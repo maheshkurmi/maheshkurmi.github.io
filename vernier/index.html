@@ -490,7 +490,7 @@ function mouseReleased(me) {
 
 function mouseWheelMoved(e) {
     e.preventDefault()
-    vernier.translate(e.wheelDelta)
+    vernier.translate(e.wheelDelta>0:1:-1)
     paint()
 }
 
