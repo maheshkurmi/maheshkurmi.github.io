@@ -451,6 +451,7 @@ function myTouchMove(event){
 }
 
 function myTouchStart(event){
+	e.preventDefault();
 	var touch = e.touches[0];
 	var mouseEvent = new MouseEvent("mousedown", {
 				clientX: touch.clientX,
@@ -460,6 +461,7 @@ function myTouchStart(event){
 }
 
 function myTouchEnd(event){
+	e.preventDefault();
 	var mouseEvent = new MouseEvent("mouseup", {
 				clientX: touch.clientX,
 				clientY: touch.clientY
@@ -468,6 +470,7 @@ function myTouchEnd(event){
 }
 	
 function getTouchPos(event){
+	e.preventDefault();
 	var rect = canvas.getBoundingClientRect();
 	return {
 		x: event.touches[0].clientX - rect.left,
