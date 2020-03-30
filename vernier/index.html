@@ -68,8 +68,8 @@ var zeroerror=0;
 
 var scale=1;
 //vsReading when it was supposed to read zero
-var canvas=world.getCanvas();
-var ctx=world.getCanvas().getContext();
+var canvas=document.getElementById("myCanvas");
+var ctx=canvas.getContext();
 canvas.setOnmousewheel(mouseWheelMoved);
 canvas.setOnmousemove(mouseDragged);
 canvas.setOnmousedown(mousePressed);
@@ -82,7 +82,7 @@ window.addEventListener('keydown',onKeyEvent,false);
 init();
 paint();
 var  moveVernier=true;
-var drawVirtualDivs=widgets.getCheckBox("CheckBox2").isSelected();;
+var drawVirtualDivs=document.getElementById("CheckBox1).checked;
 
 
 
@@ -90,18 +90,18 @@ function init(){
     var msReading=0;
     var vsReading=0;
     var zeroerror=0;
-    scale=world.getCamera().getScale()/100;
-    zeroerror=widgets.getSlider("a").getValue();
-    displayInfo=widgets.getCheckBox("CheckBox").isSelected();
-	vernierscaleWidth=(2*vernierscaleZero+vsd*10);
-	mainscaleWidth= (msd*numDiv)+vernierscaleWidth;
-	createmainscalePath();
+    scale=Number(document.getElementById("b").value);
+    zeroerror=document.getElementById("a").getValue();
+    displayInfo=document.getElementById("CheckBox").checked;
+    vernierscaleWidth=(2*vernierscaleZero+vsd*10);
+    mainscaleWidth= (msd*numDiv)+vernierscaleWidth;
+    createmainscalePath();
     paint();
 }
 
 function createmainscalePath(){	
 	path=new Path2D();
-	path.beginPath();
+	//path.beginPath();
 	var t1=10;//mainscaleZero;
 	var t2=0.7*vernierscaleHeight;
 	path.moveTo(10, 10+1.5*t1);
@@ -128,9 +128,9 @@ function createmainscalePath(){
 }
 
 function paint(){	
-	ctx.clear();
-    ctx.resetTransform();
-    ctx.scale(scale,scale);
+    	ctx.resetTransform();
+	ctx.clearRect(0,0,canvas.width,canvas.height);
+    	ctx.scale(scale,scale);
 	drawMainScale();
 }
 
@@ -143,12 +143,13 @@ function drawLine(x1,y1,x2,y2){
 
 function outString( x,y, s, x_align, y_align) {	
 	var fm=ctx.measureText(s);
+	var h=10;//fm.height
 	switch (y_align) {		
 		case 0:
-		y += fm.height;
+		y += h;
 		break;
 		case 1:
-		y += fm.height / 2;
+		y += h / 2;
 		break;
 		case 2:
 		break;
@@ -167,7 +168,7 @@ function outString( x,y, s, x_align, y_align) {
 }
 
 function drawMainScale(){	
-    ctx.translate(ox,oy);
+    	ctx.translate(ox,oy);
 	//Rectangle2D.Double rect = new Rectangle2D.Double(Xoffset,Yoffset,mainscaleWidth,mainscaleHeight);
 	ctx.fillStyle="rgb(210,210,210)";
 	ctx.fill(path);
@@ -185,20 +186,18 @@ function drawMainScale(){
 		if (i%10==0)outString(x, (y-ticklength-3),i,1,2 );
 	}
 
-    if(drawVirtualDivs){
-        for(var i=1;i<10;i++){
-           x=Xoffset+mainscaleZero+msd*i/10.0;
-           drawLine(x,y,x,y-ticklength/2);
-        }
-    }
+    	if(drawVirtualDivs){
+       	    for(var i=1;i<10;i++){
+           	x=Xoffset+mainscaleZero+msd*i/10.0;
+           	drawLine(x,y,x,y-ticklength/2);
+           }
+    	}
   
-	
 	x=Xoffset+mainscaleZero+msd*numDiv+10;
 	outString(x, (y-ticklength-3),"mm",0,2 );
 	
 	vernier.draw();
 	drawInfo();
- 
 }
 
 function drawInfo(){	
@@ -261,9 +260,9 @@ function drawInfo(){
 	drawLine(x1, y1, x1-3, y1-3);
 	drawLine(x1, y1, x1+3, y1-3);
 	outString(x1,y2-2,"MSR = "+msReading+" mm",1,2);
-       ctx.fillStyle="green";
+       	ctx.fillStyle="green";
  
-    outString(80,24,"Use mouse scroll or drag vernier to adjust values",0,2);
+    	outString(80,24,"Use mouse scroll or drag vernier to adjust values",0,2);
 
 }
 
@@ -308,9 +307,10 @@ function Vernier(x,y,w,h){
 	this.h=h;
 	this.t=0.7*h;
 	this.path= new Path2D();
-	this.createPath= function(){		
-		var	p=this.path;
-		p.beginPath();
+	this.createPath= function(){
+		this.path=new Path2D();
+		var p=this.path;
+		//p.beginPath();
 		var x=this.x;
 		var y=this.y;
 		var w=this.w;
@@ -439,18 +439,17 @@ function getMousePos(event){
 }
 
 function mousePressed( me) {
-    if(moveVernier==false)return;	
+    	if(moveVernier==false)return;	
 	mx = me.x;
-    my = me.y;
-    isdragging=vernier.contains((mx-ox*scale)/scale, (my-oy*scale)/scale);
-    isMainDragging=path.contains((mx-ox*scale)/scale, (my-oy*scale)/scale);
-    paint();
+    	my = me.y;
+    	isdragging=ctx.isPointInPath(vernier.path,mx,my);//((mx-ox*scale)/scale, (my-oy*scale)/scale);
+    	isMainDragging=ctx.isPointInPath(path,mx,my);//(mx-ox*scale)/scale, (my-oy*scale)/scale);
+    	paint();
 }
 
 function mouseReleased( me) {	
 	isdragging = false;
-    isMainDragging=false;
-
+    	isMainDragging=false;
 }
 
 function mouseWheelMoved(e) {	
@@ -460,18 +459,17 @@ function mouseWheelMoved(e) {
 
 function mouseDragged( me) {	
 	if (!isdragging && !isMainDragging) return;
-    var dx,dy;
-    dx = (me.x- mx)/scale;
-    dy = (me.y- my)/scale;
-    mx = me.x;
-    my = me.y;
-    if(isMainDragging){
-        ox+=dx;
-        oy+=dy;
-        paint();
-        return;
-    }
-
+   	var dx,dy;
+    	dx = (me.x- mx)/scale;
+    	dy = (me.y- my)/scale;
+    	mx = me.x;
+    	my = me.y;
+    	if(isMainDragging){
+        	ox+=dx;
+        	oy+=dy;
+        	paint();
+        	return;
+    	}
 	
 	if ((vernier.x<=Xoffset)&dx<0)return;
 	if ((vernier.x>=mainscaleWidth-vernierscaleWidth+Xoffset)&dx>0)return;
@@ -485,7 +483,6 @@ function mouseDragged( me) {
 		paint();
 		return ;
 	}
-	
 	
 	vernier.translate(dx/scale);
 	paint();
@@ -542,6 +539,7 @@ function Button_onClick(){
 function textfield_onPerform(widget,text){
     Button_onClick();
 }
+	
 /** 
 * Runs when simulation starts, all initialisations should be done in this function 
 */
