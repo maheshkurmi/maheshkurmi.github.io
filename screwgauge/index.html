@@ -441,8 +441,9 @@ function Vernier(x,y,w,h){
 	this.setX(vernierscaleZero);
 }
 	
-function myTouchMove(event){
-	var touch = e.touches[0];
+function myTouchMove(te){
+	te.preventDefault();
+	var touch = te.touches[0];
   	var mouseEvent = new MouseEvent("mousemove", {
     		clientX: touch.clientX,
     		clientY: touch.clientY
@@ -450,9 +451,9 @@ function myTouchMove(event){
   	canvas.dispatchEvent(mouseEvent);
 }
 
-function myTouchStart(event){
-	e.preventDefault();
-	var touch = e.touches[0];
+function myTouchStart(te){
+	te.preventDefault();
+	var touch = te.touches[0];
 	var mouseEvent = new MouseEvent("mousedown", {
 				clientX: touch.clientX,
 				clientY: touch.clientY
@@ -460,22 +461,14 @@ function myTouchStart(event){
 	canvas.dispatchEvent(mouseEvent);
 }
 
-function myTouchEnd(event){
-	e.preventDefault();
+function myTouchEnd(te){
+	te.preventDefault();
+	var touch = te.touches[0];
 	var mouseEvent = new MouseEvent("mouseup", {
 				clientX: touch.clientX,
 				clientY: touch.clientY
 			});
   	canvas.dispatchEvent(mouseEvent);
-}
-	
-function getTouchPos(event){
-	e.preventDefault();
-	var rect = canvas.getBoundingClientRect();
-	return {
-		x: event.touches[0].clientX - rect.left,
-		y: event.touches[0].clientY - rect.top
-	};
 }
 	
 function getMousePos(event){
@@ -507,11 +500,11 @@ function mouseReleased( me) {
 	isMainDragging=false;
 }
 
-function mouseWheelMoved(e) {	
-      	e.preventDefault();
+function mouseWheelMoved(me) {	
+      	me.preventDefault();
 	//console.log(e.wheelDelta);
-	var scroll=e.wheelDelta>0?1:-1;
-	let m=getMousePos(e);
+	var scroll=me.wheelDelta>0?1:-1;
+	let m=getMousePos(me);
   	let t=true;//ctx.isPointInPath(vernier.path,m.x,m.y);//(mx-ox*scale)/scale, (my-oy*scale)/scale,"nonzero");
 	if(t)vernier.Rotate(scroll);
 	else{
