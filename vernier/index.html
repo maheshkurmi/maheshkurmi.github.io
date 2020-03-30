@@ -41,6 +41,20 @@ Your browser does not support the HTML5 canvas tag.
 </div>
 	
 <script type='text/javascript'>
+var ox = 0,
+    oy = 0
+var isdragging = false
+var isMainDragging = false
+var MMTOPIXELFACTOR = 10
+var msd = 10
+var vsd = 9
+//10VSD=1MSD;
+var vernier
+var mainscaleHeight = 80
+var mainscaleWidth = 500
+var vernierscaleHeight = 50
+var vernierscaleWidth = 100
+var mainscaleZero = 0
 var vernierscaleZero = 0
 
 var numDiv = 30
