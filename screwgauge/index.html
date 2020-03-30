@@ -386,11 +386,11 @@ function Vernier(x,y,w,h){
 		if((reading>=zeroerror+msd*200)&&(count>0))return;//Resources.playSound("tick");
 	
 		reading+=count;
-	//	console.log("begin:" + reading);
+		//	console.log("begin:" + reading);
 		if (reading<zeroerror)reading=zeroerror;
 		if (reading>zeroerror+msd*100)reading=zeroerror+msd*100;
 		this.x=mainscaleZero+(reading-zeroerror)*this.pitch;
-	//	console.log("end:"+reading);
+		//	console.log("end:"+reading);
 		vsReading=reading%50;
 		msReading=Math.floor((reading-zeroerror)/50);
 		
@@ -440,12 +440,14 @@ function Vernier(x,y,w,h){
 	
 	this.setX(vernierscaleZero);
 }
+	
 function myTouchMove(event){
 	event.preventDefault();
+	if (!isdragging && !isMainDragging) return false;
 	var x = event.targetTouches[0].pageX - canvasdiv.offsetLeft;
 	var y = event.targetTouches[0].pageY - canvasdiv.offsetTop;
-	if (!isdragging && !isMainDragging) return false;
-	var dx,dy;
+	//console.log(m);
+	let dx,dy;
 	dx = (x- mx)/scale;
 	dy = (y- my)/scale;
 	mx = x;
@@ -454,10 +456,17 @@ function myTouchMove(event){
 		ox+=dx;
 		oy+=dy;
 		paint();
-		return true;
+		return;
+	}	
+
+	if ((vernier.x<=mainscaleZero)&&dy<0){	
+		paint();
+		return;
 	}
-	if ((vernier.x<=mainscaleZero)&&dy<0)return true;
-	if ((vernier.x>=mainscaleZero+mainscaleWidth)&& (dy>0))return true;
+	if ((vernier.x>=mainscaleZero+mainscaleWidth)&& (dy>0)){
+		paint();
+		return;
+	}
 	vernier.Rotate( Math.round(dy));
 	paint();
 }
@@ -466,8 +475,11 @@ function myTouchStart(event){
 	event.preventDefault();
 	let x = event.targetTouches[0].pageX - canvasdiv.offsetLeft;
 	let y = event.targetTouches[0].pageY - canvasdiv.offsetTop;
-	isdragging=ctx.isPointInPath(vernier.path,x, y);
-  isMainDragging=ctx.isPointInPath(path,x, y);
+	isdragging=false;
+	isMainDragging=ctx.isPointInPath(path,x,y);//(mx-ox*scale), (my-oy*scale));
+  	if(!isdragging){
+			isdragging=ctx.isPointInPath(vernier.path,x,y);//(mx-ox*scale), (my-oy*scale));
+	}
 	paint();
 }
 
@@ -476,6 +488,7 @@ function myTouchEnd(event){
 	isdragging=false;
 	isMainDragging=false;
 }
+	
 function getMousePos(event){
           return {
           x: event.pageX - canvasdiv.offsetLeft ,
@@ -484,7 +497,7 @@ function getMousePos(event){
 }
 
 function mousePressed( me) {	
-  let m=getMousePos(me);
+  	let m=getMousePos(me);
 	mx = m.x;
 	my = m.y;
 	isdragging=false;
@@ -493,17 +506,15 @@ function mousePressed( me) {
 			isdragging=ctx.isPointInPath(vernier.path,mx,my);//(mx-ox*scale), (my-oy*scale));
 	}
 	paint();
-    //return false;
 }
 
 function mouseReleased( me) {	
 	isdragging = false;
 	isMainDragging=false;
-    //return false; 
 }
 
 function mouseWheelMoved(e) {	
-      e.preventDefault();
+      	e.preventDefault();
 	//console.log(e.wheelDelta);
 	var scroll=e.wheelDelta>0?1:-1;
 	let m=getMousePos(e);
@@ -518,7 +529,7 @@ function mouseWheelMoved(e) {
 
 function mouseDragged( me) {	
 	if (!isdragging && !isMainDragging) return false;
-  let m=getMousePos(me);
+  	let m=getMousePos(me);
 	//console.log(m);
 	let dx,dy;
 	dx = (m.x- mx)/scale;
