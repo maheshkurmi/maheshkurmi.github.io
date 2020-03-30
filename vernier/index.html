@@ -488,9 +488,9 @@ function mouseReleased(me) {
     isMainDragging = false
 }
 
-function mouseWheelMoved(e) {
-    e.preventDefault()
-    vernier.translate(e.wheelDelta>0:1:-1)
+function mouseWheelMoved(me) {
+    me.preventDefault()
+    vernier.translate(me.wheelDelta>0?1:-1)
     paint()
 }
 
