@@ -422,7 +422,7 @@ function Vernier(x, y, w, h) {
 }
 
 function myTouchMove(event) {
-    var touch = e.touches[0]
+    var touch = event.touches[0]
     var mouseEvent = new MouseEvent('mousemove', {
         clientX: touch.clientX,
         clientY: touch.clientY,
@@ -431,8 +431,8 @@ function myTouchMove(event) {
 }
 
 function myTouchStart(event) {
-    e.preventDefault()
-    var touch = e.touches[0]
+    event.preventDefault()
+    var touch = event.touches[0]
     var mouseEvent = new MouseEvent('mousedown', {
         clientX: touch.clientX,
         clientY: touch.clientY,
@@ -441,7 +441,7 @@ function myTouchStart(event) {
 }
 
 function myTouchEnd(event) {
-    e.preventDefault()
+    event.preventDefault()
     var mouseEvent = new MouseEvent('mouseup', {
         clientX: touch.clientX,
         clientY: touch.clientY,
@@ -450,7 +450,7 @@ function myTouchEnd(event) {
 }
 
 function getTouchPos(event) {
-    e.preventDefault()
+    event.preventDefault()
     var rect = canvas.getBoundingClientRect()
     return {
         x: event.touches[0].clientX - rect.left,
@@ -486,11 +486,13 @@ function mouseReleased(me) {
 }
 
 function mouseWheelMoved(e) {
+    e.preventDefault()
     vernier.translate(e.wheelDelta)
     paint()
 }
 
 function mouseDragged(me) {
+    me.preventDefault()
     if (!isdragging && !isMainDragging) return
     var dx, dy
     let m = getMousePos(me);
