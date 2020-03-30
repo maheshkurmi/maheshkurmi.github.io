@@ -195,12 +195,15 @@ function drawMainScale() {
         drawLine(x, y, x, y - ticklength)
         if (i % 10 == 0) outString(x, y - ticklength - 3, i, 1, 2)
     }
-
+	
     if (drawVirtualDivs) {
+	var w=ctx.lineWidth;
+	ctx.lineWidth=w/scale;
         for (var i = 1; i < 10; i++) {
             x = Xoffset + mainscaleZero + (msd * i) / 10.0
             drawLine(x, y, x, y - ticklength / 2)
         }
+	ctx.lineWidth=w;    
     }
 
     x = Xoffset + mainscaleZero + msd * numDiv + 10
