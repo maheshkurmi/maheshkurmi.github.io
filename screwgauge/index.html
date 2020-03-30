@@ -171,12 +171,13 @@ function drawLine(x1,y1,x2,y2){
 
 function outString( x,y, s, x_align, y_align) {	
 	var fm=ctx.measureText(s);
+	var h=10;//fm.height not supported in browsers
 	switch (y_align) {		
 		case 0:
-		y += fm.height;
+		y += h;
 		break;
 		case 1:
-		y += fm.height / 2;
+		y += h / 2;
 		break;
 		case 2:
 		break;
