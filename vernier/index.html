@@ -37,12 +37,12 @@ Your browser does not support the HTML5 canvas tag.
 <div id="checkbox"><input id="CheckBox" onchange="CheckBox_onChange(this,this.checked)" type="checkbox"> <label for="CheckBox"> Check here to display values </label></div>
 <div id="checkbox"><input id="CheckBox1" onchange="CheckBox1_onChange(this,this.checked)" type="checkbox"> <label for="CheckBox1"> Check here to display virtual divisions (you may need to zoom in to see them clearly) </label></div>
 <div id="slider1"><b>Zero error: </b>-9 <input id="a" max="9" min="-9" step="1" type="range" oninput="a_onChange(this,this.value);" onchange="a_onChange(this,this.value);" value="0"> +9</div>
-<div id="slider2"><b>Zoom: </b>10 %<input id="b" max="1000" min="10" step="1" type="range" oninput="b_onChange(this,this.value);" onchange="b_onChange(this,this.value);"="" value="100"> +1000%</div>
+<div id="slider2"><b>Zoom: </b>10 %<input id="b" max="1000" min="10" step="1" type="range" oninput="b_onChange(this,this.value);" onchange="b_onChange(this,this.value);"="" value="125"> +1000%</div>
 </div>
 	
 <script type='text/javascript'>
-var ox = 0,
-    oy = 0
+var ox = 20,
+    oy = 20
 var isdragging = false
 var isMainDragging = false
 var MMTOPIXELFACTOR = 10
@@ -67,7 +67,7 @@ var msReading = 0
 var vsReading = 0
 var zeroerror = 0
 
-var scale = 1
+var scale = 1.25
 //vsReading when it was supposed to read zero
 var canvas = document.getElementById('myCanvas')
 var ctx = canvas.getContext('2d')
