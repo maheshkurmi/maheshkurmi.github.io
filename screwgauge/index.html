@@ -30,7 +30,7 @@ h1 {
 </head>
 	
 <body>
-<div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="800px" height="480px">
+<div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="900px" height="480px">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
 <div id="checkbox"><input id="CheckBox" onchange="CheckBox_onChange(this,this.checked)" type="checkbox"> <label for="CheckBox"> Check here to display values </label></div>
@@ -88,7 +88,7 @@ var canvas=document.getElementById("myCanvas");
 
 var ctx=canvas.getContext("2d");
 var canvasdiv=document.getElementById("canvasdiv");
-canvas.width=windoe.innerwidth;
+//canvas.width=windoe.innerwidth;
 //canvas.height=480;
 canvas.addEventListener("mousewheel",mouseWheelMoved);
 canvas.addEventListener("mousemove",mouseDragged);
