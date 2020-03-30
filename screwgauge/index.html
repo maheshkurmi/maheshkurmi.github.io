@@ -442,58 +442,49 @@ function Vernier(x,y,w,h){
 }
 	
 function myTouchMove(event){
-	event.preventDefault();
-	if (!isdragging && !isMainDragging) return false;
-	var x = event.targetTouches[0].pageX - canvasdiv.offsetLeft;
-	var y = event.targetTouches[0].pageY - canvasdiv.offsetTop;
-	//console.log(m);
-	let dx,dy;
-	dx = (x- mx)/scale;
-	dy = (y- my)/scale;
-	mx = x;
-	my = y;
-	if(isMainDragging){		
-		ox+=dx;
-		oy+=dy;
-		paint();
-		return;
-	}	
-
-	if ((vernier.x<=mainscaleZero)&&dy<0){	
-		paint();
-		return;
-	}
-	if ((vernier.x>=mainscaleZero+mainscaleWidth)&& (dy>0)){
-		paint();
-		return;
-	}
-	vernier.Rotate( Math.round(dy));
-	paint();
+	var touch = e.touches[0];
+  	var mouseEvent = new MouseEvent("mousemove", {
+    		clientX: touch.clientX,
+    		clientY: touch.clientY
+  	});
+  	canvas.dispatchEvent(mouseEvent);
 }
 
 function myTouchStart(event){
-	event.preventDefault();
-	let x = event.targetTouches[0].pageX - canvasdiv.offsetLeft;
-	let y = event.targetTouches[0].pageY - canvasdiv.offsetTop;
-	isdragging=false;
-	isMainDragging=ctx.isPointInPath(path,x,y);//(mx-ox*scale), (my-oy*scale));
-  	if(!isdragging){
-			isdragging=ctx.isPointInPath(vernier.path,x,y);//(mx-ox*scale), (my-oy*scale));
-	}
-	paint();
+	var touch = e.touches[0];
+	var mouseEvent = new MouseEvent("mousedown", {
+				clientX: touch.clientX,
+				clientY: touch.clientY
+			});
+	canvas.dispatchEvent(mouseEvent);
 }
 
 function myTouchEnd(event){
-	event.preventDefault();
-	isdragging=false;
-	isMainDragging=false;
+	var mouseEvent = new MouseEvent("mouseup", {
+				clientX: touch.clientX,
+				clientY: touch.clientY
+			});
+  	canvas.dispatchEvent(mouseEvent);
+}
+	
+function getTouchPos(event){
+	var rect = canvas.getBoundingClientRect();
+	return {
+		x: event.touches[0].clientX - rect.left,
+		y: event.touches[0].clientY - rect.top
+	};
 }
 	
 function getMousePos(event){
-          return {
-          x: event.pageX - canvasdiv.offsetLeft ,
-          y: event.pageY - canvasdiv.offsetTop 
-        };
+        var rect = canvas.getBoundingClientRect();  
+	 return {
+    		x: event.clientX - rect.left,
+    		y: event.clientY - rect.top
+  	};
+	//return {
+          //x: event.pageX - canvasdiv.offsetLeft ,
+          //y: event.pageY - canvasdiv.offsetTop 
+        //};
 }
 
 function mousePressed( me) {	
