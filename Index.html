@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+<head>
+    <title>Template</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div id="canvasdiv" class="container" align="center">
+    <canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="900px" height="480px">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div id="checkbox"><input id="CheckBox" onchange="CheckBox_onChange(this,this.checked)" type="checkbox"> <label
+            for="CheckBox"> Check here to display values </label></div>
+    <div id="checkbox"><input id="CheckBox1" onchange="CheckBox1_onChange(this,this.checked)" type="checkbox"> <label
+            for="CheckBox1"> Check here to display virtual divisions (you may need to zoom in to see them
+        clearly) </label></div>
+    <div id="slider1"><b>Zero error: </b>-9 <input id="a" max="9" min="-9" step="1" type="range"
+                                                   oninput="a_onChange(this,this.value);"
+                                                   onchange="a_onChange(this,this.value);" value="0"> +9
+    </div>
+    <div id="slider2"><b>Zoom: </b>10 %<input id="b" max="1000" min="10" step="1" type="range"
+                                              oninput="b_onChange(this,this.value);"
+                                              onchange="b_onChange(this,this.value);"="" value="125"> +1000%
+    </div>
+</div>
+
+<script type='text/javascript'>
+    var canvas = document.getElementById('myCanvas');
+    var ctx = canvas.getContext('2d');
+    canvas.addEventListener('mousewheel', mouseWheelMoved);
+    canvas.addEventListener('mousemove', mouseDragged);
+    canvas.addEventListener('mousedown', mousePressed);
+    canvas.addEventListener('mouseup', mouseReleased)
+    canvas.addEventListener('touchstart', myTouchStart, false); // touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener('touchmove', myTouchMove, false); // touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener('touchend', myTouchEnd, false); // touch handler for iPhones, iPads, and Androids
+    window.addEventListener('keydown', onKeyEvent, false);
+
+    var isDragging = false;
+    init();
+
+    function init() {
+
+        paint();
+    }
+
+
+    function myTouchMove(event) {
+        let touch = event.touches[0];
+        let mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function myTouchStart(event) {
+        event.preventDefault();
+        let touch = event.touches[0]
+        let mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function myTouchEnd(event) {
+        event.preventDefault();
+        let mouseEvent = new MouseEvent('mouseup', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function getTouchPos(event) {
+        event.preventDefault();
+        let rect = canvas.getBoundingClientRect();
+        return {
+            x: event.touches[0].clientX - rect.left,
+            y: event.touches[0].clientY - rect.top,
+        };
+    }
+
+    function getMousePos(event) {
+        let rect = canvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+        };
+        //return {
+        //x: event.pageX - canvasdiv.offsetLeft ,
+        //y: event.pageY - canvasdiv.offsetTop
+        //};
+    }
+
+    function mousePressed(me) {
+        if (moveVernier == false) return;
+        let m = getMousePos(me);
+        mx = m.x;
+        my = m.y;
+        //isDragging = ctx.isPointInPath(vernier.path, mx, my) //((mx-ox*scale)/scale, (my-oy*scale)/scale);
+        paint();
+    }
+
+    function mouseReleased(me) {
+        isdragging = false;
+    }
+
+    function mouseWheelMoved(me) {
+        me.preventDefault();
+
+        paint();
+    }
+
+    function mouseDragged(me) {
+        me.preventDefault();
+        if (!isdragging && !isMainDragging) return;
+        let dx, dy;
+        let m = getMousePos(me);
+        dx = (m.x - mx) / scale;
+        dy = (m.y - my) / scale;
+        mx = m.x;
+        my = m.y;
+        if (isDragging) {
+            ox += dx;
+            oy += dy;
+            paint();
+            return;
+        }
+
+
+        paint();
+    }
+
+
+    function onKeyEvent(e) {
+        e.preventDefault;
+        if (e.keyCode == 37) {
+            vernier.translate(-1);
+            paint();
+            return true;
+        } else if (e.keyCode == 39) {
+            vernier.translate(1);
+            paint();
+            return true;
+        }
+    }
+
+</script>
+</body>
+</html>

@@ -497,7 +497,7 @@ function mouseWheelMoved(me) {
 function mouseDragged(me) {
     me.preventDefault()
     if (!isdragging && !isMainDragging) return
-    var dx, dy
+    let dx, dy
     let m = getMousePos(me);
     dx = (m.x - mx) / scale
     dy = (m.y - my) / scale
