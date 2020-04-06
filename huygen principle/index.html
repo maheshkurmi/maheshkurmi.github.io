@@ -267,6 +267,7 @@
         var y;
 
         var th=-Math.PI/2;
+        screenGC.fillStyle="red";
         for(let i = 0; i < numSources; i++)
         {
 
@@ -285,6 +286,16 @@
             }
             th+=Math.PI/(numSources-1);
 
+        }
+
+        if(circularSources & numSources>2){
+            screenGC.fillStyle="darkred";
+            screenGC.beginPath();
+            screenGC.arc(sourceX0, sourceY0, sourceR, 0, twoPi);
+            screenGC.fill();
+            screenGC.beginPath();
+            screenGC.arc(sourceX0, sourceY0, sourcePhase , -halfPi, +halfPi);
+            screenGC.stroke();
         }
     };
 
