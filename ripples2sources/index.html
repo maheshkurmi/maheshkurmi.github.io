@@ -36,9 +36,9 @@
     </canvas>
     <div style="padding-left:20px">
         <b>Source: </b>
-        <label class="white"><input id="chkSrc1" onchange="chkSrc1_onChange(null,this.checked)" type="checkbox" checked>1</label>
+        <label class="white"><input id="chkSrc1" onchange="chkSrc2_onChange(null,this.checked)" type="checkbox" checked>1</label>
         &nbsp;
-        <label class="white"><input id="chkSrc2" onchange="chkSrc2_onChange(null,this.checked)" type="checkbox" checked>2</label>
+        <label class="white"><input id="chkSrc2" onchange="chkSrc1_onChange(null,this.checked)" type="checkbox" checked>2</label>
 
         <br>
 
@@ -179,15 +179,24 @@
 
     function onKeyEvent(e) {
         e.preventDefault;
-        if (e.keyCode == 37) {
-            vernier.translate(-1);
-
-            return true;
-        } else if (e.keyCode == 39) {
-            vernier.translate(1);
-
-            return true;
+        let col=probe.col;
+        let row=probe.row;
+        let numColumns = surface[0].length;
+        let numRows    = surface.length;
+        if (e.keyCode == 39) {
+            if(row>0)row--;
         }
+        if (e.keyCode == 37) {
+            if(row<numRows-1)row++;
+        }
+        if (e.keyCode == 40) {
+            if(col>0)col--;
+        }
+        if (e.keyCode == 38) {
+            if(col<numColumns-1)col++;
+        }
+
+        probe.set(row,col);
         updateView()
     }
 
@@ -206,7 +215,7 @@
     {
         this.canvas   = canvas;
         this.canvasGC = canvas.getContext('2d');
-
+        this.canvasGC.font="13px Arial"
         this.width  = parseInt(canvas.width);
         this.height = parseInt(canvas.height);
 
@@ -259,6 +268,8 @@
         var cosine1 = this.cosine1;
         var sine2   = this.sine2;
         var cosine2 = this.cosine2;
+
+
 
         var distance = this.distance;
 
@@ -364,6 +375,64 @@
         this.drawLineSegment(x2, y1, z1, x2, y1, z2);
     }
 
+    function Probe(row,col)
+    {
+        this.row=row;
+        this.col=col;
+        this.pt=surface[row][col];
+        this.verticesS1=[];
+        this.verticesS2=[];
+        this.vertices=[];
+        this.set=function(row,col){
+            this.row=row;
+            this.col=col;
+            this.pt=surface[row][col];
+        }
+        this.update=function(){
+            this.pt=surface[this.row][this.col];
+            let r1 = this.pt.r1;
+            let r2 = this.pt.r2
+            this.verticesS1[this.vertices.length]=amplitudeS1 * Math.sin((frequencyTimesTwoPi * t) - (r1 / lambdaOverTwoPi))
+            this.verticesS2[this.vertices.length]=amplitudeS2 * Math.sin((frequencyTimesTwoPi * t) - ((r2 - phaseDifference) / lambdaOverTwoPi));
+            this.vertices[this.vertices.length]=this.pt.z;
+            if(this.vertices.length>=240){
+                this.vertices.shift();
+                this.verticesS1.shift();
+                this.verticesS2.shift();
+            }
+        }
+    }
+
+    function drawProbe(p){
+        xyzGraph.setLineColor("blue");
+        xyzGraph.drawCube(3.5,p.pt.x,p.pt.y,p.pt.z);
+        xyzGraph.setLineColor("darkgreen");
+
+        var ctx=canvas.getContext("2d");
+        ctx.setLineDash([1, 2]);
+        ctx.linewidth=1;
+        drawGraph(ctx,"orange",probe.verticesS1);
+        drawGraph(ctx,"green",probe.verticesS2);
+        ctx.linewidth=2;
+        ctx.setLineDash([]);
+        drawGraph(ctx,"blue",probe.vertices);
+        ctx.fillStyle="blue";
+        ctx.fillText("Disturbances at Blue dot",3,2*Math.max(amplitudeS1,amplitudeS2)*4);
+
+    }
+
+    function drawGraph(ctx,color,vertices){
+        ctx.strokeStyle=color;
+        ctx.beginPath();
+        let x=0;
+        let y=Math.max(amplitudeS1,amplitudeS2)*3.2;
+        ctx.moveTo(x,60);
+        for(let i=0;i<vertices.length;i++){
+            ctx.lineTo(x,y+1.5*vertices[i]);
+            x+=1.5;
+        }
+        ctx.stroke();
+    }
 
     // graphics
     var xyzGraph;
@@ -435,8 +504,9 @@
 
     var dNumberAdjusterDiv;
     var dNumberAdjuster;
-
+    var probe;
     init();
+
 
     function init()
     {
@@ -525,7 +595,10 @@
         surfaceCreate();
         surfaceInitialize();
 
+        let numColumns = surface[0].length;
+        let numRows    = surface.length;
 
+        console.log("rows="+numRows);
         t = 0;
         dt = 0.01;
 
@@ -546,7 +619,7 @@
         //phiNumberAdjuster.get() * Math.PI / 180;
         rho = 550;
         //rhoNumberAdjuster.get();
-
+        probe=new Probe(Math.floor(numRows/2),0);
         distance = 500;
         updateView();
 
@@ -674,7 +747,7 @@
         drawSources();
         updateMesh();
         drawMesh();
-
+        drawProbe(probe);
         // tic-toc
         t += dt;
 
@@ -697,9 +770,11 @@
     function drawSources()
     {
         xyzGraph.setLineThickness(2);
-        xyzGraph.setLineColor('red');
+        xyzGraph.setLineColor('orange');
 
         xyzGraph.drawCube(10, s1x, s1y, s1z);
+        xyzGraph.setLineColor('green');
+
         xyzGraph.drawCube(10, s2x, s2y, s2z);
     }
 
@@ -722,6 +797,7 @@
                 point.z = functionOutput(r1, r2, t);
             }
         }
+        probe.update();
     }
 
 
