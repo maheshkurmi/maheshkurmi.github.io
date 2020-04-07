@@ -154,7 +154,7 @@
         console.log(p);
         console.log(m);
         //"p="+p+", m="+m);
-        if(Math.hypot(p.x-mx,p.y-my)<8){
+        if(Math.hypot(p.x-mx,p.y-my)<20){
             isProbeDragging=true;
         }else{
             isViewDragging=true;
@@ -183,34 +183,39 @@
         let m = getMousePos(me);
         dx = (m.x - mx);
         dy = (m.y - my);
-        mx = m.x;
-        my = m.y;
         if (isProbeDragging) {
+            if(Math.abs(dx)<5&&Math.abs(dy)<5) return;
             let numColumns = surface[0].length;
             let numRows = surface.length;
             let col=probe.col;
             let row=probe.row;
-            if (dx > 0) {
+            if (dx > 5) {
                 if (row > 0) row--;
             }
-            if (dx < 0) {
+            if (dx < -5) {
                 if (row < numRows - 1) row++;
             }
-            if (dy > 0) {
+            if (dy > 5) {
                 if (col > 0) col--;
             }
-            if (dy < 0) {
+            if (dy < -5) {
                 if (col < numColumns - 1) col++;
             }
 
             probe.set(row, col);
+            mx = m.x;
+            my = m.y;
             //updateView();
             return;
         } else if (isViewDragging){
             theta += dx / 50;
             phi -= dy / 50;
             updateView();
+            mx = m.x;
+            my = m.y;
         }
+
+
     }
 
 

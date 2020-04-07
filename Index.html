@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>Template</title>
+    <title>Huygen's Principle</title>
     <style>
         body {
             background: white;
@@ -34,24 +34,54 @@
     <canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="900px" height="480px">
         Your browser does not support the HTML5 canvas tag.
     </canvas>
-    <div id="checkbox"><input id="CheckBox" onchange="CheckBox_onChange(this,this.checked)" type="checkbox"> <label
-            for="CheckBox"> Check here to display values </label></div>
-    <div id="checkbox"><input id="CheckBox1" onchange="CheckBox1_onChange(this,this.checked)" type="checkbox"> <label
-            for="CheckBox1"> Check here to display virtual divisions (you may need to zoom in to see them
-        clearly) </label></div>
-    <div id="slider1"><b>Zero error: </b>-9 <input id="a" max="9" min="-9" step="1" type="range"
-                                                   oninput="a_onChange(this,this.value);"
-                                                   onchange="a_onChange(this,this.value);" value="0"> +9
+    <div style="padding-left:20px">
+        <b>Source: </b>
+        <label class="white"><input id="chkSrc1" onchange="chkSrc1_onChange(null,this.checked)" type="checkbox" checked>1</label>
+        &nbsp;
+        <label class="white"><input id="chkSrc2" onchange="chkSrc2_onChange(null,this.checked)" type="checkbox" checked>2</label>
+
+        <br>
+
+        <span class="white">Check to make sources are out of phase: </span>
+        <label class="white"><input id="chkPhase" onchange="chkPhase_onChange(null,this.checked)" type="checkbox" checked>1</label>
+        <br>
+
+        <span class="white">Check to bring sources at center: </span>
+        <label class="white"><input id="chkSrcLoc" onchange="chkSrcLoc_onChange(null,this.checked)" type="checkbox" checked>1</label>
+        <br>
     </div>
-    <div id="slider2"><b>Zoom: </b>10 %<input id="b" max="1000" min="10" step="1" type="range"
-                                              oninput="b_onChange(this,this.value);"
-                                              onchange="b_onChange(this,this.value);"="" value="125"> +1000%
+
+    <div id="slider1"><b>WaveLength </b>30 <input id="a" max="400" min="30" step="5" type="range"
+                                                  oninput="a_onChange(this,this.value);"
+                                                  onchange="a_onChange(this,this.value);" value="80"> 400
     </div>
+    <div id="slider2"><b>Frequency </b>1 <input id="b" max="8" min="1" step="0.5" type="range"
+                                                oninput="b_onChange(this,this.value);"
+                                                onchange="b_onChange(this,this.value);" value="3"> 8
+    </div>
+
+    <div id="slider3"><b>Amplitude </b>1 <input id="c" max="40" min="1" step="0.5" type="range"
+                                                oninput="c_onChange(this,this.value);"
+                                                onchange="c_onChange(this,this.value);" value="10"> 10
+    </div>
+
+    <div id="slider4"><b>Separation </b>10 <input id="d" max="500" min="20" step="5" type="range"
+                                                  oninput="d_onChange(this,this.value);"
+                                                  onchange="d_onChange(this,this.value);" value="120"> 500
+    </div>
+
 </div>
 
 <script type='text/javascript'>
-    var canvas = document.getElementById('myCanvas');
-    var ctx = canvas.getContext('2d');
+    // XYZPoint
+
+
+
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    var isDragging = false;
+
+
     canvas.addEventListener('mousewheel', mouseWheelMoved);
     canvas.addEventListener('mousemove', mouseDragged);
     canvas.addEventListener('mousedown', mousePressed);
@@ -61,13 +91,6 @@
     canvas.addEventListener('touchend', myTouchEnd, false); // touch handler for iPhones, iPads, and Androids
     window.addEventListener('keydown', onKeyEvent, false);
 
-    var isDragging = false;
-    init();
-
-    function init() {
-
-        paint();
-    }
 
 
     function myTouchMove(event) {
@@ -120,42 +143,37 @@
     }
 
     function mousePressed(me) {
-        if (moveVernier == false) return;
         let m = getMousePos(me);
         mx = m.x;
         my = m.y;
-        //isDragging = ctx.isPointInPath(vernier.path, mx, my) //((mx-ox*scale)/scale, (my-oy*scale)/scale);
-        paint();
+        isDragging= true;//ctx.isPointInPath(vernier.path, mx, my) //((mx-ox*scale)/scale, (my-oy*scale)/scale);
+        updateView()
     }
 
     function mouseReleased(me) {
-        isdragging = false;
+        isDragging = false;
+        updateView()
     }
 
     function mouseWheelMoved(me) {
         me.preventDefault();
-
-        paint();
+        let scroll=me.wheelDelta>0?2:-2;
+        rho+=scroll;
+        updateView()
     }
 
     function mouseDragged(me) {
         me.preventDefault();
-        if (!isdragging && !isMainDragging) return;
+        if (!isDragging) return;
         let dx, dy;
         let m = getMousePos(me);
-        dx = (m.x - mx) / scale;
-        dy = (m.y - my) / scale;
+        dx = (m.x - mx) ;
+        dy = (m.y - my) ;
         mx = m.x;
         my = m.y;
-        if (isDragging) {
-            ox += dx;
-            oy += dy;
-            paint();
-            return;
-        }
-
-
-        paint();
+        theta+=dx/50;
+        phi-=dy/50;
+        updateView();
     }
 
 
@@ -163,14 +181,56 @@
         e.preventDefault;
         if (e.keyCode == 37) {
             vernier.translate(-1);
-            paint();
+
             return true;
         } else if (e.keyCode == 39) {
             vernier.translate(1);
-            paint();
+
             return true;
         }
+        updateView()
     }
+
+
+
+
+
+    function b_onChange(widget,value){
+        //setFrequency(value);
+        //setFrequency(value);
+    }
+    function c_onChange(widget,value){
+
+
+        function d_onChange(widget,value){
+
+        }
+
+        function chkSrc1_onChange(widget,value)
+        {
+            //amplitudeS1 = value ? Number(document.getElementById("c").value): 0;
+        }
+
+
+        function chkSrc2_onChange(widget,value)
+        {
+            // amplitudeS2 = value ? Number(document.getElementById("c").value): 0;
+        }
+
+
+        function chkPhase_onChange(widget,value)
+        {
+            //phaseDifference = value?lambda / 2:0;
+        }
+
+
+
+        function chkSrcLoc_onChange(widget,value)
+        {
+
+        }
+
+
 
 </script>
 </body>
