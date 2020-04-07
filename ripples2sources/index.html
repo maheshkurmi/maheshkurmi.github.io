@@ -79,7 +79,8 @@
 
     const canvas = document.getElementById('myCanvas');
     const ctx = canvas.getContext('2d');
-    var isDragging = false;
+    var isProbeDragging = false;
+    var isViewDragging = false;
 
 
     canvas.addEventListener('mousewheel', mouseWheelMoved);
@@ -146,12 +147,25 @@
         let m = getMousePos(me);
         mx = m.x;
         my = m.y;
-        isDragging= true;//ctx.isPointInPath(vernier.path, mx, my) //((mx-ox*scale)/scale, (my-oy*scale)/scale);
+        let p=probe.pt;
+        p=xyzGraph.project(p.x,p.y,p.z);
+        isViewDragging=false;
+        isProbeDragging=false;
+        console.log(p);
+        console.log(m);
+        //"p="+p+", m="+m);
+        if(Math.hypot(p.x-mx,p.y-my)<8){
+            isProbeDragging=true;
+        }else{
+            isViewDragging=true;
+        }
+             //ctx.isPointInPath(vernier.path, mx, my) //((mx-ox*scale)/scale, (my-oy*scale)/scale);
         updateView()
     }
 
     function mouseReleased(me) {
-        isDragging = false;
+        isProbeDragging = false;
+        isViewDragging=false;
         updateView()
     }
 
@@ -164,16 +178,39 @@
 
     function mouseDragged(me) {
         me.preventDefault();
-        if (!isDragging) return;
+        if (!isProbeDragging &&!isViewDragging) return;
         let dx, dy;
         let m = getMousePos(me);
-        dx = (m.x - mx) ;
-        dy = (m.y - my) ;
+        dx = (m.x - mx);
+        dy = (m.y - my);
         mx = m.x;
         my = m.y;
-        theta+=dx/50;
-        phi-=dy/50;
-        updateView();
+        if (isProbeDragging) {
+            let numColumns = surface[0].length;
+            let numRows = surface.length;
+            let col=probe.col;
+            let row=probe.row;
+            if (dx > 0) {
+                if (row > 0) row--;
+            }
+            if (dx < 0) {
+                if (row < numRows - 1) row++;
+            }
+            if (dy > 0) {
+                if (col > 0) col--;
+            }
+            if (dy < 0) {
+                if (col < numColumns - 1) col++;
+            }
+
+            probe.set(row, col);
+            //updateView();
+            return;
+        } else if (isViewDragging){
+            theta += dx / 50;
+            phi -= dy / 50;
+            updateView();
+        }
     }
 
 
@@ -245,6 +282,7 @@
         this.setViewpoint    = XYZGraph_setViewpoint;
         this.drawLineSegment = XYZGraph_drawLineSegment;
         this.drawCube        = XYZGraph_drawCube;
+        this.project        = XYZGraph_project;
     }
 
 
@@ -311,6 +349,20 @@
         gc.stroke();
     }
 
+    function XYZGraph_project(x, y, z)
+    {
+        let ze;
+
+        let sine1   = this.sine1;
+        let cosine1 = this.cosine1;
+        let sine2   = this.sine2;
+        let cosine2 = this.cosine2;
+
+        if((ze = -x * cosine1 * sine2 - y * sine1 * sine2 - z * cosine2 + this.rho) <= 0) return {x:x,y:y};
+
+        return {x:(this.distance * ((-x * sine1 + y * cosine1) / ze) + this.offsetX),
+            y:(this.offsetY - this.distance * ((-x * cosine1 * cosine2 - y* sine1 * cosine2 + z* sine2) / ze))};
+    }
 
     function XYZGraph_setViewpoint(theta, phi, rho, distance)
     {
@@ -325,14 +377,10 @@
         this.cosine2 = Math.cos(phi);
     }
 
-
     function XYZGraph_setLineColor(color)
     {
         this.canvasGC.strokeStyle = color;
     }
-
-
-
 
     function XYZGraph_setLineThickness(n)
     {
