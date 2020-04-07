@@ -41,7 +41,9 @@
         <label class="white"><input id="chkSrc2" onchange="chkSrc1_onChange(null,this.checked)" type="checkbox" checked>2</label>
 
         <br>
-
+        <span class="white">High Resolution surface: </span>
+        <label class="white"><input id="chkResolution" onchange="chkResolution_onChange(null,this.checked)" type="checkbox" ></label>
+        <br>
         <span class="white">Check to make sources out of phase: </span>
         <label class="white"><input id="chkPhase" onchange="chkPhase_onChange(null,this.checked)" type="checkbox" checked>1</label>
         <br>
@@ -184,21 +186,21 @@
         dx = (m.x - mx);
         dy = (m.y - my);
         if (isProbeDragging) {
-            if(Math.abs(dx)<5&&Math.abs(dy)<5) return;
+            if(Math.abs(dx)<surfaceDx/2 && Math.abs(dy)<surfaceDy/2) return;
             let numColumns = surface[0].length;
             let numRows = surface.length;
             let col=probe.col;
             let row=probe.row;
-            if (dx > 5) {
+            if (dx > surfaceDx/2) {
                 if (row > 0) row--;
             }
-            if (dx < -5) {
+            if (dx < -surfaceDx/2) {
                 if (row < numRows - 1) row++;
             }
-            if (dy > 5) {
+            if (dy > surfaceDy/2) {
                 if (col > 0) col--;
             }
-            if (dy < -5) {
+            if (dy < -surfaceDy/2) {
                 if (col < numColumns - 1) col++;
             }
 
@@ -448,7 +450,7 @@
             this.verticesS1[this.vertices.length]=amplitudeS1 * Math.sin((frequencyTimesTwoPi * t) - (r1 / lambdaOverTwoPi))
             this.verticesS2[this.vertices.length]=amplitudeS2 * Math.sin((frequencyTimesTwoPi * t) - ((r2 - phaseDifference) / lambdaOverTwoPi));
             this.vertices[this.vertices.length]=this.pt.z;
-            if(this.vertices.length>=240){
+            if(this.vertices.length>=300){
                 this.vertices.shift();
                 this.verticesS1.shift();
                 this.verticesS2.shift();
@@ -686,6 +688,7 @@
         let column, row;
 
         surface = new Array();
+
 
         column = 0;
 
@@ -977,7 +980,31 @@
         surfaceInitialize();
     }
 
+    function chkResolution_onChange(widget,value)
+    {
+        let col=probe.col;
+        let row=probe.row;
 
+        if(value) {
+            surfaceDx=5;
+            surfaceDy=5;
+            row*=2;
+            col*=2;
+        }else{
+            surfaceDx=10;
+            surfaceDy=10;
+            row=Math.round(row/2);
+            col=Math.round(col/2);
+        }
+        surfaceCreate();
+        surfaceInitialize();
+        let numColumns = surface[0].length;
+        let numRows    = surface.length;
+        if(row>numRows-1)row=numRows;
+        if(col>numColumns-1)row=numColumns;
+
+        probe.set(row,col);
+    }
 
 </script>
 </body>
