@@ -258,7 +258,7 @@ function drawInfo() {
     y1 = vernier.y - 1
     y2 = y1 - 20
     let lw=ctx.lineWidth;
-    ctx.lineWidth=lw/scale;
+    if(drawVirtualDivs)ctx.lineWidth=lw/scale;
 
     drawLine(x1, y1, x1, y2)
     drawLine(x1, y2, x1 - 3, y2 + 3)
