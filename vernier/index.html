@@ -139,7 +139,8 @@ function createmainscalePath() {
 
 function paint() {
     ctx.resetTransform()
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+	ctx.fillStyle="rgb(0,50,0)"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.scale(scale, scale)
     drawMainScale()
 }
