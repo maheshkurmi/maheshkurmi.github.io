@@ -257,14 +257,15 @@ function drawInfo() {
     x1 = vernier.x + vernierscaleZero
     y1 = vernier.y - 1
     y2 = y1 - 20
-    let lw=ctx.lineWidth;
+    let lw=ctx.linewidth;
     ctx.linewidth=lw/scale;
 
     drawLine(x1, y1, x1, y2)
     drawLine(x1, y2, x1 - 3, y2 + 3)
     drawLine(x1, y2, x1 + 3, y2 + 3)
-       ctx.linewidth=lw;
-	ctx.strokeStyle="blue";
+    ctx.linewidth=lw;
+	
+    ctx.strokeStyle="blue";
     //drawVerticalArrow for vernier reading.
     x1 = vernier.x + vsReading * vsd
     y1 = vernier.y + 20
