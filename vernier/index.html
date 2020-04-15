@@ -261,15 +261,15 @@ function drawInfo() {
     drawLine(x1, y2, x1 - 3, y2 + 3)
     drawLine(x1, y2, x1 + 3, y2 + 3)
     //drawVerticalArrow for vernier reading.
-    var lw=ctx.lineWidth;
-    ctx.lineWidth=lw/scale;
+    let lw=ctx.lineWidth;
+    ctx.linewidth=lw/scale;
     x1 = vernier.x + vsReading * vsd
     y1 = vernier.y + 20
     y2 = y1 + 20
     drawLine(x1, y1, x1, y2)
     drawLine(x1, y1, x1 - 3, y1 + 3)
     drawLine(x1, y1, x1 + 3, y1 + 3)
-    ctx.lineWidth=lw;
+    ctx.linewidth=lw;
     outString(x1, y2 + 2, 'VSR = ' + vsReading / 10.0 + ' mm', 1, 0)
 
     //drawVerticalArrow for main scale reading.
