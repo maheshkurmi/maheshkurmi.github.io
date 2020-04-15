@@ -257,6 +257,8 @@ function drawInfo() {
     x1 = vernier.x + vernierscaleZero
     y1 = vernier.y - 1
     y2 = y1 - 20
+    let lw=ctx.lineWidth;
+    ctx.linewidth=lw/scale;
 
     drawLine(x1, y1, x1, y2)
     drawLine(x1, y2, x1 - 3, y2 + 3)
@@ -269,19 +271,17 @@ function drawInfo() {
     drawLine(x1, y1, x1, y2)
     drawLine(x1, y1, x1 - 3, y1 + 3)
     drawLine(x1, y1, x1 + 3, y1 + 3)
-   
+       ctx.linewidth=lw;
     outString(x1, y2 + 2, 'VSR = ' + vsReading / 10.0 + ' mm', 1, 0)
 
     //drawVerticalArrow for main scale reading.
     x1 = Xoffset + mainscaleZero + msReading * msd
     y1 = vernier.y - 25
     y2 = y1 - 20
-    let lw=ctx.lineWidth;
-    ctx.linewidth=lw/scale;
     drawLine(x1, y1, x1, y2)
     drawLine(x1, y1, x1 - 3, y1 - 3)
     drawLine(x1, y1, x1 + 3, y1 - 3)
-    ctx.linewidth=lw;
+
     outString(x1, y2 - 2, 'MSR = ' + msReading + ' mm', 1, 2)
     ctx.fillStyle = 'green'
 
