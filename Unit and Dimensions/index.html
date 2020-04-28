@@ -1,0 +1,648 @@
+
+<!doctype html>
+<html>
+<head>
+<title>Vernier Simulator</title>
+<style>
+body {
+  background: white;
+  color: #323232;
+  font-weight: 300;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: Helvetica neue, roboto;
+}
+
+img {
+  width: 56px;
+  height: 48px;
+}
+
+h1 {
+  font-weight: 200;
+  font-style: 26px;
+  margin: 10px;
+}
+</style>	
+</head>
+	
+<body>
+<div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="900px" height="480px">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+<div id="checkbox"><input id="CheckBox" onchange="CheckBox_onChange(this,this.checked)" type="checkbox"> <label for="CheckBox"> Check here to display values </label></div>
+<div id="checkbox"><input id="CheckBox1" onchange="CheckBox1_onChange(this,this.checked)" type="checkbox"> <label for="CheckBox1"> Check here to display virtual divisions (you may need to zoom in to see them clearly) </label></div>
+<div id="slider1"><b>Zero error: </b>-9 <input id="a" max="9" min="-9" step="1" type="range" oninput="a_onChange(this,this.value);" onchange="a_onChange(this,this.value);" value="0"> +9</div>
+<div id="slider2"><b>Zoom: </b>10 %<input id="b" max="1000" min="10" step="1" type="range" oninput="b_onChange(this,this.value);" onchange="b_onChange(this,this.value);"="" value="125"> +1000%</div>
+</div>
+	
+<script type='text/javascript'>
+var ox = 20,
+    oy = 20
+var isdragging = false
+var isMainDragging = false
+var MMTOPIXELFACTOR = 10
+var msd = 10
+var vsd = 9
+//10VSD=1MSD;
+var vernier
+var mainscaleHeight = 80
+var mainscaleWidth = 500
+var vernierscaleHeight = 50
+var vernierscaleWidth = 100
+var mainscaleZero = 0
+var vernierscaleZero = 0
+
+var numDiv = 30
+var Xoffset = 55
+var Yoffset = 45
+var path
+
+var displayInfo = false
+var msReading = 0
+var vsReading = 0
+var zeroerror = 0
+
+var scale = 1.25
+//vsReading when it was supposed to read zero
+var canvas = document.getElementById('myCanvas')
+var ctx = canvas.getContext('2d')
+canvas.addEventListener('mousewheel', mouseWheelMoved)
+canvas.addEventListener('mousemove', mouseDragged)
+canvas.addEventListener('mousedown', mousePressed)
+canvas.addEventListener('mouseup', mouseReleased)
+canvas.addEventListener('touchstart', myTouchStart, false) // touch handler for iPhones, iPads, and Androids
+canvas.addEventListener('touchmove', myTouchMove, false) // touch handler for iPhones, iPads, and Androids
+canvas.addEventListener('touchend', myTouchEnd, false) // touch handler for iPhones, iPads, and Androids
+window.addEventListener('keydown', onKeyEvent, false)
+
+var moveVernier = true
+var drawVirtualDivs = document.getElementById('CheckBox1').checked
+
+init()
+paint()
+
+function init() {
+    var msReading = 0
+    var vsReading = 0
+    var zeroerror = 0
+    scale = Number(document.getElementById('b').value) / 100
+    zeroerror = Number(document.getElementById('a').value)
+    displayInfo = document.getElementById('CheckBox').checked
+    vernierscaleWidth = 2 * vernierscaleZero + vsd * 10
+    mainscaleWidth = msd * numDiv + vernierscaleWidth
+    createmainscalePath()
+    paint()
+}
+
+function createmainscalePath() {
+    path = new Path2D()
+    //path.beginPath();
+    var t1 = 10 //mainscaleZero;
+    var t2 = 0.7 * vernierscaleHeight
+    path.moveTo(10, 10 + 1.5 * t1)
+    path.lineTo(10 + t2, 10 + 1.5 * t1)
+    path.lineTo(10 + t2, 10)
+    path.quadraticCurveTo(
+        10 + t2 + 0.6 * t1,
+        10 + 0.5 * t1,
+        10 + t2 + 10,
+        10 + 1.5 * t1
+    )
+
+    path.lineTo(10 + t2 + 10, 10 + 1.5 * t1)
+    path.lineTo(10 + t2 + mainscaleWidth, 10 + 1.5 * t1)
+    path.lineTo(10 + t2 + mainscaleWidth, 10 + 1.5 * t1 + mainscaleHeight)
+    path.lineTo(10 + t2, 10 + 1.5 * t1 + mainscaleHeight)
+    path.lineTo(10 + t2, 10 + 1.5 * t1 + mainscaleHeight + 3 * t2)
+    path.lineTo(10 + 0.7 * t2, 10 + 1.5 * t1 + mainscaleHeight + 2.7 * t2)
+
+    path.lineTo(10, 10 + 1.5 * t1 + mainscaleHeight)
+    path.lineTo(10, 10 + 1.5 * t1)
+    path.moveTo(10, 10 + 1.5 * t1)
+    path.closePath()
+    Xoffset = 10 + t2
+    Yoffset = 10 + 1.5 * t1
+    vernier = new Vernier(
+        Xoffset,
+        Yoffset + mainscaleHeight,
+        vernierscaleWidth,
+        vernierscaleHeight
+    )
+    ctx.fill(path)
+    paint()
+}
+
+function paint() {
+    ctx.resetTransform()
+	//ctx.fillStyle="rgb(0,50,0)"
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.scale(scale, scale)
+    drawMainScale()
+}
+
+function drawLine(x1, y1, x2, y2) {
+    ctx.beginPath()
+    ctx.moveTo(x1, y1)
+    ctx.lineTo(x2, y2)
+    ctx.stroke()
+}
+
+function outString(x, y, s, x_align, y_align) {
+    var fm = ctx.measureText(s)
+    var h = 10 //fm.height
+    switch (y_align) {
+        case 0:
+            y += h
+            break
+        case 1:
+            y += h / 2
+            break
+        case 2:
+            break
+    }
+    switch (x_align) {
+        case 0:
+            ctx.fillText(s, x + 3, y)
+            break
+        case 1:
+            ctx.fillText(s, x - fm.width / 2, y)
+            break
+        case 2:
+            ctx.fillText(s, x - fm.width / 2, y)
+            break
+    }
+}
+
+function drawMainScale() {
+    ctx.translate(ox, oy)
+    //Rectangle2D.Double rect = new Rectangle2D.Double(Xoffset,Yoffset,mainscaleWidth,mainscaleHeight);
+    ctx.fillStyle = 'rgb(210,210,210)'
+    ctx.fill(path)
+    ctx.strokeStyle = 'black'
+    ctx.stroke(path)
+    ctx.fillStyle = 'black'
+    var x = Xoffset
+    var y = Yoffset + mainscaleHeight
+    var ticklength = 8
+    ctx.font = 'arial 12px'
+    for (var i = 0; i <= numDiv; i++) {
+        x = Xoffset + mainscaleZero + msd * i
+        ticklength = i % 5 == 0 ? 12 : 8
+        drawLine(x, y, x, y - ticklength)
+        if (i % 10 == 0) outString(x, y - ticklength - 3, i, 1, 2)
+    }
+	
+    if (drawVirtualDivs) {
+	var w=ctx.lineWidth;
+	ctx.lineWidth=w/scale;
+        for (var i = 1; i < 10; i++) {
+            x = Xoffset + mainscaleZero + msReading * msd+(msd * i) / 10.0
+            drawLine(x, y, x, y - ticklength / 2)
+        }
+	ctx.lineWidth=w;    
+    }
+
+    x = Xoffset + mainscaleZero + msd * numDiv + 10
+    outString(x, y - ticklength - 3, 'mm', 0, 2)
+
+    vernier.draw()
+    drawInfo()
+}
+
+function drawInfo() {
+    ctx.font = 'Arial 11px'
+    ctx.fillStyle = 'gray'
+
+    var x1, y1, x2, y2
+    x1 = Xoffset + 1
+    x2 = vernier.x - 1
+    //drawHorizontalArrow for reading
+    y1 = Yoffset + mainscaleHeight + vernierscaleHeight * 2
+    drawLine(x1, y1, x2, y1)
+    drawLine(x1, y1, x1 + 3, y1 + 3)
+    drawLine(x1, y1, x1 + 3, y1 - 3)
+    drawLine(x2, y1, x2 - 3, y1 + 3)
+    drawLine(x2, y1, x2 - 3, y1 - 3)
+
+    y1 = Yoffset + mainscaleHeight + vernierscaleHeight * 2 + 15
+    if (displayInfo) {
+        calculateReading()
+        var s
+        ctx.fillStyle = 'red'
+        //(Color.RED);
+        if (zeroerror != 0) {
+            s =
+                getReading().toFixed(1) +
+                '-(' +
+                zeroerror / 10.0 +
+                ') = ' +
+                getCorrectedReading().toFixed(1) +
+                ' mm'
+        } else {
+            s = getCorrectedReading().toFixed(1) + ' mm'
+        }
+        outString((x1 + x2) / 2, y1, s, 1, 2)
+    } else {
+        outString((x1 + x2) / 2, y1, '?', 1, 2)
+    }
+
+    if (displayInfo == false) return
+    ctx.fillStyle = 'red'
+    //drawVerticalArrow for zero of vernier.
+    x1 = vernier.x + vernierscaleZero
+    y1 = vernier.y ;//- 1
+    y2 = y1 - 20
+    let lw=ctx.lineWidth;
+    if(drawVirtualDivs)ctx.lineWidth=lw/scale;
+
+    drawLine(x1, y1, x1, y2)
+    drawLine(x1, y2, x1 - 2, y2 + 2)
+    drawLine(x1, y2, x1 + 2, y2 + 2)
+    ctx.lineWidth=lw;
+	
+    ctx.strokeStyle="blue";
+    //drawVerticalArrow for vernier reading.
+    x1 = vernier.x + vsReading * vsd
+    y1 = vernier.y + 20
+    y2 = y1 + 20
+    drawLine(x1, y1, x1, y2)
+    drawLine(x1, y1, x1 - 3, y1 + 3)
+    drawLine(x1, y1, x1 + 3, y1 + 3)
+
+    outString(x1, y2 + 2, 'VSR = ' + vsReading / 10.0 + ' mm', 1, 0)
+
+    //drawVerticalArrow for main scale reading.
+    x1 = Xoffset + mainscaleZero + msReading * msd
+    y1 = vernier.y - 25
+    y2 = y1 - 20
+    drawLine(x1, y1, x1, y2)
+    drawLine(x1, y1, x1 - 3, y1 - 3)
+    drawLine(x1, y1, x1 + 3, y1 - 3)
+
+    outString(x1, y2 - 2, 'MSR = ' + msReading + ' mm', 1, 2)
+    ctx.fillStyle = 'green'
+
+    outString(80, 24, 'Use mouse scroll or drag vernier to adjust values', 0, 2)
+}
+
+/**
+ * @return the zeroerror
+ */
+function getZeroerror() {
+    return zeroerror
+}
+
+/**
+ * @param zeroerror the zeroerror to set
+ */
+function setZeroerror(zeroerror) {
+    this.zeroerror = zeroerror
+    vernierscaleZero = mainscaleZero + zeroerror
+    calculateReading()
+    paint()
+}
+
+function calculateReading() {
+    var reading = Math.floor(vernier.x - Xoffset)
+    //actual distance
+    reading += zeroerror
+    //measured distance
+    msReading = Math.floor(reading / 10)
+    vsReading = reading % 10
+}
+
+function getReading() {
+    calculateReading()
+    return msReading + vsReading / 10.0
+}
+
+function getCorrectedReading() {
+    return getReading() - zeroerror / 10.0
+}
+
+function Vernier(x, y, w, h) {
+    this.x = x
+    this.y = y
+    this.w = w
+    this.h = h
+    this.t = 0.7 * h
+    this.path = new Path2D()
+    this.createPath = function() {
+        this.path = new Path2D()
+        var p = this.path
+        //p.beginPath();
+        var x = this.x
+        var y = this.y
+        var w = this.w
+        var h = this.h
+        var t = this.t
+        //vernier scale + Outside jaws:
+        p.moveTo(x, y)
+        p.lineTo(x, y + 3 * t)
+        p.lineTo(x + 0.3 * t, y + 2.7 * t)
+        p.lineTo(x + t, y + t)
+        p.lineTo(x + w, y + t)
+        p.lineTo(x + w, y)
+        p.lineTo(x, y)
+        //Inside jaws:
+        var t1 = 10
+        p.moveTo(x, y - mainscaleHeight)
+        p.lineTo(x, y - mainscaleHeight - 1.5 * t1)
+        p.quadraticCurveTo(
+            x - 0.8 * t1,
+            y - mainscaleHeight - 0.6 * t1,
+            x - t1,
+            y - mainscaleHeight
+        )
+        p.lineTo(x, y - mainscaleHeight)
+        //Depth probe:
+        var width = 10
+        p.moveTo(
+            Xoffset + mainscaleWidth,
+            Yoffset + mainscaleHeight / 2 - width / 2
+        )
+        p.lineTo(
+            Xoffset + mainscaleWidth + x - Xoffset,
+            Yoffset + mainscaleHeight / 2 - width / 2
+        )
+        p.lineTo(
+            Xoffset + mainscaleWidth + x - Xoffset,
+            Yoffset + mainscaleHeight / 2 + width / 2
+        )
+        p.lineTo(
+            Xoffset + mainscaleWidth,
+            Yoffset + mainscaleHeight / 2 + width / 2
+        )
+        p.lineTo(
+            Xoffset + mainscaleWidth,
+            Yoffset + mainscaleHeight / 2 - width / 2
+        )
+    }
+    this.setX = function(x) {
+        this.x = x
+        this.createPath()
+    }
+
+    this.translate = function(dx) {
+        if ((this.x <= Xoffset) & (dx <= 0)) return
+        if ((this.x >= mainscaleWidth - vernierscaleWidth + Xoffset) & (dx >= 0))
+            return
+        if (this.x + dx < Xoffset) {
+            this.setX(Xoffset)
+            paint()
+            return
+        }
+        if (this.x + dx >= mainscaleWidth - vernierscaleWidth + Xoffset) {
+            this.setX(mainscaleWidth - vernierscaleWidth + Xoffset)
+            paint()
+            return
+        }
+
+        this.x += dx
+        this.createPath()
+    }
+
+    this.draw = function() {
+        ctx.fillStyle = 'rgb(229,229,229)'
+        ctx.fill(this.path)
+        ctx.strokeStyle = 'black'
+        ctx.stroke(this.path)
+        ctx.fillStyle = 'black'
+        //draw rulers
+        var ticklength = 8
+        var x1, y1
+        ctx.font = 'arial 9px'
+        for (var i = 0; i < 10; i++) {
+            x1 = this.x + vernierscaleZero + vsd * i
+            y1 = this.y
+            drawLine(x1, y1, x1, y1 + ticklength)
+            if (i > 0) outString(x1, y1 + ticklength + 2, i, 1, 0)
+        }
+        ctx.fillStyle = 'green'
+    }
+
+    this.contains = function(x, y) {
+        return this.path.contains(x, y)
+    }
+
+    this.setX(Xoffset)
+}
+
+function myTouchMove(event) {
+    var touch = event.touches[0]
+    var mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+    })
+    canvas.dispatchEvent(mouseEvent)
+}
+
+function myTouchStart(event) {
+    event.preventDefault()
+    var touch = event.touches[0]
+    var mouseEvent = new MouseEvent('mousedown', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+    })
+    canvas.dispatchEvent(mouseEvent)
+}
+
+function myTouchEnd(event) {
+    event.preventDefault()
+    var mouseEvent = new MouseEvent('mouseup', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+    })
+    canvas.dispatchEvent(mouseEvent)
+}
+
+function getTouchPos(event) {
+    event.preventDefault()
+    var rect = canvas.getBoundingClientRect()
+    return {
+        x: event.touches[0].clientX - rect.left,
+        y: event.touches[0].clientY - rect.top,
+    }
+}
+
+function getMousePos(event) {
+    var rect = canvas.getBoundingClientRect()
+    return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+    }
+    //return {
+    //x: event.pageX - canvasdiv.offsetLeft ,
+    //y: event.pageY - canvasdiv.offsetTop
+    //};
+}
+
+function mousePressed(me) {
+    if (moveVernier == false) return
+    let m = getMousePos(me);
+    mx = m.x
+    my = m.y
+    isdragging = ctx.isPointInPath(vernier.path, mx, my) //((mx-ox*scale)/scale, (my-oy*scale)/scale);
+    isMainDragging = ctx.isPointInPath(path, mx, my) //(mx-ox*scale)/scale, (my-oy*scale)/scale);
+    paint()
+}
+
+function mouseReleased(me) {
+    isdragging = false
+    isMainDragging = false
+}
+
+function mouseWheelMoved(me) {
+    me.preventDefault()
+    vernier.translate(me.wheelDelta>0?1:-1)
+    paint()
+}
+
+function mouseDragged(me) {
+    me.preventDefault()
+    if (!isdragging && !isMainDragging) return
+    let dx, dy
+    let m = getMousePos(me);
+    dx = (m.x - mx) / scale
+    dy = (m.y - my) / scale
+    mx = m.x
+    my = m.y
+    if (isMainDragging) {
+        ox += dx
+        oy += dy
+        paint()
+        return
+    }
+
+    if ((vernier.x <= Xoffset) & (dx < 0)) return
+    if ((vernier.x >= mainscaleWidth - vernierscaleWidth + Xoffset) & (dx > 0))
+        return
+    if (vernier.x + dx < Xoffset) {
+        vernier.setX(Xoffset)
+        paint()
+        return
+    }
+    if (vernier.x + dx >= mainscaleWidth - vernierscaleWidth + Xoffset) {
+        vernier.setX(mainscaleWidth - vernierscaleWidth + Xoffset)
+        paint()
+        return
+    }
+
+    vernier.translate(dx / scale)
+    paint()
+}
+/**
+ * Runs when the widget is selected or deselected
+ * @param widget{Object} : the source of event
+ * @param value{boolean} : true if widget is selected else false
+ */
+function CheckBox_onChange(widget, value) {
+    displayInfo = value
+    //chkDisplayInfo.isSelected();
+    //System.out.println(vernierPanel.displayInfo);
+    paint()
+}
+
+/**
+ * Runs when the widget is selected or deselected
+ * @param widget{Object} : the source of event
+ * @param value{boolean} : true if widget is selected else false
+ */
+function CheckBox1_onChange(widget, value) {
+    drawVirtualDivs = value
+    paint()
+}
+
+/**
+ * Runs when the widget value is changed
+ * @param widget{Object} : the source of event
+ * @param value{Number} : current value of widget
+ */
+function a_onChange(widget, value) {
+    zeroerror = Number(value)
+    //.getValue();
+    setZeroerror(zeroerror)
+}
+
+function b_onChange(widget, value) {
+    scale = Number(value) / 100
+    paint()
+}
+/**
+ * Runs when widget is clicked
+ */
+function Button_onClick() {
+    var txtAnswer = widgets.getTextField('textfield')
+    if (!txtAnswer.getText()) {
+        app.showErrorMessageBox(
+            'Invalid Answer',
+            'You are supposed to write answer first in the Text Box'
+        )
+        return
+    }
+    var n = txtAnswer.getText() * 1
+    if (getCorrectedReading() && n == getCorrectedReading()) {
+        App.showMessageBox(
+            'Correct Answer!',
+            'Congratulation! your answer is correct'
+        )
+    } else {
+        App.showMessageBox('Wrong Answer!', 'Sorry! your answer is wrong')
+    }
+}
+
+/**
+ * Runs when enter was pressed in an editable and enabled textfield.
+ * @param widget{Object} : the source of event
+ * @param text{Object} : the current text in widget
+ */
+function textfield_onPerform(widget, text) {
+    Button_onClick()
+}
+
+/**
+ * Runs when simulation starts, all initialisations should be done in this function
+ */
+function world_onStart() {}
+/**
+ * Runs whenever simulation is updated [almost 60 times per second],
+ * heavy work should be avoided in this function since it may slow down simulation drastically
+ * @param time {Number} : current simulation time in seconds
+ * @param dt {Number} : time elapsed since last step
+ */
+function world_onUpdate(time, dt) {
+    var s = world.getCamera().getScale() / 100
+    if (s != scale) {
+        scale = s
+        paint()
+    }
+}
+
+/**
+ * Runs when widget recieves key event (events are similar to java.awt events).
+ * @param keyChar {char} : the character(if any) associated with keyevent
+ * @param keyCode {Number} : key code {@see https://docs.oracle.com/javase/7/docs/api/java/awt/event/KeyEvent.html} for keycodes
+ * @param key {String} : the identifier of the key (like 'ArrowLeft','a','Enter','F11) that was pressed when a key event occured
+ * @param id {Number} : EventType 401(keyPressed), 402(KeyReleased)
+ * @return if true is returned event is consumed and not further handled by simphy world*/
+function onKeyEvent(e) {
+    e.preventDefault
+    if (e.keyCode == 37) {
+        vernier.translate(-1)
+        paint()
+        return true
+    } else if (e.keyCode == 39) {
+        vernier.translate(1)
+        paint()
+        return true
+    }
+}
+
+</script>
+</body>
+</html>
