@@ -31,7 +31,7 @@ h1 {
 </head>
 	
 <body>
-<div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="900px" height="480px">
+<div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="720px" height="400px">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
 <div id="checkbox"><input id="CheckBox" onchange="CheckBox_onChange(this,this.checked)" type="checkbox"> <label for="CheckBox"> Check here to display values </label></div>
@@ -67,7 +67,7 @@ var msReading = 0
 var vsReading = 0
 var zeroerror = 0
 
-var scale = 1.25
+var scale = 1.20
 //vsReading when it was supposed to read zero
 var canvas = document.getElementById('myCanvas')
 var ctx = canvas.getContext('2d')
@@ -139,6 +139,7 @@ function createmainscalePath() {
 
 function paint() {
     ctx.resetTransform()
+	//ctx.fillStyle="rgb(0,50,0)"
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.scale(scale, scale)
     drawMainScale()
@@ -200,7 +201,7 @@ function drawMainScale() {
 	var w=ctx.lineWidth;
 	ctx.lineWidth=w/scale;
         for (var i = 1; i < 10; i++) {
-            x = Xoffset + mainscaleZero + (msd * i) / 10.0
+            x = Xoffset + mainscaleZero + msReading * msd+(msd * i) / 10.0
             drawLine(x, y, x, y - ticklength / 2)
         }
 	ctx.lineWidth=w;    
@@ -254,18 +255,25 @@ function drawInfo() {
     ctx.fillStyle = 'red'
     //drawVerticalArrow for zero of vernier.
     x1 = vernier.x + vernierscaleZero
-    y1 = vernier.y - 1
+    y1 = vernier.y ;//- 1
     y2 = y1 - 20
+    let lw=ctx.lineWidth;
+    if(drawVirtualDivs)ctx.lineWidth=lw/scale;
+
     drawLine(x1, y1, x1, y2)
-    drawLine(x1, y2, x1 - 3, y2 + 3)
-    drawLine(x1, y2, x1 + 3, y2 + 3)
+    drawLine(x1, y2, x1 - 2, y2 + 2)
+    drawLine(x1, y2, x1 + 2, y2 + 2)
+    ctx.lineWidth=lw;
+	
+    ctx.strokeStyle="blue";
     //drawVerticalArrow for vernier reading.
-    x1 = vernier.x + 10 + vsReading * vsd
+    x1 = vernier.x + vsReading * vsd
     y1 = vernier.y + 20
     y2 = y1 + 20
     drawLine(x1, y1, x1, y2)
     drawLine(x1, y1, x1 - 3, y1 + 3)
     drawLine(x1, y1, x1 + 3, y1 + 3)
+
     outString(x1, y2 + 2, 'VSR = ' + vsReading / 10.0 + ' mm', 1, 0)
 
     //drawVerticalArrow for main scale reading.
@@ -275,6 +283,7 @@ function drawInfo() {
     drawLine(x1, y1, x1, y2)
     drawLine(x1, y1, x1 - 3, y1 - 3)
     drawLine(x1, y1, x1 + 3, y1 - 3)
+
     outString(x1, y2 - 2, 'MSR = ' + msReading + ' mm', 1, 2)
     ctx.fillStyle = 'green'
 
