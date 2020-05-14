@@ -1,0 +1,56 @@
+.container {
+	margin-top:50px;
+}
+#score {
+	padding-top:15px;
+	font-size:3em;
+	color:#999;
+}
+#score #total {
+	color:#666;
+	padding:0 10px;
+}
+#score #correct {
+	color:#57A957;
+	padding:0 10px;
+}
+#score #percent {
+	padding: 0 0 0 5px;
+	font-size:40%;
+}
+.term-btn-group {
+	bottom: 20px;
+	right: 20px;
+	position: fixed;
+}
+
+.insignificance-label {
+	font-size: 10px;
+}
+
+.instructions {
+	display: none;
+	bottom: 60px;
+	right: 20px;
+	max-width: 800px;
+	position: fixed;
+}
+
+.term-expression {
+	display: inline-block;
+	width: 95%;
+	outline: none;
+	border: none;
+}
+
+.term-result {
+	color: green;
+}
+
+#term-container {
+	width: 100%;
+	padding-top: 20px;
+	font-family: Monaco,Menlo,Consolas,sans-serif;
+	font-size: 16px;
+	color: #000080;
+}
