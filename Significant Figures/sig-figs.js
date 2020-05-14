@@ -61,6 +61,16 @@ SigFloat.add = function(sf1, sf2) {
 
 // Subtract two SigFloats using appropriate rule (keep only smaller number of decimal places)
 SigFloat.subtract = function(sf1, sf2) {
+    let one=sf1.toFloat();
+    let two=sf2.toFloat();
+    var partOne = one.toString().split('.'),
+        partTwo = two.toString().split('.');
+    if(partOne.length == 1 || partTwo.length == 1) {
+        return new SigFloat(Math.round(one + two));
+    }
+
+    return new SigFloat((one - two).toFixed(Math.min(partOne.length>0?partOne[1].length:0, partTwo.length>0?partTwo[1].length:0)));
+    /*
     var lenAfterDecimal = SigFloat.smallerLenPastDecimal(sf1, sf2);
     var diffValue = sf1.toFloat() - sf2.toFloat();
     var diffString = diffValue.toString();
@@ -68,10 +78,11 @@ SigFloat.subtract = function(sf1, sf2) {
     v=Round_off(diffValue,v.sigFigures());
 
     return new SigFloat(v);
-   // var diffArr = diffString.split(/[Ee\.]/);
-   // var diffSF = new SigFloat(diffString);
+    */
+    // var diffArr = diffString.split(/[Ee\.]/);
+    // var diffSF = new SigFloat(diffString);
 
-   // var numSFsInDiff = diffArr[0].length + lenAfterDecimal;
+    // var numSFsInDiff = diffArr[0].length + lenAfterDecimal;
 
     // return diffSF.withSigFigures(numSFsInDiff);
 }

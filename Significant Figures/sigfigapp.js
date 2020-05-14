@@ -18,7 +18,7 @@ function SigFigApp () {
 						return Math.round(one + two);
 					}
 					
-					return (one + two).toFixed(Math.min(partOne[1].length, partTwo[1].length)); 
+					return (one + two).toFixed(Math.min(partOne.length>0?partOne[1].length:0, partTwo.length>0?partTwo[1].length:0));
 				},
 				exactAnswer: function(one, two) {
 					return one + two;
