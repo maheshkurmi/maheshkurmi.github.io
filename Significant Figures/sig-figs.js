@@ -49,6 +49,7 @@ SigFloat.log = function(sf) {
 
 // Add two SigFloats using appropriate rule (keep only smaller number of decimal places)
 SigFloat.add = function(sf1, sf2) {
+    /*
     var lenAfterDecimal = SigFloat.smallerLenPastDecimal(sf1, sf2);
     var sumValue = sf1.toFloat() + sf2.toFloat();
     var sumString = sumValue.toString();
@@ -57,19 +58,32 @@ SigFloat.add = function(sf1, sf2) {
 
     var numSFsInSum = sumArr[0].length + lenAfterDecimal;
     return sumSF.withSigFigures(numSFsInSum);
-}
-
-// Subtract two SigFloats using appropriate rule (keep only smaller number of decimal places)
-SigFloat.subtract = function(sf1, sf2) {
-    let one=sf1.toFloat();
-    let two=sf2.toFloat();
+    */
+    let one=sf1.toFixed();
+    let two=sf2.toFixed();
     var partOne = one.toString().split('.'),
         partTwo = two.toString().split('.');
+    console.log("a="+one+" , b= "+two +"   c="+(one - two).toFixed(0)+" SF="+Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0));
     if(partOne.length == 1 || partTwo.length == 1) {
         return new SigFloat(Math.round(one + two));
     }
 
-    return new SigFloat((one - two).toFixed(Math.min(partOne.length>0?partOne[1].length:0, partTwo.length>0?partTwo[1].length:0)));
+    return new SigFloat((one + two).toFixed(Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0)));
+
+}
+
+// Subtract two SigFloats using appropriate rule (keep only smaller number of decimal places)
+SigFloat.subtract = function(sf1, sf2) {
+    let one=sf1.toFixed();
+    let two=sf2.toFixed();
+    var partOne = one.toString().split('.'),
+        partTwo = two.toString().split('.');
+    console.log("a="+one+" , b= "+two +"   c="+(one - two).toFixed(0)+" SF="+Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0));
+    if(partOne.length == 1 || partTwo.length == 1) {
+        return new SigFloat(Math.round(one - two));
+    }
+
+    return new SigFloat((one - two).toFixed(Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0)));
     /*
     var lenAfterDecimal = SigFloat.smallerLenPastDecimal(sf1, sf2);
     var diffValue = sf1.toFloat() - sf2.toFloat();
