@@ -8,10 +8,10 @@
     <link href="bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="sigfigapp.css"/>
 
-    <script type="text/javascript" src="sig-figs.js"></script>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script src="bootstrap.min.js"></script>
+    <script type="text/javascript" src="bootstrap.min.js"></script>
+    <script type="text/javascript" src="sig-figs.js"></script>
     <script type="text/javascript" src="sigfigapp.js"></script>
     <script type="text/javascript" src="parser.js"></script>
     <script type="text/javascript" src="parser-sig.js"></script>
@@ -154,7 +154,7 @@
 
                     <div>
                         <div class="input-group">
-                            <input type="text" id="term-expression" placeholder="Enter expression"  onchange="evaluateExpression();">
+                            <input type="text" autocomplete="off" id="term-expression" placeholder="Enter expression"  onchange="evaluateExpression();">
                             <div class="input-group-btn">
                                 <button class="btn btn-primary" onclick="evaluateExpression();">Solve</button>
                             </div>
