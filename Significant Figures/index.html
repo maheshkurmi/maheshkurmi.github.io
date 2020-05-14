@@ -47,7 +47,7 @@
                     <p>• Any non-zero digit<br>
                         • Zeros between non-zero digits as in 4004 or 54.70008<br>
                         • Trailing zeros only when there is a decimal point as in 7650. or 742.4400</p>
-                    <p>
+                    <p class="text-secondary">
                         Enter a decimal value below, its number of significant figures will be printed below.
                     </p>
                     <p>
@@ -57,7 +57,7 @@
                     </form>
                     </p>
                     <p>
-                    <div id ="output_num_sig_fig" class="alert alert-info" role="alert">
+                    <div id ="output_num_sig_fig" class="alert alert-success" role="alert">
                         Number of Significant figures are <b>5</b>.
                     </div>
                     </p>
@@ -77,7 +77,7 @@
                     <p>
                         Let's imagine you have a value from a calculation, and need to strip it down to a particular number of significant figures. For example the number "65789" would become "66000" if only two significant figures were warranted. The number "65.789" would become "66" in the same situation.
                       </p>
-                    <p>
+                    <p class="text-secondary">
                         Enter a valid decimal value below along with a number of significant figures (between 1 and 13), the rounded off value with the desired number of significant figures will be displayed below.
                     </p>
                     <p>
@@ -86,7 +86,7 @@
                     </form>
                     </p>
                     <p>
-                    <div id ="output_roundoff" class="alert alert-info" role="alert">
+                    <div id ="output_roundoff" class="alert alert-success" role="alert">
                         Number after round off is <b>23.5</b>.
                     </div>
                     </p>
@@ -110,11 +110,11 @@
                         <strong>Rules for Multiplication And Division:</strong> <br>
                         The outcome of either multiplication or division should have as many sig figs as the number involved that contains the least number of sig figs.
                     </p>
-                    <p>
+                    <p class="text-secondary">
                         Now lets practice these rules of algebra of significant figures
                     </p>
                     <div class="span6 columns">
-                        <div class="alert alert-info" >
+                        <div class="alert alert-success" >
                         <strong>Your progress</strong>
                         <span id="score"><span id="correct">0</span>/<span id="total">0</span><span id="percent">0%</span></span>
                         </div>
@@ -146,7 +146,7 @@
             <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
                 <div class="card-body">
                     <div>
-                        <p>This calculator takes significant digits into account and applies the rules of significant figures</a> to calculations.
+                        <p class="text-secondary">This calculator takes significant digits into account and applies the rules of significant figures</a> to calculations.
                             You can enter an arithmatic expression in the text box to evaluate it as per rules of significant figures.
                             Use the <kbd>@</kbd> symbol for scientific notation (e.g., 5.02@3 = 5.02 &times; 10<sup>3</sup>).</p>
 
@@ -168,7 +168,7 @@
                         </label>
                     </div>
                     <p></p>
-                    <div id ="output_calc" class="alert alert-info" role="alert">
+                    <div id ="output_calc" class="alert alert-success" role="alert">
                        Output=?
                     </div>
 
@@ -190,11 +190,11 @@
             num=num*1;
             let sf = new SigFloat(num);
             out.removeClass('alert alert-danger');
-            out.addClass('alert alert-info');
+            out.addClass('alert alert-success');
             num=Round_off(num,numSF);//num.toPrecision(numSF)
             out.html("Number after round off is <b>"+num+"</b>");
          } else {
-            out.removeClass('alert alert-info');
+            out.removeClass('alert alert-success');
             out.addClass('alert alert-danger');
             out.html(isNaN(num)?"Invalid Input !":"Invalid number of SF");
         }
@@ -208,11 +208,11 @@
             let sf = new SigFloat(num);
             let out=$('#output_num_sig_fig');
             out.removeClass('alert alert-danger');
-            out.addClass('alert alert-info');
+            out.addClass('alert alert-success');
             out.html("Number of significant figures are <b>"+sf.sigFigures()+"</b>");
         } else {
             let out=$('#output_num_sig_fig');
-            out.removeClass('alert alert-info');
+            out.removeClass('alert alert-success');
             out.addClass('alert alert-danger');
             out.html("Invalid Number !");
         }
@@ -231,10 +231,10 @@
             if (!significance) result += '&nbsp;<span class="label label-primary insignificance-label">significance off</span>';
             else result += '&nbsp;<span class="label label-primary insignificance-label">significance on</span>';
             out.removeClass('alert alert-danger');
-            out.addClass('alert alert-info');
+            out.addClass('alert alert-success');
             out.html(result);
         }catch(e) {
-            out.removeClass('alert alert-info');
+            out.removeClass('alert alert-success');
             out.addClass('alert alert-danger');
             out.html("Error:"+e);
         }

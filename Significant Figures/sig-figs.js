@@ -64,11 +64,16 @@ SigFloat.subtract = function(sf1, sf2) {
     var lenAfterDecimal = SigFloat.smallerLenPastDecimal(sf1, sf2);
     var diffValue = sf1.toFloat() - sf2.toFloat();
     var diffString = diffValue.toString();
-    var diffArr = diffString.split(/[Ee\.]/);
-    var diffSF = new SigFloat(diffString);
+    var v=new SigFloat(diffValue.toFixed(lenAfterDecimal));
+    v=Round_off(diffValue,v.sigFigures());
 
-    var numSFsInDiff = diffArr[0].length + lenAfterDecimal;
-    return diffSF.withSigFigures(numSFsInDiff);
+    return new SigFloat(v);
+   // var diffArr = diffString.split(/[Ee\.]/);
+   // var diffSF = new SigFloat(diffString);
+
+   // var numSFsInDiff = diffArr[0].length + lenAfterDecimal;
+
+    // return diffSF.withSigFigures(numSFsInDiff);
 }
 
 SigFloat.multiply = function(sf1, sf2) {
