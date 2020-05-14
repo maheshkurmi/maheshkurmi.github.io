@@ -1,0 +1,366 @@
+<!doctype html>
+<html>
+<head>
+    <title>Induction of charge</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="entry-content">
+    <link rel="stylesheet" href="https://javalab.org/lee/javalab.css">
+    <div id="myContainer"><canvas id="myCanvas" class="p5Canvas" width="1088" height="544" style="width: 544px; height: 272px;"></canvas></div>
+    <div class="flexContainer">
+        <div class="flexItem"><span id="radioA"><div style="margin-right: 10px;"><input type="radio" value="1" name="defaultradio0" id="defaultradio0-0"><label for="defaultradio0-0">Charged with (+) </label><input type="radio" value="2" name="defaultradio0" id="defaultradio0-1"><label for="defaultradio0-1">Charged with (-) </label></div></span></div>
+    </div>
+
+
+    <p class="javalab-subtitle">
+    </p><p>What happens when the charged body is close to the conductor and insulator?</p>
+    <ul>
+        <li>Conductor<br>Electrostatic induction is a redistribution of electrical charge in an object, caused by the influence of nearby charges. In the presence of a charged body, an insulated conductor develops a positive charge on one end and a negative charge on the other end.</li>
+        <li>Insulator<br>When a charged rod is brought near a neutral substance, an insulator in this case, the distribution of charge in atoms and molecules is shifted slightly. Opposite charge is attracted nearer the external charged rod, while like charge is repelled. </li>
+    </ul>
+
+</div>
+<script async src="utils.js"></script>
+<script type='text/javascript'>
+    // XYZPoint
+
+
+var language=2;var radioA;var img_hand_0;var img_hand_1;var xRod=150;var yRod=200;var oxRodCharge=[];var oyRodCharge=[];
+var maxMetal=16;var xMetalAtom=[];var yMetalAtom=[];var iMetalElectron=[];var jMetalElectron=[];var aMetalElectron=[];
+var tMetalElectron=[];var maxTrace=20;var xMetalElectron=[];var yMetalElectron=[];var maxInsulatorAtom=14;
+var xInsulatorAtom=[];var yInsulatorAtom=[];var tInsulatorElectron=[];var aInsulatorElectron=[];
+var bInsulatorElectron=[];var xInsulatorElectron=[];var yInsulatorElectron=[];
+
+const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    var isDragging = false;
+
+    var language = 2;
+    var radioA;
+    var img_hand_0;
+    var img_hand_1;
+    var xRod = 150;
+    var yRod = 200;
+    var oxRodCharge = [];
+    var oyRodCharge = [];
+    var maxMetal = 16;
+    var xMetalAtom = [];
+    var yMetalAtom = [];
+    var iMetalElectron = [];
+    var jMetalElectron = [];
+    var aMetalElectron = [];
+    var tMetalElectron = [];
+    var maxTrace = 20;
+    var xMetalElectron = [];
+    var yMetalElectron = [];
+    var maxInsulatorAtom = 14;
+    var xInsulatorAtom = [];
+    var yInsulatorAtom = [];
+    var tInsulatorElectron = [];
+    var aInsulatorElectron = [];
+    var bInsulatorElectron = [];
+    var xInsulatorElectron = [];
+    var yInsulatorElectron = [];
+    var timer;
+    preload();
+    function preload() {
+        img_hand_0 = new Image();
+        img_hand_0.src ="conductor_and_insulator_hand_0.png";
+        img_hand_1 = new Image();
+        img_hand_1.src="conductor_and_insulator_hand_0.png";
+        canvas.addEventListener('touchstart', touchStarted, false); // touch handler for iPhones, iPads, and Androids
+        canvas.addEventListener('touchmove', touchMoved, false); // touch handler for iPhones, iPads, and Androids
+        canvas.addEventListener('touchend',touchEnded, false); // touch handler for iPhones, iPads, and Androids
+        window.addEventListener('resize', windowResized, false);
+
+        setup();
+    }
+
+    function setup() {
+
+        //pixelDensity(2 * displayDensity());
+        var o = document.getElementById("myContainer");
+        var a = 0.5;
+        var w = Math.floor((o.width > (window.innerHeight * 0.82) / a) ? (window.innerHeight * 0.82) / a : o.width);
+        var h = Math.floor(w * a);
+        myCanvas = canvas;//createCanvas(w, h);
+        //myCanvas.parent("myContainer");
+        //myCanvas.id("myP5Canvas");
+        radioA = createRadio("radioA");
+        radioA.option("Charged with (+) ", "1");
+        radioA.option("Charged with (-) ", "2");
+        radioA.parent("radioA");
+        radioA.value("2");
+        radioA.style("margin-right", "10px");
+        oxRodCharge[0] = [];
+        oyRodCharge[0] = [];
+        oxRodCharge[1] = [];
+        oyRodCharge[1] = [];
+        for (var i = 0; i < 10; i++) {
+            oxRodCharge[0][i] = 0;
+            oyRodCharge[0][i] = map(i, 0, 9, -130, 130);
+            oxRodCharge[1][i] = random(-22, 22);
+            oyRodCharge[1][i] = random(-22, 22)
+        }
+        for (var i = 0; i < maxMetal; i++) {
+            xMetalAtom[i] = 500 + mod(i, 8) * 50;
+            yMetalAtom[i] = 90 + int(i / 8) * 50;
+            iMetalElectron[i] = mod(i, 8);
+            jMetalElectron[i] = int(i / 8);
+            aMetalElectron[i] = int(random(360) / 15) * 15;
+            tMetalElectron[i] = (random(1) > 0.5) ? 15 : -15
+        }
+        var x;
+        var y;
+        for (var i = 0; i < maxMetal; i++) {
+            x = xMetalAtom[i] + 25 * dcos[aMetalElectron[i]];
+            y = yMetalAtom[i] + 25 * dsin[aMetalElectron[i]];
+            xMetalElectron[i] = [];
+            yMetalElectron[i] = [];
+            for (var j = 0; j < maxTrace; j++) {
+                xMetalElectron[i][j] = x;
+                yMetalElectron[i][j] = y
+            }
+        }
+        for (var i = 0; i < maxInsulatorAtom; i++) {
+            xInsulatorAtom[i] = 500 + mod(i, 7) * 58;
+            yInsulatorAtom[i] = 230 + int(i / 7) * 50;
+            tInsulatorElectron[i] = int(random(360) / 10) * 10
+        }
+
+        timer=window.setInterval(draw,20);
+    }
+
+    function line(){
+
+    }
+
+    function ellipse(){
+
+    }
+
+
+    function windowResized() {
+        var o = document.getElementById("canvasdiv");
+        var a = 0.5;
+        var w = Math.floor((o.width > (window.innerHeight * 0.82) / a) ? (window.innerHeight * 0.82) / a : o.width);
+        var h = Math.floor(w * a);
+        resizeCanvas(w, h)
+    }
+
+    function drawProton(x, y) {
+        ctx.fillStyle="red";//(255, 0, 0);
+        ctx.ellipse(x, y, 18, 18,0,Math.PI*2,0);
+        ctx.fillStyle="white";
+        ctx.fillRect(x - 5, y - 1, 10, 2);
+        ctx.fillRect(x - 1, y - 5, 2, 10)
+    }
+
+    function drawElectron(x, y) {
+        ctx.fillStyle="red";//(255, 0, 0);
+        ctx.ellipse(x, y, 12, 12,0,Math.PI*2,0);
+        ctx.fillStyle="white";
+        ctx.fillRect(x - 4, y - 1, 8, 2)
+    }
+
+    function getForce() {
+        var f = map(xRod, 100, 420, 0, 1);
+        return 4 * f * f * f
+    }
+
+    function draw() {
+        if (touches.length > 1) return;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.strokeWidth=1;
+        ctx.font="Arial 20px";
+        ctx.textAlign="center";
+        ctx.textBaseline="centere";
+
+        ctx.save();
+        ctx.scale(width / 900,width / 900);
+        var f = getForce();
+        ctx.save();
+        ctx.translate(xRod, yRod);
+        ctx.drawImage(img_hand_0, 0, 100, 400, 400);
+        ctx.fillStyle="red";//fill(255);
+        ctx.strokeStyle="black";//stroke(0);
+        ctx.fillRect(-20, -150, 40, 300, 10);
+        for (var i = 0; i < oxRodCharge[0].length; i++) {
+            drawProton(oxRodCharge[0][i], oyRodCharge[0][i])
+        }
+        if (radioA.value() == 2)
+            for (var i = 0; i < oxRodCharge[1].length; i++) {
+                drawElectron(oxRodCharge[0][i] - oxRodCharge[1][i], oyRodCharge[0][i] - oyRodCharge[1][i]);
+                drawElectron(oxRodCharge[0][i] + oxRodCharge[1][i], oyRodCharge[0][i] + oyRodCharge[1][i])
+            }
+        ctx.drawImage(img_hand_1, 0, 100, 400, 400);
+        ctx.fillStyle="black";//(0);
+        // noStroke();
+        ctx.textAlign="right";//textAlign(RIGHT, CENTER);
+        ctx.fillText("Charged Body", -30, 0);
+        ctx.restore();
+        {
+            for (var i = 0; i < maxMetal; i++) {
+                aMetalElectron[i] += tMetalElectron[i];
+                aMetalElectron[i] = mod(aMetalElectron[i], 360);
+                relocationMetalElectron(i)
+            }
+            for (var i = 0; i < maxMetal; i++) {
+                var x = xMetalAtom[iMetalElectron[i] + 8 * jMetalElectron[i]] + 25 * dcos[aMetalElectron[i]];
+                var y = yMetalAtom[iMetalElectron[i] + 8 * jMetalElectron[i]] + 25 * dsin[aMetalElectron[i]];
+                for (var j = maxTrace - 1; j > 0; j--) {
+                    xMetalElectron[i][j] = xMetalElectron[i][j - 1];
+                    yMetalElectron[i][j] = yMetalElectron[i][j - 1]
+                }
+                xMetalElectron[i][0] = x;
+                yMetalElectron[i][0] = y
+            }
+            for (var i = 0; i < maxInsulatorAtom; i++) {
+                aInsulatorElectron[i] = 23 + f;
+                bInsulatorElectron[i] = 23 - f
+            }
+            for (var i = 0; i < maxInsulatorAtom; i++) {
+                tInsulatorElectron[i] += 5;
+                tInsulatorElectron[i] = mod(tInsulatorElectron[i], 360);
+                xInsulatorElectron[i] = aInsulatorElectron[i] * dcos[tInsulatorElectron[i]];
+                yInsulatorElectron[i] = bInsulatorElectron[i] * dsin[tInsulatorElectron[i]]
+            }
+        }
+        //noStroke();
+        ctx.fillStyle="rgb(200,200,200)";
+        ctx.fillRect(xMetalAtom[0] - 35, yMetalAtom[0] - 35, 20 + 8 * 50, 20 + 2 * 50, 40, 40, 40, 40);
+       // noStroke();
+        ctx.fillStyle="rgb(255, 191, 191)";
+        ctx.fillRect(xInsulatorAtom[0] - 35, yInsulatorAtom[0] - 35, 20 + 7 * 57, 20 + 2 * 50, 40, 40, 40, 40);
+        for (var i = 0; i < maxMetal; i++) {
+            drawProton(xMetalAtom[i], yMetalAtom[i])
+        }
+        for (var i = 0; i < maxInsulatorAtom; i++) {
+            drawProton(xInsulatorAtom[i], yInsulatorAtom[i])
+        }
+        ctx.strokeWeight=3;
+        var a;
+        for (var i = 0; i < maxMetal; i++) {
+            for (var j = maxTrace - 1; j > 0; j--) {
+                a = map(j, 0, maxTrace - 1, 0, 200);
+                ctx.strokeStyle="rgb(a, a, 255)";
+                line(xMetalElectron[i][j - 1], yMetalElectron[i][j - 1], xMetalElectron[i][j], yMetalElectron[i][j])
+            }
+        }
+        for (var i = 0; i < maxMetal; i++) {
+            drawElectron(xMetalElectron[i][0], yMetalElectron[i][0])
+        }
+        f *= 2;
+        if (radioA.value() == 1) f *= -1;
+        for (var i = 0; i < maxInsulatorAtom; i++) {
+            //oFill();
+            ctx.strokeStyle="rgb(128, 128, 222)";
+            ellipse(xInsulatorAtom[i] + f, yInsulatorAtom[i], 2 * aInsulatorElectron[i], 2 * bInsulatorElectron[i]);
+            drawElectron(xInsulatorAtom[i] + f + xInsulatorElectron[i], yInsulatorAtom[i] + yInsulatorElectron[i])
+        }
+        ctx.fillStyle="black";//fill(0);
+        //textAlign(CENTER, CENTER);
+        ctx.textAlign="center";
+        ctx.fillText("Conductor(Metal)", 680, yMetalAtom[3] - 55);
+        ctx.fillText("Insulator", 680, yInsulatorAtom[10] + 55);
+        ctx.strokeWeight=1;
+        ctx.restore();
+        drawButtonDrag()
+    }
+
+    function relocationMetalElectron(i) {
+        var f = getForce();
+        if (aMetalElectron[i] == 0)
+            if ((iMetalElectron[i] + 1) < 8) {
+                var a = false;
+                if (radioA.value() == 2)
+                    if (f > 1)
+                        if (random(f) > 0.4) a = true;
+                if (random(1) < 0.5) a = true;
+                if (a) {
+                    iMetalElectron[i]++;
+                    aMetalElectron[i] = 180;
+                    tMetalElectron[i] *= -1
+                }
+                return
+            } if (aMetalElectron[i] == 90)
+            if ((jMetalElectron[i] + 1) < 2)
+                if (random(1) < 0.5) {
+                    jMetalElectron[i]++;
+                    aMetalElectron[i] = 270;
+                    tMetalElectron[i] *= -1;
+                    return
+                } if (aMetalElectron[i] == 180)
+            if (0 <= (iMetalElectron[i] - 1)) {
+                var a = false;
+                if (radioA.value() == 1)
+                    if (f > 1)
+                        if (random(f) > 0.4) a = true;
+                if (random(1) < 0.5) a = true;
+                if (a) {
+                    iMetalElectron[i]--;
+                    aMetalElectron[i] = 0;
+                    tMetalElectron[i] *= -1
+                }
+                return
+            } if (aMetalElectron[i] == 270)
+            if (0 <= (jMetalElectron[i] - 1))
+                if (random(1) < 0.5) {
+                    jMetalElectron[i]--;
+                    aMetalElectron[i] = 90;
+                    tMetalElectron[i] *= -1;
+                    return
+                }
+    }
+    var dragged = false;
+    var offsetX = 0;
+
+    function touchStarted() {
+        if (!contain(mouseX, mouseY, 0, 0, width, height)) return;
+        dragged = true;
+        offsetX = mouseX * 900 / width - xRod
+    }
+
+    function touchMoved() {
+        if (touches.length > 1) return;
+        if (dragged) {
+            xRod = mouseX * 900 / width - offsetX;
+            xRod = constrain(xRod, 100, 420);
+            if (abs(mouseX - pmouseX) > abs(mouseY - pmouseY)) return false
+        }
+        draw();
+    }
+
+    function touchEnded() {
+        dragged = false
+    }
+
+</script>
+</body>
+</html>
