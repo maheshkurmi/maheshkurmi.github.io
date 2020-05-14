@@ -253,7 +253,7 @@ function  Round_off( N,  n)
     b = N;
     b = b * Math.pow(10, d);
     e = b + 0.5;
-    if (e===Math.ceil(b)) {
+    if (e===Math.ceil(b) && n<=0) {
         f = (Math.ceil(b));
         h = Math.floor(f - 2);
         if (h % 2 != 0) {
