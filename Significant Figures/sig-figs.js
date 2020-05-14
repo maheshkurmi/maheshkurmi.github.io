@@ -233,6 +233,7 @@ SigFloat.prototype.withSigFigures = function(n) {
 // Function to round - off the number
 function  Round_off( N,  n)
 {
+
     let h;
     let l, a, b, c, d, e, i, j, m, f, g;
     b = N;
@@ -243,7 +244,7 @@ function  Round_off( N,  n)
     for (i = 0; b >= 1; ++i)
         b = b / 10;
 
-    d = n - i;
+    d = n - i;``
     b = N;
     b = b * Math.pow(10, d);
     e = b + 0.5;
@@ -254,6 +255,14 @@ function  Round_off( N,  n)
             e = e - 1;
         }
     }else{
+        //let sf1=new SigFloat(N);
+        let sf2=new SigFloat(N.toPrecision(n));
+
+        if(n!=sf2.sigFigures()){
+            let m=Round_off( N/10,  n);
+            console.log("sf2="+sf2+","+" n="+n+" m"+m);
+            return m+"e1";
+        }
         return N.toPrecision(n);
     }
     j = Math.floor(e);

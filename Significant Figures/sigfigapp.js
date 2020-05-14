@@ -4,7 +4,7 @@ function SigFigApp () {
 		min: -10,
 		max: 10,
 		rounding: function () {
-			return that.utils.rand(0,3, false);
+			return that.utils.rand(0,4, false);
 		},
 		depth: 1,
 		operators: [
@@ -38,7 +38,10 @@ function SigFigApp () {
 				name: 'multiplication',
 				latex: '{0}\\times{1}',
 				answer: function(one, two) {
-					return (one * two).toPrecision(Math.min(that.utils.sigfigs(one), that.utils.sigfigs(two))); 
+					let n=Math.min(that.utils.sigfigs(one), that.utils.sigfigs(two));
+					let N=that.utils.round_off(one * two,n);
+					console.log("N="+N+"NumSF="+n)
+					return N;//that.utils.round_off(one * two,Math.min(that.utils.sigfigs(one), that.utils.sigfigs(two));
 				},
 				exactAnswer: function(one, two) {
 					return one * two;
@@ -48,7 +51,7 @@ function SigFigApp () {
 				name: 'division',
 				latex: '\\frac{{0}}{{1}}',
 				answer: function(one, two) {
-					return (one / two).toPrecision(Math.min(that.utils.sigfigs(one), that.utils.sigfigs(two))); 
+					return that.utils.round_off((one / two),Math.min(that.utils.sigfigs(one), that.utils.sigfigs(two)));
 				},
 				exactAnswer: function(one, two) {
 					return one / two;
@@ -65,6 +68,11 @@ function SigFigApp () {
 
 	this.utils = {
 		sigfigs: function (num) {
+			let sf=new SigFloat(num+"");
+			console.log("N="+num+" NumSF="+sf.sigFigures());
+			return sf.sigFigures();
+		},
+		sigfigsold: function (num) {
 			// reference:  http://www.usca.edu/chemistry/genchem/sigfig.htm
 			num = (typeof num == 'string' ? num : parseFloat(num).toString()).split('.');
 
@@ -109,7 +117,43 @@ function SigFigApp () {
 				  : '{' + number + '}'
 				;
 			});
+		},
+		round_off: function( N,  n) {		 //Function to round - off the number
+		let h,l, a, b, c, d, e, i, j, m, f, g;
+		b = N;
+		c = Math.floor(N);
+
+		// Counting the no. of digits to the left of decimal point
+		// in the given no.
+		for (i = 0; b >= 1; ++i)
+			b = b / 10;
+
+		d = n - i;
+		b = N;
+		b = b * Math.pow(10, d);
+		e = b + 0.5;
+		if (e===Math.ceil(b) ||n<=0) {
+			f = (Math.ceil(b));
+			h = Math.floor(f - 2);
+			if (h % 2 != 0) {
+				e = e - 1;
+			}
+		}else{
+			let sf2=new SigFloat(N.toPrecision(n));
+			if(n!=sf2.sigFigures()){
+				let m=this.round_off( N/10,  n);
+				console.log("sf2="+sf2+","+" n="+n+" m"+m);
+				return m+"e1";
+			}
+			return N.toPrecision(n);
 		}
+		j = Math.floor(e);
+		m = Math.pow(10, d);
+		j = j / m;
+		//System.out.println("The number after rounding-off is "
+		//  + j);
+		return j;
+	}
 	};
 					
 	this.redrawMathJax = function() {
@@ -118,7 +162,7 @@ function SigFigApp () {
 	
 	this.generateExpression = function(one, two) {
 		var i = this.utils.rand(0, opts.operators.length-1, false);
-			op = opts.operators[i];
+		op = opts.operators[i];
 		
 		return {
 			'op': i,
@@ -200,7 +244,7 @@ function SigFigApp () {
 			this.score = [this.score[0], this.score[1]+1];
 			out.html('<div class="alert-message error"><p><strong>Not quite.</strong> That is incorrect, please try again. The correct answer is: '+this.currentAnswer+'</p></div>');					
 		}
-		
+
 		this.drawscore();
 	};
 	
@@ -211,7 +255,7 @@ function SigFigApp () {
 	};
 	
 	this.next = function () {
-		opts.next.hide();
+		//opts.next.hide();
 		opts.resp.find('.alert-message').remove();
 		
 		that.displayRandomQuestion();
@@ -238,7 +282,10 @@ function SigFigApp () {
 			return false;
 		}
 	});
-	/* END UI STUFF */
+
+	this.test=function(op,a,b){
+		return opts.operators[op].exactAnswer(a,b)+","+opts.operators[op].answer(a,b);
+	}
 }
 
 $(function () {
