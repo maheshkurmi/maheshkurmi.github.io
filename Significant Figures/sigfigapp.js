@@ -21,7 +21,7 @@ function SigFigApp () {
 					return (one + two).toFixed(Math.min(partOne.length>0?partOne[1].length:0, partTwo.length>0?partTwo[1].length:0));
 				},
 				exactAnswer: function(one, two) {
-					return (one + two).toPrecision(12);
+					return parseFloat((one + two).toPrecision(12));
 				}
 			},
 			{
@@ -44,7 +44,7 @@ function SigFigApp () {
 					return N;//that.utils.round_off(one * two,Math.min(that.utils.sigfigs(one), that.utils.sigfigs(two));
 				},
 				exactAnswer: function(one, two) {
-					return (one * two).toPrecision(12);;
+					return parseFloat((one * two).toPrecision(12));
 				}
 			},
 			{
@@ -54,7 +54,7 @@ function SigFigApp () {
 					return that.utils.round_off((one / two),Math.min(that.utils.sigfigs(one), that.utils.sigfigs(two)));
 				},
 				exactAnswer: function(one, two) {
-					return (one / two).toPrecision(12);;
+					return parseFloat((one / two).toPrecision(12));
 				}
 			},
 		],
@@ -197,7 +197,8 @@ function SigFigApp () {
 				exactAnswer: opts.operators[expr.op].exactAnswer(expr.left, expr.right)
 			}
 		}
-	
+
+		console.log("rh="+rh);
 		return {
 			latex: '$$'+this.utils.format(opts.operators[expr.op].latex, expr.left, rh.latex)+'='+rh.exactAnswer.toFixed(6)+'$$',
 			answer: rh.answer
