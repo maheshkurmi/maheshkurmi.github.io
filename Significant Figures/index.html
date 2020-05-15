@@ -51,10 +51,8 @@
                         Enter a decimal value below, its number of significant figures will be printed below.
                     </p>
                     <p>
-                    <form action="" class="form-inline" id="num-sig-figs-form">
                         <input type="text" id="numberSF" autocomplete="off" value="0.0030400" class="form-control" style="width: 140px;" placeholder="Number"
                                oninput="showNumSigFigs()"/>
-                    </form>
                     </p>
                     <p>
                     <div id ="output_num_sig_fig" class="alert alert-success" role="alert">
@@ -191,8 +189,9 @@
             let sf = new SigFloat(num);
             out.removeClass('alert alert-danger');
             out.addClass('alert alert-success');
-            num=Round_off(num,numSF);//num.toPrecision(numSF)
-            out.html("Number after round off is <b>"+num+"</b>");
+            num=sf.withSigFigures(numSF);
+            //num=Round_off(num,numSF);//num.toPrecision(numSF)
+            out.html("Number after round off is <b>"+num.toFixed()+"</b>");
          } else {
             out.removeClass('alert alert-success');
             out.addClass('alert alert-danger');
@@ -227,7 +226,7 @@
         let expression = element.val();
         let out=$('#output_calc');
         try {
-            let result = significance ? ParserSignificance.evaluate(expression) : Parser.evaluate(expression);
+            let result = significance ? ParserSignificance.evaluate(expression) : eval(expression).toPrecision(12);
             if (!significance) result += '&nbsp;<span class="label label-primary insignificance-label">significance off</span>';
             else result += '&nbsp;<span class="label label-primary insignificance-label">significance on</span>';
             out.removeClass('alert alert-danger');

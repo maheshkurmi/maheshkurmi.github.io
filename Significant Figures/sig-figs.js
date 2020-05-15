@@ -49,7 +49,7 @@ SigFloat.log = function(sf) {
 
 // Add two SigFloats using appropriate rule (keep only smaller number of decimal places)
 SigFloat.add = function(sf1, sf2) {
-    /*
+
     var lenAfterDecimal = SigFloat.smallerLenPastDecimal(sf1, sf2);
     var sumValue = sf1.toFloat() + sf2.toFloat();
     var sumString = sumValue.toString();
@@ -58,25 +58,32 @@ SigFloat.add = function(sf1, sf2) {
 
     var numSFsInSum = sumArr[0].length + lenAfterDecimal;
     return sumSF.withSigFigures(numSFsInSum);
-    */
+
+    /*
     let one=sf1.toFixed();
     let two=sf2.toFixed();
     var partOne = one.toString().split('.'),
         partTwo = two.toString().split('.');
-    console.log("a="+one+" , b= "+two +"   c="+(one - two).toFixed(0)+" SF="+Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0));
+    one=sf1.toFloat();
+    two=sf2.toFloat();
+    let n=Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0);
+    console.log("a="+one+" , b= "+two +"   c="+((one + two).toFixed(n))+" Num deciaml="+n);
     if(partOne.length == 1 || partTwo.length == 1) {
         return new SigFloat(Math.round(one + two));
     }
 
-    return new SigFloat((one + two).toFixed(Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0)));
+    let sf=new SigFloat((one + two)
+    return new SigFloat((one + two).toFixed(n));
+    */
 
 }
 
 // Subtract two SigFloats using appropriate rule (keep only smaller number of decimal places)
 SigFloat.subtract = function(sf1, sf2) {
+    /*
     let one=sf1.toFixed();
     let two=sf2.toFixed();
-    var partOne = one.toString().split('.'),
+    let partOne = one.toString().split('.'),
         partTwo = two.toString().split('.');
     console.log("a="+one+" , b= "+two +"   c="+(one - two).toFixed(0)+" SF="+Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0));
     if(partOne.length == 1 || partTwo.length == 1) {
@@ -84,21 +91,16 @@ SigFloat.subtract = function(sf1, sf2) {
     }
 
     return new SigFloat((one - two).toFixed(Math.min(partOne.length>1?partOne[1].length:0, partTwo.length>1?partTwo[1].length:0)));
-    /*
+    */
     var lenAfterDecimal = SigFloat.smallerLenPastDecimal(sf1, sf2);
     var diffValue = sf1.toFloat() - sf2.toFloat();
     var diffString = diffValue.toString();
-    var v=new SigFloat(diffValue.toFixed(lenAfterDecimal));
-    v=Round_off(diffValue,v.sigFigures());
 
-    return new SigFloat(v);
-    */
-    // var diffArr = diffString.split(/[Ee\.]/);
-    // var diffSF = new SigFloat(diffString);
+    var diffArr = diffString.split(/[Ee\.]/);
+    var diffSF = new SigFloat(diffString);
+    var numSFsInDiff = diffArr[0].length + lenAfterDecimal;
 
-    // var numSFsInDiff = diffArr[0].length + lenAfterDecimal;
-
-    // return diffSF.withSigFigures(numSFsInDiff);
+    return diffSF.withSigFigures(numSFsInDiff);
 }
 
 SigFloat.multiply = function(sf1, sf2) {
@@ -239,8 +241,20 @@ SigFloat.prototype.withSigFigures = function(n) {
             j++;
         }
         var toRound = flStr.substring(j).replace(/\./g, '');
-        toRound = toRound.substring(0, 1) + '.' + toRound.substring(1);
-        flStr = flStr.replaceAt(j, Math.round(parseFloat(toRound)).toString());
+        var nn=toRound.substring(0, 1);
+        if(parseFloat("0."+toRound.substring(1))==0.5 && nn%2==0){
+            flStr = flStr.replaceAt(j,nn);
+        }else{
+
+            toRound = toRound.substring(0, 1) + '.' + toRound.substring(1);
+            console.log(toRound+" rounded to "+Math.round(parseFloat(toRound)));
+            if( Math.round(parseFloat(toRound))==10){
+                console.log(flStr+" rounded to "+new SigFloat(Round_off(parseFloat(flStr),n)).toFixed());
+                return new SigFloat(Round_off(parseFloat(flStr),n));
+            }
+            flStr = flStr.replaceAt(j, Math.round(parseFloat(toRound)).toString());
+        }
+
         j++;
         while (j < flStr.length) {
             if (flStr.charAt(j) != '.') {

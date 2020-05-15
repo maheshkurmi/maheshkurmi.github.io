@@ -302,7 +302,8 @@ var Parser = (function (scope) {
 	};
 
 	function add(a, b) {
-		return Number(a) + Number(b);
+		console.log(a+"+"+b+"="+(a+b*1));
+		return 1*a + 1*b;
 	}
 	function sub(a, b) {
 		return a - b; 
