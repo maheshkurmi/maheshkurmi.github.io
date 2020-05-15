@@ -142,7 +142,7 @@ SigFloat.smallerLenPastDecimal = function(sf1, sf2) {
 SigFloat.prototype.toFixed = function() {
     var str = this.fixed;
     var arr = str.split('.');
-    if (arr.length == 1) {
+    if (arr.length == 1 ||str.indexOf("e")>0||str.indexOf("E")>0) {
         return str;
     }
     return parseFloat(str).toFixed(arr[1].length);
@@ -205,19 +205,32 @@ SigFloat.prototype.withSigFigures = function(n) {
         var newStr = sciNotationArray[0];
 
         if (newStr.indexOf('.') == -1) {
+            newStr=Round_off(this.toFloat(),n);
+            sciNotationArray = (newStr+"").split(/[eE]/);
+            newStr = sciNotationArray[0];
+            // console.log(n+" n<sf so "+newStr +" has sig figures "+sciNotationArray);
+            //return new SigFloat(newStr);
+            /*
             newStr += '.';
-            for (var i = this.sigFigures(); i < n - 1; i++) {
+            for (var i = this.sigFigures(); i <= n - 1; i++) {
                 newStr += '0';
             }
+            */
         } else {
             for (var i = this.sigFigures(); i < n; i++) {
                 newStr += '0';
             }
         }
+
         if (sciNotationArray.length > 1) {
+            console.log(" N=" +newStr +"e"+sciNotationArray[1]);
+            let sf=new SigFloat(newStr+ 'e' + sciNotationArray[1]);
+            console.log(" N=" +sf.toFixed() +" has SF "+sf.sigFigures());
             return new SigFloat(newStr + 'e' + sciNotationArray[1]);
         } else {
-            return new SigFloat(newStr);
+            let sf=new SigFloat(newStr);
+
+            return sf;//new SigFloat(newStr);
         }
     } else {
         // Step through string from the left (using index j) and save n significant digits;
@@ -247,9 +260,9 @@ SigFloat.prototype.withSigFigures = function(n) {
         }else{
 
             toRound = toRound.substring(0, 1) + '.' + toRound.substring(1);
-            console.log(toRound+" rounded to "+Math.round(parseFloat(toRound)));
+            //console.log(toRound+" rounded to "+Math.round(parseFloat(toRound)));
             if( Math.round(parseFloat(toRound))==10){
-                console.log(flStr+" rounded to "+new SigFloat(Round_off(parseFloat(flStr),n)).toFixed());
+                //console.log(flStr+" rounded to "+new SigFloat(Round_off(parseFloat(flStr),n)).toFixed());
                 return new SigFloat(Round_off(parseFloat(flStr),n));
             }
             flStr = flStr.replaceAt(j, Math.round(parseFloat(toRound)).toString());
@@ -266,7 +279,13 @@ SigFloat.prototype.withSigFigures = function(n) {
             if (sciNotationArray.length == 2) {
                 return new SigFloat(parseFloat(flStr + 'e' + sciNotationArray[1]).toString());
             } else {
-                return new SigFloat(parseFloat(flStr).toString()); // Removes trailing zeros
+                let sf=new SigFloat(parseFloat(flStr).toString());
+                if(sf.sigFigures()<n){
+                    console.log(sf.toFixed()+" has sig figures less than "+n);
+                    sf= sf.withSigFigures(n);
+                    console.log(sf.toFloat()+" now has sig figures "+sf.sigFigures());
+                }
+                return sf; // Removes trailing zeros
             }
         } else {
             return new SigFloat('0');
