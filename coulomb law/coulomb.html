@@ -1,0 +1,339 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<title>Coulomb's Law</title>
+<style type="text/css">
+@import "jquery.svg.css";
+
+html, body { font-family: Verdana, Geneva, sans-serif;} 
+p {font-size: 0.93em;}
+button {
+	padding: 2px 10px 2px 10px;
+	border:outset 1px #afafaf;
+	background-color:#f6f6f6;
+	text-align:center;
+	border-radius:3px;
+	-moz-border-radius:3px;
+	color:#333;
+	font-size:1.0em;
+	font-weight:bold;
+	height: 33px;
+}
+input[type="text"] {
+	padding: 2px 10px 2px 10px;
+	border:solid 1px #afafaf;
+	background-color:#f6f6f6;
+	text-align:center;
+	border-radius:3px;
+	-moz-border-radius:3px;
+	color:#333;
+	font-size:1.0em;
+	font-weight:bold;
+	height: 33px;
+	width: 85px;
+}
+button:hover {
+	color: black;
+}
+button:active {
+	border-style:inset;
+}
+.smartspinner {
+	padding: 2px 18px 2px 2px;
+	border:solid 1px #afafaf;
+	background: url(png/normal.jpg) no-repeat right;
+	background-color:#f6f6f6;
+	text-align:center;
+	line-height:2;
+	border-radius:3px;
+	-moz-border-radius:3px;
+	color:#333;
+	font-size:1.0em;
+	font-weight:bold;
+}
+.smartspinner.up {
+	background: url(png/up.jpg) no-repeat right;
+	background-color:#f6f6f6;
+	cursor:pointer;
+}
+.smartspinner.down {
+	background: url(png/down.jpg) no-repeat right;
+	background-color:#f6f6f6;
+	cursor:pointer;
+}
+#results { border: 1px solid #666; }
+#results td, #results th { border: 1px solid #666; padding: 2px; }
+#svgpane { width: 821px; height: 161px; border: 0; }
+</style>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript" src="jquery.svg.js"></script>
+<script type="text/javascript" src="smartspinner.js"></script>
+<script type="text/javascript">
+$(function() {
+	$('#svgpane').svg({onLoad: drawInitial});
+	$(document).ready(function() {
+         $('#ch1charge').spinit({min:1,max:20,stepInc:1,height:26,callback:updateAll});
+		 $('#ch2charge').spinit({min:1,max:20,stepInc:1,height:26,callback:updateAll});
+		 $('#springk').spinit({min:100,max:8000,stepInc:100,height:26,width:60,callback:updateAll});
+    });
+});
+
+/* CONSTANTS */
+var gridsp = 40;	// 1 cm = gridsp pixels
+var k = 9*Math.pow(10,9);
+var q = 1.67*Math.pow(10,-19);
+var springlen = 5*gridsp;	// 5 gridlines = 5cm
+
+/* PROGRAM VARIABLES */
+var ch1grp = false;
+var ch1pos = gridsp;
+var ch2grp;
+var ch2pos;
+var wallpos;
+var spring;
+var dmeas;
+var rmeas;
+var scalemeas;
+var svg;
+
+function drawInitial(svgl) {
+	svg = svgl;
+	var defs = svg.defs();
+	var svgpane = $('#svgpane');
+	// Background Grid
+	var ptn = svg.pattern(defs, "grid", 0, 0, gridsp, gridsp, 0, 0, 10, 10,  
+							{patternUnits: 'userSpaceOnUse'});
+	svg.rect(ptn, 0, 0, gridsp, gridsp, 
+			{fill: 'none', stroke: 'gray', 'stroke-width': 0.5});
+	svg.rect(0, 0, svgpane.width(), svgpane.height(), {fill: 'url(#grid)'});
+	
+	// Crosshatch pattern
+	var crossh = svg.pattern(defs, "dch", 0, 0, 10, 10, 0, 0, 10, 10, 
+							{patternUnits: 'userSpaceOnUse'});
+	svg.rect(crossh, 0, 0, 10, 10, {stroke: 'none', fill: 'tan'});
+	svg.line(crossh, 0, 0, 10, 10, {stroke: 'black'});
+	
+	// Marker for Arrowheads
+	var mrk = svg.marker(defs, 'Arrowheadr', 0, 0, 20, 20, 0, {overflow: 'visible'});
+	svg.add(mrk, '<path id="path16476" style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;" d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z " transform="scale(0.7) rotate(180) translate(1, 0)" />');
+	// Other way
+	mrk = svg.marker(defs, 'Arrowheadl', 0, 0, 20, 20, 0, {overflow: 'visible'});
+	svg.add(mrk, '<path id="path16476" style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;" d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z " transform="scale(0.7) translate(1, 0)" />');
+	
+	// Spring
+	spring = svg.group('spring');
+	for (var i = 0; i < 19; i++) {
+		//svg.ellipse(parent, cx, cy, rx, ry, settings)
+		var coil = svg.ellipse(spring, svgpane.width()-5*gridsp+i*0.25*gridsp, gridsp, 8, 15, {'stroke-width': $('#springk').val()/8000+0.5, 'stroke': '#333', 'fill': 'none'});
+	}
+	
+	// Charge 2
+	ch2grp = svg.group('ch2grp');
+	ch2pos = svgpane.width()-springlen-0.5*gridsp;
+	svg.circle(ch2grp, ch2pos, gridsp, 20, {fill: 'orange', stroke: 'black', 'stroke-width': 1});
+	svg.text(ch2grp, ch2pos, gridsp+10, '+', 
+			{fontFamily: "Verdana", fontSize: 30, textAnchor: "middle"});
+	ch2grp.velocity = 0;
+	
+	// Wall
+	wallpos = svgpane.width()-(gridsp/2);
+	svg.rect(wallpos, 0, svgpane.width(), svgpane.height(), 
+		{fill: 'url(#dch)', stroke: 'black'});
+	
+
+	// Scale measurement
+	scalemeas = svg.group('scalemeas');
+	drawDistance(gridsp, 2*gridsp, $('#svgpane').height()-gridsp, '1 cm', scalemeas, {stroke: 'black', 'stroke-width': 2}, {fontFamily: "Verdana", fontSize: 15, textAnchor: "middle"});
+	// Measurements
+	drawDistances();
+	
+	$('#ch1toggle').on('click', toggleCharge1);
+	$('#store').on('click', storeResult);
+	
+}
+
+function toggleCharge1(event) {
+	if (ch1grp == false) {
+		// Charge 1
+		ch1grp = svg.group('ch1grp');
+		svg.circle(ch1grp, ch1pos, gridsp, 20, {fill: 'red', stroke: 'black', 'stroke-width': 1});
+		svg.text(ch1grp, ch1pos, gridsp+10, '+', 
+			{fontFamily: "Verdana", fontSize: 30, textAnchor: "middle"});
+		// Event handling
+		$('#ch1toggle').text('Remove');
+		$(ch1grp).on('mousedown', beginDrag);
+		$(ch1grp).on('mouseup', endDrag);
+		$('#svgpane').on('mouseup', endDrag);
+	} else {
+		svg.remove(ch1grp);
+		ch1grp = false;
+		removeDistances();
+		drawDistances();
+		$('#ch1toggle').text('Add');
+	}
+	updateAll();
+}
+
+var startMouse;
+var startCharge;
+var interval;
+function beginDrag(event) {
+	//$('#debug').text('You clicked');
+	var offset = $('#svgpane').offset();
+	if (!$.browser.msie) { 
+        offset.left -= document.documentElement.scrollLeft || document.body.scrollLeft; 
+        offset.top -= document.documentElement.scrollTop || document.body.scrollTop; 
+    }
+	if (ch1grp === false) { return; }
+	startMouse = event.clientX;
+	startCharge = $(ch1grp).children('circle').first().offset().left;
+	$('#svgpane').on('mousemove', doDrag);
+	$(ch1grp).on('mousemove', doDrag);
+	interval = setInterval(update, 100);
+	removeDistances();
+	event.preventDefault();
+}
+
+function doDrag(event) {
+	if (ch1grp === false) { return; }
+	//$('#debug').text(startCharge + " + "+ event.clientX + " - "+startMouse);
+	ch1pos = startCharge + event.clientX - startMouse;
+	if (ch1pos > ch2pos - 60) ch1pos = ch2pos - 60;
+	svg.change(ch1grp.firstChild, {cx: ch1pos});
+	svg.change(ch1grp.firstChild.nextSibling, {x: ch1pos});
+	event.preventDefault();
+	//update();  // This is called on a setInterval
+	if (this.id == 'svgpane') event.stopPropagation();
+}
+
+function endDrag(event) {
+	//$('#debug').parent().append('<p>ending drag</p>');
+	$('#svgpane').off('mousemove', doDrag);
+	$(ch1grp).off('mousemove', doDrag);
+	clearInterval(interval);
+	update(true);
+	drawDistances();
+	event.stopPropagation();
+}
+
+function updateAll() {
+	removeDistances();
+	update(true);
+	drawDistances();
+}
+
+function update(isFinal) {
+	//$('#debug').append('update was called');
+	if (ch1grp === false) {
+		ch2pos = wallpos - springlen;
+		updateCh2AndSpring();
+	} else {
+		var Fr = (k*$('#ch1charge').val()/1000000*$('#ch2charge').val()/1000000)
+					/ Math.pow(toM(ch2pos - ch1pos), 2);
+		var Fl = $('#springk').val()*toM(springlen - (wallpos - ch2pos));
+		var Fnet = Fr - Fl;
+		ch2grp.velocity += 2*Fnet;
+		ch2grp.velocity = ch2grp.velocity / 2; // Damp oscillations
+		ch2pos = ch2pos + ch2grp.velocity;
+		if (ch2pos > wallpos - 20) {
+			ch2pos = wallpos - 21;
+		} else if (ch1grp != false && ch2pos < ch1pos + 40) {
+			ch2pos = ch1pos - 40
+		}
+		updateCh2AndSpring();
+		if (isFinal && ch2pos != wallpos - 21) {
+			if (Math.abs(Fr-Fl) > 0.001) {
+				update(true);
+			} else {
+				drawDistances();
+			}
+		}
+	}
+}
+function drawDistances() {
+	if (dmeas) svg.remove(dmeas);
+	if (rmeas) svg.remove(rmeas);
+	// Draw d-measurement
+	dmeas = svg.group('dmeas');
+	drawDistance(ch2pos, wallpos, gridsp*2, 'd', dmeas,
+		{stroke: 'black', 'stroke-width': 2}, {fontFamily: "Verdana", fontSize: 15, textAnchor: "middle"}, true);
+	$('#ddist').val(toM(wallpos-ch2pos).toPrecision(3));
+	// Draw r-measurement
+	if (ch1grp != false) {
+		rmeas = svg.group('rmeas');
+		drawDistance(ch1pos, ch2pos, gridsp*2, 'r', dmeas,
+			{stroke: 'black', 'stroke-width': 2}, {fontFamily: "Verdana", fontSize: 15, textAnchor: "middle"}, true);
+		$('#rdist').val(toM(ch2pos-ch1pos).toPrecision(3));
+	} else {
+		rmeas = false;
+		$('#rdist').val('none');
+	}
+
+}
+
+function removeDistances() {
+	if (dmeas) svg.remove(dmeas);
+	if (rmeas) svg.remove(rmeas);
+	dmeas = false;
+	rmeas = false;
+}
+
+function drawDistance(x1, x2, y, label, group, lineprops, textprops, drawguidel) {
+	lineprops = typeof lineprops !== 'undefined' ? lineprops : {};
+	textprops = typeof textprops !== 'undefined' ? textprops : {};
+	drawguidel = typeof drawguidel !== 'undefined' ? drawguidel : false;
+	if (!textprops.fontSize) textprops.fontSize = 15;
+	
+	if (drawguidel) {
+		svg.line(group, x1, gridsp+20, x1, y+5, lineprops);
+		svg.line(group, x2, gridsp+20, x2, y+5, lineprops);
+	}
+	arrows = lineprops;
+	arrows['marker-end'] = 'url(#Arrowheadr)';
+	arrows['marker-start'] = 'url(#Arrowheadl)';
+	svg.line(group, x1, y, x2, y, lineprops);
+	svg.text(group, (x1+x2)/2, y+3+textprops.fontSize, label, textprops);
+}
+
+function updateCh2AndSpring() {
+	svg.change(ch2grp.firstChild, {cx: ch2pos});
+	svg.change(ch2grp.firstChild.nextSibling, {x: ch2pos});
+	
+	var coil = false;
+	var i = 0;
+	var spacing = wallpos - ch2pos;
+	var sprk = $('#springk').val();
+	do {
+		if (coil == false) {
+			coil = spring.firstChild;
+		} else {
+			coil = coil.nextSibling;
+		}
+		svg.change(coil, {cx:ch2pos + i*spacing/18, rx:spacing/22.5, 'stroke-width': sprk/8000+0.5});
+		i++;
+	} while (coil.nextSibling);
+}
+
+function toM(pixels) {
+	return pixels/gridsp/100;
+}
+function toPixels(m) {
+	return m*gridsp*100;
+}
+
+function storeResult() {
+	$('#results').append('<tr><td>'+$('#rdist').val()+'</td><td>'+$('#ddist').val()+'</td></tr>');
+}
+</script>
+</head>
+<body>
+<h1>How is electrical force related to separation distance and charge?</h1>
+<p><strong style="color:red">Charge 1</strong>: Q<sub>1</sub> = +<input type="text" id="ch1charge" class="smartspinner" maxlength="3" value="1"/>&mu;C &nbsp;<button id="ch1toggle">Add</button> &nbsp; &nbsp; &nbsp; <strong style="color:orange">Charge 2</strong>: Q<sub>2</sub> = +<input type="text" id="ch2charge" class="smartspinner" maxlength="3" value="1"/>&mu;C &nbsp; &nbsp; <strong>Spring</strong>: k = <input type="text" id="springk" class="smartspinner" maxlength="5" value="1000"/>N/m</p>
+<div id="svgpane"></div>
+<p><strong>Results</strong>: r = <input type="text" id="rdist" readonly="readonly"/>m&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; d = <input type="text" id="ddist" readonly="readonly" />m &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<button id="store">Store Result</button></p>
+<table id="results">
+<tr><th>r (m)</th><th>d (m)</th></tr>
+</table>
+</body>
+</html>
