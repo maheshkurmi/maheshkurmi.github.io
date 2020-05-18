@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <meta charset="utf-8">
+    <title>Charge in electric field</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; margin-left:10; margin-right:10;">
+<center>
+    <div id="canvasesdiv" style="position:relative; display:block; margin:auto; width:580px; height:540px"></div>
+    <canvas id="myCanvas" style="display: block; position: absolute; margin: 0 auto;display: block;
+        position: absolute; margin: 0 auto; top: 0; bottom: 0; left: 0; right: 0;" width="580" height="540"></canvas>
+
+</center>
+
+<script>
+
+
+    function play() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        runMotion();
+
+    }
+
+    function pause() {
+        window.clearTimeout(timer);
+        runFlag = 0;
+
+    }
+
+    function stepForward() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+    function stepBack() {
+        window.clearTimeout(timer);
+        index = index-2;
+        runFlag = 1;
+        drawMotion();
+        if (index < -1) reset();
+
+    }
+
+
+    function reset() {
+        window.clearTimeout(timer);
+        index = -1;
+        time = 0.0;
+        EsliderValue = EsliderValueMin + (EsliderValueMax-EsliderValueMin)*(EsliderX-EsliderXMin)/(EsliderXMax-EsliderXMin);
+        EField = EsliderValue;
+        QsliderValue = QsliderValueMin + (QsliderValueMax-QsliderValueMin)*(QsliderX-QsliderXMin)/(QsliderXMax-QsliderXMin);
+        charge = QsliderValue;
+        msliderValue = msliderValueMin + (msliderValueMax-msliderValueMin)*(msliderX-msliderXMin)/(msliderXMax-msliderXMin);
+        mass = msliderValue;
+        runFlag = 1;
+        drawMotion();
+    }
+
+
+
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+    canvas.onmousedown = myDown;							// mouse event handler for computer browsers
+    canvas.onmouseup = myUp;								// mouse event handler for computer browsers
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+    var myCheck = document.getElementById("myCheck");
+    var index = -1;
+    var xBase = 50;
+    var yBase = 50;
+    var xSupport = canvas.width/2;
+    var ySupport = yBase;
+    var length = 220;
+    var xInit = 37;
+    var radius = 3;
+    var time = 0.0;
+    var  deltat = 1/100.0;
+
+    var EField = 20.0;
+    var charge = 10.0;
+    var fX = charge*EField;
+    var g = 10;
+    var mass = 20.0;
+    var fY = mass*g;
+
+    var xPos = xBase;
+    var yPos = yBase + 150;
+    var vx = 100.0;
+    var vy = 0.0;
+    var timer;
+    var runFlag = 1;
+
+    var EsliderX = 90;
+    var EsliderY = 440;
+    var EsliderXMin = 40;
+    var EsliderXMax = 240;
+    var EsliderValueMin = 10.0;
+    var EsliderValueMax = 50.0;
+    var EsliderValue = EField;
+    var EsliderDecimals = 1.0;
+
+    var QsliderX = 560;
+    var QsliderY = 440;
+    var QsliderXMin = 360;
+    var QsliderXMax = 560;
+    var QsliderValueMin = -10;
+    var QsliderValueMax = 10;
+    var QsliderValue = charge;
+    var QsliderDecimals = 1.0;
+
+    var msliderX = 90;
+    var msliderY = 510;
+    var msliderXMin = 40;
+    var msliderXMax = 240;
+    var msliderValueMin = 10.0;
+    var msliderValueMax = 50.0;
+    var msliderValue = mass;
+    var msliderDecimals = 1.0;
+
+
+    drawMotion();
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+        //    if ((time >= 100.0) || (xPos > xBase+400) || (Math.abs(yPos-(yBase+150))>150)) runFlag = 0;
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " xPos = " + xPos + " time = " + time + " yPos = " + yPos);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // set background color for the entire thing
+            context.fillStyle = "#ffd";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // draw EField slider
+
+            drawSlider(EsliderX, EsliderY, EsliderXMin, EsliderXMax, EsliderValueMin, EsliderValueMax, EsliderValue, EsliderDecimals);
+            var sLabel = 'Electric field = ';
+            sLabel = sLabel + EsliderValue.toFixed(EsliderDecimals) + ' N/C';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,EsliderXMin+0.5*(EsliderXMax-EsliderXMin), EsliderY-25);
+
+            // draw mass slider
+
+            drawSlider(msliderX, msliderY, msliderXMin, msliderXMax, msliderValueMin, msliderValueMax, msliderValue, msliderDecimals);
+            sLabel = 'mass = ';
+            sLabel = sLabel + msliderValue.toFixed(msliderDecimals) + ' milligrams';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,msliderXMin+0.5*(msliderXMax-msliderXMin), msliderY-25);
+
+
+            // draw charge slider
+
+            drawSlider(QsliderX, QsliderY, QsliderXMin, QsliderXMax, QsliderValueMin, QsliderValueMax, QsliderValue, QsliderDecimals);
+            sLabel = 'Charge = ';
+            sLabel = sLabel + QsliderValue.toFixed(QsliderDecimals) + ' microC';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,QsliderXMin+0.5*(QsliderXMax-QsliderXMin), QsliderY-25);
+
+            index = index + 1;
+            time = index/100.0;
+            //        console.log(index + "  time = " + time + " x = " + xPos + " y = " + yPos);
+
+            // draw the field lines
+            var maxVectors = 0.3*EField;
+            var spaceBetweenVectors = 300/maxVectors;
+            for (var i = 0; i <= maxVectors; i++) {
+                drawArrow(100,0,xBase,yBase+i*spaceBetweenVectors,"#ff88dd");   // draw electric field arrows
+
+            }
+
+// draw the support
+            context.fillStyle = 'black';
+            context.beginPath();
+            context.arc(xSupport,ySupport, radius, 0, 2 * Math.PI, false);
+            context.fill();
+
+// draw the string and ball
+            fX = charge*EField;
+            fY = mass*g;
+            var theta = Math.atan2(fY,fX);
+            var xBall = xSupport + length*Math.cos(theta);
+            var yBall = ySupport + length*Math.sin(theta);
+            context.strokeStyle = 'black';
+            context.beginPath();
+            context.moveTo(xSupport,ySupport);
+            context.lineTo(xBall,yBall);
+            context.stroke();
+
+            var thetaDeg = 90.0 - (180.0/Math.PI)*theta;
+            sLabel = 'Angle = ';
+            sLabel = sLabel + thetaDeg.toFixed(1) + ' degrees';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,QsliderXMin+0.5*(QsliderXMax-QsliderXMin), msliderY-25);
+
+            context.fillStyle = 'red';
+            if (charge < 0.0) context.fillStyle = 'blue';
+            if (charge == 0.0) context.fillStyle = 'grey';
+            context.beginPath();
+            context.arc(xBall,yBall, 3*radius, 0, 2 * Math.PI, false);
+            context.fill();
+
+
+// draw the free-body diagram
+            context.beginPath();
+            context.arc(xSupport,ySupport+340, 3*radius, 0, 2 * Math.PI, false);
+            context.fill();
+
+            drawArrow(0,-fY/25,xSupport,ySupport+340,"#449944");   // gravitational force
+            drawArrow(fX/25,0,xSupport,ySupport+340,"purple");   // electric force
+            drawArrow(-fX/25,fY/25,xSupport,ySupport+340,"black");   // tension
+
+
+        }
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 300/30);
+        }
+    }
+
+    function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+        var theta = Math.atan2(Fy,Fx);
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px, Py);
+        context.lineTo(Px+5*Fx, Py-5*Fy);
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.fillStyle = arrowColor;
+        context.beginPath();
+        context.moveTo(Px+5*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.lineTo(Px+5*Fx,Py-5*Fy);
+        context.lineTo(Px+5*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+
+        context.stroke();
+        context.fill();
+
+    }
+
+
+    function drawSlider(sliderX, sliderY, sliderXMin, sliderXMax, sliderValueMin, sliderValueMax, sliderValue, sliderDecimals) {
+
+
+        context.strokeStyle = '#999';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderXMax,sliderY);
+        context.stroke();
+
+        context.strokeStyle = '#44f';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderX,sliderY);
+        context.stroke();
+
+        context.beginPath();
+        context.arc(sliderX, sliderY, 10, 0, 2 * Math.PI, false);
+        context.fillStyle = '#00f';
+        context.fill();
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+
+    }
+
+    //  Mouse and Touch event functions from  Wolfgang Bauer
+
+    function whereClicked(x_,y_,what_) {    // underscore denotes local variables
+        //if (what_ == 'down') {console.log('('+x_+','+y_+')'+what_)};
+//	console.log('('+x_+','+y_+')'+what_);
+//    console.log("x offset = " + charge1X + " y offset = " + charge1Y);
+        if ((Math.abs(x_ - (EsliderX)) < 40) && (Math.abs(y_ - EsliderY) < 40))   // moving the EField slider
+        {
+            EsliderX = x_ ;
+            if (EsliderX < EsliderXMin) EsliderX = EsliderXMin;
+            if (EsliderX > EsliderXMax) EsliderX = EsliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (QsliderX)) < 40) && (Math.abs(y_ - QsliderY) < 40))   // moving the charge slider
+        {
+            QsliderX = x_ ;
+            if (QsliderX < QsliderXMin) QsliderX = QsliderXMin;
+            if (QsliderX > QsliderXMax) QsliderX = QsliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (msliderX)) < 40) && (Math.abs(y_ - msliderY) < 40))   // moving the mass slider
+        {
+            msliderX = x_ ;
+            if (msliderX < msliderXMin) msliderX = msliderXMin;
+            if (msliderX > msliderXMax) msliderX = msliderXMax;
+            reset();
+        }
+//        reset();
+//      }
+//      else if ((Math.abs(x_ - (charge2X)) < 15) && (Math.abs(y_ - charge2Y) < 15))  // moving the right-hand charge
+//      {
+//        charge2X = x_ ;
+//        charge2Y = y_ ;
+//        reset();
+//      }
+
+        if (what_ == 'down') {
+//		dragRect = true;
+//		x1 = x_;     // x1, y1 are global variables
+//		y1 = y_;
+        }
+        if (what_ == 'move') {
+//		dragRect = true;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+        if (what_ == 'up') {
+//		dragRect = false;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+    }
+
+    function myMove(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawAll();
+//	drawMotion();
+
+    }
+
+    function myDown(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        canvas.onmousemove = myMove;
+//	drawMotion();
+    }
+
+    function myUp(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        canvas.onmousemove = null;
+//	drawMotion();
+    }
+
+    function myTouchMove(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawMotion();
+    }
+
+    function myTouchStart(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+//	drawMotion();
+    }
+
+    function myTouchEnd(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+//	drawMotion();
+    }
+
+
+</script>
+<p>This is a simulation showing the equilibrium position of a charged ball on a string.</p>
+
+<p>The sliders allow you to adjust the strength of the electric field (shown with the purple arrows), the charge of the particle, and the mass of the particle.
+    The gravitational field is a constant 10 N/kg directed down.
+    Explore the simulation - given the limitations set by the sliders, what is the maximum angle that can be achieved? How close to 0 degrees can you get? </p>
+
+<p>Also, can you identify each of the forces on the free-body diagram?</p>
+
+
+</body>
+</html>
