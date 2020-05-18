@@ -1,0 +1,1455 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+
+    <style>
+        .VCRButton {
+            background-color: #cccccc;
+            border: none;
+            border-radius: 4px;
+            color: black;
+            padding: 2px 2px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .graphButton {
+            background-color: #0000ff;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            padding: 4px 4px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        /* Style the active class, and buttons on mouse-over */
+        .active, .graphButton:hover {
+            background-color: #009999;
+            color: white;
+        }
+        .compareButton {
+            background-color: #9999ff;
+            border: none;
+            border-radius: 4px;
+            color: black;
+            padding: 4px 4px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        /* Style the active class, and buttons on mouse-over */
+        .active2, .compareButton:hover {
+            background-color: #009999;
+            color: white;
+        }
+
+
+    </style>
+
+    <meta charset="utf-8">
+    <title>A simple pendulum</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; margin-left:10; margin-right:10;">
+<center>
+    <div id="canvasesdiv" style="position:relative; display:block; margin:auto; width:820px; height:470px"></div>
+    <canvas id="myCanvas" style="display: block; position: absolute; margin: 0 auto;display: block;
+        position: absolute; margin: 0 auto; top: 0; bottom: 0; left: 0; right: 0;" width="820" height="470"></canvas>
+    <div id="buttons">
+        <input type="button" class="VCRButton" id="play" value="Play" onclick="play()">
+        <input type="button" class="VCRButton" id="pause" value="Pause" onclick="pause()">
+        <input type="button" class="VCRButton" id="stepback" value="<< Step" onclick="stepBack()">
+        <input type="button" class="VCRButton" id="stepforward" value="Step >>" onclick="stepForward()">
+        <input type="button" class="VCRButton" id="reset" value="Reset" onclick="reset()">
+    </div>
+    <div id="graphButtons"><b>Graph (versus time):</b>
+        <input type="button" class="graphButton active" id="graph1" value="Angle" onclick="positionGraph()">
+        <input type="button" class="graphButton" id="graph2" value="Ang. velocity" onclick="velocityGraph()">
+        <input type="button" class="graphButton" id="graph3" value="Ang. acceleration" onclick="accelerationGraph()">
+        <input type="button" class="graphButton" id="graph4" value="Energy" onclick="energyGraph1()">
+        <input type="button" class="graphButton" id="graph9" value="Energy for small-angle approx." onclick="energyGraph1a()">
+        <BR><b>Graph (versus angle):</b>
+        <input type="button" class="graphButton" id="graph5" value="Energy" onclick="energyGraph2()">
+        <input type="button" class="graphButton" id="graph10" value="Energy for small-angle approx." onclick="energyGraph2a()">
+        <input type="button" class="graphButton" id="graph6" value="Ang. speed" onclick="speedGraph()">
+        <input type="button" class="graphButton" id="graph7" value="Ang. velocity" onclick="velocityGraphX()">
+        <input type="button" class="graphButton" id="graph8" value="Ang. acceleration" onclick="accelerationGraphX()">
+    </div>
+    <div id="compareButtons"><b>Compare to (in orange):</b>
+        <input type="button" class="compareButton active2" id="compare1" value="Small-angle approx." onclick="compare(1)">
+        <input type="button" class="compareButton" id="compare2" value="Zero damping" onclick="compare(2)">
+        <input type="button" class="compareButton" id="compare3" value="Half the initial angle" onclick="compare(3)">
+        <input type="button" class="compareButton" id="compare4" value="Nothing" onclick="compare(4)">
+    </div>
+    <div>
+        <input type="checkbox" id="myCheck" onchange="drawForces();" >Check here to show the free-body diagram
+    </div>
+    <script>
+        // Add active class to the current button (highlight it)
+        var header = document.getElementById("graphButtons");
+        var btns = header.getElementsByClassName("graphButton");
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener("click", function() {
+                var current = document.getElementsByClassName("active");
+                current[0].className = current[0].className.replace(" active", "");
+                this.className += " active";
+            });
+        }
+
+        // Add active2 class to the current button (highlight it)
+        var header2 = document.getElementById("compareButtons");
+        var Gbtns = header2.getElementsByClassName("compareButton");
+        for (var i = 0; i < Gbtns.length; i++) {
+            Gbtns[i].addEventListener("click", function() {
+                var current2 = document.getElementsByClassName("active2");
+                current2[0].className = current2[0].className.replace(" active2", "");
+                this.className += " active2";
+            });
+        }
+
+
+    </script>
+
+</center>
+
+<script>
+
+
+    function play() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        runMotion();
+
+    }
+
+    function pause() {
+        window.clearTimeout(timer);
+        runFlag = 0;
+
+    }
+
+    function stepForward() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+    function stepBack() {
+        window.clearTimeout(timer);
+        index = index-2;
+        if (index < -1) index = -1;
+        time = index/80.0;
+        if (index >= 0) {
+            theta = ray[index].theta;
+            omega = ray[index].omega;
+            alpha = ray[index].alpha;
+            thetaRef = SHM[index].theta;
+            omegaRef = SHM[index].omega;
+            alphaRef = SHM[index].alpha;
+        }
+        xPos = xBase;
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+
+    function reset() {
+        window.clearTimeout(timer);
+        index = -1;
+        time = 0.0;
+        gsliderValue = gsliderValueMin + (gsliderValueMax-gsliderValueMin)*(gsliderX-gsliderXMin)/(gsliderXMax-gsliderXMin);
+        g = gsliderValue;
+        thetasliderValue = thetasliderValueMin + (thetasliderValueMax-thetasliderValueMin)*(thetasliderX-thetasliderXMin)/(thetasliderXMax-thetasliderXMin);
+        thetaInit = (Math.PI/180.0)*thetasliderValue;
+        msliderValue = msliderValueMin + (msliderValueMax-msliderValueMin)*(msliderX-msliderXMin)/(msliderXMax-msliderXMin);
+        m = msliderValue;
+        lengthsliderValue = lengthsliderValueMin + (lengthsliderValueMax-lengthsliderValueMin)*(lengthsliderX-lengthsliderXMin)/(lengthsliderXMax-lengthsliderXMin);
+        length = lengthsliderValue;
+        dampingsliderValue = dampingsliderValueMin + (dampingsliderValueMax-dampingsliderValueMin)*(dampingsliderX-dampingsliderXMin)/(dampingsliderXMax-dampingsliderXMin);
+        damping = dampingsliderValue;
+        angFreq = Math.sqrt(g/length);
+        theta = thetaInit;
+        omega = 0.0;
+        alpha = -(g/length)*Math.sin(theta);
+        ray[0].theta = thetaInit;
+        ray[0].alpha =  -g*Math.sin*(ray[0].theta)/length;
+        ray[0].PE = m*g*length*(1-Math.cos(ray[0].theta));
+        omegaRef = 0.0;
+        thetaRef = thetaInit;
+        if (compareFlag == 3) thetaRef = 0.5*thetaInit;
+        if (compareFlag == 1) {
+            alphaRef = -(g/length)*theta;
+        }
+        else {
+            alphaRef = -(g/length)*Math.sin(thetaRef);
+        }
+        SHM[0].theta = thetaInit;
+        SHM[0].alpha =  -g*SHM[0].theta/length;
+        SHM[0].PE = m*g*length*(1-Math.cos(SHM[0].theta));
+        xPos = xBase;
+        angFreq = Math.sqrt(g/length);
+        if (graphType ==1) yMajorTicks = 0.5*Math.ceil(thetaInit);
+        if ((graphType ==1) && (thetaInit < 0.4)) yMajorTicks = 0.2;
+        if ((graphType ==1) && (thetaInit < 0.2)) yMajorTicks = 0.1;
+        if ((graphType ==2) || (graphType ==7)) yMajorTicks = (0.5*2)*Math.ceil(0.5*thetaInit*angFreq);
+        if (((graphType ==2) || (graphType ==7)) && (thetaInit*angFreq < 1.0)) yMajorTicks = 0.5;
+        if (((graphType ==2) || (graphType ==7)) && (thetaInit*angFreq < 0.4)) yMajorTicks = 0.2;
+        if (graphType ==6)  yMajorTicks = (0.25*4)*Math.ceil(0.25*thetaInit*angFreq);
+        if ((graphType ==3) || (graphType ==8)) yMajorTicks = (0.5*2)*Math.ceil(0.5*thetaInit*angFreq*angFreq);
+        if (((graphType ==3) || (graphType ==8)) && (thetaInit*angFreq*angFreq < 1.0)) yMajorTicks = 0.5;
+        if ((graphType ==4) || (graphType == 5) || (graphType == 9) || (graphType == 10)) yMajorTicks = (0.25*4)*Math.ceil(0.25*m*g*length*(1-Math.cos(thetaInit)));
+        if (((graphType ==4) || (graphType == 5) || (graphType == 9)  || (graphType == 10)) && (m*g*length*(1-Math.cos(thetaInit)) < 0.8)) yMajorTicks = 0.2;
+        if (((graphType ==4) || (graphType == 5 || (graphType == 9)  || (graphType == 10))) && (m*g*length*(1-Math.cos(thetaInit)) < 0.4)) yMajorTicks = 0.1;
+        if (yMajorTicks >= 1.0) {yDecimals = 0} else yDecimals = 1;
+        if (((graphType ==4) || (graphType == 5) || (graphType == 9)  || (graphType == 10)) && (m*g*length*(1-Math.cos(thetaInit)) < 0.08)) {
+            yMajorTicks = 0.02;
+            yDecimals = 2;
+        }
+        if ((graphType > 4)  && (graphType != 9)) {
+            xAxisOffset = -0.5;
+            xMajorTicks = 0.1;
+            if (thetaInit > 0.5) {
+                xAxisOffset = -1.0;
+                xMajorTicks = 0.2
+            }
+            if (thetaInit > 1.0) {
+                xAxisOffset = -2.0;
+                xMajorTicks = 0.4
+            }
+            if (thetaInit > 2.0) {
+                xAxisOffset = -3.0;
+                xMajorTicks = 0.6
+            }
+        }
+        runFlag = 1;
+        drawMotion();
+    }
+
+    function positionGraph() {
+        graphType = 1;
+        graphLabel = 'Angular position vs. time';
+        xAxisLabel = 't (s)';
+        xAxisOffset = 0.0;
+        xMajorTicks = 1;
+        xDecimals = 0;
+        yAxisLabel = 'theta (rad)';
+        yMajorTicks = 0.5;
+        plotColor = '#7700cc';
+        runFlag = 1;
+        reset();
+    }
+
+    function velocityGraph() {
+        graphType = 2;
+        graphLabel = 'Angular velocity vs. time';
+        xAxisLabel = 't (s)';
+        xAxisOffset = 0.0;
+        xMajorTicks = 1;
+        xDecimals = 0;
+        yAxisLabel = 'omega (rad/s)';
+        yMajorTicks = 2.0;
+        plotColor = '#7700cc';
+        runFlag = 1;
+        reset();
+    }
+
+    function accelerationGraph() {
+        graphType = 3;
+        graphLabel = 'Angular acceleration vs. time';
+        xAxisOffset = 0.0;
+        xAxisLabel = 't (s)';
+        xMajorTicks = 1;
+        xDecimals = 0;
+        yAxisLabel = 'alpha (rad/s/s)';
+        yMajorTicks = 5.0;
+        plotColor = '#7700cc';
+        runFlag = 1;
+        reset();
+    }
+
+    function energyGraph1() {
+        graphType = 4;
+        graphLabel = 'Energy vs. time (purple ball)';
+        xAxisOffset = 0.0;
+        xAxisLabel = 't (s)';
+        xMajorTicks = 1;
+        xDecimals = 0;
+        yAxisLabel = 'E (J)';
+        yMajorTicks = 0.5;
+        plotColor = '#00bb00';
+        runFlag = 1;
+        reset();
+    }
+
+    function energyGraph1a() {
+        graphType = 9;
+        graphLabel = 'Energy vs. time (orange ball)';
+        xAxisOffset = 0.0;
+        xAxisLabel = 't (s)';
+        xMajorTicks = 1;
+        xDecimals = 0;
+        yAxisLabel = 'E (J)';
+        yMajorTicks = 0.5;
+        plotColor = '#00bb00';
+        runFlag = 1;
+        reset();
+    }
+
+    function energyGraph2() {
+        graphType = 5;
+        graphLabel = 'Energy vs. theta (purple ball)';
+        xAxisOffset = -2.0;
+        xAxisLabel = 'theta (rad)';
+        xMajorTicks = 0.4;
+        xDecimals = 1;
+        yAxisLabel = 'E (J)';
+        yMajorTicks = 0.5;
+        plotColor = '#00bb00';
+        runFlag = 1;
+        reset();
+    }
+
+    function energyGraph2a() {
+        graphType = 10;
+        graphLabel = 'Energy vs. theta (orange ball)';
+        xAxisOffset = -2.0;
+        xAxisLabel = 'theta (rad)';
+        xMajorTicks = 0.4;
+        xDecimals = 1;
+        yAxisLabel = 'E (J)';
+        yMajorTicks = 0.5;
+        plotColor = '#00bb00';
+        runFlag = 1;
+        reset();
+    }
+
+    function speedGraph() {
+        graphType = 6;
+        graphLabel = 'Angular speed vs. theta';
+        xAxisOffset = -2.0;
+        xAxisLabel = 'theta (rad)';
+        xMajorTicks = 0.4;
+        xDecimals = 1;
+        yAxisLabel = 'omega (rad/s)';
+        yMajorTicks = 0.5;
+        plotColor = '#7700cc';
+        runFlag = 1;
+        reset();
+    }
+
+    function velocityGraphX() {
+        graphType = 7;
+        graphLabel = 'Angular velocity vs. theta';
+        xAxisLabel = 'theta (rad)';
+        xAxisOffset = -2.0;
+        xMajorTicks = 0.4;
+        xDecimals = 1;
+        yAxisLabel = 'omega (rad/s)';
+        yMajorTicks = 1.0;
+        plotColor = '#7700cc';
+        runFlag = 1;
+        reset();
+    }
+
+    function accelerationGraphX() {
+        graphType = 8;
+        graphLabel = 'Angular acceleration vs. position';
+        xAxisOffset = -2.0;
+        xAxisLabel = 'theta (rad)';
+        xMajorTicks = 0.4;
+        xDecimals = 1;
+        yAxisLabel = 'alpha (rad/s/s)';
+        yMajorTicks = 2.0;
+        plotColor = '#7700cc';
+        runFlag = 1;
+        reset();
+    }
+
+    function compare(newCompareFlag)
+    {
+        compareFlag = Number(newCompareFlag);
+        reset();
+    }
+
+    function drawForces() {
+        var scale = 0.5;
+        if (myCheck.checked) {
+            drawArrow(-scale*m*g*Math.sin(theta)*Math.cos(theta),-scale*m*g*Math.sin(theta)*Math.sin(theta),xSupport+length*rodLength*Math.sin(theta),ySupport+length*rodLength*Math.cos(theta),"blue");   // tangential component of mg
+            drawArrow(scale*m*g*Math.cos(theta)*Math.sin(theta),-scale*m*g*Math.cos(theta)*Math.cos(theta),xSupport+length*rodLength*Math.sin(theta),ySupport+length*rodLength*Math.cos(theta),"green");   // radial component of mg
+            drawArrow(scale*m*Math.sin(theta)*(-g*Math.cos(theta)-length*omega*omega),scale*Math.cos(theta)*m*(g*Math.cos(theta)+length*omega*omega),xSupport+length*rodLength*Math.sin(theta),ySupport+length*rodLength*Math.cos(theta),"#00cccc");   // force from the support rod
+            drawArrow(-scale*Math.cos(theta)*m*damping*omega,-scale*Math.sin(theta)*m*damping*omega,xSupport+length*rodLength*Math.sin(theta),ySupport+length*rodLength*Math.cos(theta),"black");   // tangential component of mg
+        }
+    }
+
+
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+    canvas.onmousedown = myDown;							// mouse event handler for computer browsers
+    canvas.onmouseup = myUp;								// mouse event handler for computer browsers
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+    var myCheck = document.getElementById("myCheck");
+    var index = -1;
+    var xBase = 300;
+    var yBase = 70;
+    var xSupport = 130;
+    var ySupport = yBase + 80;
+    var xInit = 37;
+    var graphX = 10;
+    var graphY = 4;
+    var graphType = 1;
+    var xAxisOffset = 0.0;
+    var xMajorTicks = 1;
+    var xDecimals = 0;
+    var graphLabel = 'Angular position vs. time';
+    var xAxisLabel = 't (s)';
+    var yAxisLabel = 'theta (rad)';
+    var slope = 0.4;
+    var yMajorTicks = 0.2;
+    var yDecimals = 1;
+    var yStart = yBase+160;
+    var plotColor = '#7700cc';
+    var radius = 3;
+    var time = 0.0;
+    var thetaInit = 15.0*Math.PI/180.0;
+    var x = 0.0;
+    var g = 9.8;
+    var length = 1.0;
+    var rodLength = 110;
+    var m = 2.0;
+    var damping = 0.0;
+    var amplitude = 1.0;
+    var omega = 0.0;
+    var theta = thetaInit;
+    var alpha = -(g/length)*Math.sin(theta);
+    var angFreq = Math.sqrt(g/length);
+    var omegaRef = 0.0;
+    var thetaRef = thetaInit;
+    var alphaRef = -(g/length)*theta;
+    var compareFlag = 1;
+    var radius = 3;
+    var A = 120.0;
+    var xPos = 200 + A;
+    var timer;
+    var runFlag = 1;
+
+    var arraySize = 10001;
+    var ray = new Array(arraySize);
+    for (var i = 0; i < arraySize; i++) {
+        ray[i] = {};
+        ray[i].theta = thetaInit;
+        ray[i].omega = 0.0;
+        ray[i].alpha = -g*Math.sin*(ray[i].theta)/length;
+        ray[i].PE = m*g*length*(1-Math.cos(ray[i].theta));
+        ray[i].KE = 0.5*m*length*length*ray[i].omega*ray[i].omega;
+    }
+    var SHM = new Array(arraySize);
+    for (i = 0; i < arraySize; i++) {
+        SHM[i] = {};
+        SHM[i].theta = thetaInit;
+        SHM[i].omega = 0.0;
+        SHM[i].alpha = -g*SHM[i].theta/length;
+        SHM[i].PE = m*g*length*(1-Math.cos(SHM[i].theta));
+        SHM[i].KE = 0.5*m*length*length*SHM[i].omega*SHM[i].omega;
+    }
+    var gsliderX = 476;
+    var gsliderY = 310;
+    var gsliderXMin = 300;
+    var gsliderXMax = 480;
+    var gsliderValueMin = 1.0;
+    var gsliderValueMax = 10.0;
+    var gsliderValue = g;
+    var gsliderDecimals = 2.0;
+
+    var thetasliderX = 580;
+    var thetasliderY = 310;
+    var thetasliderXMin = 570;
+    var thetasliderXMax = 715;
+    var thetasliderValueMin = 5.0;
+    var thetasliderValueMax = 150.0;
+    var thetasliderValue = (180.0/Math.PI)*thetaInit;
+    var thetasliderDecimals = 0;
+
+    var msliderX = 365;
+    var msliderY = 380;
+    var msliderXMin = 315;
+    var msliderXMax = 465;
+    var msliderValueMin = 1.0;
+    var msliderValueMax = 4.0;
+    var msliderValue = m;
+    var msliderDecimals = 2.0;
+
+    var lengthsliderX = 720;
+    var lengthsliderY = 380;
+    var lengthsliderXMin = 560;
+    var lengthsliderXMax = 720;
+    var lengthsliderValueMin = 0.2;
+    var lengthsliderValueMax = 1.0;
+    var lengthsliderValue = length;
+    var lengthsliderDecimals = 3.0;
+
+    var dampingsliderX = 340;
+    var dampingsliderY = 450;
+    var dampingsliderXMin = 340;
+    var dampingsliderXMax = 440;
+    var dampingsliderValueMin = 0.0;
+    var dampingsliderValueMax = 1.0;
+    var dampingsliderValue = damping;
+    var dampingsliderDecimals = 2.0;
+
+    var forceArrowColor = '#393';
+    var vArrowColor = '#d63';
+
+
+    drawMotion();
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+        if ((time >= 10.0)) runFlag = 0;
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " xPos = " + xPos);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // set background color for the entire thing
+            context.fillStyle = "#ffd";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // draw g slider
+
+            drawSlider(gsliderX, gsliderY, gsliderXMin, gsliderXMax, gsliderValueMin, gsliderValueMax, gsliderValue, gsliderDecimals);
+            var sLabel = 'g = ';
+            sLabel = sLabel + gsliderValue.toFixed(gsliderDecimals) + ' m/s/s';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,gsliderXMin+0.5*(gsliderXMax-gsliderXMin), gsliderY-25);
+
+            // draw theta slider
+
+            drawSlider(thetasliderX, thetasliderY, thetasliderXMin, thetasliderXMax, thetasliderValueMin, thetasliderValueMax, thetasliderValue, thetasliderDecimals);
+            sLabel = 'Initial angle = ';
+            sLabel = sLabel + thetasliderValue.toFixed(thetasliderDecimals) + ' degrees';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,thetasliderXMin+0.5*(thetasliderXMax-thetasliderXMin), thetasliderY-25);
+
+            // draw m slider
+
+            drawSlider(msliderX, msliderY, msliderXMin, msliderXMax, msliderValueMin, msliderValueMax, msliderValue, msliderDecimals);
+            var sLabel = 'Ball mass = ';
+            sLabel = sLabel + msliderValue.toFixed(msliderDecimals) + ' kg';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,msliderXMin+0.5*(msliderXMax-msliderXMin), msliderY-25);
+
+            // draw length slider
+
+            drawSlider(lengthsliderX, lengthsliderY, lengthsliderXMin, lengthsliderXMax, lengthsliderValueMin, lengthsliderValueMax, lengthsliderValue, lengthsliderDecimals);
+            var sLabel = 'Pendulum length = ';
+            sLabel = sLabel + lengthsliderValue.toFixed(lengthsliderDecimals) + ' m';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,lengthsliderXMin+0.5*(lengthsliderXMax-lengthsliderXMin), lengthsliderY-25);
+
+            // draw damping slider
+
+            drawSlider(dampingsliderX, dampingsliderY, dampingsliderXMin, dampingsliderXMax, dampingsliderValueMin, dampingsliderValueMax, dampingsliderValue, dampingsliderDecimals);
+            var sLabel = 'Damping parameter = ';
+            sLabel = sLabel + dampingsliderValue.toFixed(dampingsliderDecimals) + ' rad m/s';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,dampingsliderXMin+0.5*(dampingsliderXMax-dampingsliderXMin), dampingsliderY-25);
+
+            index = index + 1;
+            time = index/80.0;
+            var deltat = 1/80.0;
+            numIterations = 100;
+            var dt = deltat / numIterations;
+            if (index > 0) {
+                for (i = 1; i <= numIterations; i++) {
+                    alpha = -(g/length)*Math.sin(theta) - damping*omega/length;
+                    omega = omega + alpha*dt;
+                    theta = theta + omega*dt;
+                    if (compareFlag == 1) alphaRef = -(g/length)*thetaRef - damping*omegaRef/length;
+                    if (compareFlag == 2) alphaRef = -(g/length)*Math.sin(thetaRef);
+                    if (compareFlag == 3) alphaRef = -(g/length)*Math.sin(thetaRef) - damping*omegaRef/length;
+                    if ((compareFlag == 4) && (graphType == 9) || (graphType == 10)) alphaRef = -(g/length)*thetaRef - damping*omegaRef/length;
+                    omegaRef = omegaRef + alphaRef*dt;
+                    thetaRef = thetaRef + omegaRef*dt;
+                }
+                ray[index].theta = theta;
+                ray[index].omega = omega;
+                ray[index].alpha = alpha;
+                ray[index].PE = m*g*length*(1-Math.cos(ray[index].theta));
+                ray[index].KE = 0.5*m*length*length*ray[index].omega*ray[index].omega;
+                SHM[index].theta = thetaRef;
+                SHM[index].omega = omegaRef;
+                SHM[index].alpha = alphaRef;
+                SHM[index].PE = m*g*length*(1-Math.cos(SHM[index].theta));
+                SHM[index].KE = 0.5*m*length*length*SHM[index].omega*SHM[index].omega;
+            }
+            xPos = 300 + A*Math.cos(omega*time);
+//        console.log(index + "  x = " + position + " v = " + velocity + " a = " + acceleration);
+
+
+            // draw graph
+
+            if (graphType == 1) {    // angular position vs. time
+                // draw axes for the graph
+                drawAxesMidY (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 4) {
+                    context.strokeStyle = '#ff8800';
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY/2-(40/yMajorTicks)*SHM[0].theta);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY/2-(40/yMajorTicks)*SHM[ival].theta);
+                    }
+                    context.stroke();
+                }
+                context.strokeStyle = plotColor;
+                context.beginPath();
+                context.moveTo(xBase, yBase+40*graphY/2-(40/yMajorTicks)*ray[0].theta);
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY/2-(40/yMajorTicks)*ray[ival].theta);
+                }
+                context.stroke();
+            }
+
+            if (graphType == 2) {    // angular velocity vs. time
+                // draw axes for the graph
+                drawAxesMidY (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 4) {
+                    context.strokeStyle = '#ff8800';
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY/2-(40/yMajorTicks)*SHM[0].omega);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY/2-(40/yMajorTicks)*SHM[ival].omega);
+                    }
+                    context.stroke();
+                }
+                context.strokeStyle = plotColor;
+                context.beginPath();
+                context.moveTo(xBase, yBase+40*graphY/2-(40/yMajorTicks)*ray[0].omega);
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY/2-(40/yMajorTicks)*ray[ival].omega);
+                }
+                context.stroke();
+            }
+
+            if (graphType == 3) {     // angular acceleration vs. time
+                // draw axes for the graph
+                drawAxesMidY (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 4) {
+                    context.strokeStyle = '#ff8800';
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY/2-(40/yMajorTicks)*SHM[0].alpha);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY/2-(40/yMajorTicks)*SHM[ival].alpha);
+                    }
+                    context.stroke();
+                }
+                context.strokeStyle = plotColor;
+                context.beginPath();
+                context.moveTo(xBase, yBase+40*graphY/2-(40/yMajorTicks)*ray[0].alpha);
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY/2-(40/yMajorTicks)*ray[ival].alpha);
+                }
+                context.stroke();
+            }
+
+            if (graphType == 4) {       // energy vs. time
+                // draw axes for the graph
+                drawAxes (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 0) {
+                    // Total energy graph
+                    context.strokeStyle = "black";
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*(SHM[0].PE+SHM[0].KE));
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*(SHM[ival].PE+SHM[ival].KE));
+                    }
+                    context.stroke();
+                    // PE graph
+                    context.strokeStyle = "black";
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*SHM[0].PE);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*SHM[ival].PE);
+                    }
+                    context.stroke();
+                    // KE graph
+                    context.strokeStyle = "black";
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*SHM[0].KE);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*SHM[ival].KE);
+                    }
+                    context.stroke();
+                }
+                // Total energy graph
+                context.strokeStyle = "green";
+                context.beginPath();
+                context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*(ray[0].PE+ray[0].KE));
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*(ray[ival].PE+ray[ival].KE));
+                }
+                context.stroke();
+                // PE graph
+                context.strokeStyle = "blue";
+                context.beginPath();
+                context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*ray[0].PE);
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*ray[ival].PE);
+                }
+                context.stroke();
+                // KE graph
+                context.strokeStyle = "red";
+                context.beginPath();
+                context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*ray[0].KE);
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*ray[ival].KE);
+                }
+                context.stroke();
+                //           console.log(ray[index].PE + "  " +ray[index].KE);
+            }
+
+            if (graphType == 9) {       // energy vs. time for small-angle approximation
+                // draw axes for the graph
+                drawAxes (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 5) {
+                    // Total energy graph
+                    context.strokeStyle = "green";
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*(SHM[0].PE+SHM[0].KE));
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*(SHM[ival].PE+SHM[ival].KE));
+                    }
+                    context.stroke();
+                    // PE graph
+                    context.strokeStyle = "blue";
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*SHM[0].PE);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*SHM[ival].PE);
+                    }
+                    context.stroke();
+                    // KE graph
+                    context.strokeStyle = "red";
+                    context.beginPath();
+                    context.moveTo(xBase, yBase+40*graphY-(40/yMajorTicks)*SHM[0].KE);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+10.0*ival/20.0, yBase+40*graphY-(40/yMajorTicks)*SHM[ival].KE);
+                    }
+                    context.stroke();
+                }
+            }
+
+            if (graphType == 5) {      // energy vs. angle
+                                       // draw axes for the graph
+                drawAxes (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 0) {
+                    // Total energy graph
+                    context.strokeStyle = "black";
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[0].PE+SHM[0].KE));
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[ival].PE+SHM[ival].KE));
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[index].PE+SHM[index].KE), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = 'black';
+                    context.fill();
+                    context.stroke();
+
+                    // PE graph
+                    context.strokeStyle = "black";
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY-(40/yMajorTicks)*SHM[0].PE);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY-(40/yMajorTicks)*SHM[ival].PE);
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[index].PE), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = 'black';
+                    context.fill();
+                    context.stroke();
+                    // KE graph
+                    context.strokeStyle = "black";
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY-(40/yMajorTicks)*SHM[0].KE);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY-(40/yMajorTicks)*SHM[ival].KE);
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[index].KE), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = 'black';
+                    context.fill();
+                    context.stroke();
+                }
+                // Total energy graph
+                context.strokeStyle = "green";
+                context.beginPath();
+                context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[0].theta, yBase+40*graphY-(40/yMajorTicks)*(ray[0].PE+ray[0].KE));
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[ival].theta, yBase+40*graphY-(40/yMajorTicks)*(ray[ival].PE+ray[ival].KE));
+                }
+                context.stroke();
+                context.beginPath();
+                context.arc(xBase+40*graphX/2+(40/xMajorTicks)*ray[index].theta, yBase+40*graphY-(40/yMajorTicks)*(ray[index].PE+ray[index].KE), radius, 0, 2 * Math.PI, false);
+                context.fillStyle = 'green';
+                context.fill();
+                context.stroke();
+
+                // PE graph
+                context.strokeStyle = "blue";
+                context.beginPath();
+                context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[0].theta, yBase+40*graphY-(40/yMajorTicks)*ray[0].PE);
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[ival].theta, yBase+40*graphY-(40/yMajorTicks)*ray[ival].PE);
+                }
+                context.stroke();
+                context.beginPath();
+                context.arc(xBase+40*graphX/2+(40/xMajorTicks)*ray[index].theta, yBase+40*graphY-(40/yMajorTicks)*(ray[index].PE), radius, 0, 2 * Math.PI, false);
+                context.fillStyle = 'blue';
+                context.fill();
+                context.stroke();
+                // KE graph
+                context.strokeStyle = "red";
+                context.beginPath();
+                context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[0].theta, yBase+40*graphY-(40/yMajorTicks)*ray[0].KE);
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[ival].theta, yBase+40*graphY-(40/yMajorTicks)*ray[ival].KE);
+                }
+                context.stroke();
+                context.beginPath();
+                context.arc(xBase+40*graphX/2+(40/xMajorTicks)*ray[index].theta, yBase+40*graphY-(40/yMajorTicks)*(ray[index].KE), radius, 0, 2 * Math.PI, false);
+                context.fillStyle = 'red';
+                context.fill();
+                context.stroke();
+
+            }
+
+            if (graphType == 10) {      // energy vs. angle for the small-angle approx.
+                                        // draw axes for the graph
+                drawAxes (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 5) {
+                    // Total energy graph
+                    context.strokeStyle = "green";
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[0].PE+SHM[0].KE));
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[ival].PE+SHM[ival].KE));
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[index].PE+SHM[index].KE), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = 'green';
+                    context.fill();
+                    context.stroke();
+
+                    // PE graph
+                    context.strokeStyle = "blue";
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY-(40/yMajorTicks)*SHM[0].PE);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY-(40/yMajorTicks)*SHM[ival].PE);
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[index].PE), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = 'blue';
+                    context.fill();
+                    context.stroke();
+                    // KE graph
+                    context.strokeStyle = "red";
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY-(40/yMajorTicks)*SHM[0].KE);
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY-(40/yMajorTicks)*SHM[ival].KE);
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY-(40/yMajorTicks)*(SHM[index].KE), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = 'red';
+                    context.fill();
+                    context.stroke();
+                }
+
+            }
+
+            if (graphType == 6) {
+                // draw axes for the graph
+                drawAxes (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 4) {
+                    context.strokeStyle = '#ff8800';
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY-(40/yMajorTicks)*Math.abs(SHM[0].omega));
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY-(40/yMajorTicks)*Math.abs(SHM[ival].omega));
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY-(40/yMajorTicks)*Math.abs(SHM[index].omega), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = 'blue';
+                    context.fill();
+                    context.stroke();
+                }
+                context.strokeStyle = plotColor;
+                context.beginPath();
+                context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[0].theta, yBase+40*graphY-(40/yMajorTicks)*Math.abs(ray[0].omega));
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[ival].theta, yBase+40*graphY-(40/yMajorTicks)*Math.abs(ray[ival].omega));
+                }
+                context.stroke();
+                context.beginPath();
+                context.arc(xBase+40*graphX/2+(40/xMajorTicks)*ray[index].theta, yBase+40*graphY-(40/yMajorTicks)*Math.abs(ray[index].omega), radius, 0, 2 * Math.PI, false);
+                context.fillStyle = 'plotColor';
+                context.fill();
+                context.stroke();
+            }
+
+            if (graphType == 7) {
+                // draw axes for the graph
+                drawAxesMidY (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 4) {
+                    context.strokeStyle = '#ff8800';
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY/2-(40/yMajorTicks)*(SHM[0].omega));
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY/2-(40/yMajorTicks)*(SHM[ival].omega));
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY/2-(40/yMajorTicks)*(SHM[index].omega), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = '#ff8800';
+                    context.fill();
+                    context.stroke();
+                }
+                context.strokeStyle = plotColor;
+                context.beginPath();
+                context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[0].theta, yBase+40*graphY/2-(40/yMajorTicks)*(ray[0].omega));
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[ival].theta, yBase+40*graphY/2-(40/yMajorTicks)*(ray[ival].omega));
+                }
+                context.stroke();
+                context.beginPath();
+                context.arc(xBase+40*graphX/2+(40/xMajorTicks)*ray[index].theta, yBase+40*graphY/2-(40/yMajorTicks)*(ray[index].omega), radius, 0, 2 * Math.PI, false);
+                context.fillStyle = 'plotColor';
+                context.fill();
+                context.stroke();
+            }
+
+            if (graphType == 8) {
+                // draw axes for the graph
+                drawAxesMidY (xBase, yBase, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+                if (compareFlag < 4) {
+                    context.strokeStyle = '#ff8800';
+                    context.beginPath();
+                    context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[0].theta, yBase+40*graphY/2-(40/yMajorTicks)*(SHM[0].alpha));
+                    for (var ival = 1; ival <=index; ival++) {
+                        context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*SHM[ival].theta, yBase+40*graphY/2-(40/yMajorTicks)*(SHM[ival].alpha));
+                    }
+                    context.stroke();
+                    context.beginPath();
+                    context.arc(xBase+40*graphX/2+(40/xMajorTicks)*SHM[index].theta, yBase+40*graphY/2-(40/yMajorTicks)*(SHM[index].alpha), radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = '#ff8800';
+                    context.fill();
+                    context.stroke();
+                }
+                context.strokeStyle = plotColor;
+                context.beginPath();
+                context.moveTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[0].theta, yBase+40*graphY/2-(40/yMajorTicks)*(ray[0].alpha));
+                for (var ival = 1; ival <=index; ival++) {
+                    context.lineTo(xBase+40*graphX/2+(40/xMajorTicks)*ray[ival].theta, yBase+40*graphY/2-(40/yMajorTicks)*(ray[ival].alpha));
+                }
+                context.stroke();
+                context.strokeStyle = "black";
+                context.beginPath();
+                context.arc(xBase+40*graphX/2+(40/xMajorTicks)*ray[index].theta, yBase+40*graphY/2-(40/yMajorTicks)*(ray[index].alpha), radius, 0, 2 * Math.PI, false);
+                context.fillStyle = 'plotColor';
+                context.fill();
+                context.stroke();
+            }
+
+
+            //         xPos = 300 + 120*position;
+            // draw the support point
+            context.beginPath();
+            context.arc(xSupport, ySupport, radius, 0, 2 * Math.PI, false);
+            context.fillStyle = 'black';
+            context.fill();
+            context.lineWidth = 2;
+            context.strokeStyle = 'black';
+            context.stroke();
+
+            // draw a reference circle
+
+            context.strokeStyle = 'black';
+            context.lineWidth = 1;
+            context.beginPath();
+            context.arc(xSupport, ySupport, rodLength, 0, 2 * Math.PI, false);
+            context.strokeStyle = 'black';
+            context.stroke();
+
+            // draw reference lines
+
+            context.strokeStyle = 'black';
+            context.lineWidth = 1;
+            for (i=0; i<=5; i++) {
+                context.beginPath();
+                context.moveTo(xSupport-rodLength*Math.sin(30*i*Math.PI/180),ySupport-rodLength*Math.cos(30*i*Math.PI/180));
+                context.lineTo(xSupport+rodLength*Math.sin(30*i*Math.PI/180),ySupport+rodLength*Math.cos(30*i*Math.PI/180));
+                context.stroke();
+            }
+
+            // draw support rod
+
+            context.strokeStyle = 'purple';
+            context.lineWidth = 4;
+            context.beginPath();
+            context.moveTo(xSupport,ySupport);
+            context.lineTo(xSupport+length*rodLength*Math.sin(theta),ySupport+length*rodLength*Math.cos(theta));
+            context.stroke();
+
+            // draw HM reference bob
+
+            if (compareFlag < 4) {
+                context.strokeStyle = '#ff8800';
+                context.beginPath();
+                context.arc(xSupport+length*rodLength*Math.sin(thetaRef),ySupport+length*rodLength*Math.cos(thetaRef), Math.sqrt(2*m)*radius, 0, 2 * Math.PI, false);
+                context.fillStyle = '#ff8800';
+                context.fill();
+                context.lineWidth = 2;
+                context.strokeStyle = '#ff8800';
+                context.stroke();
+            }
+
+            // draw pendulum bob
+
+            context.strokeStyle = '#7700cc';
+            context.beginPath();
+            context.arc(xSupport+length*rodLength*Math.sin(theta),ySupport+length*rodLength*Math.cos(theta), Math.sqrt(2*m)*radius, 0, 2 * Math.PI, false);
+            context.fillStyle = '#7700cc';
+            context.fill();
+            context.lineWidth = 2;
+            context.strokeStyle = '#7700cc';
+            context.stroke();
+
+            drawForces();
+            // draw the force arrow
+//           drawArrow(10*m*acceleration,0,xPos,yBase+190,forceArrowColor);
+
+
+            // draw the velocity arrow
+//           drawArrow(12*velocity,0,xPos,yBase+250,vArrowColor);
+
+
+            context.font = '16pt Calibri';
+            context.fillStyle = 'black';
+
+
+            var timeLabel = 't = ';
+            timeLabel = timeLabel + time.toFixed(2) + ' s';
+            context.textAlign = 'center';
+            context.fillText(timeLabel, xSupport, 380);
+
+        }
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 300/30);
+        }
+    }
+
+    function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+        var theta = Math.atan2(Fy,Fx);
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px, Py);
+        context.lineTo(Px+5*Fx, Py-5*Fy);
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.fillStyle = arrowColor;
+        context.beginPath();
+        context.moveTo(Px+5*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.lineTo(Px+5*Fx,Py-5*Fy);
+        context.lineTo(Px+5*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+
+        context.stroke();
+        context.fill();
+
+    }
+
+    function drawAxes(xAxisStart,yAxisStart,xNum, yNum, xOffset, xIncrement, yIncrement, xNumDecimals, yNumDecimals, xAxisTitle, yAxisTitle, graphTitle) {
+        // set background color for the graph
+        context.fillStyle = "#eff";
+        context.fillRect(xAxisStart, yAxisStart, 40*xNum, 40*yNum);
+
+        var axisLabel = '';
+        var axisValue = 0;
+
+        // vertical grid lines
+        context.lineWidth = 2;
+        context.strokeStyle = '#888';
+
+        for (var i = 0; i <= xNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart+40*i, yAxisStart);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum+10);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = xOffset+xIncrement*(i);
+            axisLabel = axisValue.toFixed(xNumDecimals);
+            context.fillText(axisLabel, xAxisStart+40*i, yAxisStart+40*yNum+20);
+        }
+
+        // horizontal grid lines
+        for (i = 0; i <= yNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart-10, yAxisStart+40*i);
+            context.lineTo(xAxisStart+40*xNum, yAxisStart+40*i);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = yIncrement*(yNum-i);
+            axisLabel = axisValue.toFixed(yNumDecimals);
+            context.fillText(axisLabel, xAxisStart-30, yAxisStart+40*i);
+
+        }
+
+        // x-axis
+        context.strokeStyle = '#000';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(xAxisStart-1, yAxisStart+40*yNum);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum-6);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum);
+        context.lineTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum+6);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.fillText(xAxisTitle, xAxisStart+40*xNum+24, yAxisStart+40*yNum);
+
+        // y-axis
+        context.strokeStyle = '#000';
+        context.beginPath();
+        context.moveTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart-6, yAxisStart-10);
+        context.lineTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart+6, yAxisStart-10);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.strokeStyle = '#000';
+        context.textAlign = 'center';
+        //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xAxisStart );
+
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(yAxisTitle, xAxisStart-30, yAxisStart - 35);
+
+        // graph title
+        context.font = 'bold 18pt Calibri';
+        context.fillStyle = 'purple';
+        context.textAlign = 'center';
+        context.fillText(graphTitle, xAxisStart+40*xNum/2, yAxisStart-24);
+
+    }
+
+    function drawAxesMidY(xAxisStart,yAxisStart,xNum, yNum, xOffset, xIncrement, yIncrement, xNumDecimals, yNumDecimals, xAxisTitle, yAxisTitle, graphTitle) {
+        // set background color for the graph
+        context.fillStyle = "#eff";
+        context.fillRect(xAxisStart, yAxisStart, 40*xNum, 40*yNum);
+
+        var axisLabel = '';
+        var axisValue = 0;
+
+        // vertical grid lines
+        context.lineWidth = 2;
+        context.strokeStyle = '#888';
+
+        for (var i = 0; i <= xNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart+40*i, yAxisStart);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum/2+10);
+            context.stroke();
+            context.moveTo(xAxisStart+40*i, yAxisStart+40*yNum/2+30);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = xOffset + xIncrement*(i);
+            axisLabel = axisValue.toFixed(xNumDecimals);
+            if (i > 0) context.fillText(axisLabel, xAxisStart+40*i, yAxisStart+40*yNum/2+20);
+        }
+
+        // horizontal grid lines
+        for (i = 0; i <= yNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart-10, yAxisStart+40*i);
+            context.lineTo(xAxisStart+40*xNum, yAxisStart+40*i);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = yIncrement*(yNum/2-i);
+            axisLabel = axisValue.toFixed(yNumDecimals);
+            context.fillText(axisLabel, xAxisStart-30, yAxisStart+40*i);
+
+        }
+
+        // x-axis
+        context.strokeStyle = '#000';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(xAxisStart-1, yAxisStart+40*yNum/2);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum/2);
+        context.stroke();
+        context.moveTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum/2-6);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum/2);
+        context.lineTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum/2+6);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.fillText(xAxisTitle, xAxisStart+40*xNum+24, yAxisStart+40*yNum/2);
+
+        // y-axis
+        context.strokeStyle = '#000';
+        context.beginPath();
+        context.moveTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart-6, yAxisStart-10);
+        context.lineTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart+6, yAxisStart-10);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.strokeStyle = '#000';
+        context.textAlign = 'center';
+        //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xAxisStart );
+
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(yAxisTitle, xAxisStart-30, yAxisStart - 35);
+
+        // graph title
+        context.font = 'bold 18pt Calibri';
+        context.fillStyle = 'purple';
+        context.textAlign = 'center';
+        context.fillText(graphTitle, xAxisStart+40*xNum/2, yAxisStart-24);
+
+    }
+
+    function drawSlider(sliderX, sliderY, sliderXMin, sliderXMax, sliderValueMin, sliderValueMax, sliderValue, sliderDecimals) {
+
+
+        context.strokeStyle = '#999';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderXMax,sliderY);
+        context.stroke();
+
+        context.strokeStyle = '#44f';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderX,sliderY);
+        context.stroke();
+
+        context.beginPath();
+        context.arc(sliderX, sliderY, 10, 0, 2 * Math.PI, false);
+        context.fillStyle = '#00f';
+        context.fill();
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+
+    }
+
+    //  Mouse and Touch event functions from  Wolfgang Bauer
+
+    function whereClicked(x_,y_,what_) {    // underscore denotes local variables
+        //if (what_ == 'down') {console.log('('+x_+','+y_+')'+what_)};
+//	console.log('('+x_+','+y_+')'+what_);
+//    console.log("x offset = " + charge1X + " y offset = " + charge1Y);
+        if ((Math.abs(x_ - (gsliderX)) < 40) && (Math.abs(y_ - gsliderY) < 40))   // moving the g slider
+        {
+            gsliderX = x_ ;
+            if (gsliderX < gsliderXMin) gsliderX = gsliderXMin;
+            if (gsliderX > gsliderXMax) gsliderX = gsliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (thetasliderX)) < 40) && (Math.abs(y_ - thetasliderY) < 40))   // moving the g slider
+        {
+            thetasliderX = x_ ;
+            if (thetasliderX < thetasliderXMin) thetasliderX = thetasliderXMin;
+            if (thetasliderX > thetasliderXMax) thetasliderX = thetasliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (msliderX)) < 40) && (Math.abs(y_ - msliderY) < 40))   // moving the g slider
+        {
+            msliderX = x_ ;
+            if (msliderX < msliderXMin) msliderX = msliderXMin;
+            if (msliderX > msliderXMax) msliderX = msliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (lengthsliderX)) < 40) && (Math.abs(y_ - lengthsliderY) < 40))   // moving the g slider
+        {
+            lengthsliderX = x_ ;
+            if (lengthsliderX < lengthsliderXMin) lengthsliderX = lengthsliderXMin;
+            if (lengthsliderX > lengthsliderXMax) lengthsliderX = lengthsliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (dampingsliderX)) < 40) && (Math.abs(y_ - dampingsliderY) < 40))   // moving the g slider
+        {
+            dampingsliderX = x_ ;
+            if (dampingsliderX < dampingsliderXMin) dampingsliderX = dampingsliderXMin;
+            if (dampingsliderX > dampingsliderXMax) dampingsliderX = dampingsliderXMax;
+            reset();
+        }
+//        reset();
+//      }
+//      else if ((Math.abs(x_ - (charge2X)) < 15) && (Math.abs(y_ - charge2Y) < 15))  // moving the right-hand charge
+//      {
+//        charge2X = x_ ;
+//        charge2Y = y_ ;
+//        reset();
+//      }
+
+        if (what_ == 'down') {
+//		dragRect = true;
+//		x1 = x_;     // x1, y1 are global variables
+//		y1 = y_;
+        }
+        if (what_ == 'move') {
+//		dragRect = true;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+        if (what_ == 'up') {
+//		dragRect = false;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+    }
+
+    function myMove(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawAll();
+//	drawMotion();
+
+    }
+
+    function myDown(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        canvas.onmousemove = myMove;
+//	drawMotion();
+    }
+
+    function myUp(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        canvas.onmousemove = null;
+//	drawMotion();
+    }
+
+    function myTouchMove(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawMotion();
+    }
+
+    function myTouchStart(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+//	drawMotion();
+    }
+
+    function myTouchEnd(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+//	drawMotion();
+    }
+
+
+</script>
+
+<p>Purple is the true motion; orange is the comparison motion.</p>
+<p>This is a simulation of a simple pendulum (a ball attached to a massless rod). If the damping is set to zero, the pendulum moves without resistance. The larger the damping, the larger the resistive torque.</p>
+
+<p>Check out all the different graphs, and compare the zero damping case to the case with damping. You can also compare the real motion to the motion under the small-angle approximation - this is a ball for which the gravitational torque is proportional to the angle (an approximation) instead of what is actually true (and what happens for the purple ball), that the gravitational torque is proportional to the sine of the angle, measured from the equilibrium position.
+    Note that the small-angle approximation is inconsistent with energy conservation!</p>
+
+<p>If you view the free-body diagram, you will see the radial and tangential components of the force of gravity acting on the ball, the force the rod exerts on the ball, and the damping force (if damping is not zero).</p>
+
+
+</body>
+</html>
