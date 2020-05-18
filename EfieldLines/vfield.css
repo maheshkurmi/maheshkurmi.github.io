@@ -1,0 +1,567 @@
+@import url('https://fonts.googleapis.com/css?family=Raleway:100,700,300');
+html
+{
+    height:             100%;
+    color:              #333;
+    line-height:        1.42857;
+}
+body
+{
+    margin-left:        0px;
+    margin-right:       0px;
+    margin-top:         0px;
+    margin-bottom:      0px;
+    padding-left:       0px;
+    padding-right:      0px;
+    padding-top:        0px;
+    padding-bottom:     0px;
+    background-color:   ivory;
+}
+h1, h2, h3, h4, h5, h6
+{
+    font-family: Tahoma, Arial, sans-serif;
+    font-weight: normal;
+    color:       #0050B2;
+    background:  transparent;
+}
+h1
+{
+    text-align: center;
+}
+h2.center
+{
+    text-align: center;
+}
+h3.center
+{
+    text-align: center;
+}
+h4.center
+{
+    text-align: center;
+}
+
+h3.portfolio a:link
+{
+    text-decoration:none;
+}
+
+h3.portfolio a:visited
+{
+    text-decoration:none;
+}
+
+h3.portfolio a:hover
+{
+    text-decoration:underline;
+}
+
+h3.portfolio a:active
+{
+    text-decoration:underline;
+}
+
+div#header
+{
+    height:             48px;
+    overflow:           hidden;
+    width:              100%;
+    border-bottom:      1px solid #cccccc;
+    padding-top:        2px;
+    padding-left:       5%;
+    padding-right:      5%;
+    margin-top:         0;
+}
+
+div#header ul
+{
+    float:          right;
+    display:        block;
+    list-style:     none;
+    font-family:    Helvetica, sans-serif;
+    font-size:      1.5vw;
+    line-height:    20px;
+    margin:         0;
+    padding:        0;
+}
+
+div#header li
+{
+    float:          left;
+    height:         46px;
+    display:        inline;
+    text-align:     left;
+    margin-left:    1px;
+    font-size:      1.5vw;
+    line-height:    20px;
+    color:          grey;
+    padding:        0;
+    border-bottom:  1px solid #cccccc;
+}
+
+div#header li a
+{
+    padding:         3px 0vw 30px 4vw;
+    text-decoration: none;
+    color:           #336699;
+    height:          22px;
+    margin:          0;
+}
+html,
+html *,
+div#header
+{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing:    border-box;
+    box-sizing:         border-box;
+}
+
+div#header li:hover
+{
+    border-bottom:  1px solid brown;
+}
+
+.logo2
+{
+    font-size:     3.0vw;
+    padding-right: 10px;
+    line-height:   40px;
+    float:         left;
+    text-shadow:   0 1px   0   #ccc,
+    0 2px   0   #c9c9c9,
+    0 3px   0   #bbb,
+    0 4px   0   #b9b9b9,
+    0 5px   0   #aaa,
+    0 6px   1px rgba(0,0,0,.1),
+    0 0     5px rgba(0,0,0,.1),
+    0 1px   3px rgba(0,0,0,.3),
+    0 3px   5px rgba(0,0,0,.2),
+    0 5px  10px rgba(0,0,0,.25),
+    0 8px  10px rgba(0,0,0,.2),
+    0 16px 20px rgba(0,0,0,.15);
+}
+
+.logo2 a:link,
+.logo2 a:visited,
+.logo2 a:hover,
+.logo2 a:active
+{
+    text-decoration:    none;
+    color:              rgb(14, 43, 224);
+}
+
+@media (min-width: 850px)
+{
+    .logo2
+    {
+        font-size:   36px;
+    }
+
+    div#header li
+    {
+        font-size:   15px;
+    }
+}
+
+.Fell
+{
+    font-family: 'IM Fell French Canon', serif;
+    font-style:  italic;
+    font-weight: 400;
+}
+
+div.content
+{
+    min-height:         7in;
+    max-width:          1024px;
+    margin-top:         0;
+    margin-right:       auto;
+    margin-left:        auto;
+    padding-top:        0;
+    padding-bottom:     2em;
+    padding-left:       15px;
+    padding-right:      15px;
+    position:           relative;
+    font-family:        "Raleway","HelveticaNeue","Helvetica Neue",Helvetica,sans-serif;
+    font-weight:        300;
+    font-size:          18px;
+    /*HelveticaNeue-Light, 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif; */
+}
+
+div.content,
+div.content *
+{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing:    border-box;
+    box-sizing:         border-box;
+}
+
+
+p.abstract
+{
+    font-style:    italic;
+    width:         75%;
+    margin-left:   auto;
+    margin-right:  auto;
+}
+
+.clear
+{
+    display:      block;
+    height:       0;
+    clear:        both;
+    visibility:   hidden;
+}
+
+div.footnote
+{
+    font-size:         small;
+    font-style:        italic;
+}
+
+p, li
+{
+    color:          #000066;
+    text-rendering: optimizeLegibility;
+}
+
+div.portfolio
+{
+    text-align:     justify;
+}
+
+div.portfolio:after
+{
+    content:        '';
+    display:        inline-block;
+}
+
+div.project
+{
+    display:        inline-block;
+    vertical-align: top;
+    width:          100%;
+    box-sizing:     border-box;
+}
+
+@media (min-width: 850px)
+{
+    div.project
+    {
+        width:          48%;
+    }
+}
+
+.floatleft
+{
+    float:         left;
+    padding:       1% 1% 1% 1%;
+    margin-right:  2%;
+    display:       inline;
+}
+
+.floatright
+{
+    float:         right;
+    padding:       1% 1% 1% 1%;
+    margin-left:   2%;
+    display:       inline;
+}
+
+div.halfWidth
+{
+    margin: 0;
+    width:  50%;
+}
+
+.example
+{
+    margin-left:       2%;
+}
+
+div.exemplar
+{
+    margin:            1em 4em;
+}
+
+div.codeExample
+{
+    height:            3in;
+    overflow:          auto;
+}
+
+.largeCode
+{
+    overflow-x:         scroll;
+}
+
+div#left
+{
+    position:      absolute;
+    padding-top:   25px;
+    top:           0;
+    left:          0;
+    height:        88%;
+    width:         8em;
+}
+
+div#right
+{
+    margin-left:   8em;
+}
+
+
+p.first:first-letter
+{
+    font-size:     2.5em;
+    margin:        0 -7px 3px 0;
+}
+
+
+figure.center img, figure.center canvas,  figure.center applet, figure.center embed, figure.center iframe, math.center
+{
+    display:      block;
+    margin-right: auto;
+    margin-left:  auto;
+}
+
+.right
+{
+    float: right;
+}
+
+.left
+{
+    float: left;
+}
+
+figure figcaption
+{
+    font-size:  smaller;
+    font-style: italic;
+    text-align: center;
+}
+
+table.center, div.center
+{
+    margin-right: auto;
+    margin-left:  auto;
+}
+
+div.figure
+{
+    margin-left:  auto;
+    margin-right: auto;
+}
+
+div.figure p
+{
+    font-style: italic;
+    font-size:  smaller;
+    text-align: center;
+}
+
+div.figure img, div.figure embed, div.floatLeft img, div.floatLeft embed
+{
+    display:      block;
+    margin-left:  auto;
+    margin-right: auto;
+    border-style: ridge;
+    padding:      3px;
+}
+
+iframe[seamless]
+{
+    background-color: transparent;
+    border:           0px none transparent;
+}
+
+details
+{
+    color:        #000066;
+    padding-left: 2em;
+}
+
+.clearfix:after
+{
+    content:                  "";
+    display:               block;
+    clear:                  both;
+}
+
+summary.faqElement
+{
+    font-family: Tahoma, Arial, sans-serif;
+    font-weight: normal;
+    color:       #0050B2;
+    background:  transparent;
+}
+
+ul.navigation
+{
+    list-style-type: none;
+    font-size:       medium;
+    position:        absolute;
+    right:           5%;
+    width:           90%;
+    margin:          0;
+    padding:         0;
+}
+
+ul.navigation .right
+{
+    position:        absolute;
+    right:           1%;
+}
+
+ul.navigation .left
+{
+    position:        absolute;
+    left:            1%;
+}
+
+ul.navigation li a
+{
+    display:               block;
+    width:                 5em;
+    color:                 #FFF;
+    background-color:      #036;
+    padding:               .2em 0;
+    text-align:            center;
+    text-decoration:       none;
+    border-radius:         15px;
+    -moz-border-radius:    15px;
+    -webkit-border-radius: 15px;
+}
+
+ul.navigation li a:hover
+{
+    color:            #FFF;
+    background-color: #69C;
+}
+
+.license
+{
+    color:          #000066;
+    font-size:      small;
+    font-style:     italic;
+    text-align:     center;
+    padding:        1em;
+    max-width:      75%;
+}
+
+p.error
+{
+    display:      none;
+    border-style: solid;
+    border-color: red;
+}
+section.examples
+{
+    overflow:      auto;
+    width:         100%;
+}
+
+section.examples div.example
+{
+    width:         50%;
+    padding-left:  5%;
+    padding-right: 5%;
+    margin:        0%;
+}
+
+div.steppedExample div.step
+{
+    width:         100%;
+    overflow:      auto;
+}
+
+div.step div.explanation
+{
+    overflow:      hidden;
+}
+
+table.explanation
+{
+    margin-right:     auto;
+    margin-left:      auto;
+    font-family:      verdana, arial, sans-serif;
+    color:            #000066;
+    border-width:     1px;
+    border-color:     #666666;
+    border-collapse:  collapse;
+}
+
+table.explanation th
+{
+    border-width:     1px;
+    padding:          8px;
+    border-style:     solid;
+    border-color:     #666666;
+    background-color: #dedede;
+}
+
+table.explanation td
+{
+    text-align:       left;
+    border-width:     1px;
+    padding:          8px;
+    border-style:     solid;
+    border-color:     #666666;
+}
+
+figure canvas
+{
+    max-width: 100%;
+}
+
+/*
+@media (min-width: 1150px)
+{
+  div.step pre.prettyprint
+  {
+    float:         left;
+    margin-right:  5%;
+    margin-top:    0;
+  }
+}
+*/
+
+/* Calls out the association between the description and the code. */
+/*div.step:hover
+{
+  filter:         drop-shadow(4px 4px 2px #bbb);
+  -webkit-filter: drop-shadow(4px 4px 2px #bbb);
+  -moz-filter:    drop-shadow(4px 4px 2px #bbb);
+  -o-filter:      drop-shadow(4px 4px 2px #bbb);
+  -ms-filter:     drop-shadow(4px 4px 2px #bbb);
+}*/
+
+/*
+ * A Kludge allowing me to put the content on a new line.
+ *  Turn off border for Google prettyprint
+ */
+pre.prettyprint
+{
+    margin:        -1.0em auto;
+    border:        none !important;
+}
+
+@media (max-width: 400px)
+{
+    figure
+    {
+        margin-left:  10px;
+        margin-right: 10px;
+    }
+
+    .optional
+    {
+        display: none;
+    }
+
+    pre.prettyprint
+    {
+        overflow-x:    scroll;
+    }
+}

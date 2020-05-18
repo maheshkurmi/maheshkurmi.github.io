@@ -1,0 +1,627 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Charge in electric field</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; margin-left:10; margin-right:10;">
+
+<center>
+
+    <div id="canvasesdiv" style="position:relative; display:block; margin:auto; width:660px; height:550px"></div>
+    <canvas id="myCanvas" style="display: block; position: absolute; margin: 0 auto;display: block;
+        position: absolute; margin: 0 auto; top: 0; bottom: 0; left: 0; right: 0;" width="640" height="540"></canvas>
+    <div id="buttons">
+        <input type="button" id="play" value="Play" onclick="play()">
+        <input type="button" id="pause" value="Pause" onclick="pause()">
+        <input type="button" id="stepback" value="<< Step" onclick="stepBack()">
+        <input type="button" id="stepforward" value="Step >>" onclick="stepForward()">
+        <input type="button" id="reset" value="Reset" onclick="reset()">
+    </div>
+
+</center>
+
+<script>
+
+
+    function play() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        runMotion();
+
+    }
+
+    function pause() {
+        window.clearTimeout(timer);
+        runFlag = 0;
+
+    }
+
+    function stepForward() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+    function stepBack() {
+        window.clearTimeout(timer);
+        index = index-2;
+        if (index >= 0) {
+            xPos = position[index].x;
+            yPos = position[index].y;
+            vy = vy - 2*fY*deltat;
+            runFlag = 1;
+            drawMotion();
+        }
+        if (index < -1) reset();
+
+    }
+
+
+    function reset() {
+        window.clearTimeout(timer);
+        index = -1;
+        time = 0.0;
+        xPos = xBase;
+        yPos = yBase + 150;
+        VXsliderValue= VXsliderValueMin + (VXsliderValueMax-VXsliderValueMin)*(VXsliderX-VXsliderXMin)/(VXsliderXMax-VXsliderXMin);
+        VYsliderValue= VYsliderValueMin + (VYsliderValueMax-VYsliderValueMin)*(VYsliderX-VYsliderXMin)/(VYsliderXMax-VYsliderXMin);
+        vx= VXsliderValue;
+        vy= -VYsliderValue;
+        EsliderValue = EsliderValueMin + (EsliderValueMax-EsliderValueMin)*(EsliderX-EsliderXMin)/(EsliderXMax-EsliderXMin);
+        EField = EsliderValue;
+        QsliderValue = QsliderValueMin + (QsliderValueMax-QsliderValueMin)*(QsliderX-QsliderXMin)/(QsliderXMax-QsliderXMin);
+        charge = QsliderValue;
+        runFlag = 1;
+        drawMotion();
+    }
+
+
+
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+    canvas.onmousedown = myDown;							// mouse event handler for computer browsers
+    canvas.onmouseup = myUp;								// mouse event handler for computer browsers
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+    var myCheck = document.getElementById("myCheck");
+    var index = -1;
+    var xBase = 100;
+    var yBase = 50;
+    var xSupport = canvas.width/2;
+    var ySupport = yBase;
+    var xInit = 37;
+    var radius = 3;
+    var time = 0.0;
+    var  deltat = 1/100.0;
+
+    var EField = 20.0;
+    var charge = 10.0;
+    var fY = charge*EField;
+
+    var xPos = xBase;
+    var yPos = yBase + 150;
+    var vx = 120.0;
+    var vy = 60.0;
+    var timer;
+    var runFlag = 1;
+
+    var EsliderX = 90;
+    var EsliderY = 520;
+    var EsliderXMin = 40;
+    var EsliderXMax = 240;
+    var EsliderValueMin = 10.0;
+    var EsliderValueMax = 50.0;
+    var EsliderValue = EField;
+    var EsliderDecimals = 1.0;
+
+    var QsliderX = 560;
+    var QsliderY = 520;
+    var QsliderXMin = 360;
+    var QsliderXMax = 560;
+    var QsliderValueMin = -10;
+    var QsliderValueMax = 10;
+    var QsliderValue = charge;
+    var QsliderDecimals = 1.0;
+
+    var VXsliderX = 90;
+    var VXsliderY = 460;
+    var VXsliderXMin = 40;
+    var VXsliderXMax = 240;
+    var VXsliderValueMin = 0.0;
+    var VXsliderValueMax = 200.0;
+    var VXsliderValue = vx;
+    var VXsliderDecimals = 1.0;
+
+    var VYsliderX = 560;
+    var VYsliderY = 460;
+    var VYsliderXMin = 360;
+    var VYsliderXMax = 560;
+    var VYsliderValueMin = -200.0;
+    var VYsliderValueMax = 250.0;
+    var VYsliderValue = vy;
+    var VYsliderDecimals = 1.0;
+
+    var arraySize = 10001;
+    var position = new Array(arraySize);
+    for (var i = 0; i < arraySize; i++) {
+        position[i] = {};
+        position[i].x = xPos;
+        position[i].y = yPos;
+    }
+
+    reset();
+    drawMotion();
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+        if ((time >= 120.0) || (xPos > xBase+450) || (Math.abs(yPos-(yBase+150))>180)) runFlag = 0;
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " xPos = " + xPos + " time = " + time + " yPos = " + yPos);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // set background color for the entire thing
+            context.fillStyle = "#ffd";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // draw EField slider
+
+            drawSlider(EsliderX, EsliderY, EsliderXMin, EsliderXMax, EsliderValueMin, EsliderValueMax, EsliderValue, EsliderDecimals);
+            var sLabel = 'Electric field = ';
+            sLabel = sLabel + EsliderValue.toFixed(EsliderDecimals) + ' N/C';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,EsliderXMin+0.5*(EsliderXMax-EsliderXMin), EsliderY-25);
+
+
+            // draw charge slider
+
+            drawSlider(QsliderX, QsliderY, QsliderXMin, QsliderXMax, QsliderValueMin, QsliderValueMax, QsliderValue, QsliderDecimals);
+            var sLabel = 'Charge = ';
+            sLabel = sLabel + QsliderValue.toFixed(QsliderDecimals) + ' nC';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,QsliderXMin+0.5*(QsliderXMax-QsliderXMin), QsliderY-25);
+
+
+            // draw v_x slider
+
+            drawSlider(VXsliderX, VXsliderY, VXsliderXMin, VXsliderXMax, VXsliderValueMin, VXsliderValueMax, VXsliderValue, VXsliderDecimals);
+            sLabel = 'X Velocity = ';
+            sLabel = sLabel + vx.toFixed(VXsliderDecimals) + ' m/s';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,VXsliderXMin+0.5*(VXsliderXMax-VXsliderXMin), VXsliderY-25);
+
+
+            // draw v_y slider
+
+            drawSlider(VYsliderX, VYsliderY, VYsliderXMin, VYsliderXMax, VYsliderValueMin, VYsliderValueMax, VYsliderValue, VYsliderDecimals);
+            sLabel = 'Y Velocity = ';
+            sLabel = sLabel + (VYsliderValue).toFixed(VYsliderDecimals) + ' m/s';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'black';
+            context.fillText(sLabel,VYsliderXMin+0.5*(VYsliderXMax-VYsliderXMin), VYsliderY-25);
+
+            index = index + 1;
+            time = index/100.0;
+            //        console.log(index + "  time = " + time + " x = " + xPos + " y = " + yPos);
+
+            var maxVectors = 0.6*EField;
+            var spaceBetweenVectors = 440/maxVectors;
+            for (var i = 0; i <= maxVectors; i++) {
+                drawArrow(0,-70,xBase +i*spaceBetweenVectors,yBase-10,"purple");   // draw electric field arrows
+
+            }
+
+            // draw the charge
+            context.fillStyle = 'red';
+            if (charge < 0.0) context.fillStyle = 'blue';
+            if (charge == 0.0) context.fillStyle = 'grey';
+            context.beginPath();
+            context.arc(xPos,yPos, 3*radius, 0, 2 * Math.PI, false);
+            context.fill();
+
+            context.strokeStyle = context.fillStyle;
+            context.beginPath();
+            context.moveTo(position[0].x,position[0].y);
+            for (i = 1; i < index; i++) {
+                context.lineTo(position[i].x,position[i].y);
+            }
+            context.stroke();
+
+// update the positions and y velocity
+            fY = charge*EField;
+            vy = vy + fY*deltat;
+            xPos = xPos + vx*deltat;
+            //      console.log(index + "  time = " + time + " x = " + xPos + " y = " + yPos + " vy = " + vy + " deltat = " + deltat);
+            yPos = yPos + vy*deltat;
+            position[index].x = xPos;
+            position[index].y = yPos;
+            //      console.log(index + "  time = " + time + " x = " + xPos + " y = " + yPos);
+            drawArrow(vx/10,-vy/10,xPos,yPos,"red");
+
+
+            //          context.font = '16pt Calibri';
+            //          context.fillStyle = 'black';
+
+
+//        var timeLabel = 't = ';
+//        timeLabel = timeLabel + time.toFixed(2) + ' s';
+//        context.textAlign = 'center';
+//        context.fillText(timeLabel, xSupport, 410);
+
+        }
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 300/30);
+        }
+    }
+
+    function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+        var theta = Math.atan2(Fy,Fx);
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px, Py);
+        context.lineTo(Px+5*Fx, Py-5*Fy);
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.fillStyle = arrowColor;
+        context.beginPath();
+        context.moveTo(Px+5*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.lineTo(Px+5*Fx,Py-5*Fy);
+        context.lineTo(Px+5*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+
+        context.stroke();
+        context.fill();
+
+    }
+
+    function drawAxes(xAxisStart,yAxisStart,xNum, yNum, xOffset, xIncrement, yIncrement, xNumDecimals, yNumDecimals, xAxisTitle, yAxisTitle, graphTitle) {
+        // set background color for the graph
+        context.fillStyle = "#eff";
+        context.fillRect(xAxisStart, yAxisStart, 40*xNum, 40*yNum);
+
+        var axisLabel = '';
+        var axisValue = 0;
+
+        // vertical grid lines
+        context.lineWidth = 2;
+        context.strokeStyle = '#888';
+
+        for (var i = 0; i <= xNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart+40*i, yAxisStart);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum+10);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = xOffset+xIncrement*(i);
+            axisLabel = axisValue.toFixed(xNumDecimals);
+            context.fillText(axisLabel, xAxisStart+40*i, yAxisStart+40*yNum+20);
+        }
+
+        // horizontal grid lines
+        for (i = 0; i <= yNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart-10, yAxisStart+40*i);
+            context.lineTo(xAxisStart+40*xNum, yAxisStart+40*i);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = yIncrement*(yNum-i);
+            axisLabel = axisValue.toFixed(yNumDecimals);
+            context.fillText(axisLabel, xAxisStart-30, yAxisStart+40*i);
+
+        }
+
+        // x-axis
+        context.strokeStyle = '#000';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(xAxisStart-1, yAxisStart+40*yNum);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum-6);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum);
+        context.lineTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum+6);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.fillText(xAxisTitle, xAxisStart+40*xNum+24, yAxisStart+40*yNum);
+
+        // y-axis
+        context.strokeStyle = '#000';
+        context.beginPath();
+        context.moveTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart-6, yAxisStart-10);
+        context.lineTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart+6, yAxisStart-10);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.strokeStyle = '#000';
+        context.textAlign = 'center';
+        //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xAxisStart );
+
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(yAxisTitle, xAxisStart-30, yAxisStart - 35);
+
+        // graph title
+        context.font = 'bold 18pt Calibri';
+        context.fillStyle = 'purple';
+        context.textAlign = 'center';
+        context.fillText(graphTitle, xAxisStart+40*xNum/2, yAxisStart-24);
+
+    }
+
+    function drawAxesMidY(xAxisStart,yAxisStart,xNum, yNum, xOffset, xIncrement, yIncrement, xNumDecimals, yNumDecimals, xAxisTitle, yAxisTitle, graphTitle) {
+        // set background color for the graph
+        context.fillStyle = "#eff";
+        context.fillRect(xAxisStart, yAxisStart, 40*xNum, 40*yNum);
+
+        var axisLabel = '';
+        var axisValue = 0;
+
+        // vertical grid lines
+        context.lineWidth = 2;
+        context.strokeStyle = '#888';
+
+        for (var i = 0; i <= xNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart+40*i, yAxisStart);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum/2+10);
+            context.stroke();
+            context.moveTo(xAxisStart+40*i, yAxisStart+40*yNum/2+30);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = xOffset + xIncrement*(i);
+            axisLabel = axisValue.toFixed(xNumDecimals);
+            if (i > 0) context.fillText(axisLabel, xAxisStart+40*i, yAxisStart+40*yNum/2+20);
+        }
+
+        // horizontal grid lines
+        for (i = 0; i <= yNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart-10, yAxisStart+40*i);
+            context.lineTo(xAxisStart+40*xNum, yAxisStart+40*i);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = yIncrement*(yNum/2-i);
+            axisLabel = axisValue.toFixed(yNumDecimals);
+            context.fillText(axisLabel, xAxisStart-30, yAxisStart+40*i);
+
+        }
+
+        // x-axis
+        context.strokeStyle = '#000';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(xAxisStart-1, yAxisStart+40*yNum/2);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum/2);
+        context.stroke();
+        context.moveTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum/2-6);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum/2);
+        context.lineTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum/2+6);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.fillText(xAxisTitle, xAxisStart+40*xNum+24, yAxisStart+40*yNum/2);
+
+        // y-axis
+        context.strokeStyle = '#000';
+        context.beginPath();
+        context.moveTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart-6, yAxisStart-10);
+        context.lineTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart+6, yAxisStart-10);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.strokeStyle = '#000';
+        context.textAlign = 'center';
+        //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xAxisStart );
+
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(yAxisTitle, xAxisStart-30, yAxisStart - 35);
+
+        // graph title
+        context.font = 'bold 18pt Calibri';
+        context.fillStyle = 'purple';
+        context.textAlign = 'center';
+        context.fillText(graphTitle, xAxisStart+40*xNum/2, yAxisStart-24);
+
+    }
+
+    function drawSlider(sliderX, sliderY, sliderXMin, sliderXMax, sliderValueMin, sliderValueMax, sliderValue, sliderDecimals) {
+
+
+        context.strokeStyle = '#999';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderXMax,sliderY);
+        context.stroke();
+
+        context.strokeStyle = '#44f';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderX,sliderY);
+        context.stroke();
+
+        context.beginPath();
+        context.arc(sliderX, sliderY, 10, 0, 2 * Math.PI, false);
+        context.fillStyle = '#00f';
+        context.fill();
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+
+    }
+
+    //  Mouse and Touch event functions from  Wolfgang Bauer
+
+    function whereClicked(x_,y_,what_) {    // underscore denotes local variables
+        //if (what_ == 'down') {console.log('('+x_+','+y_+')'+what_)};
+//	console.log('('+x_+','+y_+')'+what_);
+//    console.log("x offset = " + charge1X + " y offset = " + charge1Y);
+        if ((Math.abs(x_ - (EsliderX)) < 40) && (Math.abs(y_ - EsliderY) < 40))   // moving the g slider
+        {
+            EsliderX = x_ ;
+            if (EsliderX < EsliderXMin) EsliderX = EsliderXMin;
+            if (EsliderX > EsliderXMax) EsliderX = EsliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (QsliderX)) < 40) && (Math.abs(y_ - QsliderY) < 40))   // moving the g slider
+        {
+            QsliderX = x_ ;
+            if (QsliderX < QsliderXMin) QsliderX = QsliderXMin;
+            if (QsliderX > QsliderXMax) QsliderX = QsliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (VXsliderX)) < 40) && (Math.abs(y_ - VXsliderY) < 40))   // moving the g slider
+        {
+            VXsliderX = x_ ;
+            if (VXsliderX < VXsliderXMin) VXsliderX = VXsliderXMin;
+            if (VXsliderX > VXsliderXMax) VXsliderX = VXsliderXMax;
+            reset();
+        } else if ((Math.abs(x_ - (VYsliderX)) < 40) && (Math.abs(y_ - VYsliderY) < 40))   // moving the g slider
+        {
+            VYsliderX = x_ ;
+            if (VYsliderX < VYsliderXMin) VYsliderX = VYsliderXMin;
+            if (VYsliderX > VYsliderXMax) VYsliderX = VYsliderXMax;
+            reset();
+        }
+//        reset();
+//      }
+//      else if ((Math.abs(x_ - (charge2X)) < 15) && (Math.abs(y_ - charge2Y) < 15))  // moving the right-hand charge
+//      {
+//        charge2X = x_ ;
+//        charge2Y = y_ ;
+//        reset();
+//      }
+
+        if (what_ == 'down') {
+//		dragRect = true;
+//		x1 = x_;     // x1, y1 are global variables
+//		y1 = y_;
+        }
+        if (what_ == 'move') {
+//		dragRect = true;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+        if (what_ == 'up') {
+//		dragRect = false;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+    }
+
+    function myMove(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawAll();
+//	drawMotion();
+
+    }
+
+    function myDown(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        canvas.onmousemove = myMove;
+//	drawMotion();
+    }
+
+    function myUp(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        canvas.onmousemove = null;
+//	drawMotion();
+    }
+
+    function myTouchMove(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawMotion();
+    }
+
+    function myTouchStart(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+//	drawMotion();
+    }
+
+    function myTouchEnd(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+//	drawMotion();
+    }
+
+
+</script>
+<p>This is a simulation of a charged particle being launched horizontally into a uniform electric field that is directed down.</p>
+
+<p>The sliders allow you to adjust the strength of the electric field as well as the charge on the particle. Note
+    that gravity is neglected - we assume the gravitational force is negligible for all the situations shown.
+    Explore the simulation - what changes when the strength of the electric field is changed? What changes when the particle's charge is adjusted? </p>
+
+
+<p>Simulation written by Andrew Duffy, modified by Mahesh Kurmi.</p>
+
+</body>
+</html>

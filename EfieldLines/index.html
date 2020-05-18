@@ -52,15 +52,17 @@
                 [
                     {
                         type: "charge",  charge:  5.0,
-                        x: 0.0, y: 0.0, z: 0.0,
-                        fieldLineDensity: 5.0,
-                        bind: {set: "y", from: "q1"}
+                        x: -20, y: 0.0, z: 0.0,
+                        nfieldLines: 25.0,
+                        bind: {set: "charge", from: "q1"}
+
                     },
+
                     {
-                        type: "Gaussian sphere",
-                        x:      0.0, y:   0.0, z: 0.0,
-                        r:     20.0,
-                        bind: {set: "r", from: "r"}
+                        type: "charge",  charge:  -5.0,
+                        x: 20.0, y: 0.0, z: 0.0,
+                        nfieldLines: 25.0,
+                        bind: {set: "charge", from: "q2"}
                     }
                 ]
         };
@@ -71,7 +73,7 @@
 
 <figure class="center">
     <!--This is the canvas for our electric field visualization. -->
-    <canvas id="chargeCanvas" width="300" height="300"></canvas>
+    <canvas id="chargeCanvas" width="480" height="480"></canvas>
     <!-- This lesson element controls q1 ranging from -5 to 5 in steps of .2 -->
     <figcaption>The electric field from a <span class="lessonElement"
                                                 data-type="rangedSource"

@@ -1,0 +1,317 @@
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-8175315-20"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-8175315-20');
+    </script>
+
+    <meta charset="utf-8">
+    <title>Electric Field</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; width:600px; margin-left:auto; margin-right:auto;">
+<center>
+    <div id="canvasesdiv" style="position:relative; width:600px; height:400px">
+        <canvas id="myCanvas" style="position:absolute; left:0px; top:0px;" width="600" height="400"></canvas>
+    </div>
+    <div>Value of the left charge</div>
+    <div id="slider1">
+        -10 C <input type="range" id="Charge1Value" min="-10" max="10" value="5.0" step="1.0" oninput="showQ1(this.value)" onchange="showQ1(this.value)"> +10 C
+        <div id="initialQ1Value">5</div>
+    </div>
+    <div>Value of the right charge</div>
+    <div id="slider2">
+        -10 C <input type="range" id="Charge2Value" min="-10" max="10" value="-5.0" step="1.0" oninput="showQ2(this.value)" onchange="showQ2(this.value)"> +10 C
+        <div id="initialQ2Value">-5</div>
+    </div>
+
+</center>
+
+<script>
+
+    // Simulation first posted on 8-3-2015 - written by Andrew Duffy
+    // Revised by AD on 2-15-2016 with ability to drag the charges around
+    // Revised by AD on 3-2-2016 to fix a typo, update the arrow drawing routine, and switch to a denser field vector pattern
+
+
+    function showQ1(newValue)
+    {
+        //get the element
+        var display = document.getElementById("initialQ1Value");
+        //show the amount
+        display.innerHTML=newValue;
+        Q1 = Number(newValue);
+        drawMotion();
+    }
+
+    function showQ2(newValue)
+    {
+        //get the element
+        var display = document.getElementById("initialQ2Value");
+        //show the amount
+        display.innerHTML=newValue;
+        Q2 = Number(newValue);
+        drawMotion();
+    }
+
+
+
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
+    canvas.onmousedown = myDown;							// mouse event handler for computer browsers
+    canvas.onmouseup = myUp;								// mouse event handler for computer browsers
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+
+    var index = 0;
+    var xBase = 50;
+    var yBase = 200;
+    var radius = 6;
+    var runFlag = 1;
+    var time = 0.0;
+    var timer;
+    var charge1X = xBase+110;
+    var charge1Y = yBase;
+    var charge2X = xBase+390;
+    var charge2Y = yBase;
+    var Ex = 0;
+    var Ey = 0;
+    var rSq = 0;
+    var xPos = 0;
+    var yPos = 0;
+    var vectorColor = 'black';
+    var Q1 = 5.0;
+    var Q2 = -5.0;
+
+
+    drawMotion();
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+        runFlag = 1;
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " yPos = " + yPos + " index = " +index);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            index = index + 1;
+
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // set background color for the entire thing
+            context.fillStyle = "#ffd";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // set line color
+            context.strokeStyle = '#999';
+            context.lineWidth = 2;
+
+            // draw charges
+            if (Math.abs(Q1) > 0.2) {
+                if (Q1 > 0) {
+                    context.fillStyle = 'red';
+                    context.strokeStyle = 'red';
+                }
+                else {
+                    context.fillStyle = 'blue';
+                    context.strokeStyle = 'blue';
+                }
+
+                context.beginPath();
+                context.arc(charge1X, charge1Y, radius, 0, 2 * Math.PI, false);
+                context.fill();
+                context.lineWidth = 2;
+                context.stroke();
+            }
+
+            if (Math.abs(Q2) > 0.2) {
+                if (Q2 > 0) {
+                    context.fillStyle = 'red';
+                    context.strokeStyle = 'red';
+                }
+                else {
+                    context.fillStyle = 'blue';
+                    context.strokeStyle = 'blue';
+                }
+                context.beginPath();
+                context.arc(charge2X, charge2Y, radius, 0, 2 * Math.PI, false);
+                context.fill();
+                context.lineWidth = 2;
+                context.stroke();
+            }
+
+            // draw field vectors
+            for (var i = -7; i <= 7; i++) {
+                Ex = Ey = 0;
+                xPos = 300+40*i;
+                for (var j = -4; j<= 4; j++) {
+                    yPos = yBase + 40*j;
+                    context.beginPath();
+                    context.arc(xPos, yPos, 0.33*radius, 0, 2 * Math.PI, false);
+                    context.fillStyle = 'black';
+                    context.fill();
+                    context.lineWidth = 2;
+                    context.strokeStyle = 'black';
+                    context.stroke();
+                    rSq = (xPos-charge1X)*(xPos-charge1X) + (yPos-charge1Y)*(yPos-charge1Y);
+                    Ex = 6e3*Q1*(xPos-charge1X)/Math.pow(rSq,1.5);
+                    Ey = 6e3*Q1*(charge1Y-yPos)/Math.pow(rSq,1.5);
+                    rSq = (xPos-charge2X)*(xPos-charge2X) + (yPos-charge2Y)*(yPos-charge2Y);
+                    Ex = Ex - 6e3*Q2*(charge2X-xPos)/Math.pow(rSq,1.5);
+                    Ey = Ey - 6e3*Q2*(yPos-charge2Y)/Math.pow(rSq,1.5);
+                    E = Math.sqrt(Ex*Ex + Ey*Ey);
+                    Ex = 6*Ex/E;
+                    Ey = 6*Ey/E;
+                    E = E*40;
+//             console.log(E);
+
+                    if (E > 255) E = 255;
+                    E = Math.round(255-E);
+                    grayString = E.toString(16);
+                    if (grayString.length == 1) grayString = "0"+grayString;
+
+                    vectorColor = "#" + grayString+grayString+grayString;
+                    drawArrow(Ex,Ey,xPos,yPos,vectorColor)
+
+                }
+            }
+        }
+    }
+
+    function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+        var theta = Math.atan2(Fy,Fx);
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px-2.5*Fx, Py+2.5*Fy);
+        context.lineTo(Px+2.5*Fx, Py-2.5*Fy);
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.fillStyle = arrowColor;
+        context.beginPath();
+        context.moveTo(Px+2.5*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-2.5*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.lineTo(Px+2.5*Fx,Py-2.5*Fy);
+        context.lineTo(Px+2.5*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-2.5*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+
+        context.stroke();
+        context.fill();
+
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 1000/30);
+        }
+    }
+
+    //  Mouse and Touch event functions from  Wolfgang Bauer
+
+    function whereClicked(x_,y_,what_) {    // underscore denotes local variables
+        //if (what_ == 'down') {console.log('('+x_+','+y_+')'+what_)};
+//	console.log('('+x_+','+y_+')'+what_);
+//    console.log("x offset = " + charge1X + " y offset = " + charge1Y);
+        if ((Math.abs(x_ - (charge1X)) < 15) && (Math.abs(y_ - charge1Y) < 15))   // moving the left-hand charge
+        {
+            charge1X = x_ ;
+            charge1Y = y_ ;
+
+//        reset();
+        }
+        else if ((Math.abs(x_ - (charge2X)) < 15) && (Math.abs(y_ - charge2Y) < 15))  // moving the right-hand charge
+        {
+            charge2X = x_ ;
+            charge2Y = y_ ;
+//        reset();
+        }
+
+        if (what_ == 'down') {
+//		dragRect = true;
+//		x1 = x_;     // x1, y1 are global variables
+//		y1 = y_;
+        }
+        if (what_ == 'move') {
+//		dragRect = true;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+        if (what_ == 'up') {
+//		dragRect = false;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+    }
+
+    function myMove(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawAll();
+        drawMotion();
+
+    }
+
+    function myDown(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        canvas.onmousemove = myMove;
+        drawMotion();
+    }
+
+    function myUp(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        canvas.onmousemove = null;
+        drawMotion();
+    }
+
+    function myTouchMove(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+        drawMotion();
+    }
+
+    function myTouchStart(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        drawMotion();
+    }
+
+    function myTouchEnd(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        drawMotion();
+    }
+</script>
+<p>The simulation shows the electric field near two charged particles.
+    <BR>If the particle is drawn in red, it has a positive charge.
+    <BR>If the particle is drawn in blue, it has a negative charge.
+<p>You should be able to click-and-drag the particles to move them around the screen,
+    and use the sliders to change the charges.</p>
+</body>
+</html>

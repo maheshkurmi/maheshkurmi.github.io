@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiple Visualizations on a Page</title>
+    <link   rel="stylesheet"          href="vfield.css" type="text/css" />
+
+    <!-- Lesson.js uses these styles -->
+    <link   rel="stylesheet" type="text/css"
+            href="http://vizit.github.io/lesson/css/Lesson.css">
+    <link   rel="prev"                href="sideBySide.html">
+    <link   rel="next"                href="interactiveField.html">
+    <link   rel="stylesheet" type="text/css"
+            href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css" />
+    <script async src=https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.js></script>
+    <script defer src="http://vizit.github.io/lesson/js/Lesson.min.js">
+    </script>
+    <script defer src="http://vizit.github.io/vfield/js/VField.min.js">
+    </script>
+    <script>
+        // This time VISUALIZATION_CONFIG is an array
+        var VISUALIZATION_CONFIG
+            = [
+            {
+                // The first entry is a simple vector field
+                type:      "simple vector field",
+                // The id of the canvas we draw into
+                canvas:    "chargeCanvasI",
+                scale:     5.0,
+                arrowSize: 1.0,
+                // f is a vector valued function.
+                f:  {
+                    type: "charge",  charge:  5.0,
+                    x: 0.0, y: 0.0, z: 0.0,
+                    nfieldLines: 35.0,
+                    // Set the charge to q1 when it changes.
+                    bind: {set: "charge", from: "q1"}
+                }
+            },
+            {
+                // The first entry is a simple vector field
+                type:      "simple vector field",
+                // The id of the canvas we draw into
+                canvas:    "chargeCanvasII",
+                scale:     5.0,
+                arrowSize: 1.0,
+                // f is a vector valued function.
+                f:  [{
+                    type: "charge",  charge:  5.0,
+                    x: -2.0, y: 0.0, z: 0.0,
+                    nfieldLines: 35.0,
+                },
+                    {
+                        type: "charge",  charge:  5.0,
+                        x: 2.0, y: 0.0, z: 0.0,
+                        nfieldLines: 35.0,
+                    }]
+            },
+            {
+                // The second entry is an electric field.
+                type:          "electric field",
+                // The id of the canvas we draw into
+                canvas:        "chargeCanvasIII",
+                scale:         30.0,
+                arrowHeadSize: 1.0,
+                arrowSpacing:  15.0,
+                // Position a single charge at the origin
+                elements:
+                    {
+                        type: "charge",  charge:  5.0,
+                        x: 0.0, y: 0.0, z: 0.0,
+                        fieldLineDensity: 5,
+                        bind: {set: "charge", from: "q2"}
+                    }
+            },
+            {
+                // The electric field graph displays charges,
+                // field lines and Gaussian surfaces.
+                type:          "electric field",
+                // The id of the canvas we draw into
+                canvas:        "chargeCanvasIV",
+                scale:         50.0,
+                arrowHeadSize: 1.0,
+                arrowSpacing:  15.0,
+                // Position a single charge at the origin
+                elements:
+                    [
+                        {
+                            type: "charge",  charge:  5.0,
+                            x: -20, y: 0.0, z: 0.0,
+                            fieldLineDensity: 3,
+                        },
+
+                        {
+                            type: "charge",  charge:  -5.0,
+                            x: 20.0, y: 0.0, z: 0.0,
+                            fieldLineDensity:3,
+                        }
+                    ]
+            },
+            {
+                // The electric field graph displays charges,
+                // field lines and Gaussian surfaces.
+                type:          "electric field",
+                // The id of the canvas we draw into
+                canvas:        "chargeCanvasV",
+                scale:         50.0,
+                arrowHeadSize: 1.0,
+                arrowSpacing:  15.0,
+                // Position a single charge at the origin
+                elements:
+                    [
+                        {
+                            type: "charge",  charge:  5.0,
+                            x: -20, y: 0.0, z: 0.0,
+                            fieldLineDensity: 5,
+                            bind: {set: "charge", from: "q3"}
+
+                        },
+
+                        {
+                            type: "charge",  charge:  5.0,
+                            x: 20.0, y: 0.0, z: 0.0,
+                            fieldLineDensity:5,
+                            bind: {set: "charge", from: "q4"}
+                        }
+                    ]
+            }
+        ];
+    </script>
+</head>
+<body>
+<div class="wrapper">
+    <div id="main">
+
+        <div class="content">
+
+            <h2>Vector Field vs field lines</h2>
+            <p id="nowebgl" class="error"></p>
+            <span color="darkgreen"> Note that all figures are interactive, mouse drag to rotate and mouse scroll to  zoom in/out</span>
+            <p>
+                As mentioned earlier, our model is that the charge on an object (the source charge) alters space in the region around it in such a way that when another charged object (the test charge) is placed in that region of space, that test charge experiences an electric force.
+                The concept of electric field lines, and of electric field line diagrams, enables us to visualize the way in which the space is altered, allowing us to visualize the field.
+
+                Our starting point is the physical fact that the electric field of the source charge causes a test charge in that field to experience a force. By definition, electric field vectors point in the same direction as the electric force that a (hypothetical) positive test charge would experience, if placed in the field             </p>
+
+          <section class="examples">
+                    <figure class="center">
+                        <!--This is a canvas for our electric field visualization. -->
+                        <canvas id="chargeCanvasI" width="300" height="300"></canvas>
+                        <figcaption>The electric field from a point charge <span class="lessonElement"
+                                                                                 data-type="rangedSource"
+                                                                                 data-name="q1"
+                                                                                 data-value="5.0"
+                                                                                 data-min="-5.0"
+                                                                                 data-max="5.0"
+                                                                                 data-step="0.2"></span>
+                            statC<sup>1</sup> represented
+                            as a vector field.</figcaption>
+                    </figure>
+          </section>
+
+            <p>
+                This diagram is correct, but it becomes less useful as the source charge distribution becomes more complicated. For example, consider the vector field diagram of a dipole           </p>
+
+            <section class="examples">
+                <figure class="center">
+                    <!--This is a canvas for our electric field visualization. -->
+                    <canvas id="chargeCanvasII" width="300" height="300"></canvas>
+                    <figcaption>The vector field of a dipole. Even with just two identical charges, the vector field diagram becomes difficult to understand.
+                    </figcaption>
+                </figure>
+            </section>
+
+            <p>
+                There is a more useful way to present the same information. Rather than drawing a large number of increasingly smaller vector arrows, we instead connect all of them together,
+                forming continuous lines and curves, as shown below for single point charge
+            </p>
+            <section class="examples">
+                <div class="example left">
+                    <figure class="right">
+                        <!--This is a canvas for our electric field visualization. -->
+                        <canvas id="chargeCanvasIII" width="300" height="300"></canvas>
+                        <figcaption>The electric field from a point charge represented
+                            as field lines.</figcaption>
+                    </figure>
+                </div>
+
+                <div class="example right">
+                    <figure class="left">
+                        <!--This is another canvas for our electric field visualization. -->
+                        <canvas id="chargeCanvasIV" width="400" height="400"></canvas>
+                        <figcaption>The electric field from a dipole represented
+                            as field lines.
+                        </figcaption>
+
+                    </figure>
+                </div>
+            </section>
+            <p>
+            Although it may not be obvious at first glance, these field diagrams convey the same information about the electric field as do the vector diagrams. First, the direction of the field at every point is simply the direction of the tangent vector on line at that same point.
+            As for the magnitude of the field, that is indicated by the field line density—that is, the number of field lines per unit area passing through a small cross-sectional area perpendicular to the electric field. As a result, if the field lines are close together (that is, the field line density is greater), this indicates that the magnitude of the field is large at that point.
+
+        <h2>2D Interactive simulator: Field lines due to 2 Point charges</h2>
+        <section>
+        <iframe style="border:0px" src="lines2d.html" width="100%" height="660"> </iframe>
+        </section>
+
+            <h2>3D Interactive simulator: Field lines due to 2 Point charges</h2>
+        <section class="examples">
+            <figure class="center">
+                Hover the mouse over charge values written below this figure, a slider shows up, you can drag the slider to adjust charge values. Try making charges same sign opposite sign etc.
+                <!--This is a canvas for our electric field visualization. -->
+                <canvas id="chargeCanvasV" width="400" height="400"></canvas>
+                <figcaption>The vector field of two charges q1 =<span class="lessonElement"
+                                                                      data-type="rangedSource"
+                                                                      data-name="q3"
+                                                                      data-value="5.0"
+                                                                      data-min="-5.0"
+                                                                      data-max="5.0"
+                                                                      data-step="0.2"></span> statC and
+                    q2 =<span class="lessonElement"
+                              data-type="rangedSource"
+                              data-name="q4"
+                              data-value="5.0"
+                              data-min="-5.0"
+                              data-max="5.0"
+                              data-step="0.2"></span> statC.
+                    . Change the values of charges to see field lines.
+                </figcaption>
+            </figure>
+        </section>
+
+
+        <p>
+            <div class="note1">
+            <p class="boxtitle">From above simulations try to conclude following points</p>
+
+
+            <ol>
+                <li>Electric field lines either originate on positive charges or come in from infinity, and either terminate on negative charges or extend out to infinity.</li>
+                <li>The number of field lines originating or terminating at a charge is proportional to the magnitude of that charge. A charge of 2<em>q</em> will have twice as many lines as a charge of <em>q</em>.</li>
+                <li>At every point in space, the field vector at that point is tangent to the field line at that same point.</li>
+                <li>The field line density at any point in space is proportional to (and therefore is representative of) the magnitude of the field at that point in space.</li>
+                <li>Field lines can never cross. Since a field line represents the direction of the field at a given point, if two field lines crossed at some point, that would imply that the electric field was pointing in two different directions at a single point. This in turn would suggest that the (net) force on a test charge placed at that point would point in two different directions. Since this is obviously impossible, it follows that field lines must never cross.</li>
+            </ol>
+
+        </div>
+                Always keep in mind that field lines serve only as a convenient way to visualize the electric field; they are not physical entities. Although the direction and relative intensity of the electric field can be deduced from a set of field lines, the lines can also be misleading. For example, the field lines drawn to represent the electric field in a region must, by necessity, be discrete. However, the actual electric field in that region exists at every point in space.
+            </p>
+        </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiple Visualizations on a Page</title>
+    <link   rel="stylesheet"          href="vfield.css" type="text/css" />
+
+    <!-- Lesson.js uses these styles -->
+    <link   rel="stylesheet" type="text/css"
+            href="http://vizit.github.io/lesson/css/Lesson.css">
+    <link   rel="prev"                href="sideBySide.html">
+    <link   rel="next"                href="interactiveField.html">
+    <link   rel="stylesheet" type="text/css"
+            href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css" />
+    <script async src=https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.js></script>
+    <script defer src="http://vizit.github.io/lesson/js/Lesson.min.js">
+    </script>
+    <script defer src="http://vizit.github.io/vfield/js/VField.min.js">
+    </script>
+    <script>
+        // This time VISUALIZATION_CONFIG is an array
+        var VISUALIZATION_CONFIG
+            = [
+            {
+                // The first entry is a simple vector field
+                type:      "simple vector field",
+                // The id of the canvas we draw into
+                canvas:    "chargeCanvasI",
+                scale:     5.0,
+                arrowSize: 1.0,
+                // f is a vector valued function.
+                f:  [{
+                    type: "charge",  charge:  5.0,
+                    x: -2.0, y: 0.0, z: 0.0,
+                    nfieldLines: 35.0,
+                    // Set the charge to q1 when it changes.
+                    bind: {set: "charge", from: "q1"}
+                },{
+
+                    type: "charge",  charge:  5.0,
+                    x: 2.0, y: 0.0, z: 0.0,
+                    nfieldLines: 35.0,
+                    // Set the charge to q1 when it changes.
+                    bind: {set: "charge", from: "q1"}
+
+                }]
+            },
+            {
+                // The second entry is an electric field.
+                type:          "electric field",
+                // The id of the canvas we draw into
+                canvas:        "chargeCanvasII",
+                scale:         30.0,
+                arrowHeadSize: 1.0,
+                arrowSpacing:  15.0,
+                // Position a single charge at the origin
+                elements:
+                    {
+                        type: "charge",  charge:  5.0,
+                        x: 0.0, y: 0.0, z: 0.0,
+                        fieldLineDensity: 5,
+                        bind: {set: "charge", from: "q2"}
+                    }
+            },
+            {
+                // The electric field graph displays charges,
+                // field lines and Gaussian surfaces.
+                type:          "electric field",
+                // The id of the canvas we draw into
+                canvas:        "chargeCanvasIII",
+                scale:         50.0,
+                arrowHeadSize: 1.0,
+                arrowSpacing:  15.0,
+                // Position a single charge at the origin
+                elements:
+                    [
+                        {
+                            type: "charge",  charge:  5.0,
+                            x: -20, y: 0.0, z: 0.0,
+                            fieldLineDensity: 3,
+                            bind: {set: "charge", from: "q3"}
+
+                        },
+
+                        {
+                            type: "charge",  charge:  -5.0,
+                            x: 20.0, y: 0.0, z: 0.0,
+                            fieldLineDensity:3,
+                            bind: {set: "charge", from: "q4"}
+                        }
+                    ]
+            }
+        ];
+    </script>
+</head>
+<body>
+<div class="wrapper">
+    <div id="main">
+
+        <div class="content">
+            <div class="skills">
+                <p class="boxtitle">Learning Objectives</p>
+
+                <p>By the end of this section, you will be able to:</p>
+
+                <ul>
+                    <li>Explain the purpose of an electric field diagram</li>
+                    <li>Describe the relationship between a vector diagram and a field line diagram</li>
+                    <li>Explain the rules for creating a field diagram and why these rules make physical sense</li>
+                    <li>Sketch the field of an arbitrary source charge</li>
+                </ul>
+            </div>
+
+            <h2>Electric field lines due to Point charge</h2>
+            <p id="nowebgl" class="error"></p>
+
+            <p>
+                An electric field can be visualized by drawing field lines, which indicate both the magnitude and direction of the field. Field lines start on positive charges and end on negative charges. The direction of the field line at a point is the direction of the field at that point. The relative magnitude of the electric field is proportional to the density of the field lines.
+
+                Where the field lines are close together the field is strongest; where the field lines are far apart the field is weakest.
+
+                Another way to visualize field is to use field vectors. This conveys the message that every point in space has a field associated with it. The field vector at any point gives the direction of the field at the point, and the length of the vector shows the strength of the field.
+            </p>
+
+
+
+            <section class="examples">
+                <div class="example left">
+                    <figure class="right">
+                        <!--This is a canvas for our electric field visualization. -->
+                        <canvas id="chargeCanvasI" width="300" height="300"></canvas>
+                        <figcaption>The electric field from a point charge <span class="lessonElement"
+                                                                                 data-type="rangedSource"
+                                                                                 data-name="q1"
+                                                                                 data-value="5.0"
+                                                                                 data-min="-5.0"
+                                                                                 data-max="5.0"
+                                                                                 data-step="0.2"></span>
+                            statC<sup>1</sup> represented
+                            as a vector field.</figcaption>
+                    </figure>
+                </div>
+
+                <div class="example right">
+                    <figure class="left">
+                        <!--This is another canvas for our electric field visualization. -->
+                        <canvas id="chargeCanvasII" width="300" height="300"></canvas>
+                        <figcaption>The electric field from a point charge <span class="lessonElement"
+                                                                                 data-type="rangedSource"
+                                                                                 data-name="q2"
+                                                                                 data-value="5.0"
+                                                                                 data-min="-5.0"
+                                                                                 data-max="5.0"
+                                                                                 data-step="0.2"></span>
+                            statC<sup>2</sup> represented
+                            by field lines.</figcaption>
+                    </figure>
+                </div>
+
+                <h2>Electric field lines due to 2 Point charges</h2>
+                <p id="nowebgl" class="error"></p>
+
+                <p>
+                    An electric field can be visualized by drawing field lines, which indicate both the magnitude and direction of the field. Field lines start on positive charges and end on negative charges. The direction of the field line at a point is the direction of the field at that point. The relative magnitude of the electric field is proportional to the density of the field lines.
+
+                    Where the field lines are close together the field is strongest; where the field lines are far apart the field is weakest.
+
+                    Another way to visualize field is to use field vectors. This conveys the message that every point in space has a field associated with it. The field vector at any point gives the direction of the field at the point, and the length of the vector shows the strength of the field.
+                </p>
+                <section class="examples">
+                    <figure class="center">
+                        <!--This is a canvas for our electric field visualization. -->
+                        <canvas id="chargeCanvasIII" width="400" height="400"></canvas>
+                        <figcaption>The electric field from a point charge <span class="lessonElement"
+                                                                                 data-type="rangedSource"
+                                                                                 data-name="q3"
+                                                                                 data-value="5.0"
+                                                                                 data-min="-5.0"
+                                                                                 data-max="5.0"
+                                                                                 data-step="0.2"></span>
+                            statC<sup>1</sup> represented
+                            as a vector field.
+                            <span class="lessonElement"
+                                  data-type="rangedSource"
+                                  data-name="q4"
+                                  data-value="5.0"
+                                  data-min="-5.0"
+                                  data-max="5.0"
+                                  data-step="0.2"></span>
+                            statC<sup>1</sup></figcaption>
+
+                    </figure>
+
+
+                </section>
+
+
+        </div>
+    </div>
+</div>
+</body>
+</html>
