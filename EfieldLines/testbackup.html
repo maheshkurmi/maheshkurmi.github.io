@@ -200,3 +200,112 @@
 </div>
 </body>
 </html>
+
+
+
+
+<!doctype html>
+<html>
+<head>
+    <title>RElectric field lines 3D</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+    <!-- Lesson.js uses these styles -->
+    <link rel="stylesheet" type="text/css"
+          href="http://vizit.github.io/lesson/css/Lesson.css">
+    <script defer src="http://vizit.github.io/lesson/js/Lesson.min.js">
+    </script>
+    <script defer src="http://vizit.github.io/vfield/js/VField.min.js">
+    </script>
+
+    <script>
+        // This object is loaded by the VizBuilder on the DOMReady event.
+        var VISUALIZATION_CONFIG
+            = {
+            // The electric field graph displays charges,
+            // field lines and Gaussian surfaces.
+            type:          "electric field",
+            // The id of the canvas we draw into
+            canvas:        "chargeCanvas",
+            scale:         50.0,
+            arrowHeadSize: 1.0,
+            arrowSpacing:  15.0,
+            // Position a single charge at the origin
+            elements:
+                [
+                    {
+                        type: "charge",  charge:  5.0,
+                        x: -20, y: 0.0, z: 0.0,
+                        nfieldLines: 25.0,
+                        bind: {set: "charge", from: "q1"}
+
+                    },
+
+                    {
+                        type: "charge",  charge:  -5.0,
+                        x: 20.0, y: 0.0, z: 0.0,
+                        nfieldLines: 25.0,
+                        bind: {set: "charge", from: "q2"}
+                    }
+                ]
+        };
+    </script>
+</head>
+
+<body>
+
+<figure class="center">
+    <!--This is the canvas for our electric field visualization. -->
+    <canvas id="chargeCanvas" width="480" height="480"></canvas>
+    <!-- This lesson element controls q1 ranging from -5 to 5 in steps of .2 -->
+    <figcaption>The electric field from a <span class="lessonElement"
+                                                data-type="rangedSource"
+                                                data-name="q1"
+                                                data-value="5.0"
+                                                data-min="-5.0"
+                                                data-max="5.0"
+                                                data-step="0.2"></span>
+        statC charge.</figcaption>
+</figure>
+
+<p>
+    This <span class="lessonElement"
+               data-type="rangedSource"
+               data-name="q1"
+               data-value="5.0"
+               data-min="-5.0"
+               data-max="5.0"
+               data-step="0.2"></span> statC charge is surrounded
+    by a sphere of radius <span class="lessonElement"
+                                data-type="rangedSource"
+                                data-name="r"
+                                data-value="20.0"
+                                data-min="10.0"
+                                data-max="30.0"
+                                data-step="1.0"></span>cm.
+</p>
+</body>
+</html>
