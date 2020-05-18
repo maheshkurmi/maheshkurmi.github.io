@@ -565,3 +565,116 @@ pre.prettyprint
         overflow-x:    scroll;
     }
 }
+
+.setter
+{
+    box-shadow:       inset 0px 1px 0px rgba(255, 255, 255, 0.5),
+    0px 1px 2px rgba(0, 0, 0, 0.15);
+    background-color: #eeeeee;
+    background:       linear-gradient(top, #fbfbfb, #e1e1e1);
+    display:          inline-block;
+    border:           1px solid #d4d4d4;
+    border-radius:    3px;
+    padding:          .20em .5em;
+    text-shadow:      0 1px 1px white;
+    margin:           0;
+    color:            inherit;
+    font:             inherit;
+}
+
+/* https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient */
+.setter:hover
+{
+    background-color: #eeeeee;
+    background:       -webkit-linear-gradient(top, #ffffff, #dcdcdc);
+    background:       -moz-linear-gradient(   top, #ffffff, #dcdcdc);
+    background:       -o-linear-gradient(     top, #ffffff, #dcdcdc);
+    background:       linear-gradient(        top, #ffffff, #dcdcdc);
+}
+
+.setter:active
+{
+    -webkit-box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;
+    -moz-box-shadow:    inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;
+    box-shadow:         inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;
+    text-shadow:        0px 1px 0px rgba(255, 255, 255, 0.4);
+    background:         #eeeeee;
+    color:              #bbbbbb;
+}
+
+
+span.lessonRangedSource
+{
+    /* Make it evident to the user that there is an action associated with this element. */
+    text-decoration:  underline;
+    cursor:           pointer;
+    position:         relative;
+}
+
+.lessonRangedSource .bar
+{
+
+}
+
+
+input.lessonRangedSource[type="range"]
+{
+    -webkit-appearance: none;
+    -moz-appearance:    none;
+    background-color:   black;
+    height:             2px;
+    width:              11em;
+    position:           absolute;
+    bottom:             1.1em;
+    left:               -5em;
+    background:         #1d2e38;
+    border-radius:      20px;
+    opacity:            0;
+    -webkit-transition: all 0.5s ease;
+    -ms-transition:     all 0.5s ease;
+    transition:         all 0.5s ease;
+}
+
+.lessonRangedSource:hover input.lessonRangedSource, .lessonRangedSource:focus input.lessonRangedSource
+{
+    opacity: 1;
+}
+
+/*
+ * http://www.developerdrive.com/2013/09/how-to-style-range-sliders-in-webkit/
+ * https://coderwall.com/p/rw6i0q
+ */
+input.lessonRangedSource[type="range"]::-webkit-slider-thumb
+{
+    -webkit-appearance:    none;
+    -moz-appearance:       none;
+    position:              relative;
+    top:                   0px;
+    z-index:               1;
+    width:                 11px;
+    height:                11px;
+    cursor:                pointer;
+    -webkit-box-shadow:    0px 6px 5px 0px rgba(0,0,0,0.6);
+    box-shadow:            0px 6px 5px 0px rgba(0,0,0,0.6);
+    border-radius:         40px;
+    background-image:      -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ebf1f6), color-stop(50%,#abd3ee), color-stop(51%,#89c3eb), color-stop(100%,#d5ebfb));
+    background:            linear-gradient(to left bottom, #ebf1f6, 0%, #abd3ee, 50%, #89c3eb, 51%, #d5ebfb, 100%);
+}
+
+/* Duplicate of the above with moz selector */
+input.lessonRangedSource[type="range"]::-moz-range-thumb
+{
+    -webkit-appearance:    none;
+    -moz-appearance:       none;
+    position:              relative;
+    top:                   0px;
+    z-index:               1;
+    width:                 11px;
+    height:                11px;
+    cursor:                pointer;
+    -webkit-box-shadow:    0px 6px 5px 0px rgba(0,0,0,0.6);
+    box-shadow:            0px 6px 5px 0px rgba(0,0,0,0.6);
+    border-radius:         40px;
+    background-image:      -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ebf1f6), color-stop(50%,#abd3ee), color-stop(51%,#89c3eb), color-stop(100%,#d5ebfb));
+    background:            linear-gradient(to left bottom, #ebf1f6, 0%, #abd3ee, 50%, #89c3eb, 51%, #d5ebfb, 100%);
+}
