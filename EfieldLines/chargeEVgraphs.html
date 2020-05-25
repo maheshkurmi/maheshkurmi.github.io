@@ -1,0 +1,580 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <title>Field and Potential</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; width:700px; margin-left:auto; margin-right:auto;">
+<center>
+    <H3>Electric Field and Electric Potential</H3>
+    <div id="canvasesdiv" style="position:relative; width:700px; height:460px">
+        <canvas id="myCanvas" style="position:absolute; left:0px; top:0px;" height="460" width="700"></canvas>
+    </div>
+
+    <div>Charge of the particle on the left</div>
+    <div id="slider2">
+        -30 nC <input type="range" id="charge1Value" min="-30" max="30" value="10" step="1.0" oninput="showCharge1(this.value)" onchange="showCharge1(this.value)"> 30 nC
+        <div id="initialCharge1Value">10</div>
+    </div>
+    <div>Charge of the particle on the right</div>
+    <div id="slider4">
+        -30 nC <input type="range" id="charge2Value" min="-30" max="30" value="-10" step="1.0" oninput="showCharge2(this.value)" onchange="showCharge2(this.value)"> 30 nC
+        <div id="initialCharge2Value">-10</div>
+    </div>
+
+
+    <div id="Buttons4">Plot on the vertical axis:
+        <input type="button" id="yAxis1" value="Field only" onclick="yAxisGraph(1)">
+        <input type="button" id="yAxis2" value="Potential only" onclick="yAxisGraph(2)">
+        <input type="button" id="yAxis3" value="Both" onclick="yAxisGraph(3)">
+    </div>
+
+</center>
+
+<script>
+
+    // Simulation first posted on 1-20-2016, written by Andrew Duffy
+    // Typo in the written description corrected on 2-16-2016, by Andrew Duffy
+
+
+
+    function showCharge1(newCharge1)
+    {
+        //get the element
+        var display = document.getElementById("initialCharge1Value");
+        //show the amount
+        display.innerHTML=newCharge1;
+        charge1 = Number(newCharge1);
+        reset();
+    }
+
+    function showCharge2(newCharge2)
+    {
+        //get the element
+        var display = document.getElementById("initialCharge2Value");
+        //show the amount
+        display.innerHTML=newCharge2;
+        charge2 = Number(newCharge2);
+        reset();
+    }
+
+
+    function yAxisGraph(newYAxis)
+    {
+        yAxisChoice = newYAxis;
+
+        if (yAxisChoice == 1) {
+            yAxisTitle = 'E (V/m)';
+            graphTitle = 'Field vs. position';
+        }
+        if (yAxisChoice == 2) {
+            yAxisTitle = 'V (V)';
+            graphTitle = 'Potential vs. position';
+        }
+        if (yAxisChoice == 3) {
+            yAxisTitle = 'E (V/m); V (V)';
+            graphTitle = 'Field + Potential vs. position';
+        }
+
+        reset();
+    }
+
+
+    function reset() {
+        window.clearTimeout(timer);
+        index = -1;
+        time = 0.0;
+        xPos = xBase;
+        drawMotion();
+
+    }
+
+
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+    canvas.onmousedown = myDown;							// mouse event handler for computer browsers
+    canvas.onmouseup = myUp;								// mouse event handler for computer browsers
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+
+    var index = -1;
+    var xBase = 80;     // for the drawing
+    var xBase2 = 120;   // for the graph
+    var yBase = 420;     // for the drawing
+    var yBase2 = 60;    // for the graph
+    var xInit = 37;
+    var graphType = 1;
+    var graphTitle = 'Field vs. position';
+    var yAxisTitle = 'E (V/m)';
+    var xAxisTitle = 'x (m)';
+    var xAxisChoice = 1;
+    var yAxisChoice = 1;
+    var xIncrement = 1;
+    var xNumDecimals = 0;
+    var slope = 0.4;
+    var yIncrement = 500;
+    var yNumDecimals = 0;
+    var yStart = yBase+160;
+    var plotColor = '#ff00ff';
+    var circuitMode = 1;
+    var switchMode = 1;
+    var charge = 1.0;
+    var chargeColor = 'red';
+    var switchCharge = 4;
+    var v;
+    var radius = 6;
+    var time = 0.0;
+    var x = 0.0;
+    var x1 = -2.0;
+    var x2 = 2.0;
+    var charge1 = 10;
+    var charge2 = -10;
+    var xStart1 = -5.0;
+    var xEnd1 = x1 - 0.005;
+    var xStart2 = x1 + 0.005;
+    var xEnd2 = x2 - 0.005;
+    var xStart3 = x2 + 0.005;
+    var xEnd3 = 5.0;
+    var graphY = 8;
+    var graphX = 10;
+    var timer;
+    var runFlag = 1;
+    var scale=3;
+    drawMotion();
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " xPos = " + xPos);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            index = index + 1;
+            time = index/100.0;
+
+
+            // set background color for the entire thing
+            context.fillStyle = "#ffd";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // set background color for the graph
+            context.fillStyle = "#eff";
+            context.fillRect(xBase2, yBase2, 40*graphX, 40*graphY);
+
+            var axisLabel = '';
+            var axisValue = 0;
+
+            // vertical grid lines
+            for (var i = 0; i <= graphX; i++) {
+                context.beginPath();
+                context.moveTo(xBase2+40*i, yBase2);
+                context.lineTo(xBase2+40*i, yBase2+40*graphY/2+10);
+                context.stroke();
+                context.moveTo(xBase2+40*i, yBase2+40*graphY/2+30);
+                context.lineTo(xBase2+40*i, yBase2+40*graphY);
+                context.stroke();
+                context.font = '14pt Calibri';
+                context.fillStyle = 'black';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                axisValue = xIncrement*(i-5);
+                axisLabel = axisValue.toFixed(xNumDecimals);
+                if (i > 0) context.fillText(axisLabel, xBase2+40*i, yBase2+40*graphY/2+20);
+            }
+
+            // horizontal grid lines
+            for (i = 0; i <= graphY; i++) {
+                context.beginPath();
+                context.moveTo(xBase2-10, yBase2+40*i);
+                context.lineTo(xBase2+40*graphX, yBase2+40*i);
+                context.stroke();
+                context.font = '14pt Calibri';
+                context.fillStyle = 'black';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                axisValue = yIncrement*(4-i);
+                axisLabel = axisValue.toFixed(yNumDecimals);
+                context.fillText(axisLabel, xBase2-30, yBase2+40*i);
+
+            }
+
+            // x-axis
+            context.strokeStyle = '#000';
+            context.lineWidth = 3;
+            context.beginPath();
+            context.moveTo(xBase2-1, yBase2+40*graphY/2);
+            context.lineTo(xBase2+40*graphX+20, yBase2+40*graphY/2);
+            context.stroke();
+            context.moveTo(xBase2+40*graphX+10, yBase2+40*graphY/2-6);
+            context.lineTo(xBase2+40*graphX+20, yBase2+40*graphY/2);
+            context.lineTo(xBase2+40*graphX+10, yBase2+40*graphY/2+6);
+            context.lineJoin = 'miter';
+            context.stroke();
+            context.font = '16pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'left';
+            context.fillText(xAxisTitle, xBase2+40*graphX+24, yBase2+40*graphY/2);
+
+
+            // draw graph
+
+            if (yAxisChoice != 2) {
+                context.strokeStyle = "#990099";
+                var interval = (xEnd1-xStart1)/100;
+                context.beginPath();
+
+                context.moveTo(xBase2+200+(40/xIncrement)*xStart1, yBase2+40*graphY/2-(40/yIncrement)*((-9*scale*charge1/((x1-xStart1)*(x1-xStart1))
+                    +(-9*scale*charge2/((x2-xStart1)*(x2-xStart1))))));
+
+                for (i = 1; i <=100; i++) {
+                    context.lineTo(xBase2+200+(40/xIncrement)*(xStart1+i*interval), yBase2+40*graphY/2-(40/yIncrement)*((-9*scale*charge1/((x1-(xStart1+i*interval))*(x1-(xStart1+i*interval))))
+                        +(-9*scale*charge2/((x2-(xStart1+i*interval))*(x2-(xStart1+i*interval))))));
+                }
+                context.stroke();
+
+                interval = (xEnd2-xStart2)/100;
+                context.beginPath();
+                context.moveTo(xBase2+200+(40/xIncrement)*xStart2, yBase2+40*graphY/2-(40/yIncrement)*((9*charge1/((x1-xStart2)*(x1-xStart2)))
+                    +(-9*charge2/((x2-xStart2)*(x2-xStart2)))));
+
+                for (i = 1; i <=100; i++) {
+                    context.lineTo(xBase2+200+(40/xIncrement)*(xStart2+i*interval), yBase2+40*graphY/2-(40/yIncrement)*((9*scale*charge1/((x1-(xStart2+i*interval))*(x1-(xStart2+i*interval))))
+                        +(-9*scale*charge2/((x2-(xStart2+i*interval))*(x2-(xStart2+i*interval))))));
+                }
+                context.stroke();
+
+                interval = (xEnd3-xStart3)/100;
+                context.beginPath();
+                context.moveTo(xBase2+200+(40/xIncrement)*xStart3, yBase2+40*graphY/2-(40/yIncrement)*((9*scale*charge1/((x1-xStart3)*(x1-xStart3)))
+                    +(9*scale*charge2/((x2-xStart3)*(x2-xStart3)))));
+
+                for (i = 1; i <=100; i++) {
+                    context.lineTo(xBase2+200+(40/xIncrement)*(xStart3+i*interval), yBase2+40*graphY/2-(40/yIncrement)*((9*scale*charge1/((x1-(xStart3+i*interval))*(x1-(xStart3+i*interval))))
+                        +(9*scale*charge2/((x2-(xStart3+i*interval))*(x2-(xStart3+i*interval))))));
+                }
+                context.stroke();
+
+                //        context.beginPath();
+                //        context.arc(xBase2+(40/xIncrement)*chargeX, yBase2+40*graphY/2-charge*40*4/(chargeX*chargeX), 0.8*radius, 0, 2 * Math.PI, false);
+                //        context.fillStyle = "#990099";
+                //        context.fill();
+                //        context.lineWidth = 2;
+                //        context.strokeStyle = "#000000";
+                //        context.stroke();
+            }
+
+
+            if (yAxisChoice > 1) {
+                context.lineWidth = 3;
+                context.strokeStyle = "#009900";
+                var interval = (xEnd1-xStart1)/100;
+                context.beginPath();
+                context.moveTo(xBase2+200+(40/xIncrement)*xStart1, yBase2+40*graphY/2-(40/yIncrement)*((9*charge1/((x1-xStart1))
+                    +(9*charge2/((x2-xStart1))))));
+
+                for (i = 1; i <=100; i++) {
+                    context.lineTo(xBase2+200+(40/xIncrement)*(xStart1+i*interval), yBase2+40*graphY/2-(40/yIncrement)*((9*charge1/((x1-(xStart1+i*interval))))
+                        +(9*charge2/((x2-(xStart1+i*interval))))));
+                }
+                context.stroke();
+
+                interval = (xEnd2-xStart2)/100;
+                context.beginPath();
+                context.moveTo(xBase2+200+(40/xIncrement)*xStart2, yBase2+40*graphY/2-(40/yIncrement)*((9*charge1/((xStart2-x1)))
+                    +(9*charge2/((x2-xStart2)))));
+
+                for (i = 1; i <=100; i++) {
+                    context.lineTo(xBase2+200+(40/xIncrement)*(xStart2+i*interval), yBase2+40*graphY/2-(40/yIncrement)*((9*charge1/(((xStart2+i*interval)-x1)))
+                        +(9*charge2/((x2-(xStart2+i*interval))))));
+                }
+                context.stroke();
+
+                interval = (xEnd3-xStart3)/100;
+                context.beginPath();
+                context.moveTo(xBase2+200+(40/xIncrement)*xStart3, yBase2+40*graphY/2-(40/yIncrement)*((9*charge1/((xStart3-x1)))
+                    +(9*charge2/((xStart3-x2)))));
+
+                for (i = 1; i <=100; i++) {
+                    context.lineTo(xBase2+200+(40/xIncrement)*(xStart3+i*interval), yBase2+40*graphY/2-(40/yIncrement)*((9*charge1/(((xStart3+i*interval)-x1)))
+                        +(9*charge2/(((xStart3+i*interval)-x2)))));
+                }
+                context.stroke();
+
+//             context.beginPath();
+//             if (xAxisChoice == 1) context.arc(xBase2+(40/xIncrement)*chargeX, yBase2+40*graphY/2-charge*40*4/(chargeX), 0.8*radius, 0, 2 * Math.PI, false);
+//             context.fillStyle = "#009900";
+//             context.fill();
+//             context.lineWidth = 2;
+//             context.strokeStyle = '#000000';
+//             context.stroke();
+            }
+
+            context.fillStyle = "#ffd";
+            context.fillRect(xBase2-4, 0, 408, yBase2-2);
+            context.fillRect(xBase2-4, yBase2+40*graphY+2, 408, canvas.height-(yBase2+40*graphY+2));
+
+            // y-axis
+            context.strokeStyle = '#000';
+            context.beginPath();
+            context.moveTo(xBase2, yBase2-20);
+            context.lineTo(xBase2, yBase2+40*graphY);
+            context.stroke();
+            context.moveTo(xBase2-6, yBase2-10);
+            context.lineTo(xBase2, yBase2-20);
+            context.lineTo(xBase2+6, yBase2-10);
+            context.lineJoin = 'miter';
+            context.stroke();
+            context.strokeStyle = '#000';
+            context.textAlign = 'center';
+            //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xBase2 );
+
+            context.font = '16pt Calibri';
+            context.fillStyle = 'black';
+            context.fillText(yAxisTitle, xBase2-45, 22);
+
+
+            //  draw the axis
+
+            context.strokeStyle = '#000';
+            context.lineWidth = 4;
+            context.beginPath();
+            context.moveTo(xBase2-1, yBase);
+            context.lineTo(xBase2+40*graphX+20, yBase);
+            context.stroke();
+            context.moveTo(xBase2+40*graphX+10, yBase-6);
+            context.lineTo(xBase2+40*graphX+20, yBase);
+            context.lineTo(xBase2+40*graphX+10, yBase+6);
+            context.lineJoin = 'miter';
+            context.stroke();
+            context.font = '16pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'left';
+            context.fillText("x (m)", xBase2+40*graphX+24, yBase);
+
+            // set line color
+            context.strokeStyle = '#999';
+            context.lineWidth = 3;
+
+
+            // axis ticks
+            for (var i = 0; i <= graphX; i++) {
+                context.beginPath();
+                context.moveTo(xBase2+40*i, yBase-10);
+                context.lineTo(xBase2+40*i, yBase+10);
+                context.stroke();
+                context.font = '14pt Calibri';
+                context.fillStyle = 'black';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                axisValue = (i-5);
+                axisLabel = axisValue.toFixed(0);
+                context.fillText(axisLabel, xBase2+40*i, yBase+20);
+            }
+
+            // draw charge1
+
+            context.beginPath();
+            context.arc(xBase2+200+40*x1, yBase, radius, 0, 2 * Math.PI, false);
+            context.fillStyle = "#888888";
+            if (charge1 > 0.0) context.fillStyle = "red";
+            if (charge1 < 0.0) context.fillStyle = "blue";
+            context.fill();
+            context.lineWidth = 2;
+            context.strokeStyle = '#000000';
+            context.stroke();
+
+            // draw charge2
+
+            context.beginPath();
+            context.arc(xBase2+200+40*x2, yBase, radius, 0, 2 * Math.PI, false);
+            context.fillStyle = "#888888";
+            if (charge2 > 0.0) context.fillStyle = "red";
+            if (charge2 < 0.0) context.fillStyle = "blue";
+            context.fill();
+            context.stroke();
+
+
+
+            // draw the force arrow for the fixed charge
+//         drawArrow(-24*charge/(chargeX*chargeX),0,xBase2,yBase,(0.5+0.5*charge)*3.1416,"#ff66ff");
+
+            // draw the force arrow for the movable charge
+//         drawArrow(24*charge/(chargeX*chargeX),0,xBase2+40*chargeX,yBase,(0.5-0.5*charge)*3.1416,"ff66ff");
+
+
+            // graph title
+            context.font = 'bold 18pt Calibri';
+            context.fillStyle = 'purple';
+            context.textAlign = 'center';
+            context.fillText(graphTitle, 0.5*(canvas.width), 20);
+
+            context.font = '16pt Calibri';
+            context.fillStyle = 'black';
+
+            //         if (yAxisChoice != 2) {
+            //
+            //           var field = 16.0/(chargeX*chargeX);
+            //           var FLabel = 'Force magnitude = ' + force.toFixed(2) + ' V/m';
+            //           context.textAlign = 'left';
+            //           context.fillText(FLabel, xBase+40, yBase-40);
+            //         }
+
+            //         if (yAxisChoice > 1) {
+
+            //           var PE = 16.0*charge/(chargeX);
+            //           var PELabel = 'Potential energy = ' + PE.toFixed(2) + ' J';
+            //           context.textAlign = 'left';
+            //           context.fillText(PELabel, xBase+300, yBase-40);
+            //         }
+
+        }
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 1000/30);
+        }
+    }
+
+    function drawArrow(Fx,Fy,Px,Py,theta, arrowColor) {
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px, Py);
+        context.lineTo(Px+5*Fx,Py-5*Fy);
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.fillStyle = arrowColor;
+        context.beginPath();
+        context.moveTo(Px+5*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.lineTo(Px+5*Fx,Py-5*Fy);
+        context.lineTo(Px+5*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+        context.stroke();
+        context.fill();
+
+    }
+
+    //  Mouse and Touch event functions from  Wolfgang Bauer
+
+    function whereClicked(x_,y_,what_) {    // underscore denotes local variables
+        //if (what_ == 'down') {console.log('('+x_+','+y_+')'+what_)};
+//	console.log('('+x_+','+y_+')'+what_);
+//    console.log("x offset = " + Math.abs(x_ - (xBase2+200+40*x2)) + " y offset = " + Math.abs(y_ - yBase));
+        if ((x_ >= (xBase2 + 8)) &&(x_ <= (xBase2 + 192))) {    // moving the left-hand charge
+            if ((Math.abs(x_ - (xBase2+200+40*x1)) < 15) && (Math.abs(y_ - yBase) < 15))
+            {
+                x1 = (x_ - (xBase2 + 200))/40;
+//        console.log(x1);
+//        x1 = 0.1*Math.round(10*x1);
+//        console.log(x1);
+                xEnd1 = x1 - 0.005;
+                xStart2 = x1 + 0.005;
+//        reset();
+            }
+        }
+        if ((x_ >= (xBase2 + 208)) &&(x_ <= (xBase2 + 392))) {  // moving the right-hand charge
+            if ((Math.abs(x_ - (xBase2+200+40*x2)) < 15) && (Math.abs(y_ - yBase) < 15))
+            {
+                x2 = (x_ - (xBase2 + 200))/40;
+//        console.log(x2);
+//        x2 = 0.1*Math.round(10*x2);
+//        console.log(x2);
+                xEnd2 = x2 - 0.005;
+                xStart3 = x2 + 0.005;
+//        reset();
+            }
+        }
+
+        if (what_ == 'down') {
+//		dragRect = true;
+//		x1 = x_;     // x1, y1 are global variables
+//		y1 = y_;
+        }
+        if (what_ == 'move') {
+//		dragRect = true;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+        if (what_ == 'up') {
+//		dragRect = false;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+    }
+
+    function myMove(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawAll();
+        drawMotion();
+
+    }
+
+    function myDown(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        canvas.onmousemove = myMove;
+        drawMotion();
+    }
+
+    function myUp(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        canvas.onmousemove = null;
+        drawMotion();
+    }
+
+    function myTouchMove(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+        drawMotion();
+    }
+
+    function myTouchStart(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        drawMotion();
+    }
+
+    function myTouchEnd(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        drawMotion();
+    }
+
+</script>
+
+<p>Click-and-drag the particles to move them left or right. The particle on the left is confined to the region to the left of the origin;
+    the particle on the right is confined to the region to the right of the origin.
+    In this simulation, you can see the graph of the electric field on the x-axis as a function of position, as well as
+    the electric potential on the x-axis as a function of position. On the graph, the electric field is shown as positive if the net field at that position is directed to the right,
+    and the field is shown as negative if the field is directed left.
+    Using the sliders, you can adjust the charges of the particles.
+</p>
+
+
+</body>
+</html>
