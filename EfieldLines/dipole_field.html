@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Electric Field Lines Visualization</title>
+    <link   rel="stylesheet"          href="vfield.css" type="text/css" />
+
+    <!-- Lesson.js uses these styles -->
+    <script defer src="Lesson.min.js">
+    </script>
+    <script defer src="VField.min.js">
+    </script>
+    <script>
+        // This time VISUALIZATION_CONFIG is an array
+        var VISUALIZATION_CONFIG =
+            {
+                // The electric field graph displays charges,
+                // field lines and Gaussian surfaces.
+                type: "electric field",
+                // The id of the canvas we draw into
+                canvas: "chargeCanvas",
+                scale: 50.0,
+                arrowHeadSize: 1.0,
+                arrowSpacing: 15.0,
+                // Position a single charge at the origin
+                elements:
+                    [
+                        {
+                            type: "charge", charge: 5.0,
+                            x: -20, y: 0.0, z: 0.0,
+                            fieldLineDensity: 3,
+                        },
+
+                        {
+                            type: "charge", charge: -5.0,
+                            x: 20.0, y: 0.0, z: 0.0,
+                            fieldLineDensity: 3,
+                        }
+                    ]
+            };
+
+    </script>
+</head>
+<body>
+<div class="wrapper">
+    <div id="main">
+
+        <div class="content">
+
+            <h2>Electric field lines due to dipole</h2>
+            <p id="nowebgl" class="error"></p>
+            <span color="darkgreen"> Note that the figure is interactive, mouse drag to rotate and mouse scroll to  zoom in/out</span>
+            <section class="examples">
+                <figure class="center">
+                    <!--This is a canvas for our electric field visualization. -->
+                    <canvas id="chargeCanvas" width="400" height="400"></canvas>
+                </figure>
+            </section>
+
+            <p>
+                Using the simulation above feel the following statements about lines due to dipole <br>
+            <ol>
+                <li> Lines are parallel to dipole on axial line</li>
+                <li> Lines are antiparallel to dipole on equatorial plane</li>
+                <li> Dipole is the axis of symmetry of linesL </li>
+                <li> All lines originate at positive (red) and terminate at negative (blue)</li>
+                <li> The equatorial plane (perpendicular bisector of charges) is zero potential plane since it is equidistant from charges and E is perpendicular tio this plane</li>
+                <li> The field is perpendicular to dipole when position vector of point wrt center of charges makes roughly tan<sup>-1</sup>(root(2) angle with dipole</li>
+            </ol>
+
+            <h2>Electric field at a point due to dipole</h2>
+            <p >
+            Use the following simulator to fell the direction of magnitude at any point due to dipole better. Keep ratio of charges =-1 to make ssytem as dipole.<br>
+            Drag the point to find electric field vector<br>
+            </p>
+            <p align="center">
+            <iframe scrolling="no" title="Dipole Electric field" src="https://www.geogebra.org/material/iframe/id/bhsvmut9/width/700/height/540/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false" width="700px" height="540px" style="border:0px;"> </iframe>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
