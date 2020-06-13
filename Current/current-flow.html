@@ -1,0 +1,476 @@
+
+<!doctype html>
+<html>
+<head>
+    <title>Curretn Flow in Conductor Simulation</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div id="canvasdiv" class="container" align="center"><canvas id="canvas" style="border: 1px solid #c3c3c3;" width=800px" height="480px">
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+    <div id="slider1div"><b>Electron Density (n) :<input id="a"  value="51" max="128" min="20" unit="1" type="range" oninput="updateValues();" onchange="updateValues();"> </b></div>
+    <div id="slider2div"><b>Resister's Length (L)  :<input id="b"  value="400" max="480" min="180" unit="1" type="range" oninput="updateValues();" onchange="updateValues();"> </b></div>
+    <div id="slider3div"><b>Resister's Area (A)     :<input id="c"  value="112" max="240" min="60" unit="1" type="range" oninput="updateValues();" onchange="updateValues();"> </b></div>
+    <div id="slider4div"><b>Potential difference (V)   :<input id="d"  value="6" max="10" min="2" unit="0.1" type="range" oninput="updateValues();" onchange="updateValues();"> </b></div>
+    <div id="checkboxdiv"><input id="CheckBox" onchange="updateValues();" type="checkbox" checked="true"> <label for="CheckBox"> Toggle switch On/Off </label></div>
+
+</div>
+
+<script type='text/javascript'>
+    var PI=Math.PI;
+    var HALF_PI=Math.PI/2;
+    var TWO_PI=Math.PI*2;
+    var timer=null;
+    var dsin = [ 0, 0.017452406, 0.034899497, 0.052335956, 0.069756474, 0.087155743, 0.104528463, 0.121869343, 0.139173101, 0.156434465, 0.173648178, 0.190808995, 0.207911691, 0.224951054, 0.241921896, 0.258819045, 0.275637356, 0.292371705, 0.309016994, 0.325568154, 0.342020143, 0.35836795, 0.374606593, 0.390731128, 0.406736643, 0.422618262, 0.438371147, 0.4539905, 0.469471563, 0.48480962, 0.5, 0.515038075, 0.529919264, 0.544639035, 0.559192903, 0.573576436, 0.587785252, 0.601815023, 0.615661475, 0.629320391, 0.64278761, 0.656059029, 0.669130606, 0.68199836, 0.69465837, 0.707106781, 0.7193398, 0.731353702, 0.743144825, 0.75470958, 0.766044443, 0.777145961, 0.788010754, 0.79863551, 0.809016994, 0.819152044, 0.829037573, 0.838670568, 0.848048096, 0.857167301, 0.866025404, 0.874619707, 0.882947593, 0.891006524, 0.898794046, 0.906307787, 0.913545458, 0.920504853, 0.927183855, 0.933580426, 0.939692621, 0.945518576, 0.951056516, 0.956304756, 0.961261696, 0.965925826, 0.970295726, 0.974370065, 0.978147601, 0.981627183, 0.984807753, 0.987688341, 0.990268069, 0.992546152, 0.994521895, 0.996194698, 0.99756405, 0.998629535, 0.999390827, 0.999847695, 1, 0.999847695, 0.999390827, 0.998629535, 0.99756405, 0.996194698, 0.994521895, 0.992546152, 0.990268069, 0.987688341, 0.984807753, 0.981627183, 0.978147601, 0.974370065, 0.970295726, 0.965925826, 0.961261696, 0.956304756, 0.951056516, 0.945518576, 0.939692621, 0.933580426, 0.927183855, 0.920504853, 0.913545458, 0.906307787, 0.898794046, 0.891006524, 0.882947593, 0.874619707, 0.866025404, 0.857167301, 0.848048096, 0.838670568, 0.829037573, 0.819152044, 0.809016994, 0.79863551, 0.788010754, 0.777145961, 0.766044443, 0.75470958, 0.743144825, 0.731353702, 0.7193398, 0.707106781, 0.69465837, 0.68199836, 0.669130606, 0.656059029, 0.64278761, 0.629320391, 0.615661475, 0.601815023, 0.587785252, 0.573576436, 0.559192903, 0.544639035, 0.529919264, 0.515038075, 0.5, 0.48480962, 0.469471563, 0.4539905, 0.438371147, 0.422618262, 0.406736643, 0.390731128, 0.374606593, 0.35836795, 0.342020143, 0.325568154, 0.309016994, 0.292371705, 0.275637356, 0.258819045, 0.241921896, 0.224951054, 0.207911691, 0.190808995, 0.173648178, 0.156434465, 0.139173101, 0.121869343, 0.104528463, 0.087155743, 0.069756474, 0.052335956, 0.034899497, 0.017452406, 0, -0.017452406, -0.034899497, -0.052335956, -0.069756474, -0.087155743, -0.104528463, -0.121869343, -0.139173101, -0.156434465, -0.173648178, -0.190808995, -0.207911691, -0.224951054, -0.241921896, -0.258819045, -0.275637356, -0.292371705, -0.309016994, -0.325568154, -0.342020143, -0.35836795, -0.374606593, -0.390731128, -0.406736643, -0.422618262, -0.438371147, -0.4539905, -0.469471563, -0.48480962, -0.5, -0.515038075, -0.529919264, -0.544639035, -0.559192903, -0.573576436, -0.587785252, -0.601815023, -0.615661475, -0.629320391, -0.64278761, -0.656059029, -0.669130606, -0.68199836, -0.69465837, -0.707106781, -0.7193398, -0.731353702, -0.743144825, -0.75470958, -0.766044443, -0.777145961, -0.788010754, -0.79863551, -0.809016994, -0.819152044, -0.829037573, -0.838670568, -0.848048096, -0.857167301, -0.866025404, -0.874619707, -0.882947593, -0.891006524, -0.898794046, -0.906307787, -0.913545458, -0.920504853, -0.927183855, -0.933580426, -0.939692621, -0.945518576, -0.951056516, -0.956304756, -0.961261696, -0.965925826, -0.970295726, -0.974370065, -0.978147601, -0.981627183, -0.984807753, -0.987688341, -0.990268069, -0.992546152, -0.994521895, -0.996194698, -0.99756405, -0.998629535, -0.999390827, -0.999847695, -1, -0.999847695, -0.999390827, -0.998629535, -0.99756405, -0.996194698, -0.994521895, -0.992546152, -0.990268069, -0.987688341, -0.984807753, -0.981627183, -0.978147601, -0.974370065, -0.970295726, -0.965925826, -0.961261696, -0.956304756, -0.951056516, -0.945518576, -0.939692621, -0.933580426, -0.927183855, -0.920504853, -0.913545458, -0.906307787, -0.898794046, -0.891006524, -0.882947593, -0.874619707, -0.866025404, -0.857167301, -0.848048096, -0.838670568, -0.829037573, -0.819152044, -0.809016994, -0.79863551, -0.788010754, -0.777145961, -0.766044443, -0.75470958, -0.743144825, -0.731353702, -0.7193398, -0.707106781, -0.69465837, -0.68199836, -0.669130606, -0.656059029, -0.64278761, -0.629320391, -0.615661475, -0.601815023, -0.587785252, -0.573576436, -0.559192903, -0.544639035, -0.529919264, -0.515038075, -0.5, -0.48480962, -0.469471563, -0.4539905, -0.438371147, -0.422618262, -0.406736643, -0.390731128, -0.374606593, -0.35836795, -0.342020143, -0.325568154, -0.309016994, -0.292371705, -0.275637356, -0.258819045, -0.241921896, -0.224951054, -0.207911691, -0.190808995, -0.173648178, -0.156434465, -0.139173101, -0.121869343, -0.104528463, -0.087155743, -0.069756474, -0.052335956, -0.034899497, -0.017452406, 0 ];
+    var dcos = [ 1, 0.999847695, 0.999390827, 0.998629535, 0.99756405, 0.996194698, 0.994521895, 0.992546152, 0.990268069, 0.987688341, 0.984807753, 0.981627183, 0.978147601, 0.974370065, 0.970295726, 0.965925826, 0.961261696, 0.956304756, 0.951056516, 0.945518576, 0.939692621, 0.933580426, 0.927183855, 0.920504853, 0.913545458, 0.906307787, 0.898794046, 0.891006524, 0.882947593, 0.874619707, 0.866025404, 0.857167301, 0.848048096, 0.838670568, 0.829037573, 0.819152044, 0.809016994, 0.79863551, 0.788010754, 0.777145961, 0.766044443, 0.75470958, 0.743144825, 0.731353702, 0.7193398, 0.707106781, 0.69465837, 0.68199836, 0.669130606, 0.656059029, 0.64278761, 0.629320391, 0.615661475, 0.601815023, 0.587785252, 0.573576436, 0.559192903, 0.544639035, 0.529919264, 0.515038075, 0.5, 0.48480962, 0.469471563, 0.4539905, 0.438371147, 0.422618262, 0.406736643, 0.390731128, 0.374606593, 0.35836795, 0.342020143, 0.325568154, 0.309016994, 0.292371705, 0.275637356, 0.258819045, 0.241921896, 0.224951054, 0.207911691, 0.190808995, 0.173648178, 0.156434465, 0.139173101, 0.121869343, 0.104528463, 0.087155743, 0.069756474, 0.052335956, 0.034899497, 0.017452406, 0, -0.017452406, -0.034899497, -0.052335956, -0.069756474, -0.087155743, -0.104528463, -0.121869343, -0.139173101, -0.156434465, -0.173648178, -0.190808995, -0.207911691, -0.224951054, -0.241921896, -0.258819045, -0.275637356, -0.292371705, -0.309016994, -0.325568154, -0.342020143, -0.35836795, -0.374606593, -0.390731128, -0.406736643, -0.422618262, -0.438371147, -0.4539905, -0.469471563, -0.48480962, -0.5, -0.515038075, -0.529919264, -0.544639035, -0.559192903, -0.573576436, -0.587785252, -0.601815023, -0.615661475, -0.629320391, -0.64278761, -0.656059029, -0.669130606, -0.68199836, -0.69465837, -0.707106781, -0.7193398, -0.731353702, -0.743144825, -0.75470958, -0.766044443, -0.777145961, -0.788010754, -0.79863551, -0.809016994, -0.819152044, -0.829037573, -0.838670568, -0.848048096, -0.857167301, -0.866025404, -0.874619707, -0.882947593, -0.891006524, -0.898794046, -0.906307787, -0.913545458, -0.920504853, -0.927183855, -0.933580426, -0.939692621, -0.945518576, -0.951056516, -0.956304756, -0.961261696, -0.965925826, -0.970295726, -0.974370065, -0.978147601, -0.981627183, -0.984807753, -0.987688341, -0.990268069, -0.992546152, -0.994521895, -0.996194698, -0.99756405, -0.998629535, -0.999390827, -0.999847695, -1, -0.999847695, -0.999390827, -0.998629535, -0.99756405, -0.996194698, -0.994521895, -0.992546152, -0.990268069, -0.987688341, -0.984807753, -0.981627183, -0.978147601, -0.974370065, -0.970295726, -0.965925826, -0.961261696, -0.956304756, -0.951056516, -0.945518576, -0.939692621, -0.933580426, -0.927183855, -0.920504853, -0.913545458, -0.906307787, -0.898794046, -0.891006524, -0.882947593, -0.874619707, -0.866025404, -0.857167301, -0.848048096, -0.838670568, -0.829037573, -0.819152044, -0.809016994, -0.79863551, -0.788010754, -0.777145961, -0.766044443, -0.75470958, -0.743144825, -0.731353702, -0.7193398, -0.707106781, -0.69465837, -0.68199836, -0.669130606, -0.656059029, -0.64278761, -0.629320391, -0.615661475, -0.601815023, -0.587785252, -0.573576436, -0.559192903, -0.544639035, -0.529919264, -0.515038075, -0.5, -0.48480962, -0.469471563, -0.4539905, -0.438371147, -0.422618262, -0.406736643, -0.390731128, -0.374606593, -0.35836795, -0.342020143, -0.325568154, -0.309016994, -0.292371705, -0.275637356, -0.258819045, -0.241921896, -0.224951054, -0.207911691, -0.190808995, -0.173648178, -0.156434465, -0.139173101, -0.121869343, -0.104528463, -0.087155743, -0.069756474, -0.052335956, -0.034899497, -0.017452406, 0, 0.017452406, 0.034899497, 0.052335956, 0.069756474, 0.087155743, 0.104528463, 0.121869343, 0.139173101, 0.156434465, 0.173648178, 0.190808995, 0.207911691, 0.224951054, 0.241921896, 0.258819045, 0.275637356, 0.292371705, 0.309016994, 0.325568154, 0.342020143, 0.35836795, 0.374606593, 0.390731128, 0.406736643, 0.422618262, 0.438371147, 0.4539905, 0.469471563, 0.48480962, 0.5, 0.515038075, 0.529919264, 0.544639035, 0.559192903, 0.573576436, 0.587785252, 0.601815023, 0.615661475, 0.629320391, 0.64278761, 0.656059029, 0.669130606, 0.68199836, 0.69465837, 0.707106781, 0.7193398, 0.731353702, 0.743144825, 0.75470958, 0.766044443, 0.777145961, 0.788010754, 0.79863551, 0.809016994, 0.819152044, 0.829037573, 0.838670568, 0.848048096, 0.857167301, 0.866025404, 0.874619707, 0.882947593, 0.891006524, 0.898794046, 0.906307787, 0.913545458, 0.920504853, 0.927183855, 0.933580426, 0.939692621, 0.945518576, 0.951056516, 0.956304756, 0.961261696, 0.965925826, 0.970295726, 0.974370065, 0.978147601, 0.981627183, 0.984807753, 0.987688341, 0.990268069, 0.992546152, 0.994521895, 0.996194698, 0.99756405, 0.998629535, 0.999390827, 0.999847695, 1 ];
+    // ìž„ì˜ì˜ ì ì˜ ê°ë„ êµ¬í•˜ê¸° (360ì§„ë²•)
+    function getAngle(x, y)
+    {
+        var r = Math.sqrt(x*x + y*y);
+        var dx = x/r;
+        var dy = y/r;
+
+        var e0 = 1;
+        var e1 = 1;
+        var a = 0;
+
+        for (var i = 0; i < 360; i++)
+        {
+            e1 = Math.abs(dcos[i] - dx) + Math.abs(dsin[i] - dy);
+            if (e1 < e0)
+            {
+                e0 = e1;
+                a = i;
+            }
+        }
+
+        return a;
+    }
+
+    function sin(th){
+        return Math.sin(th);
+    }
+
+    function cos(th){
+        return Math.cos(th);
+    }
+
+    function line(x,y,x1,y1){
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x1, y1)
+        ctx.stroke();
+    }
+
+    function dist(x1,y1,x2,y2) {
+        return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    }
+
+    function arc(x, y, w, h, start, stop, mode, detail) {
+        ctx.beginPath();
+        ctx.arc(x, y, w/2, start, stop);
+        ctx.stroke();
+    }
+
+    function map(n,start1,stop1,start2,stop2){
+        if(n<start1)n=start1;
+        if(n>stop1)n=stop1;
+        return (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    }
+
+    function constrain(n, low, high) {
+        return Math.max(Math.min(n, high), low);
+    }
+
+    function contain(x, y, x1, y1, w1, h1){
+
+        if (x < x1) return false;
+        if (x > (x1 + w1)) return false;
+        if (y < y1) return false;
+        if (y > (y1 + h1)) return false;
+        return true;
+    }
+
+    function mod(x, y){
+        //return x%y;
+        // ì¼ë‹¨, ì–‘ìˆ˜ë¡œ ë§Œë“ ë‹¤.
+        if (x < 0) x += y * (Math.ceil(Math.abs(x)/y) + 1);
+        var c = Math.floor(x / y);
+        return x - y * c;
+    }
+
+    function random(min,max){
+        return min+Math.random()*(max-min);
+    }
+
+    function getCrossX(x1, y1, x2, y2, x3, y3, x4, y4){
+
+        var t;
+        var s;
+        var under = (y4-y3)*(x2-x1)-(x4-x3)*(y2-y1);
+        if (under == 0) return 0;
+
+        var _t = (x4-x3)*(y1-y3) - (y4-y3)*(x1-x3);
+        var _s = (x2-x1)*(y1-y3) - (y2-y1)*(x1-x3);
+
+        t = _t/under;
+        s = _s/under;
+        //if(t < 0.0 || t > 1.0 || s < 0.0 || s > 1.0) return 0;
+        //if(_t == 0 && _s == 0) return 0;
+
+        return(x1 + t * (x2-x1));
+    }
+    function getCrossY(x1, y1, x2, y2, x3, y3, x4, y4){
+
+        var t;
+        var s;
+        var under = (y4-y3)*(x2-x1)-(x4-x3)*(y2-y1);
+        if (under == 0) return 0;
+
+        var _t = (x4-x3)*(y1-y3) - (y4-y3)*(x1-x3);
+        var _s = (x2-x1)*(y1-y3) - (y2-y1)*(x1-x3);
+
+        t = _t/under;
+        s = _s/under;
+        //if(t < 0.0 || t > 1.0 || s < 0.0 || s > 1.0) return 0;
+        //if(_t == 0 && _s == 0) return 0;
+
+        return(y1 + t * (y2-y1));
+    }
+
+    function drawArrow2D(x, y, cx, cy){
+
+        var lArrow = Math.sqrt(cx*cx+cy*cy);
+        //, cy); // ì „ì²´ ê¸¸ì´
+        var wArrow = width*0.005;
+        // ë°˜ìª½ ë„“ì´
+        var head = Math.min(lArrow, 3*wArrow);
+
+        // ìš´ë™ì—ë„ˆì§€ í™”ì‚´í‘œ ê·¸ë¦¬ê¸°
+        var oxArrow = [ 0, lArrow - head, lArrow - head, lArrow, lArrow - head, lArrow - head, 0 ];
+        var oyArrow = [ wArrow, wArrow, 2*wArrow, 0, -2*wArrow, -wArrow, -wArrow ];
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.atan2(cy, cx));
+        ctx.beginPath();
+        //beginShape();
+        for (var i = 0; i < oxArrow.length; i++){
+
+            ctx.lineTo(Math.max(oxArrow[i], 0), oyArrow[i]);
+        }
+        ctx.closePath();
+        //endShape(CLOSE);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawArrow2D_thick(x, y, cx, cy, thick){
+
+        // í™”ì‚´í‘œì˜ ê¸¸ì´
+        var lArrow = Math.round(Math.sqrt(cx * cx + cy * cy));
+
+        // ìš´ë™ì—ë„ˆì§€ í™”ì‚´í‘œ ê·¸ë¦¬ê¸°
+        var oxArrow = [ 0, lArrow - 2*thick, lArrow - 2*thick, lArrow, lArrow - 2*thick, lArrow - 2*thick, 0 ];
+        var oyArrow = [ thick, thick, 2*thick, 0, -2*thick, -thick, -thick ];
+
+        //push();
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.atan2(cy, cx));
+        //beginShape();
+        ctx.beginPath();
+        for (var i = 0; i < oxArrow.length; i++){
+
+            ctx.lineTo(Math.max(oxArrow[i], 0), oyArrow[i]);
+        }
+        ctx.closePath();
+        ctx.fill();
+        //endShape(CLOSE);
+        ctx.restore();
+    }
+
+    var maxMole = 32;
+    var xMole = [];
+    var yMole = [];
+    var vMole = [];
+    var aMole = [];
+    var pipeX0=200;
+    var pipeY0=150;
+    var pipeHeight=80;
+    var pipeLength=360;
+    var randomSpeed=3;
+    var driftFactor=0;
+
+    var wireXoffset=30;
+    var wireHeight=150;
+    var wirePerimeter=880;
+    const d=5;
+    var elecPos=[];
+    var checkBlow=document.getElementById("CheckBox");
+    var canvas=document.getElementById("canvas");
+    var ctx=canvas.getContext("2d");
+
+    updateValues();
+
+
+    function setup() {
+        ctx.font="14px Arial";
+        //if (checkBlow.checked)driftFactor=0.2;
+        for (var i = 0; i < maxMole; i++) {
+            xMole[i] = random(pipeX0, pipeX0+pipeLength);
+            yMole[i] = random(pipeY0, pipeY0+pipeHeight);
+            vMole[i] = randomSpeed;
+        }
+
+        setup2();
+        window.clearInterval(timer);
+        timer=window.setInterval(draw,40);
+        draw();
+    }
+
+
+
+    function setup2() {
+        for (var i = 0; i < maxMole; i++) {
+            if (checkBlow.checked) aMole[i] = mod(Math.floor((1-driftFactor)*random(-60, 60)), 360);
+            else aMole[i] = Math.floor(Math.random()*360);
+        }
+    }
+
+
+    function fillOval(x,y,w,h){
+        ctx.beginPath();
+        ctx.arc(x,y,w/2,0,2*PI,false);
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    function draw() {
+        //if (touches.length > 1) return;
+        //background(222);
+        //ctx.reset();
+        ctx.fillStyle="rgb(222,222,222)";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.save();
+        ctx.scale(1.3, 1.3);
+        ctx.translate(-100,-80);//, ty)
+
+        //ctx.setLineJoin("round");
+        //textSize(width / 40);
+        //textAlign(CENTER, CENTER);
+        //imageMode(CENTER);
+        //var img=checkBlow.isSelected() ? img_pipe_1 : img_pipe_0;
+        //ctx.drawImage(img, 0,-48, width, width * 0.5);
+        drawPipe();
+        //noStroke();
+        //var d = width / 200;
+        ctx.fillStyle="rgb(0, 0, 255,0.7)";//, 0.5);
+       // console.log(ctx.fillStyle);//JSON.stringify(xMole));
+        ctx.lineWidth=1.0;
+
+        for (let i = 0; i < maxMole; i++) {
+            fillOval(xMole[i],  yMole[i], d, d)
+            //ctx.strokeOval(width * xMole[i], width * yMole[i], d, d)
+        }
+        running();
+        ctx.restore();
+    }
+
+    function drawPipe(){
+        ctx.fillStyle="lightgrey"
+        ctx.strokeStyle="black";
+        ctx.lineWidth=2.4;
+        ctx.fillRect(pipeX0,pipeY0, pipeLength,pipeHeight);
+        ctx.strokeRect(pipeX0,pipeY0, pipeLength,pipeHeight);
+        ctx.beginPath();
+        let H=pipeHeight/2+wireHeight;
+        ctx.moveTo(pipeX0, pipeY0+pipeHeight/2);
+        ctx.lineTo(pipeX0-30, pipeY0+pipeHeight/2);
+        ctx.lineTo(pipeX0-30, pipeY0+H);
+        if (!checkBlow.checked) {
+            ctx.lineTo(pipeX0+pipeLength/4, pipeY0+H);
+            ctx.lineTo(pipeX0+pipeLength/4+14, pipeY0+H-14);
+            ctx.moveTo(pipeX0+pipeLength/4+12, pipeY0+H);
+        }
+        ctx.lineTo(pipeX0+pipeLength/2, pipeY0+H);
+
+        ctx.lineTo(pipeX0+pipeLength/2, pipeY0+H+10);
+        ctx.lineTo(pipeX0+pipeLength/2, pipeY0+H-10);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pipeX0+pipeLength/2+10, pipeY0+H-20);
+        ctx.lineTo(pipeX0+pipeLength/2+10, pipeY0+H+20);
+        ctx.lineTo(pipeX0+pipeLength/2+10, pipeY0+H);
+        ctx.lineTo(pipeX0+pipeLength+30, pipeY0+H);
+        ctx.lineTo(pipeX0+pipeLength+30, pipeY0+pipeHeight/2);
+        ctx.lineTo(pipeX0+pipeLength, pipeY0+pipeHeight/2);
+        ctx.stroke();
+
+        ctx.fillStyle=ctx.strokeStyle;
+        ctx.fillText("V",pipeX0+pipeLength/2,pipeY0+pipeHeight/2+H);
+        ctx.fillText("L",pipeX0+pipeLength/2+5,pipeY0+pipeHeight+25);
+        ctx.fillStyle="rgb(0, 0, 255,0.7)";//, 0.5);
+        // console.log(ctx.fillStyle);//JSON.stringify(xMole));
+        ctx.lineWidth=1.0;
+
+        let t,x,y;
+        for(let i=0;i<elecPos.length;i++){
+            t=elecPos[i]*wirePerimeter;
+            if(t<wireXoffset){
+                x=pipeX0+pipeLength+t;
+                y=pipeY0+pipeHeight/2;
+            }else if(t<wireXoffset+wireHeight){
+                x=pipeX0+pipeLength+wireXoffset;
+                y=pipeY0+pipeHeight/2+t-wireXoffset;
+            }else if(t<3*wireXoffset+wireHeight+pipeLength){
+                x=pipeX0+pipeLength+wireXoffset-(t-wireXoffset-wireHeight);
+                y=pipeY0+pipeHeight/2+wireHeight;
+            }else if(t<3*wireXoffset+wireHeight+pipeLength+wireHeight){
+                x=pipeX0-wireXoffset;
+                y=pipeY0+pipeHeight/2+wireHeight-(t-3*wireXoffset-pipeLength-wireHeight);
+            }else{
+                x=pipeX0-(wirePerimeter-t);
+                y=pipeY0+pipeHeight/2;
+            }
+            fillOval(x,y,d,d);
+        }
+        if (!checkBlow.checked)return;
+        ctx.lineWidth=2.4;
+        let E=driftFactor*100;
+        H=pipeY0-20;
+        ctx.beginPath();
+        ctx.moveTo(pipeX0+pipeLength/2+E, H);
+        ctx.lineTo(pipeX0+pipeLength/2-E, H);
+        ctx.lineTo(pipeX0+pipeLength/2-E+6, H+4);
+        ctx.lineTo(pipeX0+pipeLength/2-E, H);
+        ctx.lineTo(pipeX0+pipeLength/2-E+6, H-4);
+        ctx.stroke();
+        ctx.fillText("E = V/L",pipeX0+pipeLength/2+E+4, H+8);
+
+    }
+
+    function running() {
+        var a = 0.01;
+        for (var i = 0; i < maxMole - 1; i++)
+            for (var j = i + 1; j < maxMole; j++) {
+                var b = xMole[i] + vMole[i] * dcos[aMole[i]];
+                var c = yMole[i] + vMole[i] * dsin[aMole[i]];
+                var d = xMole[j] + vMole[j] * dcos[aMole[j]];
+                var e = yMole[j] + vMole[j] * dsin[aMole[j]];
+                if (dist(xMole[i], yMole[i], xMole[j], yMole[j]) < a)
+                    if (dist(xMole[i], yMole[i], xMole[j], yMole[j]) > dist(b, c, d, e)) {
+                        var f = vMole[i] * dcos[aMole[i]];
+                        var g = vMole[i] * dsin[aMole[i]];
+                        var k = vMole[j] * dcos[aMole[j]];
+                        var l = vMole[j] * dsin[aMole[j]];
+                        var m = (f + k) / 2.;
+                        var n = (g + l) / 2.;
+                        var o = f - m;
+                        var p = g - n;
+                        var q = k - m;
+                        var r = l - n;
+                        var s = dist(0, 0, o, p);
+                        var u = dist(0, 0, q, r);
+                        var v = getAngle(o, p);
+                        var x = getAngle(q, r);
+                        var y = getAngle(xMole[j] - xMole[i], yMole[j] - yMole[i]);
+                        var z = getAngle(xMole[i] - xMole[j], yMole[i] - yMole[j]);
+                        v = mod(2 * y + 180 - v, 360);
+                        x = mod(2 * z + 180 - x, 360);
+                        f = s * dcos[v];
+                        g = s * dsin[v];
+                        k = u * dcos[x];
+                        l = u * dsin[x];
+                        f += m;
+                        g += n;
+                        k += m;
+                        l += n;
+                        var t = vMole[i] + vMole[j];
+                        vMole[i] = dist(0, 0, f, g);
+                        vMole[j] = t - vMole[i];
+                        aMole[i] = getAngle(f, g);
+                        aMole[j] = getAngle(k, l)
+                    }
+            }
+        for (var i = 0; i < maxMole; i++) {
+            {
+                xMole[i] += vMole[i] * dcos[aMole[i]];
+                yMole[i] += vMole[i] * dsin[aMole[i]]
+            }
+            //noStroke();
+            //var w = width / 50;
+            //var h = height / 100;
+            if (xMole[i] < (pipeX0)) {
+                xMole[i] += (pipeLength)
+            }
+            if (xMole[i] > (pipeX0+pipeLength)) {
+                xMole[i] -= pipeLength;
+            }
+            if (yMole[i] < (pipeY0)) {
+                yMole[i] = 2 * (pipeY0) - yMole[i];
+                aMole[i] = 360 - aMole[i];
+                //if (checkHit.checked()) rect(width * xMole[i] - w / 2, width * yMin - h, w, h)
+            }
+            if (yMole[i] > (pipeY0+pipeHeight)) {
+                yMole[i] = 2 * (pipeY0+pipeHeight) - yMole[i];
+                aMole[i] = 360 - aMole[i];
+                // if (checkHit.isSelected()) rect(width * xMole[i] - w / 2, width * yMax, w, h)
+            }
+        }
+        if(!checkBlow.checked)return;
+        let dt=randomSpeed/wirePerimeter;
+        for(let i=elecPos.length-1;i>=0;i--){
+            elecPos[i]+=dt;
+            if(elecPos[i]> 1)elecPos[i]=0;//elecPos.splice(i,1);
+        }
+
+
+
+    }
+
+    function updateValues(){
+        pipeLength=Number(document.getElementById("b").value);
+        pipeHeight=Number(document.getElementById("c").value);
+        maxMole=Math.floor(Number(document.getElementById("a").value)*pipeHeight*pipeLength/240/240);
+        driftFactor=20*Number(document.getElementById("d").value)/pipeLength;
+        randomSpeed=Math.max(1.8,2*(1+Math.log(6*driftFactor)));
+        wirePerimeter=4*wireXoffset+pipeLength+2*wireHeight;
+        let N=Math.round(maxMole*driftFactor);
+        elecPos=new Array(N);
+
+        for(let i=0;i                        <N;i++){
+            elecPos[i]=(i/N);
+        }
+        setup();
+    }
+
+</script>
+</body>
+</html>
