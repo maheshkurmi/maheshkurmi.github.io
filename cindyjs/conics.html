@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Cindy JS</title>
+    <script type="text/javascript" src="Cindy.js"></script>
+
+
+</head>
+
+<body style="font-family:Arial;">
+
+<script id='init' type='text/cindyscript'>
+mat=[[1,0,0],[0,1,0],[0,0,1]];
+a=(0,0,1);
+gridsize=4;
+
+mat=[[0.9127,-0.0635,-0.4036],[-0.0902,0.9322,-0.3506],[0.3985,0.3564,0.8451]];
+
+
+rotating=true;
+
+embed(p):=(p.x,0,p.y);
+
+mapp(pp):=(
+  p=s2*pp;
+  o=(p-(p*a)*a)/(1-p*a);
+  (o.x,o.y)*s1;
+);
+
+
+
+grid(n,al):=(
+ apply((-gridsize*n..gridsize*n)/n,i,
+    p1=(i,0,-gridsize);
+    p2=(i,0,gridsize);
+    draw(mapp(mat*p1),mapp(mat*p2),alpha->al);
+    p1=(-gridsize,0,i);
+    p2=(gridsize,0,i);
+    draw(mapp(mat*p1),mapp(mat*p2),alpha->al)
+ )
+);
+
+
+arrow(pa,pb,col):=(
+   draw(mapp(mat*pa),mapp(mat*pb),color->col,size->2);
+   n=pb-pa;
+   n=n/|n|;
+
+   p=cross(n,(0,1,0));
+   fillpoly(apply(
+    (pb-n*0.3+p*0.2,
+     pb-n*0.2+p*0.03,
+     pa+p*0.03,
+     pa-p*0.03,
+     pb-n*0.2-p*0.03,
+     pb-n*0.3-p*0.2,
+     pb),mapp(mat*#)),color->col);
+
+);
+
+arrow2(pa,pb,col):=(
+   draw(mapp(mat*pa),mapp(mat*pb),color->col,size->2);
+   n=pb-pa;
+   n=n/|n|;
+
+   p=cross(n,(0,0,1));
+   fillpoly(apply(
+    (pb-n*0.3+p*0.2,
+     pb-n*0.2+p*0.03,
+     pa+p*0.03,
+     pa-p*0.03,
+     pb-n*0.2-p*0.03,
+     pb-n*0.3-p*0.2,
+     pb),mapp(mat*#)),color->col);
+
+);
+
+
+
+//Hier wird der Kegel gemalt
+//top gibt an welcher der Halbkegel
+//sig gibt Vorder und Rückseite
+
+drawcone(sig,top):=(
+//Zuerst die Flächenfüllungen
+ repeat(n,i,
+   p1=mapcone((sin(i*dw),0,cos(i*dw)));
+   if(top>0,
+    p1=-p1*3+4*pm,
+    p1=p1*3-2*pm
+   );
+   phit1=(p1*pm_2-pm*p1_2)/(pm_2-p1_2);
+   p2=mapcone((sin((i+1)*dw),0,cos((i+1)*dw)));
+   if(top>0,
+    p2=-p2*3+4*pm,
+    p2=p2*3-2*pm
+   );
+
+   phit2=(p2*pm_2-pm*p2_2)/(pm_2-p2_2);
+   q1=p1;
+   q2=p2;
+   //Gefrickel um die Schnittsituation gut zu machen
+   hit1=false;
+   hit2=false;
+   if((pm_2*p1_2)<0,p1=phit1;hit1=true);
+   if((pm_2*p2_2)<0,p2=phit2;hit2=true);
+   //Falls ein Strahl scheidet und der andere nicht
+   if(hit1!=hit2,
+     pint=(q1*q2_2-q2*q1_2)/(q2_2-q1_2),
+     pint=p1;
+   );
+
+   p1map=mapp(mat*p1);
+   p2map=mapp(mat*p2);
+   //Normalenvektor für Farbgebung
+   no=cross(mat*(pm-p1),mat*(pm-p2));
+   no=no/|no|;
+   col=(0,(no*(1,1,1))^2*.4,(no*(1,1,2))^2*.4);
+
+   if(area(p1map,p2map,pmmap)*sig<0,
+     if(sig*if(top>0,-1,1)>0,
+       col=((no*(1,1,1))^2*.4,(no*(1,1,2))^2*.2,0);
+     );
+    fillpoly((p1map,mapp(mat*pint),p2map,pmmap),color->col,alpha->.9,size->2);
+   );
+ );
+
+
+//und jetzt die daraufliegenden Linien
+ repeat(n,i,
+   p1=mapcone((sin(i*dw),0,cos(i*dw)));
+   if(top>0,
+    p1=-p1*3+4*pm,
+    p1=p1*3-2*pm
+   );
+   phit1=(p1*pm_2-pm*p1_2)/(pm_2-p1_2);
+   p2=mapcone((sin((i+1)*dw),0,cos((i+1)*dw)));
+   if(top>0,
+    p2=-p2*3+4*pm,
+    p2=p2*3-2*pm
+   );
+   phit2=(p2*pm_2-pm*p2_2)/(pm_2-p2_2);
+   hit1=false;
+   hit2=false;
+   q1=p1;
+   q2=p2;
+   if((pm_2*p1_2)<0,p1=phit1;hit1=true);
+   if((pm_2*p2_2)<0,p2=phit2;hit2=true);
+   p1map=mapp(mat*p1);
+   p2map=mapp(mat*p2);
+   if(hit1!=hit2,
+     pint=(q1*q2_2-q2*q1_2)/(q2_2-q1_2)
+   );
+   if(area(p1map,p2map,pmmap)*sig<0,
+    draw(mapp(mat*p1),mapp(mat*pm),color->(0,0,0),alpha->1,size->2);
+    if(!hit1&!hit2,
+     draw(p1map,p2map,color->(0,0,0),alpha->1,size->3);
+    );
+
+    //Falls Schnittsituation
+    if(!hit1 & hit2,
+     draw(p1map,mapp(mat*pint),color->(0,0,0),alpha->1,size->3);
+    );
+    if(hit1 & !hit2,
+     draw(p2map,mapp(mat*pint),color->(0,0,0),alpha->1,size->3);
+    );
+   );
+ );
+
+
+
+);
+
+
+
+drawedge(p1,p2,cut):=(
+   pint=(p1*(p2_1-cut)  - p2*(p1_1-cut))/((p2_1-cut)-(p1_1-cut));
+   if(pint_3>gridsize,
+      pint=(p1*(p2_3-gridsize)  - p2*(p1_3-gridsize))/((p2_3-gridsize)-(p1_3-gridsize));
+   );
+   if(pint_3<-gridsize,
+      pint=(p1*(p2_3+gridsize)  - p2*(p1_3+gridsize))/((p2_3+gridsize)-(p1_3+gridsize));
+   );
+   draw(mapp(mat*p1),mapp(mat*pint),color->(0.6,0,0),alpha->1,size->3);
+);
+
+//Die Gitterebene
+fullgrid():=(
+ //Fläche
+ fillpoly(apply(((gridsize,0,gridsize),(gridsize,0,-gridsize),(-gridsize,0,-gridsize),(-gridsize,0,gridsize))
+    ,mapp(mat*#)),color->(1,1,1)*.7,alpha->0.6);
+ connect(apply(((gridsize,0,gridsize),(gridsize,0,-gridsize),(-gridsize,0,-gridsize),(-gridsize,0,gridsize),(gridsize,0,gridsize))
+   ,mapp(mat*#)),color->(0,0,0),alpha->0.8,size->2);
+ linecolor((0,0,0));
+ //Gitter
+ grid(1,0.4);
+ grid(10,0.1);
+
+ //Kegelschnitt
+ nn=80;
+ dwn=360°/nn;
+ repeat(nn,i,
+   p1=mapcone((sin(i*dwn),0,cos(i*dwn)));
+   phit1=(p1*pm_2-pm*p1_2)/(pm_2-p1_2);
+   p2=mapcone((sin((i+1)*dwn),0,cos((i+1)*dwn)));
+   phit2=(p2*pm_2-pm*p2_2)/(pm_2-p2_2);
+
+   if(|phit1_1|<gridsize&|phit1_1|<gridsize&|phit2_1|<gridsize&|phit2_1|<gridsize,
+    draw(mapp(mat*phit1),mapp(mat*phit2),color->(0.6,0,0),alpha->1,size->3),
+    if(phit1_1<gridsize&phit2_1>gridsize&phit2_1<3*gridsize,drawedge(phit1,phit2,gridsize));
+    if(phit1_1>gridsize&phit1_1<3*gridsize&phit2_1<gridsize,drawedge(phit2,phit1,gridsize));
+    if(phit1_1>-gridsize&phit2_1<-gridsize&phit2_1>-3*gridsize,drawedge(phit1,phit2,-gridsize));
+    if(phit2_1>-gridsize&phit1_1<-gridsize&phit1_1>-3*gridsize,drawedge(phit2,phit1,-gridsize));
+
+
+
+);
+ );
+
+
+
+);
+
+
+
+
+
+
+        </script>
+
+<script id='firstDrawing' type='text/cindyscript'>
+        X.xy=(X-O)/|X-O|*.75+O;
+           y=S.y;
+          if(y<S1.y,y=S1.y);
+          if(y>S2.y,y=S2.y);
+
+          S.xy=(S1.x,y);
+
+        s1=20*(|S,S1|/|S1,S2|);
+
+                  y=T.y;
+          if(y<T1.y,y=T1.y);
+          if(y>T2.y,y=T2.y);
+
+          T.xy=(T1.x,y);
+
+        s2=(|T,T1|/|T1,T2|)*.1;
+
+////s1=|B,E|*4;
+////s2=(|D,F|/|D,C|/3)+0.01;
+
+K.xy=mapp(mat*(0,0,0));
+L.xy=mapp(mat*(1,0,0));
+M.xy=mapp(mat*(0,0,1));
+G.xy=mapp(mat*(1,0,1));
+
+
+sig=-area(K,L,M);
+
+//Welcher der Halbkegel liegt vorne
+
+//Der Kippwinkel und seine Matrix
+////win=-U.angle+180°;
+ww=X-O;
+
+win=arctan2(ww.y,ww.x);
+//win=30°;
+//apply(-4..4,i,
+// if(|win-i*pi/4|<0.05,U.angle=180°-i*45°);
+//);
+//win=-U.angle+90°;
+winr=round(win/(pi/4))*pi/4;
+
+if(|win-winr|<.1,win=winr);
+X.xy=(sin(win),cos(win))*.75+O;
+W=(sin(win+45°),cos(win+45°))*.75+O;
+V=(sin(win-45°),cos(win-45°))*.75+O;
+rot=[
+  [cos(win),sin(win),0],
+  [-sin(win),cos(win),0],
+  [0,0,1]
+ ];
+mapcone(p):=(
+  rot*(p-(0,1,0))+(0,1,0);
+);
+
+
+
+ex1=mapp(mat*mapcone((0,1,0)));
+ex2=mapp(mat*mapcone((0,1,1)));
+ex3=mapp(mat*mapcone((1,1,0)));
+
+frontcone=if(area(ex1,ex2,ex3)<0,-1,1);
+
+n=60;
+dw=1/n*360°;
+
+
+//Der Mittelpunkt des Kegels
+pm=mapcone((0,1,0));
+pmmap=(mapp(mat*pm));
+
+
+if(area(M,G,L)>0,
+
+ fullgrid();
+ if(frontcone>0,
+  drawcone(1,-1);
+  drawcone(-1,-1);
+  drawcone(-1,1);
+  drawcone(1,1),
+  drawcone(-1,1);
+  drawcone(1,1);
+  drawcone(1,-1);
+  drawcone(-1,-1);
+ ),
+ if(frontcone<0,
+  drawcone(-1,1);
+  drawcone(1,1);
+  drawcone(1,-1);
+  drawcone(-1,-1),
+  drawcone(1,-1);
+  drawcone(-1,-1);
+  drawcone(-1,1);
+  drawcone(1,1);
+ );
+
+ fullgrid()
+);
+
+nd=20;
+repeat(nd,i,
+  la=cos(i/nd*180°)*.5+.5;
+  draw((-V*la-W*(1-la))*.8+1.8*O,(V*la+W*(1-la))*.8+.2*O,alpha->0.3);
+);
+
+vv1=V;
+vv2=-V+2*O;
+ww1=W;
+ww2=-W+2*O;
+if(vv1.y~<O.y,vv1=0.75*(-((vv1-O).x)/((vv1-O).y),-1)+O);
+if(vv2.y~<O.y,vv2=0.75*(-((vv2-O).x)/((vv2-O).y),-1)+O);
+if(ww1.y~<O.y,ww1=0.75*(-((ww1-O).x)/((ww1-O).y),-1)+O);
+if(ww2.y~<O.y,ww2=0.75*(-((ww2-O).x)/((ww2-O).y),-1)+O);
+
+draw(vv1,vv2,size->3);
+draw(ww1,ww2,size->3);
+
+draw(perp(O-(.0,+.75),join(O,O-(.0,-.75))));
+
+
+
+        </script>
+
+
+<script id='down' type='text/cindyscript'>
+
+startx=mouse().x;
+starty=mouse().y;
+mm=mouse().xy;
+rotating=mm.x<3;
+//rotating=false;
+
+
+//dragging=true;
+        </script>
+
+<script id='up' type='text/cindyscript'>
+rotating=true;
+
+        </script>
+
+<script id='drag' type='text/cindyscript'>
+
+if(rotating,
+ xx=mouse().x;
+ yy=mouse().y;
+ wy=(startx-xx)*.3;
+ wx=-(starty-yy)*.3;
+
+ mmmx=[
+  [1,0,0],
+  [0,cos(wx),sin(wx)],
+  [0,-sin(wx),cos(wx)]
+ ];
+
+
+ mmmy=[
+  [cos(wy),0,-sin(wy)],
+  [0,1,0],
+  [sin(wy),0,cos(wy)]
+ ];
+
+ mat=mmmx*mmmy*mat;
+errc(mat);
+
+ startx=xx;
+ starty=yy;
+);
+
+
+
+        </script>
+
+
+
+<canvas  id="CSCanvas" width=800 height=500  style="border:2px solid #000000"></canvas>
+
+<script type="text/javascript">
+
+
+    var gslp=[
+
+        {name:"M", type:"Free", pos:[1,1],color:[1,0,0],size:0.01},
+        {name:"K", type:"Free", pos:[1,1],color:[1,0,0],size:0.01},
+        {name:"L", type:"Free", pos:[1,1],color:[1,0,0],size:0.01},
+        {name:"G", type:"Free", pos:[1,1],color:[1,0,0],size:0.01},
+        {name:"H", type:"Free", pos:[1,1],color:[1,0,0],size:0.01},
+        {name:"S1", type:"Free", pos:[5,-1],color:[0,0,0],pinned:true,size:2},
+        {name:"S2", type:"Free", pos:[5,3],color:[0,0,0],pinned:true,size:2},
+        {name:"S", type:"Free", pos:[5,1.3],color:[1,0.5,0.5],pinned:false,size:4},
+        {name:"l", type:"Segment", args:["S1","S2"],color:[0,0,0],pinned:false,size:2},
+        {name:"T1", type:"Free", pos:[6,-1],color:[0,0,0],pinned:true,size:2},
+        {name:"T2", type:"Free", pos:[6,3],color:[0,0,0],pinned:true,size:2},
+        {name:"T", type:"Free", pos:[6,2],color:[1,0.5,0.5],pinned:false,size:4},
+        {name:"m", type:"Segment", args:["T1","T2"],color:[0,0,0],pinned:false,size:2},
+        {name:"O", type:"Free", pos:[5.5,-2.25],color:[0,0,0],pinned:true,size:2,narrow:true},
+        {name:"Ci", type:"CircleMFixedr", args:["O"],radius:.75,color:[0,0,0],size:3,narrow:true},
+
+        {name:"X", type:"Free", pos:[5.5,-1],color:[1,1,1],size:3,narrow:true},
+
+
+    ];
+    createCindy({canvasname:"CSCanvas",
+        movescript:"firstDrawing",
+        initscript:"init",
+        mousedownscript:"down",
+        mousedragscript:"drag",
+        mouseupscript:"up",
+
+        geometry:gslp,
+        transform:[{scale:2.5},{translate:[1,-.5]}]
+    });
+
+</script>
+
+
+
+</body>
+</html>
+© 2020 GitHub, Inc.

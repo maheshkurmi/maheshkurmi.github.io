@@ -1,0 +1,373 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Contour Plotter | Academo.org - Free, interactive, education.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/scss/main.css?v=1589958059">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@AcademoOrg">
+    <meta name="twitter:title" content="Contour Plotter">
+    <meta name="twitter:description" content="You can use this tool to create contour lines for any function you input">
+    <meta name="twitter:image" content="https://academo.org/demos/contour-plot/twitter-card.png">
+    <meta property="og:url"	content="https://academo.org/demos/contour-plot/" />
+    <meta property="og:site_name" content="Academo.org"/>
+    <meta property="og:title" content="Contour Plotter"/>
+    <meta property="og:description" content="You can use this tool to create contour lines for any function you input"/>
+    <meta property="og:image" content="https://academo.org/demos/contour-plot/facebook-og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <style type="text/css" class='demo-specific-styles'>
+        #demo{
+            position:relative;
+            height:500px;
+        }
+        #demo svg, #demo canvas{
+            position:absolute;
+            top:0;
+            left:50%;
+            margin-left: -250px;
+            z-index: 1;
+            /*width:100%;*/
+            max-width: 500px;
+        }
+        #demo canvas{
+            z-index: 0;
+        }
+        #js-key {
+            margin-bottom: 20px;
+        }
+        #demo svg path:hover{
+            stroke:black;
+        }
+    </style>
+
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- <script type="text/javascript">
+    window._mNHandle = window._mNHandle || {};
+    window._mNHandle.queue = window._mNHandle.queue || [];
+    medianet_versionId = "3121199";
+</script>
+<script src="//contextual.media.net/dmedianet.js?cid=8CUN6154D" async="async"></script> -->
+
+    <script type="text/javascript">
+        (function(){
+            var bsa_optimize=document.createElement('script');
+            bsa_optimize.type='text/javascript';bsa_optimize.async=true;
+            bsa_optimize.src='https://cdn-s2s.buysellads.net/pub/academo.js?'+(new Date()-new Date()%600000);
+            (document.getElementsByTagName('head')[0]||document.getElementsByTagName('body')[0]).appendChild(bsa_optimize);
+        })();
+    </script>
+
+</head>
+
+<body class='body--shaded '>
+
+<div class="header">
+    <div class="header-upper">
+        <div class="header-inner">
+            <a class="logo" href="/">Academo</a>
+            <ul class="nav nav--primary">
+                <li><a class="" href="/about/">About</a></li>
+                <li><a class="" href="/search/">Search</a></li>
+                <li><a class="" href="/contact/">Contact</a></li>
+                <li><a class="" href="/submit-an-idea/">Submit an idea</a></li>
+                <li><a class="" href="/sponsor/">Sponsor</a></li>
+                </li>
+                <li class="social--twitter"><a target='_blank' href="https://twitter.com/AcademoOrg"><i class="fa fa-twitter"></i></a></li>
+                <li class="social--facebook"><a target='_blank' href="https://facebook.com/academo.org"><i class="fa fa-facebook"></i></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="header-lower">
+        <div class="header-inner">
+            <ul class="nav nav--secondary">
+                <li><a class="mobile-show " href="/demos/">Browse all demos</a></li>
+                <li><a class="mobile-hide " href="/demos/">All</a></li>
+                <li><a class="mobile-hide " href="/engineering/">Engineering</a></li>
+                <li><a class="mobile-hide " href="/geography/">Geography</a></li>
+                <li><a class="mobile-hide " href="/maths/">Maths</a></li>
+                <li><a class="mobile-hide " href="/music/">Music</a></li>
+                <li><a class="mobile-hide " href="/physics/">Physics</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="wrapper">
+    <!-- <div class='sponsor-wrapper js-sponsor-wrapper'> -->
+    <div class='sponsor-wrapper' style="max-width: 728px;overflow: hidden;height: 130px;">
+
+        <!-- Academo_S2S_Leaderboard_ROS_Pos1 -->
+        <p style="font-size: 11px;margin-bottom: 0;">Ad</p>
+        <div id="bsa-zone_1589226005384-4_123456"></div>
+        <!-- <div id="515411888">
+        <script type="text/javascript">
+            try {
+            window._mNHandle.queue.push(function (){
+                window._mNDetails.loadTag("515411888", "728x90", "515411888");
+            });
+            }
+            catch (error) {}
+        </script>
+        </div> -->
+
+    </div>
+    <div class="main">
+
+
+
+        <div class="preamble">
+            <h1>Contour Plotter</h1>
+            <hr>
+            <p class="blurb">
+                You can use this tool to create contour lines for any function you input
+            </p>
+            <p class="tags">
+
+                <a href='/maths'>Maths</a>
+                <a href='/maths/geometry/'>Geometry</a>
+                <a href='/search/?q=contour'>Contour</a>
+
+            </p>
+            <hr>
+
+            <div class="social-buttons">
+                <div class="social-button social-button--google-classroom">
+                    <script src="https://apis.google.com/js/platform.js" async defer></script>
+                    <div class="g-sharetoclassroom" data-size="32" data-url="https://academo.org/demos/contour-plot/" ></div>
+                </div>
+
+                <div class="social-button social-button--facebook">
+                    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://academo.org/demos/contour-plot/"></a>
+                </div>
+
+                <div class="social-button social-button--twitter">
+                    <a target="_blank" href="https://twitter.com/intent/tweet?text=Contour Plotter%20https://academo.org/demos/contour-plot/+from+@AcademoOrg"></a>
+                </div>
+
+            </div>
+
+            <hr>
+        </div>
+
+        <div id="demo"  class="">
+
+        </div>
+
+
+        <div class="clearfix" id='ui-container'>
+        </div>
+
+
+
+        <div class="demo-description">
+
+            <hr>
+
+            <div id="svg-container">
+                <svg width='500px' height='500px'>
+                    <g></g>
+                </svg>
+                <canvas id="c" width='500' height='500' style='display:none;background:lightgrey'></canvas>
+                <canvas id="js-demo-axes" width='500' height='500'></canvas>
+            </div>
+
+            <p>Contour Lines Key:</p>
+            <canvas id='js-key' width='500' height='30'></canvas>
+
+            <p>
+                If you've ever looked at a map, particularly of a hilly or mountainous region, you may have noticed groups of lines like this:
+            </p>
+
+            <p>
+                These are known as contour lines, and every point on the line is at the same height. Contour lines aren't just limited to giving us info about mountains though, they can help us visualise a surface described by a mathematical function.
+            </p>
+
+            <p>
+                In the demo above, every point in the graph has an x and y value. Each point also has a z value which is calculated by plugging the x and y values in to the expression shown in the box. By default this expression is x^2 - y^2. So if x = 2, and y = 2, z will equal 4 - 4 = 0. Try hovering over the point (2,2) above. You should see in the sidebar that the (x,y,z) indicator displays (2,2,0).
+            </p>
+
+            <p>
+                So, that explains why we see a contour line along the line x = y. Because along this line, z always equals zero. Try picking another contour line and follow it with your mouse. See how the z value always stays the same.
+            </p>
+
+            <p>
+                You might also notice that when you have many contour lines close together, if you go slightly off the line, the z value quickly deviates from the line's z value. This is because you are looking at part of the graph that is very steep and a small change in x or y will have a big effect on the value of z.
+            </p>
+
+            <p>
+                There's nothing special about which contour lines are displayed, it's just a matter of choice. You can change which values the contour lines should display by tweaking the "Range of contour levels" and "Number of contour levels" sliders. By default they are set to (-100,100) and 21 respectively, so this means that the displayed contour levels will start at -100 and go up to and including +100 in intervals of 20. You can see how the contour lines equate to the colors in the key just below the graph.
+            </p>
+
+            <p>
+                To update the function that the graph is showing, enter the new function in the input box, and click "update".
+            </p>
+
+            <p>
+                The table below lists which functions can be entered in the expression box.
+            </p>
+
+            <table class="table table-bordered">
+                <tr>
+                    <th>Expression</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>sin(x)</td>
+                    <td>The sine of x in radians</td>
+                </tr>
+                <tr>
+                    <td>cos(x)</td>
+                    <td>The cosine of x in radians</td>
+                </tr>
+                <tr>
+                    <td>tan(x)</td>
+                    <td>The tangent of x in radians</td>
+                </tr>
+                <tr>
+                    <td>asin(x), acos(x), atan(x)</td>
+                    <td>The inverse of the three trigonometric functions listed above</td>
+                </tr>
+                <tr>
+                    <td>sqrt(x)</td>
+                    <td>The square root of x (for positive x only)</td>
+                </tr>
+                <tr>
+                    <td>log(x)</td>
+                    <td>The natural logarithm of x</td>
+                </tr>
+                <tr>
+                    <td>pow(x, y)</td>
+                    <td>The power of x to the y</td>
+                </tr>
+            </table>
+
+            <p>
+                Contour lines can be a bit difficult to understand, so if you are having trouble, you may find the <a href="/demos/3d-surface-plotter/">3D surface plotter</a> useful to help visualise the actual shape of the 3D surface.
+            </p>
+
+
+
+
+
+
+            <div id="disqus_thread"></div>
+            <script type="text/javascript">
+                /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                var disqus_shortname = 'academo'; // required: replace example with your forum shortname
+
+                var disqus_config = function () {
+                    this.page.url = 'https://academo.org/demos/contour-plot/';
+                    // this.page.identifier = 'a unique identifier for each page where Disqus is present';
+                    // this.page.title = 'a unique title for each page where Disqus is present';
+                };
+
+                /* * * DON'T EDIT BELOW THIS LINE * * */
+                (function() {
+                    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+            </script>
+            <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        </div>
+
+        <div class="sidebar">
+            <h3>You might also be interested in</h3>
+            <hr>
+            <ul class="thumbnails">
+                <li class='sponsored-tile js-sponsored-tile'>	</li>
+                <!-- <li class='sponsored-tile'>
+                    <style>.ab-variant{display:none!important;}</style>
+                    <div id="668912154" class="ab-variant">
+                       <script type="text/javascript">
+                           try {
+                               window._mNHandle.queue.push(function (){
+                                   window._mNDetails.loadTag("668912154", "300x250", "668912154");
+                               });
+                           }
+                           catch (error) {}
+                       </script>
+                   </div>
+
+
+                   <p class="thumbnail-title">Sponsored Link</p>
+
+               </li> -->
+
+            </ul>
+        </div>
+
+
+
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+        <script src="/js/all.js?v=1589958059"></script>
+
+
+
+
+
+        <script src="/js/lib/d3.v3.min.js" class='js-demo-library'></script>
+        <script src="/js/lib/graph.js" class='js-demo-library'></script>
+        <script src="/js/lib/parser.js" class='js-demo-library'></script>
+        <script src="/demos/contour-plot/conrec.js?v=1465590712"></script>
+        <script src="/demos/contour-plot/demo.js?v=1465590712"></script>
+
+
+        <script>
+            //ASSET SERVING
+            var assetPath = "https://s3-us-west-2.amazonaws.com/academo-assets";
+
+            $(document).trigger({
+                type: "scriptLoaded"
+            });
+        </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+            if (window.location.host == 'academo.org') {
+                ga('create', 'UA-17960919-9', 'academo.org');
+                ga('send', 'pageview');
+            }
+        </script>
+    </div>
+    <div class="push"></div>
+</div>
+<div class="footer">
+    <div class="footer-inner">
+        &copy; Academo.org 2020. Source code available at <a href="https://github.com/edwardball/academo.org">GitHub.com</a>
+    </div>
+</div> <!-- End of content -->
+</body>
+</html>

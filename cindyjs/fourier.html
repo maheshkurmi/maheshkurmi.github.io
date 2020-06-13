@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FourierSamples.cdy</title>
+    <style type="text/css">
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        #CSConsole {
+            background-color: #FAFAFA;
+            border-top: 1px solid #333333;
+            bottom: 0px;
+            height: 200px;
+            overflow-y: scroll;
+            position: fixed;
+            width: 100%;
+        }
+    </style>
+    <link rel="stylesheet" href="CindyJS.css">
+    <script type="text/javascript" src="Cindy.js"></script>
+    <script id="csdraw" type="text/x-cindyscript">
+kmax=[50,50,50,50,50,50,50,50];
+col2=(0,0,1);
+col1=(0,1,0);
+//aa=|K,N|/|K,H|;
+//bb=5*|M,O|/|M,L|+1;
+//drawtext(O+(.1,.1),bb);
+//drawtext(N+(.1,.1),aa);
+//drawtext(N+(.1,.1-1),aa*bb);
+draw((-100,0),(100,0),color->gray(.5),size->3);
+draw((0,100),(0,-100),color->gray(.5),size->3);
+
+box(i,p):=(
+  w=0.2;
+  fillpoly((
+    p+(w,w),
+    p+(w,-w),
+    p+(-w,-w),
+    p+(-w,w)
+  ),color->if(choice==i,col1,col2),alpha->0.2);
+  connect((
+    p+(w,w),
+    p+(w,-w),
+    p+(-w,-w),
+    p+(-w,w),
+    p+(w,w)
+  ),color->(1,1,1)*.2,alpha->0.7,size->2);
+);
+repeat(maxchoice,i,
+  box(i,(i/2-4+1/4,1+3/4));
+  drawtext((i/2-4,1.5)+(.22,.2),align->"center",i,size->20)
+
+);
+
+
+text=[
+//"${1\over \pi}\cdot\sum_{k=0}^n {sin((2k+1)\cdot t)\over 2k+1}$",
+"${2\over \pi}\left({sin(t)\over 1}+{sin(3t)\over 3}+{sin(5t)\over 5}+{sin(7t)\over 7}+\ldots\right)$",
+"${1\over \pi}\left({sin(t)\over 1}+{sin(2t)\over 2}+{sin(3t)\over 3}+{sin(4t)\over 4}+\ldots\right)$",
+"${1\over \pi}\left({sin(t)\over 1}-{sin(2t)\over 2}+{sin(3t)\over 3}-{sin(4t)\over 4}+\ldots\right)$",
+"${1\over \pi}\left({sin(t)\over 1}-{sin(3t)\over 9}+{sin(5t)\over 25}-{sin(7t)\over 49}+\ldots\right)$",
+"${1\over k}\left(cos(t)+cos(2t)+cos(3t)+cos(4t)+\ldots\right)$",
+"$1+{2cos(t)\over \pi}+{2cos(2t)\over 1\cdot 3}-{2cos(4t)\over 3\cdot 5}+{2cos(6t)\over 5\cdot 7}-\ldots $",
+""
+];
+
+text2=[
+"Square function",
+"Sawtooth function",
+"Sawtooth function shifted",
+"Triangle",
+"Pulse",
+"Half Cosine",
+"",
+];
+
+text3=[
+"Interesting to observe - The Gibbs-Phenomenon:
+Sharp corners of a function need a minimal amplitude to adapt",
+"Also here you see the Gibbs-Phenomenon",
+"Compered to the other sawtooth you need alternating signs here",
+"Here you get a very fast approximation to the curve",
+"You get a needle pulse if you add cosine functions",
+"Observe the apporximation quality of the zero line",
+];
+
+glg=[1,pi/2]++flatten(apply(1..30,[(-1)^(#-1)*2/((2*#-1)*(2*#+1)),0]));
+
+n=round(kmax_choice*|C,A|/|C,D|+1);
+if(choice==1,g(x):=sum(1..ceil(n/2),a,2*sin((2*a-1)*x)/(2*a-1))/pi);
+if(choice==2,g(x):=sum(1..n,a,sin((1*a)*x)/(1*a))/pi);
+if(choice==3,g(x):=sum(1..n,a,sin((-1)^a*(1*a)*x)/(1*a))/pi);
+if(choice==4,g(x):=-sum(1..ceil(n/2),a,sin((-1)^a*(2*a-1)*x)/((2*a-1)^2))/pi);
+if(choice==5,g(x):=(sum(1..n,a,cos(a*x)/n)));
+if(choice==6,g(x):=(sum(1..n,a,.25*cos((a-1)*x)*glg_a)));
+if(choice==7,g(x):=sum(1..n,a,.5*sin((a-1)*x)/(1*a)));
+
+f(x):=g(4*x);
+drawtext((-3.7,-2.1),text_choice,size->20);
+drawtext((-3.7,-1.2),text2_choice,size->16);
+drawtext((-3.7,-1.4),text3_choice,size->12,color->(0,0,0.7));
+
+drawtext(A+(0.1,-0.2),"k="+n,size->16);
+
+
+
+
+w=|E,G|*(.2)+.05;
+
+
+drawtext(G+(0.1,-.2),"zoom="+format(1/w,1),size->16);
+
+fillcircle(B,w,color->(1,1,1)*.98,alpha->1);
+drawcircle(B,w,color->(0,0,0),alpha->1);
+
+//plot(f(x),pxlres->0.2);
+
+res=200+25*n;
+connect(apply(0..res,
+x=#/(res)*8-4;
+(x,f(x));
+));
+
+fillcircle((2,-2.5),1,color->(1,1,1)*.98,alpha->1);
+up(x):=sqrt(1-x^2);
+dow(x):=-sqrt(1-x^2);
+
+gg(x):=
+min(up(x-2),
+  max(dow(x-2),
+    (f((x-2)*w+B.x)-B.y)/w))-2.5;
+
+
+connect(apply(0..200,
+x=#/200*2+1;
+(x,gg(x));
+));
+
+
+
+drawcircle((2,-2.5),1,color->(0,0,0),alpha->1);
+
+
+
+
+
+
+;
+</script>
+    <script id="csmouseup" type="text/x-cindyscript">
+repeat(maxchoice,i,
+  if(|mouse().xy-(i/2-4+1/4,1+3/4)|<.2,choice=i);
+);
+
+
+
+
+;
+</script>
+    <script id="csinit" type="text/x-cindyscript">
+maxchoice=6;
+choice=1;
+
+
+
+
+;
+</script>
+    <script type="text/javascript">
+        createCindy({
+            scripts: "cs*",
+            defaultAppearance: {
+                dimDependent: 0.7,
+                fontFamily: "sans-serif",
+                lineSize: 1,
+                pointSize: 5.0,
+                textsize: 12.0
+            },
+            angleUnit: "°",
+            use:["katex"],
+            geometry: [
+                {name: "B", type: "Free", pos: [-0.23588571428571428, -1.8870857142857143, 4.0], color: [1.0, 1.0, 1.0], size: 2.0},
+                {name: "C", type: "Free", pos: [4.0, 2.857142857142857, -1.1428571428571428], color: [0.0, 0.0, 0.0], pinned: true, size: 1.0},
+                {name: "D", type: "Free", pos: [-2.4, -4.0, 1.6], color: [0.0, 0.0, 0.0], pinned: true, size: 1.0},
+                {name: "a", type: "Segment", color: [0.0, 0.0, 0.0], args: ["C", "D"]},
+                {name: "A", type: "PointOnSegment", pos: [4.0, 3.6863835718233036, -1.4745534287293214], color: [1.0, 1.0, 1.0], args: ["a"], size: 4.0},
+                {name: "E", type: "Free", pos: [4.0, 3.4285714285714284, -1.1428571428571428], color: [0.0, 0.0, 0.0], pinned: true, size: 1.0},
+                {name: "F", type: "Free", pos: [-2.0, -4.0, 1.3333333333333333], color: [0.0, 0.0, 0.0], pinned: true, size: 1.0},
+                {name: "b", type: "Segment", color: [0.0, 0.0, 0.0], args: ["E", "F"]},
+                {name: "G", type: "PointOnSegment", pos: [-3.3417142933333333, -4.0, 1.3333333333333335], color: [1.0, 1.0, 1.0], args: ["b"], size: 4.0}
+            ],
+            ports: [{
+                id: "CSCanvas",
+                width: 778,
+                height: 575,
+                transform: [{visibleRect: [-3.9461714285714287, 2.147542857142857, 3.7004571428571427, -3.503885714285714]}],
+                grid: 0.25,
+                background: "rgb(255,255,255)"
+            }],
+            cinderella: {build: 1871, version: [2, 9, 1871]}
+        });
+    </script>
+</head>
+<body>
+<div id="CSCanvas"></div>
+</body>
+</html>

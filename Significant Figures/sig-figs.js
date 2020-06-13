@@ -56,8 +56,16 @@ SigFloat.add = function(sf1, sf2) {
     var sumArr = sumString.split(/[Ee\.]/);
     var sumSF = new SigFloat(sumString);
 
-    var numSFsInSum = sumArr[0].length + lenAfterDecimal;
-    return sumSF.withSigFigures(numSFsInSum);
+    let intPart=new SigFloat(sumArr[0]);
+
+    //let sfbeforeDecimal=sumArr[0].length
+    var numSFsInSum = intPart.sigFigures(); + lenAfterDecimal;
+    //console.log("intpart"+ intPart+" SF="+intPart.sigFigures() +" decPart SF="+lenAfterDecimal);
+    sumSF= sumSF.withSigFigures(numSFsInSum);
+    //console.log("with SF "+numSFsInSum+" no is " + sumSF);
+
+    sumSF=sumSF.toFloat().toFixed(lenAfterDecimal);
+    //console.log("with decimal "+lenAfterDecimal+" no is " + sumSF);
 
     /*
     let one=sf1.toFixed();
@@ -98,9 +106,18 @@ SigFloat.subtract = function(sf1, sf2) {
 
     var diffArr = diffString.split(/[Ee\.]/);
     var diffSF = new SigFloat(diffString);
-    var numSFsInDiff = diffArr[0].length + lenAfterDecimal;
+    let intPart=new SigFloat(diffArr[0]);
 
-    return diffSF.withSigFigures(numSFsInDiff);
+    var numSFsInDiff = intPart.sigFigures() + lenAfterDecimal;
+
+    console.log("intpart"+ intPart+" SF="+intPart.sigFigures() +" decPart SF="+lenAfterDecimal);
+    diffSF= diffSF.withSigFigures(numSFsInDiff);
+    console.log("with SF "+numSFsInDiff+" no is " + diffSF);
+
+    diffSF=diffSF.toFloat().toFixed(lenAfterDecimal);
+    console.log("with decimal "+lenAfterDecimal+" no is " + diffSF);
+
+    return diffSF;
 }
 
 SigFloat.multiply = function(sf1, sf2) {

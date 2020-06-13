@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="https://cindyjs.org/dist/latest/Cindy.js"></script>
+    <title>Interference of two circular waves</title>
+</head>
+
+<body>
+<div id="CSCanvas"></div>
+
+<script id="csinit" type="text/x-cindyscript">
+      W(x, t, p) := sin(5*|x-p|-t); //helper function
+      resetclock();
+    </script>
+
+<script id="csdraw" type="text/x-cindyscript">
+
+      colorplot(
+        u = W(#, seconds(), A) + W(#, seconds(), B);
+        gray(1/2+u/4) //the last line is the return value!
+      );
+        drawText(A,"S1",color->(1,1,1));
+       drawText(B,"S2",color->(1,1,1));
+    </script>
+
+<script type="text/javascript">
+    CindyJS({
+        scripts: "cs*",
+        autoplay: true,
+        geometry: [
+            {name:"A", kind:"P", type:"Free", pos:[-4,4]},
+            {name:"B", kind:"P", type:"Free", pos:[3,-8]},
+        ],
+        ports: [{
+            id: "CSCanvas",
+            width: 500,
+            height: 500,
+            //no transform specified => visible area: [-10,10]^2
+        }]
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>optics</title>
+    <link rel="stylesheet" href="=app.css" />
+    <link rel="stylesheet" href="CindyJS.css" />
+    <script type="text/javascript" src="Cindy.js"></script>
+    <script id="csdraw" type="text/x-cindyscript">
+
+virtualbeams=true;
+
+
+o1=["circ",C0.center,C0.radius];
+o2=["mirror",F.xy,G.xy];
+o3=["absorber",H.xy,K.xy];
+o4=["absorber",N.xy,O.xy];
+o5=["absorber",T.xy,U.xy];
+o6=["lense",C.xy,L.xy,M.xy];
+o7=["lense",R.xy,Q.xy,S.xy];
+o8=["concavelense",R'.xy,Q'.xy,S'.xy];
+
+objects=[o1,o2,o3,o4,o5,o6,o7,o8];
+
+beams=[];
+
+
+
+p=D.xy;
+s=E-D;
+s=s/|s|;
+
+beam1=[p,s,(1,1,0)];
+
+p1=D'.xy;
+s1=E'-D';
+s1=s1/|s1|;
+
+p2=D''.xy;
+s2=E''-D'';
+s2=s2/|s2|;
+
+
+beam1=[p,s,(.8,1,1)];
+beam2=[p1,s1,(1,1,.8)];
+beam3=[p2,s2,(1,0.8,1)];
+
+
+
+beamRot(beam,w):=[beam_1,gauss(complex(beam_2)*exp(i*w°)),beam_3];
+beamShift(beam,shift):=[beam_1+(perp(beam_2))*shift,beam_2,beam_3];
+
+
+
+
+beams=[beam1];
+beams=apply(-5..5,beamShift(beam2,#*.2));
+beams=beams++apply(-5..5,beamRot(beam1,#*2))++[beam3];
+
+
+intersect(p,s,o):=(
+  ll=[];
+  if(o_1=="circ", (   
+    m=o_2;
+    r=o_3;
+    q=p-m;
+    scal=s*q;
+    dist=q*q-r^2;   
+
+    a=-scal+sqrt(scal^2-dist);
+    b=-scal-sqrt(scal^2-dist);
+
+    if(|im(a)|<0.00000001 & re(a)>0.00000001,ll=ll++[[o,re(a)]]);   
+    if(|im(b)|<0.00000001 & re(b)>0.00000001,ll=ll++[[o,re(b)]]);
+   );
+  );
+  if(o_1=="mirror" % o_1=="absorber"  % o_1=="lense" % o_1=="concavelense", (   
+    aa=o_2++[1];
+    bb=o_3++[1];
+    pp=p++[1];
+    ss=s++[0];
+    a=-det(aa,bb,pp)/det(aa,bb,ss);
+
+    mm=p+a*s;
+    dets=area(pp,mm++[1],aa)*area(pp,mm++[1],bb);
+    
+    if(dets<0.0000000&a>0.00000001,ll=ll++[[o,re(a)]]);   
+   );
+  );
+  ll;
+ );
+
+reflect(p,s,o,a):=(
+  pp=p+a*s;
+  ss=s;
+  if(o_1=="circ", (  
+       sp=pp-o_2;
+       sp=sp/|sp|;
+       ss=s-2*(s*sp)*sp;
+    ); 
+  );
+  if(o_1=="mirror", (  
+       sp=perp(o_3-o_2);
+       sp=sp/|sp|;
+       ss=s-2*(s*sp)*sp;
+    ); 
+  );
+  if(o_1=="lense", (
+       focus1=(o_4).homog;
+       ph=p.homog;
+       ll=join(o_2,o_3);
+       mid=meet(perpendicular(focus1,ll),ll);
+
+       focus2=(-o_4+2*mid.xy).homog;
+
+       sign=(ll*(ph))*(ll*focus1);
+       if(sign>0,(focus1=-o_4+2*mid.xy)++[1];focus2=o_4++[1]);
+
+       focusline=parallel(point(focus2),line(ll));
+       beamline=join(p,p+s);
+
+       testpoint=meet(focusline,beamline);
+
+       midline=join(testpoint,mid);
+       sss=perp((midline.x,midline.y));
+       lll=(ll.x,ll.y);
+       sign=-(sss*lll)*(ss*lll); 
+
+       if(-sign<0,ss=sss,ss=-sss);
+       ss=-ss/|ss|;
+    ); 
+  );
+  if(o_1=="concavelense", (
+       focus1=(o_4).homog;
+       ph=p.homog;
+       ll=join(o_2,o_3);
+       mid=meet(perpendicular(focus1,ll),ll);
+
+       focus2=(-o_4+2*mid.xy).homog;
+
+       sign=(ll*(ph))*(ll*focus1);
+       if(sign<0,(focus1=-o_4+2*mid.xy)++[1];focus2=o_4++[1]);
+
+       focusline=parallel(point(focus2),line(ll));
+       beamline=join(p,p+s);
+
+       testpoint=meet(focusline,beamline);
+
+       midline=join(testpoint,mid);
+       sss=perp((midline.x,midline.y));
+       lll=(ll.x,ll.y);
+       sign=-(sss*lll)*(ss*lll); 
+
+       if(-sign<0,ss=sss,ss=-sss);
+       ss=-ss/|ss|;
+    ); 
+  );
+  if(o_1=="absorber", (  
+       stop=true;
+    ); 
+  );
+  [pp,ss];
+);
+
+
+
+processBeam(beam):=(
+  p=beam_1;
+  s=beam_2;
+  color=beam_3;
+  stop=false;
+  count=0;
+  n=20;
+  alpha=1;
+  dim=0.99;
+  while(count<n & !stop,
+    count=count+1; 
+    l=[];
+    forall(objects,o,l=l++intersect(p,s,o));
+   
+    l=sort(l,#_2);
+
+    if(length(l)>0,(
+       hit=l_1;
+       erg=reflect(p,s,hit_1,hit_2);
+       draw(p,erg_1,color->color,alpha->alpha);
+   //  draw(erg_1,erg_1+erg_2*.1,color->(1,0,0),size->2);
+       p=re(erg_1);
+       s=re(erg_2);
+      ),(
+       draw(p,p+100*s,color->color,alpha->alpha);
+ if(count>1&Text1.pressed,
+          draw(p,p-100*s,color->color,alpha->alpha*0.2););
+       stop=true;
+      )
+    );
+    alpha=alpha*dim;
+  );
+);
+
+
+drawObject(o):=(
+  if(o_1=="lense", ( 
+       aa=o_2;
+       bb=o_3;
+       mm=(aa+bb)/2;
+       tt1=perp(aa-mm) ;
+       focus=o_4; 
+       pp=tt1*5+mm;
+       d1=pp-aa;
+       d2=pp-bb;
+       w1=arctan2(d1.y,d1.x)+180°;
+       w2=arctan2(d2.y,d2.x)+180°;
+       rr=|aa-pp|;
+
+       ws=apply((((0..10)/10)*(w2-w1)),#+w1);
+       tr1=apply(ws,ww,((sin(ww),cos(ww))*rr+pp));
+
+       pp=-tt1*5+mm;
+       tr2=tr1++apply(ws,ww,((-sin(ww),-cos(ww))*rr+pp));
+       fillpolygon(tr2,color->(1,2,2.5)*.2,alpha->0.9);
+       connect(tr2,color->(1,1,1)*.5);
+
+    ); 
+  );
+
+  if(o_1=="concavelense", ( 
+       aa=o_2;
+       bb=o_3;
+       mm=(aa+bb)/2;
+       tt1=perp(aa-mm) ;
+       focus=o_4; 
+       pp=tt1*5+mm;
+       d1=pp-aa;
+       d2=pp-bb;
+       w1=arctan2(d1.y,d1.x)+180°;
+       w2=arctan2(d2.y,d2.x)+180°;
+       rr=|aa-pp|;
+
+       ws=apply((((0..10)/10)*(w2-w1)),#+w1);
+       tr1=apply(ws,ww,((sin(ww),cos(ww))*rr+pp+tt1*.15));
+
+       pp=-tt1*5+mm;
+       tr2=tr1++apply(ws,ww,((-sin(ww),-cos(ww))*rr+pp-tt1*.15));
+       fillpolygon(tr2,color->(1,2,2.5)*.2,alpha->0.9);
+       connect(tr2,color->(1,1,1)*.5);
+
+    ); 
+  );
+
+);
+
+
+
+
+forall(beams,b,processBeam(b));
+forall(objects,o,drawObject(o));
+
+
+
+
+
+
+;
+</script>
+    <script type="text/javascript">
+        createCindy({
+            scripts: "cs*",
+            defaultAppearance: { fontFamily: "sans-serif", lineSize: 1, pointSize: 5.0, textsize: 12.0 },
+            angleUnit: "°",
+            geometry: [
+                { name: "A", type: "Free", pos: [ 4.0, 3.5936507936507938, 0.31746031746031744 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0, border: false },
+                { name: "C0", type: "CircleByRadius", pos: { xx: 0.0035880566511088522, yy: 0.0035880566511088522, zz: 1.0, xy: 0.0, xz: -0.09041902760794308, yz: 0.08123360258110443 }, color: [ 1.0, 1.0, 0.0 ], radius: 2.8635642126552705, args: [ "A" ], alpha: 0.8999999761581421 },
+                { name: "D", type: "Free", pos: [ 4.0, 0.20858895705521474, -0.3067484662576687 ], color: [ 0.9803922, 1.0, 0.61960787 ], alpha: 0.8999999761581421, size: 2.0, border: false },
+                { name: "C3", type: "CircleByRadius", pos: { xx: 0.005908433461585729, yy: 0.005908433461585729, zz: 0.9999999999999999, xy: 0.0, xz: 0.15409194467815582, yz: -0.008035469507756592 }, color: [ 0.0, 0.0, 1.0 ], radius: 1.1199999999999999, args: [ "D" ], alpha: 0.0, visible: false },
+                { name: "E", type: "PointOnCircle", pos: [ 4.0, { r: 0.27069865335411925, i: 5.039457918423767E-16 }, { r: -0.335366678085756, i: 4.866398677548761E-18 } ], color: [ 0.0, 1.0, 0.0 ], args: [ "C3" ], size: 2.0, border: false },
+                { name: "", type: "OtherPointOnCircle", pos: [ 4.0, { r: 0.156245976323437, i: -4.50628175316815E-16 }, { r: -0.2826304524923698, i: -3.6552101994821315E-18 } ], color: [ 1.0, 1.0, 1.0 ], args: [ "E" ], pinned: true, size: 0.0 },
+                { name: "F", type: "Free", pos: [ 4.0, 1.5675675675675675, 0.33783783783783783 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "G", type: "Free", pos: [ 4.0, -1.3152804642166345, 0.19342359767891684 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "a", type: "Segment", color: [ 1.0, 0.7843138, 0.0 ], args: [ "F", "G" ], alpha: 0.8999999761581421, size: 3 },
+                { name: "H", type: "Free", pos: [ 4.0, -1.9555555555555555, -0.2777777777777778 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "K", type: "Free", pos: [ 4.0, -3.755555555555555, -0.2777777777777778 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "b", type: "Segment", color: [ 0.7568628, 0.0, 0.0 ], args: [ "H", "K" ], alpha: 0.8999999761581421 },
+                { name: "P", type: "Free", pos: [ 4.0, 1.0, -1.0 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "C1", type: "CircleByRadius", pos: { xx: -0.0648407511152609, yy: -0.0648407511152609, zz: 0.9999999999999999, xy: 0.0, xz: -0.5187260089220872, yz: 0.1296815022305218 }, color: [ 0.0, 0.0, 1.0 ], radius: 5.694067087767759, args: [ "P" ], alpha: 0.8999999761581421, size: 0 },
+                { name: "Q", type: "PointOnCircle", pos: [ { r: 3.4085580160740245, i: 3.291559656750557E-17 }, -4.0, { r: -0.8521395040185038, i: -1.559218899787829E-32 } ], color: [ 1.0, 0.0, 0.0 ], args: [ "C1" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "R", type: "OtherPointOnCircle", pos: [ { r: -2.3901762247404372, i: -2.30813370251555E-17 }, -4.0, { r: 0.597544056185111, i: -7.155868158830513E-33 } ], color: [ 1.0, 0.0, 0.0 ], args: [ "Q" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "e", type: "Join", color: [ 0.0, 0.0, 1.0 ], args: [ "P", "Q" ], alpha: 0.8999999761581421, visible: false },
+                { name: "C2", type: "CircleByRadius", pos: { xx: 0.2051197899573351, yy: 0.2051197899573351, zz: 1.0, xy: 0.0, xz: 1.6409583196586808, yz: -0.4102395799146702 }, color: [ 0.0, 0.0, 1.0 ], radius: 3.482068350851258, args: [ "P" ], alpha: 0.8999999761581421, size: 0 },
+                { name: "f", type: "Orthogonal", color: [ 0.0, 0.0, 1.0 ], args: [ "e", "P" ], alpha: 0.8999999761581421, visible: false },
+                { name: "Collection__1", type: "IntersectionConicLine", args: [ "C2", "f" ] },
+                { name: "S", type: "SelectP", pos: [ { r: -2.0717265965949676, i: -1.8134489332690234E-31 }, { r: -3.999999999999974, i: 9.448562388791709E-17 }, 4.0 ], color: [ 1.0, 0.0, 0.0 ], args: [ "Collection__1" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "B", type: "Free", pos: [ -1.5782312925170068, -4.0, -0.34013605442176875 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "C4", type: "CircleByRadius", pos: { xx: 0.006916624244704633, yy: 0.006916624244704633, zz: 1.0, xy: 0.0, xz: -0.064186272990859, yz: 0.16267900223545295 }, color: [ 0.0, 0.0, 1.0 ], radius: 3.90486875579705, args: [ "B" ], alpha: 0.8999999761581421, size: 0 },
+                { name: "C5", type: "CircleByRadius", pos: { xx: 0.006808353032168107, yy: 0.006808353032168107, zz: 0.9999999999999999, xy: 0.0, xz: -0.06318151613852004, yz: 0.1601324633165939 }, color: [ 0.0, 0.0, 1.0 ], radius: 3.59844410822233, args: [ "B" ], alpha: 0.8999999761581421, size: 0 },
+                { name: "C", type: "PointOnCircle", pos: [ { r: -1.20845574390336, i: 1.1497802997575391E-15 }, -4.0, -0.26044304825503445 ], color: [ 1.0, 0.0, 0.0 ], args: [ "C5" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "L", type: "OtherPointOnCircle", pos: [ { r: -2.2740761989632663, i: -1.885166531401717E-15 }, -4.0, { r: -0.4901026290869107, i: 6.714542063034825E-31 } ], color: [ 1.0, 0.0, 0.0 ], args: [ "C" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "c", type: "Join", color: [ 0.0, 0.0, 1.0 ], args: [ "B", "C" ], alpha: 0.8999999761581421, visible: false },
+                { name: "d", type: "Orthogonal", color: [ 0.0, 0.0, 1.0 ], args: [ "c", "B" ], alpha: 0.8999999761581421, visible: false },
+                { name: "Collection__2", type: "IntersectionConicLine", args: [ "C4", "d" ] },
+                { name: "M", type: "SelectP", pos: [ { r: -2.9064179441486564, i: 1.183980413756834E-15 }, -4.0, { r: -0.3401360544217685, i: 1.3856039777715573E-16 } ], color: [ 1.0, 0.0, 0.0 ], args: [ "Collection__2" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "D'", type: "Free", pos: [ 4.0, -2.073349633251834, -0.24449877750611249 ], color: [ 0.9803922, 1.0, 0.61960787 ], alpha: 0.8999999761581421, size: 2.0, border: false },
+                { name: "C3'", type: "CircleByRadius", pos: { xx: 0.0029559073216642, yy: 0.0029559073216642, zz: 1.0, xy: 0.0, xz: 0.09671728756485262, yz: 0.050132188175424836 }, color: [ 0.0, 0.0, 1.0 ], radius: 1.1199999999999999, args: [ "D'" ], alpha: 0.0, visible: false },
+                { name: "E'", type: "PointOnCircle", pos: [ 4.0, { r: -2.225721784776902, i: -3.1595275670753565E-15 }, { r: -0.26246719160105, i: -1.9273949805156514E-29 } ], color: [ 0.0, 1.0, 0.0 ], args: [ "C3'" ], size: 2.0, border: false },
+                { name: "O", type: "Free", pos: [ 4.0, -2.8, -0.4 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "T", type: "Free", pos: [ 4.0, -1.5184381778741864, -0.21691973969631237 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "U", type: "Free", pos: [ 4.0, 1.3133208255159476, 0.1876172607879925 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "h", type: "Join", color: [ 0.7568628, 0.0, 0.0 ], args: [ "T", "U" ], alpha: 0.8999999761581421 },
+                { name: "N", type: "Free", pos: [ 2.6666666666666665, -4.0, -0.26666666666666666 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "g", type: "Segment", color: [ 0.7568628, 0.0, 0.0 ], args: [ "O", "N" ], alpha: 0.8999999761581421 },
+                { name: "P'", type: "Free", pos: [ 2.422939068100358, -4.0, -0.35842293906810035 ], color: [ 1.0, 0.0, 0.0 ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "C1'", type: "CircleByRadius", pos: { xx: 0.006283048836882, yy: 0.006283048836882, zz: 1.0, xy: 0.0, xz: 0.08494682027464462, yz: 0.14023765003920624 }, color: [ 0.0, 0.0, 1.0 ], radius: 3.32938432746957, args: [ "P'" ], alpha: 0.8999999761581421, size: 0 },
+                { name: "R'", type: "PointOnCircle", pos: [ { r: 3.4730175863557307, i: -2.035582132278923E-16 }, -4.0, { r: -0.5108004896890146, i: -3.089726542914136E-19 } ], color: [ 1.0, 0.0, 0.0 ], args: [ "C1'" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "Q'", type: "OtherPointOnCircle", pos: [ { r: 1.8554108842819177, i: -1.167023570532508E-16 }, -4.0, { r: -0.276068569318429, i: -9.527833295227939E-20 } ], color: [ 1.0, 0.0, 0.0 ], args: [ "R'" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "e'", type: "Join", color: [ 0.0, 0.0, 1.0 ], args: [ "P'", "Q'" ], alpha: 0.8999999761581421, visible: false },
+                { name: "C2'", type: "CircleByRadius", pos: { xx: 0.006110079186626259, yy: 0.006110079186626259, zz: 0.9999999999999999, xy: 0.0, xz: 0.08260827060318701, yz: 0.1363769674454981 }, color: [ 0.0, 0.0, 1.0 ], radius: 2.5649951267010236, args: [ "P'" ], alpha: 0.8999999761581421, size: 0 },
+                { name: "f'", type: "Orthogonal", color: [ 0.0, 0.0, 1.0 ], args: [ "e'", "P'" ], alpha: 0.8999999761581421, visible: false },
+                { name: "Collection__3", type: "IntersectionConicLine", args: [ "C2'", "f'" ] },
+                { name: "S'", type: "SelectP", pos: [ { r: 1.5077261713680061, i: 4.5745010304191695E-17 }, -4.0, { r: -0.3593946677021913, i: -1.0574139081135823E-17 } ], color: [ 1.0, 0.0, 0.0 ], args: [ "Collection__3" ], alpha: 0.8999999761581421, size: 2.0 },
+                { name: "D''", type: "Free", pos: [ 4.0, -2.608294930875576, -0.2304147465437788 ], color: [ 0.9803922, 1.0, 0.61960787 ], alpha: 0.8999999761581421, size: 2.0, border: false },
+                { name: "C3''", type: "CircleByRadius", pos: { xx: 0.002335043207639514, yy: 0.002335043207639514, zz: 0.9999999999999999, xy: 0.0, xz: 0.08107270016924392, yz: 0.052865378220958596 }, color: [ 0.0, 0.0, 1.0 ], radius: 1.1199999999999999, args: [ "D''" ], alpha: 0.0, visible: false },
+                { name: "E''", type: "PointOnCircle", pos: [ 4.0, { r: -2.788177339901485, i: 2.1862646394417647E-16 }, { r: -0.24630541871921235, i: -2.2639295662522E-31 } ], color: [ 0.0, 1.0, 0.0 ], args: [ "C3''" ], size: 2.0, border: false },
+                { name: "Text0", type: "Text", color: [ 1.0, 1.0, 1.0 ], alpha: 0.8999999761581421, text: "Ablage für Lichtstrahlen", dock: { corner: "UL", offset: [ 10.0, -20.0 ] } },
+                { name: "Text1", type: "Text", color: [ 1.0, 0.7843138, 0.0 ], button: true, text: "Virtuelle Strahlen", dock: { corner: "LL", offset: [ 10.0, 20.0 ] } } ],
+            ports: [
+                { id: "CSCanvas", width: 994, height: 601, transform: [ { visibleRect: [ -18.62, 15.1, 21.14, -8.94 ] } ], background: "rgb(0,0,0)" } ],
+            cinderella: { build: 1835, version: [ 2, 9, 1835 ] } });
+    </script>
+</head>
+<body>
+
+
+
+
+<script src="app.js"></script>
+</body>
+</html>
