@@ -133,7 +133,7 @@ function setup(){
 
     //createButton();
     manualZoomAmount = true;
-    zoomAmount = 1;
+    zoomAmount = 0.55;
     zoomIn();
     performZoom();
 
@@ -665,14 +665,11 @@ function keyDownEvent(e){
     detectZoomKey(e.keyCode);
 
     // Space is pressed, clear screen.
-    if(e.keyCode == 32){
-            clearAll();
-    }else if(e.keyCode == 72) {
+    if(e.keyCode == 72) {
         showArrows = false;
     } else if(e.keyCode == 85) {
         showArrows = true;
-    }
-    else if(e.keyCode == 82){
+    } else if(e.keyCode == 82){
         clearAverage(true);
         fieldToRight = !fieldToRight;
         counter = 1;
