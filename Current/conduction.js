@@ -48,8 +48,8 @@ function detectZoomKey(_key){
         zoomOut();
     }
     else if(_key == 70){
-        manualZoomAmount = false;
-        zoomFullScreen();
+       // manualZoomAmount = false;
+        //zoomFullScreen();
     }
 }
 
@@ -81,7 +81,7 @@ var protons = [];
 // Should arrows be drawn
 var showArrows = false;
 
-var numElectron = 100;
+var numElectron = 120;
 
 var spawningBall = false;
 
@@ -129,12 +129,12 @@ function setup(){
 
     createConductor();
 
-    //initDetector();
+    initDetector();
 
     //createButton();
     manualZoomAmount = true;
-    zoomAmount = 0.55;
-    zoomIn();
+    zoomAmount = 1.5;
+    //zoomIn();
     performZoom();
 
     //noLoop();
@@ -664,12 +664,10 @@ function keyDownEvent(e){
     println("Key down detected. Code = "+e.keyCode);
     detectZoomKey(e.keyCode);
 
-    // Space is pressed, clear screen.
-    if(e.keyCode == 72) {
-        showArrows = false;
-    } else if(e.keyCode == 85) {
-        showArrows = true;
-    } else if(e.keyCode == 82){
+    // Toggle arrows with U
+    if(e.keyCode == 85) {
+        showArrows = !showArrows;
+    } else if(e.keyCode == 82){ //toggle field direction with 'R'
         clearAverage(true);
         fieldToRight = !fieldToRight;
         counter = 1;
