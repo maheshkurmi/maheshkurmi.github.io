@@ -133,7 +133,7 @@ function setup(){
 
     //createButton();
     manualZoomAmount = true;
-    zoomAmount = 1.5;
+    zoomAmount = 1.25;
     //zoomIn();
     performZoom();
 

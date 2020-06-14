@@ -5,12 +5,28 @@
      <!-- Removed remote host to use a local file. of the latest version <script language="javascript" type="text/javascript" src="http://cdn.jsdelivr.net/p5.js/0.3.2/p5.min.js"></script> -->
     <script language="javascript" type="text/javascript" src="p5.min.js"></script>
     <script language="javascript" type="text/javascript" src="conduction.js"></script>
+
     <style>
-        html, body {
-            overflow: hidden;
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
             margin: 0;
-            padding: 0;
-            background:white;
+
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
         }
     </style>
 </head>
@@ -20,10 +36,8 @@
 <p>Press <b>Spacebar</b> to enable or disable  the ions. Notice how much faster the electrons move in the absence of the ions. In real life the drift speed is much slower than the time it would take for an electron to move from one charged plate to another. In most cases, humans can walk faster than the electron drift speed in a resistor or a resistive wire.
 <br>Notice that as you increase the electric field for the case when the ions have disappeared, you get even faster electron speeds.
     --></p>
-<p>Press <b>U</b> to toggle the visibility of velocity vectors</p>
-<p>Press <b>R</b> to toggle the direction of electric field and notice that electrons always drift opposite to electric field</p>
-<p>Press <b>Z</b> to zoom in and <b>X</b> to zoom out</p>
-<p>Note: I have not shown the effect of random spped of electrons in the simulation (just shown the effect of presence of ions) because the random speed of electrons(order 10<sup>6</sup>m/s
+<p>Press <b>U</b> to toggle the visibility of velocity vectors, Press <b>R</b> to toggle the direction of electric field and notice that electrons always drift opposite to electric fieldPress <b>Z</b> to zoom in and <b>X</b> to zoom out</p>
+<p>Note:  Here the effect of random spped of electrons is not shown in the simulation (just shown the effect of presence of ions) because the random speed of electrons(order 10<sup>6</sup>m/s
 is much greater than the drift speed (few millimeter per second), so the effect in change in direction would be too small to notice ! </p>
 <!-- Disables the pesky context menu when you right click by accident -->
 <!--
