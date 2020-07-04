@@ -1,0 +1,718 @@
+<!doctype html>
+<html>
+<head>
+<title>Micrometer Simulator</title>
+<style>
+body {
+  background: white;
+  color: #323232;
+  font-weight: 300;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: Helvetica neue, roboto;
+}
+
+img {
+  width: 56px;
+  height: 48px;
+}
+
+h1 {
+  font-weight: 200;
+  font-style: 26px;
+  margin: 10px;
+}
+label {
+    display: inline-block;
+    text-align: left;
+    width: 100px;
+}
+p.info {
+    display: inline-block;
+    text-align: justify;
+    width: 600px;
+}
+</style>	
+</head>
+	
+<body onload="preload()">
+<div id="canvasdiv" class="container" align="center">
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" width="600px" height="540px">
+    Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div>
+        <div>
+            <div id="divRg">
+                <input type="range" id="Rg" oninput="updateSlider()" min="0.1" step="0.1" max="10" text="Rg=value Ω" value="9.9" visible="false" weightx="1" tooltip="Resistance of galv coil">
+                <label id="lblRg" for="Rg"> Rg=value Ω </label>
+            </div>
+            <div id="divS">
+                <input type="range"  id="S" oninput="updateSlider()" max="1.0" min="0" text="S=value Ω" step="0.01" value="0.1" visible="false" tooltip="Shunt Resistance">
+                <label id="lblS" for="S"> S=value Ω </label>
+            </div>
+            <div id="divIg">
+                <input type="range"  id="Ig" oninput="updateSlider()" max="50.0" min="1.0" text="Ig=value mA" step="1.0" value="20.0" tooltip="Maximum deflection current for Galva">
+                <label id="lblIg" for="Ig"> Ig=value mA </label>
+            </div>
+            <div id="divI">
+                <input type="range"  id="I" oninput="updateSlider()" max="1.0" min="0" text="I=value A" step="0.01" value="0.012" tooltip="Current through branch">
+                <label id="lblI" for="I"> I=value A </label>
+            </div>
+            <div>
+                <input type="checkbox" id="drawInfo" onchange="" checked="true" text="Draw Info" halign="left">
+                <label for="drawInfo"> Show values </label>
+            </div>
+
+            <input type="checkbox" id="useShunt" text="Use Shunt" style="display:none">
+            <input type="checkbox" id="drawDial" text="Replace with Ammeter Dial" style="display:none">
+            <input type="checkbox" id="hideInternals" text="Hide Internals" style="display:none">
+            <div>
+                <p id="textarea" class="info">         </p>
+            </div>
+
+            <div scrollable="true" weightx="1">
+                <button id="prevBtn" enabled="false" text="&lt;&lt; Previous" onclick="prevStep_onClick()">
+                    &lt;&lt; Previous
+                </button>
+                <button id="nextStep" text="Next Step &gt;&gt;" onclick="nextStep_onClick()">
+                    Next Step &gt;&gt;
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+	
+<script type='text/javascript'>
+    function Vector2(x,y){
+        this.x=x?x:0;
+        this.y=y?y:0;
+        this.distance=function(v){
+            return Math.hypot(this.x-v.x,this.y-v.y);
+        }
+        this.set=function(x,y){
+            this.x=(y==undefined?x.x:x);
+            this.y=(y==undefined?x.y:y);
+            return this;
+        }
+        this.multiply=function(s){
+            this.x*=s;
+            this.y*=s;
+            return this;
+        }
+        this.add=function(v){
+            this.x+=v.x;
+            this.y+=v.y;
+            return this;
+        }
+        this.product=function(s){
+            return new Vector2(this.x*s,this.y*s);
+        }
+    }
+    const PI=Math.PI;
+    const HALF_PI=Math.PI/2;
+    const TWO_PI=Math.PI*2;
+    const QUARTER_PI=Math.PI/4;
+    const canvas=document.getElementById("canvas");
+    const ctx=canvas.getContext("2d");
+    var timer=null;
+
+    function sin(th){
+        return Math.sin(th);
+    }
+
+    function cos(th){
+        return Math.cos(th);
+    }
+
+    function line(x,y,x1,y1){
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x1, y1)
+        ctx.stroke();
+    }
+
+    function dist(x1,y1,x2,y2) {
+        return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    }
+
+    function arc(x, y, w, h, start, stop, mode, detail) {
+        ctx.beginPath();
+        ctx.arc(x, y, w/2, start, stop);
+        //ctx.stroke();
+        ctx.fill();
+    }
+
+    function map(n,start1,stop1,start2,stop2){
+        //if(n<start1)n=start1;
+        //if(n>stop1)n=stop1;
+        return (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    }
+
+    function constrain(n, low, high) {
+        return Math.max(Math.min(n, high), low);
+    }
+
+    function contain(x, y, x1, y1, w1, h1){
+
+        if (x < x1) return false;
+        if (x > (x1 + w1)) return false;
+        if (y < y1) return false;
+        if (y > (y1 + h1)) return false;
+        return true;
+    }
+
+    function lerp(start, stop, amt){
+        return amt * (stop - start) + start;
+    }
+
+    function mod(x, y){
+        // ì¼ë‹¨, ì–‘ìˆ˜ë¡œ ë§Œë“ ë‹¤.
+        if (x < 0) x += y * (ceil(abs(x)/y) + 1);
+        var c = Math.floor(x / y);
+        return x - y * c;
+    }
+
+    function drawArrow2D(x, y, cx, cy){
+
+        var lArrow = Math.sqrt(cx*cx+cy*cy);
+        //, cy); // ì „ì²´ ê¸¸ì´
+        var wArrow = width*0.005;
+        // ë°˜ìª½ ë„“ì´
+        var head = Math.min(lArrow, 3*wArrow);
+
+        // ìš´ë™ì—ë„ˆì§€ í™”ì‚´í‘œ ê·¸ë¦¬ê¸°
+        var oxArrow = [ 0, lArrow - head, lArrow - head, lArrow, lArrow - head, lArrow - head, 0 ];
+        var oyArrow = [ wArrow, wArrow, 2*wArrow, 0, -2*wArrow, -wArrow, -wArrow ];
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.atan2(cy, cx));
+        ctx.beginPath();
+        //beginShape();
+        //DrawCurrent Arrow
+        for (var i = 0; i < oxArrow.length; i++){
+
+            // ctx.lineTo(Math.max(oxArrow[i], 0), oyArrow[i]);
+        }
+        ctx.closePath();
+        //endShape(CLOSE);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function ellipse( x, y, w, h){
+        ctx.save(); // save state
+        ctx.beginPath();
+
+        ctx.translate(x-w/2, y-h/2);
+        ctx.scale(w/2, h/2);
+        ctx.arc(1, 1, 1, 0, 2 * Math.PI, false);
+
+        ctx.restore(); // restore to original state
+        ctx.fill();
+    }
+
+    function drawResistor(x0,y0){
+        let dx=8,dy=8;
+        let n=6;
+        let x=x0,y=y0;
+        ctx.beginPath();
+        ctx.moveTo(x,y);
+        x+=dx;
+        ctx.lineTo(x,y);
+        x+=dx/2;
+        y-=dy/2;
+        ctx.lineTo(x,y);
+        while(n--){
+            ctx.lineTo(x+dx,y0+dy);
+            x+=dx;
+            dy=-dy;
+        }
+        x+=dx/2;
+        ctx.lineTo(x,y0);
+        ctx.lineTo(x+dx,y0);
+        ctx.stroke();
+    }
+
+    var v=new Vector2();
+    var currSep=25;
+    function Wire(x1,y1,x2,y2){
+        this.v1=new Vector2(x1,y1);
+        this.v2=new Vector2(x2,y2);
+        let ne=Math.round(this.v1.distance(this.v2)/currSep);
+        this.e=new Array();
+        this.current=0;
+        for(let i=0;i<ne;i++){
+            this.e.push(i/ne);
+        }
+        this.draw= function(){
+            line(this.v1.x,this.v1.y,this.v2.x,this.v2.y);
+            ctx.fillStyle="red";
+            //console.log(this.e);
+            for(let i=0;i<this.e.length;i++){
+                this.e[i]+=this.current;
+                if(this.e[i]>1){
+                    this.e[i]=this.e[i]-1;
+                }
+                v.set(this.v1).multiply(1-this.e[i]).add(this.v2.product(this.e[i]));
+                //console.log(v);
+                //Vector2.interpolate(this.v1,this.v2,this.e[i]/(1-this.e[i]));
+                ctx.fillRect(v.x-2.5, v.y-2.5, 5, 5);//,0,0,2*Math.PI);
+            }
+        }
+    }
+    const ohm='&#8486;';
+    var language = 2;
+    var labelA;
+    var rangeA;
+    var radioA;
+    var imgMagnet;
+    var imgCoil;
+    var imgPointer;
+    var charge = 0;
+    var theta = 0;
+    var width = canvas.width;
+    var height = canvas.height;
+    var Rg=document.getElementById("Rg");
+    var I=document.getElementById("I");
+    var Ig=document.getElementById("Ig");
+    var S=document.getElementById("S");
+    I.value=(0.012);
+    Ig.value=(20);
+    Rg.value=(9.9);
+    S.value=(0.1);
+    var drawInfo=document.getElementById("drawInfo");
+    var useShunt=document.getElementById("useShunt");
+    var drawDial=document.getElementById("drawDial");
+    var hideInternals=document.getElementById("hideInternals");
+    useShunt_onChange(useShunt,useShunt.checked);
+    //var radioA = Widgets.getCheckBox("radioA");
+    //var radioB = Widgets.getCheckBox("CheckBox");
+    //var miin = Widgets.getLabel("miin");
+    //var maax = Widgets.getLabel("maax");
+
+    var width = 1000;//canvas.width*1.5;
+    var height = 1000;//canvas.height*1.5;
+    preload();
+    //window.clearTimeout(timer);
+
+    var w_mainL,w_mainLV,w_mainR,w_mainRV,w_galvL,w_galvR,w_shunt;
+    const text=[];
+    text[0]="<b>STEP -1: GALV. WORKING </b> <br>The strength of the current in the electrical circuit is measured using an galvanometer. <br/>There is a rotor with a coil wound inside the ammeter. When the current flows through the ammeter, the rotor  experiences magnetic torue, which is balanced by torsional torque of spring. Greater the current greater is deflection.<br/>Try changing current in the coil as well as the maximum defelection current of the galvanometer"
+    text[1]="<b>STEP -2: ADDING SHUNT </b> <br>Being a very sensitive instrument, a large current cannot be passed through the galvanometer, as it may damage the coil.<br/>However, a galvanometer is converted into an ammeter by connecting a low resistance in parallel with it. As a result, when large current flows in a circuit, only a small fraction of the current passes through the galvanometer and the remaining larger portion of the current passes through the low resistance.<br/>Note that deflection in Galv is still proprtional to main current, Try changing galvanometer and shunt resistance ";
+    text[2]="<b>STEP -3: CHANGING DISPLAY</b> <br>Eventhough the deflection is directly proportional to the current, the galvanometer scale is not marked in ampere. Let's mark the readings in Ammeter.<br/>Try changing current through circuit and check deflection and reading shown by our modified device. "
+    text[3]="<b>STEP -4: PACKING UP AMMETER</b> <br>Lets hide the setup so that it can't be seen what is there inside it.<br/> Now the reading coincides with current flowing through it.<br/> Although we have increased range but that at the loss of precision and sensitivity.<br/><br/>Voila!!! You have created an Ammeter from galvanometer";
+    var step=0;
+    performStep();
+    function preload() {
+        //var a = getURL();
+        //var b = "http";
+        //var m = match(a, b);
+        //var c = (m == "http") ? "//javalab.org/lee/image/" : "";
+        imgMagnet = new Image();
+        imgMagnet.src="ammeter_magnet.png";
+        imgCoil = new Image();
+        imgCoil.src="ammeter_coil.png";
+        imgPointer = new Image();
+        imgPointer.src="ammeter_pointer.png";
+        imgPointer.onload = setup;
+       // draw();
+       // setup();
+    }
+
+    function setup() {
+        //frameRate(50);
+        //pixelDensity(2 * displayDensity());
+        //var o = select("#myContainer");
+        //var a = 0.45;
+        //var w = int((o.width > (window.innerHeight * 0.82) / a) ? (window.innerHeight * 0.82) / a : o.width);
+        //var h = int(w * a);
+        //myCanvas = createCanvas(w, h);
+        //myCanvas.parent("myContainer");
+        //myCanvas.id("myP5Canvas");
+        //radioA = createRadio("radioA");
+        //radioA.option("500mA ", "0.5");
+        //radioA.option("5A ", "5");
+        //radioA.parent("radioA");
+        //radioA.value("5");
+        //radioA.changed(doRadioA);
+        //radioA.style("margin-right", "10px");
+        //labelA = select("#labelA");
+        //if (language == 0) labelA.html("전류");
+        //if (language == 1) labelA.html("電流");
+        //if (language == 2) labelA.html("Current");
+        //rangeA = select("#rangeA");
+        setup2();
+    }
+
+    function setup2() {
+        window.clearInterval(timer);
+        timer = window.setInterval(draw, 30);
+        updateSlider();
+        draw();
+        //if (width * 0.5 > 300) rangeA.style("width", width * 0.5 + "px")
+    }
+
+
+
+    var ammDisp=useShunt.checked && drawDial.checked;
+    function draw() {
+        //if (touches.length > 1) return;
+        ///ctx.font="Arial Bold 30px";
+        ammDisp=useShunt.checked && drawDial.checked;
+        var i=I.value*1000;
+
+        let ig=!useShunt.checked?i:(i*S.value/(S.value*1+Rg.value*1));
+        ctx.save();
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.fillRect(0,0,900,900);
+        ctx.lineWidth = (width * 0.005);
+        ctx.translate(-0.5*(width-canvas.width), 0.1*(height-canvas.height));
+        //background(255);
+        ctx.font = "14px Arial";
+
+        //Arial " + (width * 0.03).toString() + "px";
+        ctx.textAlign = "center";
+        var a = 0.5;
+        var b = 0.3;
+        var c = map(ig, 0, Ig.value*1, 0, HALF_PI);
+        //if(theta!=c) Console.log(ig+","+Ig.value+","+c);
+        c -= QUARTER_PI;
+
+        theta = lerp(theta, c, 0.15);
+
+        theta = constrain(theta, -0.25 * PI, 0.3 * PI);
+        //rectMode(CENTER);
+        //noStroke();
+        ctx.fillStyle = "rgb(233, 233, 233)";
+        ctx.fillRect(width * 0.5 - width * 0.6/2, width * 0.2 - width * 0.6/2, width * 0.6, width * 0.6);
+        ctx.fillStyle="white";
+        ctx.fillRect(width * 0.5 - width * 0.6/2, width * 0.2 - width * 0.6/2, width * 0.6, width * 0.3);
+
+        var d = width * (a + 0.065 * cos(theta + 5 * QUARTER_PI));
+        var e = width * (b + 0.065 * sin(theta + 5 * QUARTER_PI));
+        var f = width * (a + 0.11 * cos(theta + 1.15 * PI));
+        var g = width * (b + 0.11 * sin(theta + 1.15 * PI));
+        var h = width * (a + 0.13 * cos(theta * 0.8 + PI));
+        var j = width * (b + 0.13 * sin(theta * 0.8 + PI));
+        var k = width * 0.406;
+        var l = width * 0.4;
+        var m = k;
+        var n = width * 0.467;
+        //noFill();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = (width * 0.002);
+        ctx.beginPath();
+        ctx.moveTo(d, e);
+        ctx.bezierCurveTo(f, g, h, j, k, l);
+        ctx.stroke();
+        ctx.lineWidth = (width * 0.005);
+        //line(m, l, m, n);
+        //line(0, n, m, n);
+        if(w_mainL==null){
+            w_mainL=new Wire(0, n, m, n);
+            w_mainLV=new Wire(m,n,m,l);
+            k=width * 0.5935;
+            w_shunt=new Wire(m,n,k,n);
+        }
+
+        ctx.fillStyle = "black";
+        //noStroke();
+
+        var d = width * (a + 0.065 * cos(theta + QUARTER_PI));
+        var e = width * (b + 0.065 * sin(theta + QUARTER_PI));
+        var f = width * (a + 0.11 * cos(theta + 0.15 * PI));
+        var g = width * (b + 0.11 * sin(theta + 0.15 * PI));
+        var h = width * (a + 0.11 * cos(theta * 0.5 + 0.1 * PI));
+        var j = width * (b + 0.11 * sin(theta * 0.5 + 0.1 * PI));
+        var k = width * 0.5935;
+        var l = width * 0.4;
+        var m = k;
+        var n = width * 0.467;
+        //noFill();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = (width * 0.002);
+        ctx.beginPath();
+        ctx.moveTo(d, e);
+        ctx.bezierCurveTo(f, g, h, j, k, l);
+        ctx.stroke();
+        //bezier(d, e, f, g, h, j, k, l);
+        ctx.lineWidth = (width * 0.005);
+        //line(m, l, m, n);
+        //line(width, n, m, n);
+        if(w_mainR==null){
+            w_mainRV=new Wire(m,l,m,n);
+            w_mainR=new Wire(m,n,width, n);
+        }
+
+
+        //imageMode(CORNER);
+        ctx.drawImage(imgMagnet, 0,0, width, width * imgMagnet.height / imgMagnet.width);
+
+
+        if(drawInfo.checked){
+            //textAlign(RIGHT, CENTER);
+            ctx.font = "Arial 20px";
+
+            ctx.fillText(ammDisp?(i/1000).toFixed(2)+"A":i.toFixed(1)+"mA",width * 0.25, n-10);
+
+            //ctx.textAlign = "LEFT";
+            //ctx.textBaseline = "MIDDLE";
+            ctx.fillText(ig.toFixed(1)+"mA", width * 0.39 -10, width * 0.43);
+
+            if(step>=1)ctx.fillText("Ig="+(Ig.value*1).toFixed(1)+"mA, Rg="+(Rg.value*1).toFixed(1)+"\u{2126}", width * 0.51, width * 0.22)
+
+            //textAlign(LEFT, TOP);
+            if(useShunt.checked){
+                ctx.fillText("S="+(S.value*1).toFixed(2)+"\u{2126}", width * 0.51, n - 15)
+                ctx.fillText((i-ig).toFixed(1)+"mA", width * 0.427, n + 20)
+            }
+
+            i=Math.sqrt(i)/2000;
+            let iG=Math.sqrt(ig)/2000;//200000;
+            w_mainL.current=i;
+            w_mainR.current=i;
+            w_shunt.current=(i-iG)*2;
+            w_mainLV.current=iG*5;
+            w_mainRV.current=iG*5;
+        }
+
+        //noStroke()
+        if(useShunt.checked){
+            drawResistor(width * 0.45,n);
+            w_shunt.draw();
+        }
+        w_mainR.draw();
+        w_mainRV.draw();
+        w_mainL.draw();
+        w_mainLV.draw();
+
+        var o = width / imgMagnet.width;
+        ctx.strokeStyle = "black";
+        //textAlign(CENTER, CENTER);
+        //push();
+        ctx.save();
+        ctx.translate(width * a, width * b);
+        ctx.lineWidth = (width * 0.001);
+        ctx.beginPath();
+        for (var i = 0; i <= 50; i++) {
+            var t = map(i, 0, 50, -3 * QUARTER_PI, -QUARTER_PI);
+            var d = width * 0.24 * cos(t);
+            var e = width * 0.24 * sin(t);
+            var f = width * 0.26 * cos(t);
+            var g = width * 0.26 * sin(t);
+            ctx.moveTo(d, e);
+            ctx.lineTo(f, g)
+        }
+
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.lineWidth = (width * 0.002);
+
+        ctx.font = "18px Arial";
+        // if(drawDial.isSelected()){
+        let imax=!(ammDisp)?Ig.value:Ig.value*(Rg.value*1+S.value*1)/(S.value)/1000;
+        imax=imax*1;
+        for (var i = 0; i<= 50; i += 10) {
+            ctx.strokeStyle = "black";
+            var t = map(i, 0, 50, -3 * QUARTER_PI, -QUARTER_PI);
+            var d = width * 0.24 * cos(t);
+            var e = width * 0.24 * sin(t);
+            var f = width * 0.27 * cos(t);
+            var g = width * 0.27 * sin(t);
+            line(d, e, f, g);
+            //push();
+            ctx.save();
+            ctx.fillStyle = "black";
+            //noStroke();
+            ctx.translate(width * 0.29 * cos(t), width * 0.29 * sin(t));
+            ctx.rotate(map(i, 0, 50, -QUARTER_PI, QUARTER_PI));
+            ctx.fillText((i*imax / 50).toFixed(2) + "", 0, 0);
+            //pop();
+            ctx.restore();
+        }
+        // }
+
+        //pop();
+        ctx.restore();
+        ctx.fillText(ammDisp?"A":"mA", width*0.5, height*0.12);
+
+        //imageMode(CENTER); {
+        //push();
+        ctx.save();
+        ctx.translate(width * a, width * b);
+        ctx.rotate(theta);
+        //noStroke();
+        //ctx.globalAlpha=ig/Ig.value;
+        ctx.fillStyle = "rgb("+ig/Ig.value*255+", 8, 8)";//.lerp(new Color(255, 0, 0), ig/Ig.value) //(lerpColor(color(128), color(255, 0, 0), rangeA.getValue() / 100));
+        arc(0, 0, width * 0.125, width * 0.125, PI, TWO_PI);
+        ctx.fillStyle = "rgb(8, 8,"+ 255*ig/Ig.value+")";
+        arc(0, 0, width * 0.125, width * 0.125, 0, PI);
+       // ctx.globalAlpha=1;
+
+
+        ctx.drawImage(imgCoil, imgCoil.width * o*(-0.5), imgCoil.height * o*(-0.5), imgCoil.width * o, imgCoil.height * o);
+        //pop();
+        ctx.restore();
+        //noFill();
+        ctx.lineWidth = (width * 0.003);
+        ctx.strokeStyle = "rgb(255, 191, 128)";
+        ctx.beginPath();
+        var t = map(i, 0, 29, theta - 1.3, -15.9);
+        var r = map(i, 0, 29, 0.02, map(theta, -QUARTER_PI, QUARTER_PI, 0.05, 0.04));
+        var x = width * (a + r * cos(t));
+        var y = width * (b + r * sin(t));
+        //ctx.moveTo(x,y);
+        //draw spring
+        for (var i = 1; i                                                                                                                                    < 30; i++) {
+            //x2 = x;
+            //y2 = y;
+            //t2 = t;
+            var t = map(i, 0, 29, theta - 1.3, -15.9);
+            var r = map(i, 0, 29, 0.02, map(theta, -QUARTER_PI, QUARTER_PI, 0.05, 0.04));
+            var x = width * (a + r * cos(t));
+            var y = width * (b + r * sin(t));
+            ctx.lineTo(x, y);
+            //ctx.arcTo(x2, y2, x, y, r);
+            //ctx.arc(a, b, r, t2, t, false);
+            //ctx.stroke();
+        }
+        //ctx.stroke();
+        var x = width * (a - 0.041);
+        var y = width * (b + 0.075);
+        //ctx.beginPath();
+        //ctx.lineTo(x, y);
+        ctx.lineTo(x, y);
+        //ctx.endPath();
+        ctx.stroke();
+        ctx.fillStyle = "rgb(255, 191, 128)";
+        ellipse(x, y, width * 0.01, width * 0.01);
+        ctx.save();
+        //push();
+        ctx.translate(width * a, width * b);
+        ctx.rotate(theta);
+        ctx.globalAlpha=0.75;
+        ctx.drawImage(imgPointer, imgPointer.width * o*(-0.5), imgPointer.height * o*(-0.5), imgPointer.width * o, imgPointer.height * o);
+        ctx.restore();
+        //pop()
+        if(hideInternals.checked){
+            ctx.globalAlpha=0.99;
+            //ctx.fillStyle="white";
+            //ctx.fillRect(50, -50, width-50, height/4);
+            ctx.fillStyle="lightgrey";
+            //ctx.fillRect(50, height/4-50, width-50, 3*height/4);
+            ctx.fillRect(width * 0.5 - width * 0.6/2, width * 0.2 , width * 0.6, width * 0.2);
+            ctx.fillRect(width * 0.5 - width * 0.16, width * 0.4 , width * 0.32, width * 0.1);
+
+            ctx.globalAlpha=1;
+            ctx.fillStyle="black";
+            ctx.fillText("VIRTUAL AMMETER",width * 0.5, width*0.3);
+            ctx.fillStyle="green";
+            ctx.fillText("Created in SimPHY",width * 0.5, width*0.33);
+        }
+
+        //noStroke();
+        ctx.fillStyle = "black";
+        ellipse(width * 0.68, width * 0.178, width * 0.01,width * 0.01);
+        ctx.restore();
+    }
+
+
+    /**
+     * Runs when the widget is selected or deselected
+     * @param widget{Object} : the source of event
+     * @param value{boolean} : true if widget is selected else false
+     */
+    function useShunt_onChange(widget,value){
+        I.step=(useShunt.checked?0.01:0.001)
+        I.max=(useShunt.checked?5:0.1);
+    }
+
+
+    /**
+     * Runs when widget is clicked
+     */
+    function prevStep_onClick(){
+        step--;
+        performStep();
+    }
+
+
+
+    /**
+     * Runs when widget is clicked
+     */
+    function nextStep_onClick(){
+        step++;
+        performStep();
+    }
+
+    function performStep(){
+        step=constrain(step, 0, 3);
+        document.getElementById("nextStep").enabled=(step<3);
+        document.getElementById("prevBtn").enabled=(step>0);
+        document.getElementById("textarea").innerHTML=(text[step]);
+        let I=document.getElementById("divI");
+        let Ig=document.getElementById("divIg");
+        let Rg=document.getElementById("divRg");
+        let S=document.getElementById("divS");
+
+        switch (step) {
+            case 0:
+                I.style.display = "block";
+                Ig.style.display = "block";
+                Rg.style.display = "none";
+                S.style.display = "none";
+                useShunt.checked=(false);
+                drawDial.checked=(false);
+                hideInternals.checked=(false);
+                break;
+            case 1:
+                I.style.display = "block";
+                Ig.style.display = "block";
+                Rg.style.display = "block";
+                S.style.display = "block";;
+                useShunt.checked=(true);
+                drawDial.checked=(false);
+                hideInternals.checked=(false);
+                break;
+            case 2:
+                I.style.display = "block";
+                Ig.style.display = "none";
+                Rg.style.display = "none";
+                S.style.display = "none";
+                useShunt.checked=(true);
+                drawDial.checked=(true);
+                hideInternals.checked=(false);
+                break;
+            case 3:
+                I.style.display = "block";
+                Ig.style.display = "none";
+                Rg.style.display = "none";
+                S.style.display = "none";
+                useShunt.checked=(true);
+                drawDial.checked=(true);
+                hideInternals.checked=(true);
+
+                break;
+            default:
+                break;
+        }
+
+        useShunt_onChange(useShunt,useShunt.checked);
+    }
+
+    function updateSlider(){
+        document.getElementById("lblRg").innerHTML="Rg="+Rg.value+'&#8486';
+        document.getElementById("lblS").innerHTML="S="+S.value+ohm;
+        document.getElementById("lblIg").innerHTML="Ig="+Ig.value+"mA";
+        document.getElementById("lblI").innerHTML="I="+(step==0?I.value*1000+"mA":I.value+"A");
+    }
+</script>
+</body>
+</html>
