@@ -51,7 +51,7 @@ p.info {
                 <label id="lblRg" for="Rg"> Rg=value Ω </label>
             </div>
             <div id="divS">
-                <input type="range"  id="S" oninput="updateSlider()" max="1.0" min="0" text="S=value Ω" step="0.01" value="0.1" visible="false" tooltip="Shunt Resistance">
+                <input type="range"  id="S" oninput="updateSlider()" max="1000" min="1" text="S=value Ω" step="1" value="0.1" visible="false" tooltip="Shunt Resistance">
                 <label id="lblS" for="S"> S=value Ω </label>
             </div>
             <div id="divIg">
@@ -279,13 +279,13 @@ p.info {
     var width = canvas.width;
     var height = canvas.height;
     var Rg=document.getElementById("Rg");
-    var I=document.getElementById("I");
+    var V=document.getElementById("I");
     var Ig=document.getElementById("Ig");
     var S=document.getElementById("S");
-    I.value=(0.012);
+    V.value=(0.04);
     Ig.value=(20);
-    Rg.value=(9.9);
-    S.value=(0.1);
+    Rg.value=(5);
+    S.value=(95);
     var drawInfo=document.getElementById("drawInfo");
     var useShunt=document.getElementById("useShunt");
     var drawDial=document.getElementById("drawDial");
@@ -301,12 +301,14 @@ p.info {
     preload();
     //window.clearTimeout(timer);
 
-    var w_mainL,w_mainLV,w_mainR,w_mainRV,w_galvL,w_galvR,w_shunt;
+    var w_mainL,w_mainLV,w_mainR,w_mainRV,w_battL,w_battLV,w_battR,w_battRV;
     const text=[];
-    text[0]="<b>STEP -1: GALV. WORKING </b> <br>The strength of the current in the electrical circuit is measured using an galvanometer. <br/>There is a rotor with a coil wound inside the ammeter. When the current flows through the ammeter, the rotor  experiences magnetic torue, which is balanced by torsional torque of spring. Greater the current greater is deflection.<br/>Try changing current in the coil as well as the maximum defelection current of the galvanometer"
-    text[1]="<b>STEP -2: ADDING SHUNT </b> <br>Being a very sensitive instrument, a large current cannot be passed through the galvanometer, as it may damage the coil.<br/>However, a galvanometer is converted into an ammeter by connecting a low resistance in parallel with it. As a result, when large current flows in a circuit, only a small fraction of the current passes through the galvanometer and the remaining larger portion of the current passes through the low resistance.<br/>Note that deflection in Galv is still proprtional to main current, Try changing galvanometer and shunt resistance ";
-    text[2]="<b>STEP -3: CHANGING DISPLAY</b> <br>Eventhough the deflection is directly proportional to the current, the galvanometer scale is not marked in ampere. Let's mark the readings in Ammeter.<br/>Try changing current through circuit and check deflection and reading shown by our modified device. "
-    text[3]="<b>STEP -4: PACKING UP AMMETER</b> <br>Lets hide the setup so that it can't be seen what is there inside it.<br/> Now the reading coincides with current flowing through it.<br/> Although we have increased range but that at the loss of precision and sensitivity.<br/><br/>Voila!!! You have created an Ammeter from galvanometer";
+
+    text[0]="<b>STEP -1: GALV. WORKING </b> <br>The strength of the current in the electrical circuit is measured using an galvanometer. <br/>here is a rotor with a coil wound inside the ammeter. When the current flows through the ammeter, the rotor  experiences magnetic torue, which is balanced by torsional torque of spring. Greater the current greater is deflection.<br/><br/>Try changing current in the coil as well as the maximum defelection current of the galvanometer"
+    text[1]="<b>STEP -2: ADDING SHUNT IN SERIES </b> <br>Being a very sensitive instrument, a large Potential drop cannot be created aacross the galvanometer, as it may damage the coil.\n\nHowever, a galvanometer is converted into an voltmeter by connecting a high resistance in seires with it. As a result, when large potential difference s applied , only a small fraction of the potential drop occurs at the galvanometer and the remaining larger portion of the drop occurs at high resistance.<br/><br/>Note that deflection in Galv is still proprtional to potential difference, Try changing galvanometer and shunt resistance ";
+    text[2]="<b>STEP -3: CHANGING DISPLAY </b> <br>Eventhough the deflection is directly proportional to the voltage applied, the galvanometer scale is not marked in ampere. Let's mark the readings in Voltmeter.<br/><br/>Try changing drop across circuit and check deflection and reading shown by our modified device. "
+    text[3]="<b>STEP -4: PACKING UP VOLTMETER</b> <br>Lets hide the setup so that it can't be seen what is there inside it.<br/> Now the reading coincides with voltage drop across it.<br/> Although we have increased range but that at the loss of precision and sensitivity.<br/><br/>Voila!!! You have created an Voltmeter from galvanomter";
+
     var step=0;
     performStep();
     function preload() {
@@ -365,23 +367,22 @@ p.info {
         //if (touches.length > 1) return;
         ///ctx.font="Arial Bold 30px";
         ammDisp=useShunt.checked && drawDial.checked;
-        var i=I.value*1000;
+        var v=V.value*1000;
 
-        let ig=!useShunt.checked?i:(i*S.value/(S.value*1+Rg.value*1));
+        let ig=!useShunt.checked?v/Rg.value:v/(S.value*1+Rg.value*1);
+
+       // let ig=!useShunt.checked?i:(i*S.value/(S.value*1+Rg.value*1));
         ctx.save();
-        ctx.setTransform(1,0,0,1,0,0);
-        ctx.fillRect(0,0,900,900);
         ctx.lineWidth = (width * 0.005);
         ctx.translate(-0.5*(width-canvas.width), 0.1*(height-canvas.height));
         //background(255);
-        ctx.font = "14px Arial";
-
+        ctx.font = "13px Arial";
         //Arial " + (width * 0.03).toString() + "px";
         ctx.textAlign = "center";
         var a = 0.5;
         var b = 0.3;
         var c = map(ig, 0, Ig.value*1, 0, HALF_PI);
-        //if(theta!=c) Console.log(ig+","+Ig.value+","+c);
+        //if(theta!=c) Console.log(ig+","+Ig.value*1+","+c);
         c -= QUARTER_PI;
 
         theta = lerp(theta, c, 0.15);
@@ -390,8 +391,7 @@ p.info {
         //rectMode(CENTER);
         //noStroke();
         ctx.fillStyle = "rgb(233, 233, 233)";
-        ctx.fillRect(width * 0.5 - width * 0.6/2, width * 0.2 - width * 0.6/2, width * 0.6, width * 0.6);
-        ctx.fillStyle="white";
+        ctx.fillRect(width * 0.5 - width * 0.6/2, width * 0.2 - width * 0.6/2, width * 0.6, width * 0.6);     ctx.fillStyle="white";
         ctx.fillRect(width * 0.5 - width * 0.6/2, width * 0.2 - width * 0.6/2, width * 0.6, width * 0.3);
 
         var d = width * (a + 0.065 * cos(theta + 5 * QUARTER_PI));
@@ -403,9 +403,9 @@ p.info {
         var k = width * 0.406;
         var l = width * 0.4;
         var m = k;
-        var n = width * 0.467;
+        var n = width * 0.45;
         //noFill();
-        ctx.strokeStyle = "black";
+        ctx.strokeStyle = "rgb(0, 0, 0)";
         ctx.lineWidth = (width * 0.002);
         ctx.beginPath();
         ctx.moveTo(d, e);
@@ -415,13 +415,14 @@ p.info {
         //line(m, l, m, n);
         //line(0, n, m, n);
         if(w_mainL==null){
-            w_mainL=new Wire(0, n, m, n);
+            w_mainL=new Wire(width*0.25, n, m, n);
             w_mainLV=new Wire(m,n,m,l);
-            k=width * 0.5935;
-            w_shunt=new Wire(m,n,k,n);
+            w_battL=new Wire(width*0.5-30,n+30,width*0.25,n+30);
+            w_battLV=new Wire(width*0.25,n+30,width*0.25,n);
+            //k=width * 0.5935;
         }
 
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "rgb(0, 0, 0)";
         //noStroke();
 
         var d = width * (a + 0.065 * cos(theta + QUARTER_PI));
@@ -433,9 +434,9 @@ p.info {
         var k = width * 0.5935;
         var l = width * 0.4;
         var m = k;
-        var n = width * 0.467;
+        var n = width * 0.45;
         //noFill();
-        ctx.strokeStyle = "black";
+        ctx.strokeStyle = "rgb(0, 0, 0)";
         ctx.lineWidth = (width * 0.002);
         ctx.beginPath();
         ctx.moveTo(d, e);
@@ -447,8 +448,13 @@ p.info {
         //line(width, n, m, n);
         if(w_mainR==null){
             w_mainRV=new Wire(m,l,m,n);
-            w_mainR=new Wire(m,n,width, n);
+            w_mainR=new Wire(m,n,width*0.75, n);
+            w_battR=new Wire(width*0.75,n+30,width*0.5+30,n+30);
+            w_battRV=new Wire(width*0.75,n,width*0.75,n+30);
         }
+
+
+
 
 
         //imageMode(CORNER);
@@ -457,43 +463,49 @@ p.info {
 
         if(drawInfo.checked){
             //textAlign(RIGHT, CENTER);
-            ctx.font = "Arial 20px";
+            ctx.font = "default-normal";
 
-            ctx.fillText(ammDisp?(i/1000).toFixed(2)+"A":i.toFixed(1)+"mA",width * 0.25, n-10);
+            ctx.fillText(ammDisp?(v/1000).toFixed(2)+"V":v.toFixed(1)+"mV",width * 0.5, n+40);
 
             //ctx.textAlign = "LEFT";
             //ctx.textBaseline = "MIDDLE";
-            ctx.fillText(ig.toFixed(1)+"mA", width * 0.39 -10, width * 0.43);
+            ctx.fillText(ig.toFixed(2)+"mA", width * 0.39 -10, width * 0.43);
 
-            if(step>=1)ctx.fillText("Ig="+(Ig.value*1).toFixed(1)+"mA, Rg="+(Rg.value*1).toFixed(1)+"\u{2126}", width * 0.51, width * 0.22)
+            ctx.fillText("Ig="+(Ig.value*1).toFixed(1)+"mA, Rg="+(Rg.value*1).toFixed(1)+"\u{2126}", width * 0.51, width * 0.22)
 
             //textAlign(LEFT, TOP);
             if(useShunt.checked){
-                ctx.fillText("S="+(S.value*1).toFixed(2)+"\u{2126}", width * 0.51, n - 15)
-                ctx.fillText((i-ig).toFixed(1)+"mA", width * 0.427, n + 20)
+                ctx.fillText("S="+(S.value*1).toFixed(2)+"\u{2126}", width * 0.65, n - 10)
+                //ctx.fillText((i-ig).toFixed(1)+"mA", width * 0.427, n + 20)
             }
 
-            i=Math.sqrt(i)/2000;
-            let iG=Math.sqrt(ig)/2000;//200000;
-            w_mainL.current=i;
-            w_mainR.current=i;
-            w_shunt.current=(i-iG)*2;
+            // i=Math.sqrt(i)/2000;
+            let iG=Math.sqrt(ig)/500;//200000;
+            w_mainL.current=iG;
+            w_mainR.current=iG;
             w_mainLV.current=iG*5;
             w_mainRV.current=iG*5;
+            w_battLV.current=iG*5;
+            w_battRV.current=iG*5;
+            w_battL.current=iG;
+            w_battR.current=iG;
         }
 
         //noStroke()
         if(useShunt.checked){
-            drawResistor(width * 0.45,n);
-            w_shunt.draw();
+            drawResistor(width * 0.62,n);
         }
         w_mainR.draw();
         w_mainRV.draw();
         w_mainL.draw();
         w_mainLV.draw();
+        w_battLV.draw();
+        w_battRV.draw();
+        w_battL.draw();
+        w_battR.draw();
 
         var o = width / imgMagnet.width;
-        ctx.strokeStyle = "black";
+        ctx.strokeStyle = "rgb(0, 0, 0)";
         //textAlign(CENTER, CENTER);
         //push();
         ctx.save();
@@ -513,13 +525,13 @@ p.info {
         ctx.stroke();
         ctx.beginPath();
         ctx.lineWidth = (width * 0.002);
-
-        ctx.font = "18px Arial";
+        ctx.font = "16px Arial";
         // if(drawDial.isSelected()){
-        let imax=!(ammDisp)?Ig.value:Ig.value*(Rg.value*1+S.value*1)/(S.value)/1000;
-        imax=imax*1;
-        for (var i = 0; i<= 50; i += 10) {
-            ctx.strokeStyle = "black";
+        //let imax=!(ammDisp)?Ig.value*1:Ig.value*1*(Rg.value*1+S.value)/1000;
+        let imax=!(ammDisp)?Ig.value*1:Ig.value*(Rg.value*1+S.value*1)/1000;
+
+        for (var i = 0; i                                                                                                     <= 50; i += 10) {
+            ctx.strokeStyle = "rgb(0, 0, 0)";
             var t = map(i, 0, 50, -3 * QUARTER_PI, -QUARTER_PI);
             var d = width * 0.24 * cos(t);
             var e = width * 0.24 * sin(t);
@@ -528,7 +540,7 @@ p.info {
             line(d, e, f, g);
             //push();
             ctx.save();
-            ctx.fillStyle = "black";
+            ctx.fillStyle = "rgb(0, 0, 0)";
             //noStroke();
             ctx.translate(width * 0.29 * cos(t), width * 0.29 * sin(t));
             ctx.rotate(map(i, 0, 50, -QUARTER_PI, QUARTER_PI));
@@ -540,7 +552,7 @@ p.info {
 
         //pop();
         ctx.restore();
-        ctx.fillText(ammDisp?"A":"mA", width*0.5, height*0.12);
+        ctx.fillText(ammDisp?"V":"mA", width*0.5, height*0.12);
 
         //imageMode(CENTER); {
         //push();
@@ -548,14 +560,10 @@ p.info {
         ctx.translate(width * a, width * b);
         ctx.rotate(theta);
         //noStroke();
-        //ctx.globalAlpha=ig/Ig.value;
-        ctx.fillStyle = "rgb("+ig/Ig.value*255+", 8, 8)";//.lerp(new Color(255, 0, 0), ig/Ig.value) //(lerpColor(color(128), color(255, 0, 0), rangeA.getValue() / 100));
+        ctx.fillStyle = "rgb("+ig/Ig.value*255+", 8, 8)";//.lerp("rgb(255, 0, 0), ig/Ig.value) //(lerpColor(color(128), color(255, 0, 0), rangeA.value*1 / 100));
         arc(0, 0, width * 0.125, width * 0.125, PI, TWO_PI);
         ctx.fillStyle = "rgb(8, 8,"+ 255*ig/Ig.value+")";
         arc(0, 0, width * 0.125, width * 0.125, 0, PI);
-       // ctx.globalAlpha=1;
-
-
         ctx.drawImage(imgCoil, imgCoil.width * o*(-0.5), imgCoil.height * o*(-0.5), imgCoil.width * o, imgCoil.height * o);
         //pop();
         ctx.restore();
@@ -569,7 +577,7 @@ p.info {
         var y = width * (b + r * sin(t));
         //ctx.moveTo(x,y);
         //draw spring
-        for (var i = 1; i                                                                                                                                    < 30; i++) {
+        for (var i = 1; i< 30; i++) {
             //x2 = x;
             //y2 = y;
             //t2 = t;
@@ -607,18 +615,18 @@ p.info {
             ctx.fillStyle="lightgrey";
             //ctx.fillRect(50, height/4-50, width-50, 3*height/4);
             ctx.fillRect(width * 0.5 - width * 0.6/2, width * 0.2 , width * 0.6, width * 0.2);
-            ctx.fillRect(width * 0.5 - width * 0.16, width * 0.4 , width * 0.32, width * 0.1);
+            ctx.fillRect(width * 0.5 - width * 0.16, width * 0.4 , width * 0.362, width * 0.072);
 
             ctx.globalAlpha=1;
             ctx.fillStyle="black";
-            ctx.fillText("VIRTUAL AMMETER",width * 0.5, width*0.3);
+            ctx.fillText("VIRTUAL VOLTMETER",width * 0.5, width*0.3);
             ctx.fillStyle="green";
             ctx.fillText("Created in SimPHY",width * 0.5, width*0.33);
         }
 
         //noStroke();
         ctx.fillStyle = "black";
-        ellipse(width * 0.68, width * 0.178, width * 0.01,width * 0.01);
+        ellipse(width * 0.68, width * 0.178, width * 0.01, width * 0.01)
         ctx.restore();
     }
 
@@ -629,8 +637,8 @@ p.info {
      * @param value{boolean} : true if widget is selected else false
      */
     function useShunt_onChange(widget,value){
-        I.step=(useShunt.checked?0.01:0.001)
-        I.max=(useShunt.checked?5:0.1);
+        V.step=(useShunt.checked?0.01:0.001)
+        V.max=(useShunt.checked?5:0.1);
     }
 
 
@@ -657,14 +665,14 @@ p.info {
         document.getElementById("nextStep").enabled=(step<3);
         document.getElementById("prevBtn").enabled=(step>0);
         document.getElementById("textarea").innerHTML=(text[step]);
-        let I=document.getElementById("divI");
+        let V=document.getElementById("divI");
         let Ig=document.getElementById("divIg");
         let Rg=document.getElementById("divRg");
         let S=document.getElementById("divS");
 
         switch (step) {
             case 0:
-                I.style.display = "block";
+                V.style.display = "block";
                 Ig.style.display = "block";
                 Rg.style.display = "none";
                 S.style.display = "none";
@@ -673,7 +681,7 @@ p.info {
                 hideInternals.checked=(false);
                 break;
             case 1:
-                I.style.display = "block";
+                V.style.display = "block";
                 Ig.style.display = "block";
                 Rg.style.display = "block";
                 S.style.display = "block";;
@@ -682,7 +690,7 @@ p.info {
                 hideInternals.checked=(false);
                 break;
             case 2:
-                I.style.display = "block";
+                V.style.display = "block";
                 Ig.style.display = "none";
                 Rg.style.display = "none";
                 S.style.display = "none";
@@ -691,7 +699,7 @@ p.info {
                 hideInternals.checked=(false);
                 break;
             case 3:
-                I.style.display = "block";
+                V.style.display = "block";
                 Ig.style.display = "none";
                 Rg.style.display = "none";
                 S.style.display = "none";
@@ -711,7 +719,7 @@ p.info {
         document.getElementById("lblRg").innerHTML="Rg="+Rg.value+'&#8486';
         document.getElementById("lblS").innerHTML="S="+S.value+ohm;
         document.getElementById("lblIg").innerHTML="Ig="+Ig.value+"mA";
-        document.getElementById("lblI").innerHTML="I="+(step==0?I.value*1000+"mA":I.value+"A");
+        document.getElementById("lblI").innerHTML="V="+(step==0?I.value*1000+"mV":I.value+"V");
     }
 </script>
 </body>
