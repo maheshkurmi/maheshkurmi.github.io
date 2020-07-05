@@ -1,0 +1,417 @@
+<!doctype html>
+<html>
+<head>
+    <title>PO Box Simulator</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+        label {
+            display: inline-block;
+            text-align: left;
+            width: 180px;
+        }
+        p.info {
+            display: inline-block;
+            text-align: justify;
+            width: 600px;
+        }
+    </style>
+</head>
+
+<body onload="preload()">
+<div id="canvasdiv" class="container" align="center">
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" width="990px" height="630px">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div>
+        <div>
+            <div id="divRg">
+                <input type="range" id="sldEMF" onchange="sldEMF_onChange(this,this.value)" oninput="sldEMF_onChange(this,this.value)" min="1" step="0.1" max="100" value="10"  tooltip="Resistance of galv coil">
+                <label id="lblEMF" for="sldEMF"> V= 10 Volts </label>
+            </div>
+
+            <div>
+                <input type="checkbox" id="chkShowX" onchange="chkShowX_onChange(this,this.checked)" checked="true">
+                <label for="chkShowX"> Show actual X value </label>
+            </div>
+
+            <div>
+                <input type="checkbox" id="chkShowCircuit" onchange="chkShowCircuit_onChange(this,this.checked)" checked="true">
+                <label for="chkShowCircuit"> Show Equivalent Bridge </label>
+            </div>
+            <div>
+                <p id="textarea" class="info"> In this simulation you have to find <span style="color: red">unknown resistance </span> using PO Box given here. <br> Click over dots in PO Box to add/remove resistance (<span style="color: green">unfilled dots are active resistances </span>, little confusing but this is how it works!).
+
+                    <br><br>Adjust the resistance R (lower two arms) so that galvanometer shows null deflection. It may be possible that you may not get exact null point, then find two successive values at which galv shows deflections in opposite directions.
+
+                    <br><br>You can also increase EMF of battery to increase sensitivity of galvanometer.        </p>
+            </div>
+
+            <div>
+                <button id="btnCreateNew"  onclick="btnCreateNew_onClick()">
+                    Create New problem
+                </button>
+                <button id="btnSolve"  onclick="btnSolve_onClick()">
+                    I am too lazy.. Solve it for me
+                </button>
+                <p> <br></p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type='text/javascript'>
+    function Vector2(x,y){
+        this.x=x?x:0;
+        this.y=y?y:0;
+        this.distance=function(v){
+            return Math.hypot(this.x-v.x,this.y-v.y);
+        }
+        this.set=function(x,y){
+            this.x=(y==undefined?x.x:x);
+            this.y=(y==undefined?x.y:y);
+            return this;
+        }
+        this.multiply=function(s){
+            this.x*=s;
+            this.y*=s;
+            return this;
+        }
+        this.add=function(x,y){
+            this.x+=(y==undefined?x.x:x);
+            this.y+=(y==undefined?x.y:y);
+            return this;
+        }
+        this.product=function(s){
+            return new Vector2(this.x*s,this.y*s);
+        }
+    }
+
+
+    function map(n,start1,stop1,start2,stop2){
+        //if(n<start1)n=start1;
+        //if(n>stop1)n=stop1;
+        return (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    }
+
+    function constrain(n, low, high) {
+        return Math.max(Math.min(n, high), low);
+    }
+
+    function contain(x, y, x1, y1, w1, h1){
+
+        if (x < x1) return false;
+        if (x > (x1 + w1)) return false;
+        if (y < y1) return false;
+        if (y > (y1 + h1)) return false;
+        return true;
+    }
+
+    function lerp(start, stop, amt){
+        return amt * (stop - start) + start;
+    }
+    function ellipse( x, y, w, h){
+
+        ctx.save(); // save state
+        ctx.beginPath();
+
+        ctx.translate(x-w/2, y-h/2);
+        ctx.scale(w/2, h/2);
+        ctx.arc(1, 1, 1, 0, 2 * Math.PI, false);
+
+        ctx.restore(); // restore to original state
+        ctx.fill();
+    }
+
+    function drawArrow2D(x, y, cx, cy){
+
+        var lArrow = Math.sqrt(cx*cx+cy*cy);
+        //, cy); // ì „ì²´ ê¸¸ì´
+        var wArrow = width*0.005;
+        // ë°˜ìª½ ë„“ì´
+        var head = Math.min(lArrow, 3*wArrow);
+
+        // ìš´ë™ì—ë„ˆì§€ í™”ì‚´í‘œ ê·¸ë¦¬ê¸°
+        var oxArrow = [ 0, lArrow - head, lArrow - head, lArrow, lArrow - head, lArrow - head, 0 ];
+        var oyArrow = [ wArrow, wArrow, 2*wArrow, 0, -2*wArrow, -wArrow, -wArrow ];
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.atan2(cy, cx));
+        ctx.beginPath();
+        //beginShape();
+        //DrawCurrent Arrow
+        for (var i = 0; i < oxArrow.length; i++){
+
+            // ctx.lineTo(Math.max(oxArrow[i], 0), oyArrow[i]);
+        }
+        ctx.closePath();
+        //endShape(CLOSE);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawResistor(x0,y0){
+        let dx=8,dy=8;
+        let n=6;
+        let x=x0,y=y0;
+        ctx.beginPath();
+        ctx.moveTo(x,y);
+        x+=dx;
+        ctx.lineTo(x,y);
+        x+=dx/2;
+        y-=dy/2;
+        ctx.lineTo(x,y);
+        while(n--){
+            ctx.lineTo(x+dx,y0+dy);
+            x+=dx;
+            dy=-dy;
+        }
+        x+=dx/2;
+        ctx.lineTo(x,y0);
+        ctx.lineTo(x+dx,y0);
+        ctx.stroke();
+    }
+    const PI=Math.PI;
+    const TWO_PI=Math.PI*2;
+    const canvas=document.getElementById("canvas");
+    const ctx=canvas.getContext("2d");
+    var timer=null;
+    const ohm="\u{2126}";//'&#8486;';
+
+    var imgPOBox;
+    var imgBridge;
+    var v=new Vector2();
+    var currSep=25;
+    const x0=53;
+    const y0=47;
+    var rpos=[new Vector2(86.5,43),new Vector2(126,43),new Vector2(205.5,43),new Vector2(245,43),
+        new Vector2(39,170),new Vector2(86.5,170),new Vector2(126,170),new Vector2(166,170),new Vector2(205.5,170),new Vector2(245.5,170),new Vector2(293,170),
+        new Vector2(309,232),
+        new Vector2(293,297),new Vector2(245,297),new Vector2(193,297),new Vector2(138,297),new Vector2(87,297)];
+    var rStates=[];
+
+    var rvals=[1,10,10,1,1,2,2,5,10,20,20,50,100,200,200,500,1000]
+    for(let i=0;i<rpos.length;i++){
+        rpos[i].add(x0,y0);
+        rStates[i]=false;
+    }
+
+    rStates[0]=true;
+    rStates[2]=true;
+    rStates[5]=true;
+    rStates[7]=true;
+    var P=10,Q=1,R=1,S,X;
+
+    canvas.addEventListener("mousedown", mousedown);
+    const radius=7;
+    var Emf=document.getElementById("sldEMF").value*1;
+    var showBridge=document.getElementById("chkShowCircuit").value;
+    var showX=document.getElementById("chkShowX").value;
+    var theta=0;
+
+
+
+    function Wire(x1,y1,x2,y2){
+        this.v1=new Vector2(x1,y1);
+        this.v2=new Vector2(x2,y2);
+        let ne=Math.round(this.v1.distance(this.v2)/currSep);
+        this.e=new Array();
+        this.current=0;
+        for(let i=0;i<ne;i++){
+            this.e.push(i/ne);
+        }
+        this.draw= function(){
+            line(this.v1.x,this.v1.y,this.v2.x,this.v2.y);
+            ctx.fillStyle="red";
+            for(let i=0;i<this.e.length;i++){
+                this.e[i]+=this.current;
+                if(this.e[i]>
+
+
+                    1){
+                    this.e[i]=this.e[i]-1;
+                }
+                v.set(this.v1).multiply(1-this.e[i]).add(this.v2.product(this.e[i]));
+                //Vector2.interpolate(this.v1,this.v2,this.e[i]/(1-this.e[i]));
+                ellipse(v.x, v.y, 5, 5);
+            }
+        }
+    }
+
+
+    function preload(){
+        imgPOBox=new Image();
+        imgPOBox.src="POBox_full.png";
+        imgBridge=new Image();
+        imgBridge.src="wheatstone_bridge.png";
+        imgBridge.onload=setup;
+    }
+
+    function setup(){
+        btnCreateNew_onClick();
+        draw();
+    }
+
+    function draw(){
+        ctx.font="14px Arial";
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.save();
+        ctx.drawImage(imgPOBox, 0, 0);//, sw, sh, x, y, w, h);
+
+        ctx.fillStyle="blue";
+        for(let i=0;i                        <rpos.length;i++){
+            if(!rStates[i]){
+                ellipse(rpos[i].x+1,rpos[i].y+1,2*radius,2*radius);
+            }
+        }
+        P=(rStates[0]?1:0)+(rStates[1]?10:0);
+        Q=(rStates[2]?10:0)+(rStates[3]?1:0);
+
+        if(showBridge){
+            ctx.drawImage(imgBridge, imgPOBox.width, 50);
+            ctx.fillStyle="darkBlue";
+            ctx.fillText("P="+P+ohm,imgPOBox.width+40,300);
+            ctx.fillText("Q="+Q+ohm,imgPOBox.width+40,140);
+            ctx.fillText("R="+R+ohm,imgPOBox.width+206,300);
+            ctx.fillStyle="red";
+            ctx.fillText("Measured X="+(S?S:"?"+ohm),imgPOBox.width+206,140);
+
+            if(showX){
+                ctx.fillStyle="green";
+                ctx.fillText("Actual X="+X.toFixed(3)+ohm,imgPOBox.width+226,160);
+            }
+        }
+        let c=2*Emf*(P/(P+Q)-R/(R+X));
+        c=map(c,-1,1,-PI/2,PI/2);
+        theta=lerp(theta, c, 0.1);
+        theta=constrain(theta, -PI/2,PI/2);
+        if(Math.abs(theta-c)>0.01){
+            window.clearTimeout(timer);
+            timer=window.setTimeout(draw, 30);
+        }else{timer
+            theta=c;
+        }
+        ctx.lineWidth=1;
+        let v=new Vector2(theta);
+        ctx.strokeStyle="black";
+        ctx.beginPath();
+        ctx.moveTo(123, 561-40);
+        ctx.lineTo(123, 561-45);
+        ctx.stroke();
+
+        ctx.strokeStyle="red";
+        ctx.beginPath();
+        ctx.moveTo(123, 561);
+        ctx.lineTo(123+40*Math.cos(-theta+3*PI/2), 561+40*Math.sin(3*PI/2-theta));
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function mousedown(e){
+        let v=new Vector2(e.offsetX,e.offsetY);
+        for(let i=0;i<rpos.length;i++){
+            if(v.distance(rpos[i])<2*radius){
+                rStates[i]=!rStates[i];
+                //console.log(rStates[i]);
+                break;
+            }
+            console.log(rpos[i]);
+
+        }
+        R=0;
+        for(let i=4;i<rvals.length;i++){
+            if(rStates[i]){
+                R+=rvals[i];
+            }
+        }
+        draw();
+
+        //ctx.fillRect(v.x,v.y,7,7);
+    }
+    /**
+     * Runs when the widget is selected or deselected
+     * @param widget{Object} : the source of event
+     * @param value{boolean} : true if widget is selected else false
+     */
+    function chkShowX_onChange(widget,value){
+        showX=value?true:false;
+        draw();
+    }
+
+    /**
+     * Runs when the widget is selected or deselected
+     * @param widget{Object} : the source of event
+     * @param value{boolean} : true if widget is selected else false
+     */
+    function chkShowCircuit_onChange(widget,value){
+        showBridge=value?true:false;
+        draw();
+    }
+
+
+    /**
+     * Runs when the widget value is changed
+     * @param widget{Object} : the source of event
+     * @param value{Number} : current value of widget
+     */
+    function sldEMF_onChange(widget,value){
+        Emf=value*1;
+        document.getElementById("lblEMF").innerText="V="+Emf+"Volts";
+        draw();
+    }
+    /**
+     * Runs when widget is clicked
+     */
+    function btnCreateNew_onClick(){
+        X=Math.random()*1900*Q/P;
+        S=null;
+        draw();
+    }
+
+
+    /**
+     * Runs when widget is clicked
+     */
+    function btnSolve_onClick(){
+        document.getElementById("chkShowCircuit").checked=(true);
+        showBridge=true;
+        R=X*P/Q;
+        R=Math.floor(R);
+        let amount=R;
+        for(let i=rvals.length;i>3;i--){
+            rStates[i]=false;
+            if(amount>=rvals[i]){
+                rStates[i]=true;
+                amount=amount-rvals[i];
+            }
+        }
+        S=(R*Q/P).toFixed(1)+"\u{00B1}"+(Q/P).toFixed(1);
+        draw();
+
+    }
+</script>
+</body>
+</html>
