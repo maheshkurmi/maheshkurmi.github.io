@@ -1,0 +1,209 @@
+
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>electrostatic flux</title>
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="CindyJS.css" />
+    <script type="text/javascript" src="Cindy.js"></script>
+    <script type="text/javascript" src="CindyGL.js"></script>
+</head>
+<body class="with-footer">
+
+<div id="between-bars">
+
+    <!-- Main part -->
+    <main>
+
+        <h1>electrostatic flux</h1>
+
+        <div style="float: left;">
+
+
+
+            <script id="csinit" type="text/x-cindyscript">
+      use("CindyGL");
+      
+
+				
+				
+      
+      L = [0, 0]; //bottom left corner
+      R = [512, 0]; //bottom right corner
+      
+      createimage("Cfract", 512, 512);
+      createimage("N", 512, 512);
+      createimage("Nb", 512, 512);
+      createimage("Show", 512, 512);
+      
+						colorplot(L, R, "Cfract", (random(), random(), 0)); 
+						colorplot(L, R, "N", round(random()));
+						
+            ff(x,p):= (
+              tt=(x-p)/abs(x-p)^3;
+              (tt.y,-tt.x); 
+            );
+            gg(x,p):= (
+              tt=(x-p)/abs(x-p)^3;
+              (tt.x,tt.y); 
+            );
+          
+            pg(xx,pp):= (
+              tt=1/abs(xx-pp)^1;
+              tt; 
+            );
+
+						v(x) := (
+              x1=A.x;            
+              x2=B.x;            
+              f1=ff(x,(x1,1));
+              f2=ff(x,(x1,.75));
+              f3=ff(x,(x1,.5));
+              f4=ff(x,(x1,.25));
+              f5=ff(x,(x1,0));
+              f6=ff(x,(x1,-.25));
+              f7=ff(x,(x1,-.5));
+              f8=ff(x,(x1,-.75));
+              f9=ff(x,(x1,-1));
+              g1=ff(x,(x2,1));
+              g2=ff(x,(x2,.75));
+              g3=ff(x,(x2,.5));
+              g4=ff(x,(x2,.25));
+              g5=ff(x,(x2,0));
+              g6=ff(x,(x2,-.25));
+              g7=ff(x,(x2,-.5));
+              g8=ff(x,(x2,-.75));
+              g9=ff(x,(x2,-1));
+							res=f1+f2+f3+f4+f5+f6+f7+f8+f9+(-g1-g2-g3-g4-g5-g6-g7-g8-g9);
+              res=if(|res|>2,res/|res|*2,res);      
+							res
+
+						); 
+            v(x) := (
+
+              x1=A.x;            
+              x2=B.x;            
+              y1=A.y;            
+              y2=B.y;            
+              f1=gg(x,(x1,y1));
+             
+              g1=gg(x,(x2,y2));
+              
+              res=f1-g1;
+              res=if(|res|>2,res/|res|*2,res);      
+              res
+            );
+
+
+            h(x) := (
+
+              x1=A.x;            
+              x2=B.x;            
+              y1=A.y;            
+              y2=B.y;            
+              f1=pg(x,(x1,y1));
+              g1=pg(x,(x2,y2));
+              
+              (f1-g1)*.4;
+
+            );
+
+            
+            //vector field
+						
+						h = 1;
+						getNewC(pc) := (
+							col = imagergb(L, R, "Cfract", pc);
+							curC = (floor(pc.x)+col.x, floor(pc.y)+col.y);
+							curC - h*v(pixel2coord(curC));  //euler step in the past
+						)
+    </script>
+
+
+
+            <script id="csdraw" type="text/x-cindyscript">
+					      
+      pixel2coord(x) := x/512*4+(-2,-2);
+      color(x) := (
+							z = v(pixel2coord(x));
+							gray(.5);
+      );
+
+      colorplot(L, R, "N",
+        newC = getNewC(#);
+        newval =	if(newC.x > 0 & newC.y > 0 & newC.x<512 & newC.y < 512,
+          imagergb(L, R, "N", (floor(newC.x)+.5, floor(newC.y)+.5)), //NEAREST interpolation.
+          round(random())*color(newC)
+        );
+        //newval = if(abs(mouse().xy - pixel2coord(#)) < 0.1, (0,0,0), newval);
+        newval = if(abs(A.xy - pixel2coord(#)) < 0.05, round(random())*color(#), newval);
+        newval = if(abs(B.xy - pixel2coord(#)) < 0.05, round(random())*color(#), newval);
+        if(random()>.01, newval, round(random())*color(#)) 
+        
+      );
+      
+      
+      alpha = 0.02;
+      colorplot(L, R, "Nb",
+        Na = imagergb(L, R, "N", #);
+        alpha*Na + (1-alpha)*imagergb(L, R, "Nb", #)
+      );
+      
+      colorplot(L, R, "Cfract",
+        newC = getNewC(#);
+        (newC.x-floor(newC.x), newC.y-floor(newC.y), 0)
+      );
+      
+      colorplot(L, R, "Show",
+        sh = imagergb(L, R, "Nb", #);
+        val=h(pixel2coord(#));
+        if(|val|>1,val=val/|val|);
+        sh = |sh|*(val+.5,-val+.5,0);
+      );
+
+      drawimage([-2, -2], [2, -2], "Show");
+ 
+      apply(-10..10,i,
+         apply(-10..10,j,
+            p=(i/10*2,j/10*2);
+            v=v(p)*.05;
+            si=|v|;
+            draw(p-v,p+v,color->(1,1,1),arrowshape->"full", arrowsides->"==>", arrowsize->si*5,size->si*3); 
+         )
+      )
+
+
+    </script>
+
+            <div  id="CSCanvas" style="position:relative; top:10px;"></div>
+            <script type="text/javascript">
+
+                cdy = CindyJS({canvasname:"CSCanvas",
+                    scripts: "cs*",
+                    geometry:[
+                        {name:"A", kind:"P", type:"Free", pos:[.5  ,0],size:6},
+                        {name:"B", kind:"P", type:"Free", pos:[-.5 ,0],size:6}
+                    ],
+                    animation: {autoplay: true},
+                    ports: [{
+                        id: "CSCanvas",
+                        width: 512,
+                        height: 512,
+                        transform: [ { visibleRect: [-2, -2, 2, 2] } ]
+                    }]
+                });
+            </script>
+        </div>
+
+
+    </main>
+</div>
+
+
+
+<script src="app.js"></script>
+</body>
+</html>
