@@ -1,0 +1,335 @@
+
+<!doctype html>
+<html>
+<head>
+    <title>Camera Focus</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body onload="preload();">
+    <div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="1000px" height="480px">
+    Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div style="text-align: center;">
+        <h2>Focus adjustment of the camera</h2>
+        <p>The eye focuses by adjusting the thickness of the lens, on the other hand, the camera focuses by adjusting the position of the lens.</p>
+        <p>To view objects in detail, the light originating from one point on the object must be accurately gathered at one point on the screen. <br>If the lights is scattered all over the screen,the focus is lost, resulting a blurred image.</p>
+        <p>
+            <b>Try Dragging object and lens to focus image on screen, note that not every position of object can be focussed.</b>
+        </p>
+     </div>
+
+</div>
+
+<script type='text/javascript'>
+    const PI=Math.PI;
+    const HALF_PI=Math.PI/2;
+    const TWO_PI=Math.PI*2;
+    const canvas=document.getElementById("myCanvas");
+    const ctx=canvas.getContext("2d");
+
+
+
+    function line(x,y,x1,y1){
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x1, y1)
+        ctx.stroke();
+    }
+
+    function dist(x1,y1,x2,y2) {
+        return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    }
+
+    function arc(x, y, w, h, start, stop, mode, detail) {
+        ctx.beginPath();
+        ctx.arc(x, y, w/2, start, stop);
+        ctx.stroke();
+    }
+
+    function map(n,start1,stop1,start2,stop2){
+        if(n<start1)n=start1;
+        if(n>stop1)n=stop1;
+        return (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    }
+
+    function constrain(n, low, high) {
+        return Math.max(Math.min(n, high), low);
+    }
+
+    function contain(x, y, x1, y1, w1, h1){
+
+        if (x < x1) return false;
+        if (x > (x1 + w1)) return false;
+        if (y < y1) return false;
+        if (y > (y1 + h1)) return false;
+        return true;
+    }
+
+    function mod(x, y){
+        return x%y;
+        // ì¼ë‹¨, ì–‘ìˆ˜ë¡œ ë§Œë“ ë‹¤.
+        //if (x < 0) x += y * (Maceil(abs(x)/y) + 1);
+        //var c = Math.floor(x / y);
+        // return x - y * c;
+    }
+
+    function getCrossX(x1, y1, x2, y2, x3, y3, x4, y4){
+
+        var t;
+        var s;
+        var under = (y4-y3)*(x2-x1)-(x4-x3)*(y2-y1);
+        if (under == 0) return 0;
+
+        var _t = (x4-x3)*(y1-y3) - (y4-y3)*(x1-x3);
+        var _s = (x2-x1)*(y1-y3) - (y2-y1)*(x1-x3);
+
+        t = _t/under;
+        s = _s/under;
+        //if(t < 0.0 || t > 1.0 || s < 0.0 || s > 1.0) return 0;
+        //if(_t == 0 && _s == 0) return 0;
+
+        return(x1 + t * (x2-x1));
+    }
+    function getCrossY(x1, y1, x2, y2, x3, y3, x4, y4){
+
+        var t;
+        var s;
+        var under = (y4-y3)*(x2-x1)-(x4-x3)*(y2-y1);
+        if (under == 0) return 0;
+
+        var _t = (x4-x3)*(y1-y3) - (y4-y3)*(x1-x3);
+        var _s = (x2-x1)*(y1-y3) - (y2-y1)*(x1-x3);
+
+        t = _t/under;
+        s = _s/under;
+        //if(t < 0.0 || t > 1.0 || s < 0.0 || s > 1.0) return 0;
+        //if(_t == 0 && _s == 0) return 0;
+
+        return(y1 + t * (y2-y1));
+    }
+
+
+    var img_candle;
+    var img_image;
+    var xReal = 200;
+    var yReal = 225;
+    var xFilm = 800;
+    var xLens = xFilm - 200;
+    var yLens = 225;
+    var width,height;
+    var mouseX,mouseY;
+    preload();
+
+    function preload() {
+        //var a = getURL();
+        // var b = "http";
+        // var m = match(a, b);
+        // var c = (m == "http") ? "//javalab.org/lee/image/" : "";
+        img_candle = new Image("");
+        img_candle.src="seeing_the_light_candle_0.png";
+        //img_image = new Image("seeing_the_light_candle_2.png");
+        setup();
+    }
+
+    function setup() {
+
+        // pixelDensity(2 * displayDensity());
+        //var o = select("#myContainer");
+        //var a = 0.45;
+        //var w = int((o.width > (window.innerHeight * 0.82) / a) ? (window.innerHeight * 0.82) / a : o.width);
+        //var h = int(w * a);
+        //myCanvas = createCanvas(w, h);
+        //myCanvas.parent("myContainer");
+        //myCanvas.id("myP5Canvas");
+        canvas.addEventListener("mousedown", touchStarted);
+        canvas.addEventListener("mousemove", touchMoved);
+        canvas.addEventListener("mouseup", touchEnded);
+        canvas.addEventListener('touchstart', touchStarted, false) // touch handler for iPhones, iPads, and Androids
+        canvas.addEventListener('touchmove', touchMoved, false) // touch handler for iPhones, iPads, and Androids
+        canvas.addEventListener('touchend', touchEnded, false) // touch handler for iPhones, iPads, and Androids
+
+        width=canvas.width;
+        height=canvas.height;
+        draw();
+    }
+
+    function oval(x,y,w,h,fill,stroke){
+        ctx.beginPath();
+        ctx.ellipse(x,y,w/2,h/2,0,0,2*Math.PI);
+        if(fill)ctx.fill();
+        if(stroke)ctx.stroke();
+    }
+    function Color(r,g,b){
+        return "rgb("+r+","+g+","+b+")";
+    }
+
+    function draw() {
+        //background(233, 255, 255);
+        //textSize(20);
+        ctx.fillStyle=Color(255, 255, 191);
+
+        ctx.fillRect(0,0,width,height);
+        ctx.save();
+        ctx.scale(width / 900,width / 900);
+        ctx.lineWidth=2;
+        //stroke(0);
+        oval(xFilm - 30, yLens - 100, 60, 60,true,true);
+
+        line(xFilm, yLens - 100, xFilm, yLens + 100);
+        oval(xFilm - 30, yLens + 100, 60, 60,true,true);
+        ctx.lineWidth=1;
+        ctx.drawImage(img_candle, xReal - 25, yReal - 70, 47, 140);
+        var a = 112;
+        var b = xLens - xReal;
+        var c = 1 / (1 / a - 1 / b);
+        // ctx.globalAlpha=0.5;
+        for (var y = -52; y <= 0; y += 4)
+            for (var z = -1; z < 2; z += 2) {
+                var d = xReal;
+                var e = [yReal - 70, yReal + 70];
+                var f = xLens;
+                var g = [yLens + y * z, yLens + y * z];
+                var h;
+                var i = [0, 0];
+                if (mod(y, 20) == 0) {
+                    ctx.strokeStyle=Color(191, 0, 0, 96);
+                    line(d, e[0], f, g[0]);
+                    ctx.strokeStyle=Color(0, 191, 64, 128);
+                    line(d, e[1], f, g[1])
+                }
+                d = xLens;
+                e[0] = yLens + y * z;
+                e[1] = yLens + y * z;
+                f = xLens + c;
+                g[0] = yLens + c * (yLens - (yReal - 70)) / (xLens - xReal);
+                g[1] = yLens + c * (yLens - (yReal + 70)) / (xLens - xReal);
+                h = getCrossX(d, e[0], f, g[0], xFilm, 0, xFilm, height);
+                i[0] = getCrossY(d, e[0], f, g[0], xFilm, 0, xFilm, height);
+                i[1] = getCrossY(d, e[1], f, g[1], xFilm, 0, xFilm, height);
+                if (mod(y, 20) == 0) {
+                    ctx.strokeStyle=Color(191, 0, 0, 96);
+                    line(d, e[0], h, i[0]);
+                    ctx.strokeStyle=Color(0, 191, 64, 128);
+                    line(d, e[1], h, i[1])
+                }
+                var j = c / b;
+
+                ctx.globalAlpha=1 -Math.min(0.8,Math.abs(xLens+c-xFilm)/50);
+                //Console.log(xLens+c+":"+xFilm);
+                ctx.drawImage(img_candle, h - 15 * j, i[1], 47 * j, i[0] - i[1])
+                ctx.globalAlpha=1;
+            }
+        // ctx.globalAlpha=1;
+        //noStroke();
+        ctx.fillStyle=Color(0, 191, 191, 128);
+        oval(xLens, yLens, 20, 160,true,false);
+        //strokeWeight(10);
+        ctx.lineWidth=10;
+        //noFill();
+        ctx.strokeStyle=Color(128,128,128);
+        line(xFilm - 200, yLens - 80, xFilm - 80, yLens - 80);
+        line(xFilm - 80, yLens - 80, xFilm - 80, yLens - 120);
+        arc(xFilm - 50, yLens - 120, 60, 60, PI, 3 * HALF_PI);
+        line(xFilm - 50, yLens - 150, xFilm - 10, yLens - 150);
+        arc(xFilm - 10, yLens - 120, 60, 60, 3 * HALF_PI, TWO_PI);
+        line(xFilm + 20, yLens - 120, xFilm + 20, yLens + 120);
+        arc(xFilm - 50, yLens + 120, 60, 60, HALF_PI, PI);
+        line(xFilm - 50, yLens + 150, xFilm - 10, yLens + 150);
+        arc(xFilm - 10, yLens + 120, 60, 60, 0, HALF_PI);
+        line(xFilm - 80, yLens + 80, xFilm - 80, yLens + 120);
+        line(xFilm - 200, yLens + 80, xFilm - 80, yLens + 80);
+        ctx.lineWidth=1;
+        ctx.restore();
+        //drawButtonDrag()
+    }
+
+    var dragged = -1;
+    var offsetX;
+    var offsetY;
+    function touchStarted(e) {
+        e=getTouchPos(e);
+        mouseX=e.x;
+        mouseY=e.y;
+        if (!contain(mouseX, mouseY, 0, 0, width, height)) return;
+        var a = dist(xReal, yReal, mouseX * 900 / width, mouseY * 900 / width);
+        var b = dist(xLens, yLens, mouseX * 900 / width, mouseY * 900 / width);
+        if (a < b) {
+            dragged = 0;
+            offsetX = mouseX * 900 / width - xReal;
+            offsetY = mouseY * 900 / width - yReal
+        }
+        else {
+            dragged = 1;
+            offsetX = mouseX * 900 / width - xLens
+        }
+        draw();
+    }
+
+    function touchMoved(e) {
+        e=getTouchPos(e);
+        mouseX=e.x;
+        mouseY=e.y;
+        // if (touches.length > 1) return;
+        if (dragged == 0) {
+            xReal = mouseX * 900 / width - offsetX;
+            yReal = mouseY * 900 / width - offsetY;
+            xReal = constrain(xReal, xFilm - 800, xFilm - 400);
+            yReal = constrain(yReal, yLens - 100, yLens + 100);
+           draw();
+        }
+        if (dragged == 1) {
+            xLens = mouseX * 900 / width - offsetX;
+            xLens = constrain(xLens, xFilm - 200, xFilm - 100);
+           draw();
+        }
+    }
+
+    function touchEnded(e) {
+        dragged = -1
+    }
+
+    function getTouchPos(event) {
+        event.preventDefault()
+        var rect = canvas.getBoundingClientRect()
+        if (event.touches) {
+
+            return {
+                x: event.touches[0].clientX - rect.left,
+                y: event.touches[0].clientY - rect.top,
+            }
+        } else {
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top,
+            }
+        }
+    }
+
+</script>
+</body>
+</html>
