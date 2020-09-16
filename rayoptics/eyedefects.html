@@ -1,0 +1,737 @@
+
+<!doctype html>
+<html>
+<head>
+    <title>Eye Defects Simulator</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body onload="setup();">
+<div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="1200px" height="480px">
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+    <div id="divVirtual"><input id="chkVirtual" onchange="draw()" type="checkbox"> <label for="chkVirtual"> Check here to display virtual rays from lens </label></div>
+    <div id="divPower">
+        <input id="chkPower" onchange="draw()" type="checkbox">
+        <label for="chkPower"> Check here to display virtual divisions (you may need to zoom in to see them clearly)
+        </label>
+    </div>
+    <div id="divNear"><b>Near Point: </b>5cm <input id="sldNear" max="100" min="5" step="1" type="range" oninput="draw();" onchange="draw();;" value="25"> 100cm</div>
+    <div id="divFar"><b>Far Point: </b>40cm<input id="sldFar" max="101" min="40" step="1" type="range" oninput="draw();" onchange="draw();"="" value="101"> infinity</div>
+    <div id="divFocus"><b>Focal length of Lens: </b>-200cm<input id="sldFocus" max="200" min="-200" step="1" type="range" oninput="draw();" onchange="draw();" value="0"> 200 cm</div>
+    <div id="divEye"><b>Focal length of Lens: </b>0 %<input id="sldEye" max="100" min="0" step="1" type="range" oninput="draw();" onchange="draw();" value="0"> 100 %</div>
+
+    <div id="txtInfo"></div>
+
+</div>
+
+<script type='text/javascript'>
+    //vsReading when it was supposed to read zero
+    var canvas = document.getElementById('myCanvas')
+    var ctx = canvas.getContext('2d')
+
+    const PI=Math.PI;
+    var width = canvas.width;
+    var height = canvas.height;
+    var check;
+
+
+    function map(n,start1,stop1,start2,stop2){
+        if(n<start1)n=start1;
+        if(n>stop1)n=stop1;
+        return (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    }
+
+    function constrain(n, low, high) {
+        return Math.max(Math.min(n, high), low);
+    }
+
+
+
+    function getCrossX(x1, y1, x2, y2, x3, y3, x4, y4){
+
+        var t;
+        var s;
+        var under = (y4-y3)*(x2-x1)-(x4-x3)*(y2-y1);
+        if (under == 0) return 0;
+
+        var _t = (x4-x3)*(y1-y3) - (y4-y3)*(x1-x3);
+        var _s = (x2-x1)*(y1-y3) - (y2-y1)*(x1-x3);
+
+        t = _t/under;
+        s = _s/under;
+        //if(t < 0.0 || t > 1.0 || s < 0.0 || s > 1.0) return 0;
+        //if(_t == 0 && _s == 0) return 0;
+
+        return(x1 + t * (x2-x1));
+    }
+    function getCrossY(x1, y1, x2, y2, x3, y3, x4, y4){
+
+        var t;
+        var s;
+        var under = (y4-y3)*(x2-x1)-(x4-x3)*(y2-y1);
+        if (under == 0) return 0;
+
+        var _t = (x4-x3)*(y1-y3) - (y4-y3)*(x1-x3);
+        var _s = (x2-x1)*(y1-y3) - (y2-y1)*(x1-x3);
+
+        t = _t/under;
+        s = _s/under;
+        //if(t < 0.0 || t > 1.0 || s < 0.0 || s > 1.0) return 0;
+        //if(_t == 0 && _s == 0) return 0;
+
+        return(y1 + t * (y2-y1));
+    }
+
+    var sliderA,sliderB,sliderC,sliderD;
+    var candle_img,concave_img,convex_img,eye_img,Img_candle_img0,Img_candle_img1,gradient,candle_img_inv;
+    var lineY=250;
+    var candleX=500;
+    var candleY=lineY;
+    var NPx
+    var FPx;
+    var NP;
+    var FP;
+    var lensX;
+    var axisY=250;
+    var eyeX=975;
+    var retinaX=1250;
+    var fEye;
+    var fLens;
+    var magLens;
+    var magEye;
+    var objectX;
+    var objectY;
+    var virtualX;
+    var virtualY;
+    var realX;
+    var realY;
+    var yTemp;
+    var textArea;
+    var disease;
+    var powerReq=[];
+    var cordinate=[];
+    var g=15;
+    var chkVirtual;
+    var chkPower;
+    var offsetX=-180;
+    var offsetY=0;
+    var zoom=1;
+    var rayColor;
+    var textColor;
+    var lensColor;
+
+    function setup(){
+        sliderA=document.getElementById("sldNear");//.getSlider("near");
+        sliderB=document.getElementById("sldFar");
+        sliderC=document.getElementById("sldFocus");
+        sliderD=document.getElementById("sldEye");
+        textArea=document.getElementById("txtInfo");
+        chkVirtual=document.getElementById("chkVirtual");
+        chkPower=document.getElementById("chkPower");
+
+        candle_img=new Image();
+        candle_img.src="lens_mirror_candle_0.png";
+        candle_img_inv = new Image();
+        candle_img_inv.src="lens_mirror_candle_inv_0.png";
+        concave_img=new Image();
+        concave_img.src="lens_concave.png";
+        convex_img=new Image()
+        convex_img.src="lens_convex.png";
+        eye_img=new Image();
+        eye_img.src="eye_anatomy.png";//seeing_the_light_eyeball.png";
+        Img_candle_img0=new Image();
+        Img_candle_img0.src= "lens_mirror_candle_image_0.png";
+        Img_candle_img1=new Image();
+        Img_candle_img1.src="lens_mirror_candle_image_1.png";
+        gradient=new Image();
+        gradient.src="blue_gradient.jpg";
+        //sliderA.setValue(25);
+        //sliderB.setValue(101);
+        //sliderC.setValue(0);
+        canvas.addEventListener('mousewheel', mouseWheelMoved)
+        canvas.addEventListener('mousemove', touchMoved)
+        canvas.addEventListener('mousedown', touchStarted)
+        canvas.addEventListener('mouseup', touchEnded)
+        canvas.addEventListener('touchstart', touchStarted, false) // touch handler for iPhones, iPads, and Androids
+        canvas.addEventListener('touchmove', touchMoved, false) // touch handler for iPhones, iPads, and Androids
+        canvas.addEventListener('touchend', touchEnded, false) // touch handler for iPhones, iPads, and Androids
+       // window.addEventListener('keydown', onKeyEvent, false)
+
+
+        draw();
+        //App.clearAllTimers();
+        //App.setInterval(draw, 1000/20);
+    }
+
+    function lens(Ox,Oy,Lx,f){
+        var u=Ox-Lx;
+        var v,arr=[];
+        var F=f*g;
+
+        if(f==0){
+            arr[0]=Ox;
+            arr[1]=Oy;
+        }
+        else{
+            v=F*u/(u+F);
+            arr[0]=Lx+v;
+            arr[1]=lineY-(lineY-Oy)*(v/u);
+        }
+        return arr;
+    }
+
+    function Color(r,g,b){
+        return "rgb("+r+","+g+","+b+")";
+    }
+
+    function draw(){
+        NP=sliderA.value*1;
+        sliderB.min=(NP);
+        FP=sliderB.value*1;
+        if(NP==101){
+            NP=100000;
+        }
+        if(FP==101){
+            FP=100000;
+        }
+
+        fLens=sliderC.value*1;
+
+        ctx.fillStyle="lightyellow";
+        ctx.fillRect(0,0,width,height);
+        ctx.save();
+        ctx.scale(zoom,zoom);
+        ctx.translate(offsetX,offsetY);
+        ctx.fillStyle="white";
+        ctx.strokeStyle="white";
+        render();
+        ctx.restore();
+    }
+    function render(){
+
+/*
+        if(sliderA.getValue()==101){
+            sliderA.setText("Near point = Infinity");
+        }
+        if(sliderA.getValue()!=101){
+            sliderA.setText("Near point = "+sliderA.getValue()+" cm");
+        }
+        if(sliderB.getValue()==101){
+            sliderB.setText("Far point = Infinity");
+        }
+        else{
+            sliderB.setText("Far point = "+sliderB.getValue()+" cm");
+        }
+        if(sliderC.getValue()==101){
+            sliderC.setText("Focal length of lens = Infinity");
+        }
+        else if(sliderC.getValue()==-101){
+            sliderC.setText("Focal length of lens = -Infinity");
+        }
+        else{
+            sliderC.setText("Focal length of lens = "+sliderC.getValue().toFixed(0)+" cm(P="+(100/sliderC.getValue()).toFixed(2)+")");
+        }
+        */
+
+
+         ctx.save();
+
+        ctx.strokeStyle=Color(128/255,128/255,128/255,0.5);
+
+        ctx.moveTo(0, 250);
+        ctx.lineTo(1300, 250);
+        //ctx.moveTo(975-g*5, 245);
+        //ctx.lineTo(975-g*5, 255);
+        ctx.moveTo(975-g*25, 245);
+        ctx.lineTo(975-g*25, 255);
+        ctx.stroke();
+        ctx.restore()
+        ctx.fillStyle="black"
+        ctx.font="20px Arial"
+       // ctx.fillText("5", 965-g*5, 290);
+        //ctx.fillText("25", 975-g*25-10, 290);
+
+        //ctx.fillText((eyeX-objectX)/, objectX, 390);
+
+        if(sliderD.value*1>0) {
+            ctx.globalAlpha=sliderD.value/100;
+            //ctx.drawImage(eye_img, 950, 100, 300, 300);
+            ctx.drawImage(eye_img, 815, 40, eye_img.width, eye_img.height);
+            ctx.globalAlpha=1;
+        }
+        ctx.strokeStyle="black";
+        ctx.beginPath();
+        ctx.arc(1100,axisY,150,0,Math.PI*2)
+        ctx.stroke();
+        ctx.lineWidth=4;
+        ctx.beginPath();
+        ctx.arc(1100,axisY,150,-Math.PI/6,Math.PI/6)
+        ctx.stroke();
+        ctx.lineWidth=2;
+
+        if(fLens<0 ){
+            //ctx.drawImage(concave_img, 915, 150, 20, 200)
+            drawlens(lensX, axisY,-200+fLens*2);
+        }
+        if(fLens>0 ){
+            //ctx.drawImage(convex_img, 915, 150, 20, 200)'
+            drawlens(lensX, axisY,200+fLens*2);
+        }
+
+        ctx.drawImage(candle_img, candleX-10, 200, 20, 100);
+        ctx.textAlign="center";
+
+        ctx.fillText("u="+getValueToDisplay((candleX-eyeX)/g), candleX, 330);
+
+        NPx=975-NP*g;
+        FPx=975-FP*g;
+        ctx.strokeStyle=Color(128,128,128);
+        ctx.fillStyle=Color(0,155,0);
+        ctx.moveTo(NPx,lineY)
+        ctx.arc(NPx, lineY, 10, 0, 2*PI);
+        ctx.fillText("NP="+getValueToDisplay(NP), NPx, 200);
+        ctx.moveTo(FPx,lineY)
+        ctx.arc(FPx, lineY, 10, 0, 2*PI);
+        ctx.fillText("FP="+getValueToDisplay(FP), FPx, 200);
+        ctx.fillStyle="black";
+        //ctx.fillText(NP+"cm", NPx, 290);
+        //ctx.fillText(FP+"cm", FPx, 290);
+
+        ctx.stroke();
+        //ctx.fillStyle=Color(50,255,50);
+
+        objectX=candleX;
+        objectY=200;
+        lensX=935;
+        cordinate=lens(objectX, objectY, eyeX, fLens);
+        virtualX=cordinate[0];
+        virtualY=cordinate[1];
+        magLens=(virtualX-925)/(925-objectX);
+        if(chkVirtual.checked && virtualX<925 && fLens!=0){
+            if(magLens<0){
+                ctx.drawImage(Img_candle_img0, virtualX-10*magLens, 250-50*magLens, 20*magLens, 100*magLens);
+            }
+            else if(magLens>0){
+                ctx.drawImage(Img_candle_img1, virtualX-10*magLens, 250-50*magLens, 20*magLens, 100*magLens);
+            }
+        }
+
+        //find focal length of eye
+        let P=100*g/(eyeX-objectX)+50;//g/(retinaX-eyeX);
+        if(fLens!=0)P=P-100/fLens;
+        if(P>(100/NP+50))P=100/NP+50;
+        if(P<(100/FP+50))P=100/FP+50;
+        fEye=100/P;
+
+        ctx.textAlign="left";
+        ctx.fillText("fe="+getValueToDisplay(fEye,2), eyeX+10, 180);
+        ctx.textAlign="center"
+        ctx.fillText("v="+getValueToDisplay(2), (eyeX+retinaX)/2, 320);
+
+        var m1=(objectY-virtualY)/(lensX-virtualX)
+        var m2=(lineY-objectY)/(lensX-objectX);
+        var x1=975;
+        var y1=m1*x1-m1*lensX+objectY;
+        var x2=975;
+        var y2=m2*x2-m2*lensX+lineY;
+
+        ctx.strokeStyle=Color(0,150,150);
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(objectX, objectY);
+        ctx.lineTo(lensX, objectY);
+        ctx.moveTo(objectX, objectY);
+        ctx.lineTo(x2, y2);
+        ctx.moveTo(lensX, objectY);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+
+        ctx.strokeStyle=Color(0,0,255);
+        if(chkVirtual.checked&& fLens>0){
+            var x3=lensX;
+            var y3=objectY;
+            ctx.beginPath();
+            for(var j=0;j<1000;j++){
+                ctx.moveTo(x3, y3);
+                x3=x3-2;
+                y3=m1*x3-m1*lensX+objectY;
+                ctx.lineTo(x3, y3);
+
+                x3-=2;
+                if(x3<virtualX){
+                    break;
+                }
+            }
+            ctx.stroke();
+            x3=objectX;
+            y3=objectY;
+            ctx.beginPath();
+            for(var j=0;j<1000;j++){
+                ctx.moveTo(x3, y3);
+                x3=x3-2;
+                y3=m2*x3-m2*lensX+lineY;
+                ctx.lineTo(x3, y3);
+
+                x3-=2;
+                if(x3<virtualX){
+                    break;
+                }
+            }
+            ctx.stroke();
+            if(virtualX>lensX){
+                ctx.strokeStyle=Color(0,0,255);
+                ctx.beginPath();
+                var x3=x1;
+                var y3=y1;
+                ctx.beginPath();
+                for(var j=0;j<1000;j++){
+                    ctx.moveTo(x3, y3);
+                    x3=x3+2;
+                    y3=m1*x3-m1*lensX+objectY;
+                    ctx.lineTo(x3, y3);
+
+                    x3+=2;
+                    if(x3>virtualX){
+                        break;
+                    }
+                }
+                ctx.stroke();
+                ctx.beginPath();
+                var x3=x2;
+                var y3=y2;
+                ctx.beginPath();
+                for(var j=0;j<1000;j++){
+                    ctx.moveTo(x3, y3);
+                    x3=x3+2;
+                    y3=m2*x3-m2*lensX+lineY;
+                    ctx.lineTo(x3, y3);
+
+                    x3+=2;
+                    if(x3>virtualX){
+                        break;
+                    }
+                }
+                ctx.stroke();
+            }
+
+        }
+        else if(chkVirtual.checked && fLens<0){
+            var x3=lensX;
+            var y3=objectY;
+            ctx.beginPath();
+            for(var j=0;j<1000;j++){
+                ctx.moveTo(x3, y3);
+                x3=x3-2;
+                y3=m1*x3-m1*lensX+objectY;
+                ctx.lineTo(x3, y3);
+                ctx.stroke();
+                x3-=2;
+                if(x3<virtualX){
+                    break;
+                }
+            }
+        }
+
+        var l;
+        var c;
+        if(virtualX<=NPx&&virtualX>=FPx){
+            c=275;
+        }
+        else if(virtualX>NPx&&virtualX<=975){
+            c=map(virtualX,NPx,974,275,350);
+        }
+        else if(virtualX<FPx){
+            c=map(virtualX,FPx-200,FPx,200,275);
+        }
+        else{
+            c=map(virtualX,976,40000,150,200);
+        }
+        l=map(objectX,0,975-10*g,0.7,1.3);
+
+        var d;
+        var e = [];
+        var f;
+        var k = [];
+        //k=g
+        var h;
+        var i = [0, 0];
+
+        for (var y = -52; y <= -0; y += 4)
+            for (var z = -1; z < 2; z += 2) {
+
+                d = eyeX;
+                e[0] = lineY + y * z;
+                e[1] = lineY + y * z;
+                f = eyeX + c;
+                k[0] = lineY + 50*l;
+                k[1] = lineY - 50*l;
+                h = getCrossX(d, e[0], f, k[0], retinaX, 0, retinaX, height);
+                i[0] = getCrossY(d, e[0], f, k[0], retinaX, 0, retinaX, height);
+                i[1] = getCrossY(d, e[1], f, k[1], retinaX, 0, retinaX, height);
+                ctx.globalAlpha=1-1.3*Math.abs(l-1);
+
+                ctx.drawImage(candle_img_inv, retinaX - 10 * l*(lineY-i[1])/20, i[1], 20 * l,(i[0]-i[1])*l)
+            }
+        ctx.globalAlpha=1;
+        if(virtualX<=NPx&&virtualX>=FPx){
+            ctx.strokeStyle=Color(0,150,150);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(retinaX - 10 * l*(lineY-i[1])/20 + 10 * l, i[1]+(i[0]-i[1])*l);
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(retinaX - 10 * l*(lineY-i[1])/20 + 10 * l, i[1]+(i[0]-i[1])*l);
+            yTemp=i[1]+(i[0]-i[1])*l;
+            ctx.stroke();
+        }
+        if(!(virtualX<=NPx&&virtualX>=FPx)){
+            var x4=eyeX+c;
+            var y4=yTemp+(c-275)/3;
+            var slope1=(y4-y1)/(x4-x1);
+            var slope2=(y4-y2)/(x4-x2);
+            var x5=retinaX - 10 * l*(lineY-i[1])/20 + 10 * l;
+            var y5=slope1*x5-slope1*x1+y1;
+            var y6=slope2*x5-slope2*x2+y2;
+            check=y4;
+
+            ctx.strokeStyle=Color(0,150,150);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x5, y5);
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x5, y6);
+            ctx.stroke();
+        }
+        if(NP>25&&FP>=100000){
+            disease="Hypermetropic(Far sightedness)";
+            powerReq[0]=100*(1/25 - 1/NP);
+            powerReq[1]=0;
+        }
+        else if(FP<100000&&NP<=25){
+            disease="Myopic(Near sightedness)";
+            powerReq[1]=-100/FP;
+            powerReq[0]=0;
+        }
+        else if(FP<100000&&NP>25){
+            disease="Both Hypermetropic and Myopic";
+            powerReq[0]=100*(1/25 - 1/NP);
+            powerReq[1]=-100/FP;
+        }
+        else{
+            disease="Nothing";
+            powerReq[0]=0;
+            powerReq[1]=0;
+        }
+        textArea.innerHTML=("Problem : "+disease+" \nPower Required : "+powerReq[0].toFixed(2) +"D and "+powerReq[1].toFixed(2)+"D");
+        //fill eye lens
+        ctx.fillStyle="cyan";
+        var m=map(fEye,1.7,2,1.3,0.7);
+
+        ctx.beginPath();
+        ctx.ellipse(975, 246,15*m, 55/m,0,0,Math.PI*2,false);
+        ctx.fill();
+        ctx.stroke();
+        /*
+        ctx.beginPath();
+        let cx0=975+15*m;
+        let cy0=200;
+        let cx1=975+15*m;
+        let cy1=246-24/m;
+        ctx.moveTo(cx0,cy0);
+        ctx.lineTo(cx1,cy1);
+
+        cx1=975-10*m;
+        cy1=246-14/m;
+        ctx.moveTo(cx0,cy0);
+        ctx.lineTo(cx1,cy1);
+        cx1=975+10*m;
+        cy1=246-14/m;
+        ctx.moveTo(cx0,cy0);
+        ctx.lineTo(cx1,cy1);
+        ctx.strokeStyle="red";
+        ctx.stroke();
+        */
+
+        ctx.translate(-offsetX,-offsetY);
+        ctx.textAlign="left";
+        ctx.strokeStyle = Color(0,150,150);
+        ctx.beginPath();
+        ctx.moveTo(50, 30);
+        ctx.lineTo(100, 30);
+        ctx.stroke();
+        ctx.fillStyle=Color(0,150,150);
+        ctx.fillText("Rays from candle", 120, 40);
+        ctx.strokeStyle = Color(0,0,255);
+        ctx.beginPath();
+        for(var j=0;j<=50;j+=2){
+            ctx.moveTo(50+j, 60);
+            j+=2;
+            ctx.lineTo(50+j, 60);
+        }
+        ctx.stroke();
+        ctx.fillStyle=Color(0,0,255);
+        ctx.fillText("Virtual Candle by Lens", 120, 70);
+
+
+    }
+
+  //  var dragged = false;
+   // var offsetX=0;
+    var mouseX;
+    var drag=0;
+    function touchStarted(e) {
+        mouseX=getTouchPos(e).x;
+        let y=getTouchPos(e).y;
+        console.log(mouseX+","+objectX);
+        drag= (mouseX>candleX+offsetX-10 && mouseX< candleX+ 10+offsetX && Math.abs(y-axisY)<80)?1:2;
+       // mouseX=e.x,mouseY=e.y;
+      //  dragged = true;
+        //offsetX = mouseX * 1200 / width - candleX;
+
+    }
+
+    function touchMoved(e) {
+        if (drag==0) return;
+        let x=getTouchPos(e).x;
+        if (drag==1) {
+            candleX = candleX+x-mouseX;//x * 1200 / width - offsetX;
+            candleX = constrain(candleX, 0, 975-5*g);
+        }else{
+            offsetX+=(x-mouseX);
+        }
+        draw();
+        mouseX=x;
+    }
+
+    function touchEnded(e) {
+        drag = 0;
+        mouseX=e.x;
+        mouseY=e.y;
+    }
+
+    function getTouchPos(event) {
+        event.preventDefault()
+        var rect = canvas.getBoundingClientRect()
+        if (event.touches) {
+
+            return {
+                x: event.touches[0].clientX - rect.left,
+                y: event.touches[0].clientY - rect.top,
+            }
+        } else {
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top,
+            }
+        }
+    }
+    function mouseWheelMoved(e){
+       /*
+        if(e.deltaY>0){
+            zoom*=1.05;
+        }else{
+            zoom*=0.96;
+        }
+        draw();
+        */
+    }
+
+
+    function drawlens(x,y, f){
+        let leftRadius=f;
+        let rightRadius=f;
+        let radius=80;
+        ctx.strokeStyle="darkgrey";
+        //Math.min(80,Math.abs(f));
+        //y+=radius;
+        let thickness=f<0?30:0;
+        //draw the top and bottom edges of the lens
+        ctx.beginPath();
+        ctx.moveTo(x - (thickness / 2), y - radius);
+        ctx.lineTo(x + (thickness / 2), y - radius);
+        ctx.moveTo(x - (thickness / 2), y + radius);
+        ctx.lineTo(x + (thickness / 2), y + radius);
+        ctx.stroke();
+
+        ctx.beginPath();
+        //draw the left face of the lens
+        let lensToCircleRatio = radius / leftRadius;
+        let xOffset = leftRadius * Math.cos(Math.asin(lensToCircleRatio)) - (thickness / 2);
+        //change the - to a + for a right-side concave face
+        let arcStart = Math.PI - Math.asin(lensToCircleRatio);
+        let arcEnd = Math.PI + Math.asin(lensToCircleRatio);
+
+        if(leftRadius<0){
+            let tmp=arcStart;
+            arcStart=Math.PI+arcEnd;
+            arcEnd=Math.PI+tmp;
+            ctx.moveTo(x, y - radius);
+            ctx.lineTo(x - (thickness / 2), y - radius);
+       }
+
+        ctx.arc(x + xOffset, y, Math.abs(leftRadius), arcStart, arcEnd);
+        if(leftRadius<0){
+            ctx.lineTo(x , y+ radius);
+        }
+        ctx.fillStyle="lightcyan";
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        //draw the right face of the lens
+        lensToCircleRatio = radius / rightRadius;
+        xOffset = rightRadius * Math.cos(Math.asin(lensToCircleRatio)) - (thickness / 2);
+        //change the - to a + for a left-side concave face
+        arcStart = -1 * Math.asin(lensToCircleRatio);
+        arcEnd = Math.asin(lensToCircleRatio);
+        if(rightRadius<0){
+            let tmp=arcStart;
+            arcStart=Math.PI+arcEnd;
+            arcEnd=Math.PI+tmp;
+            ctx.moveTo(x, y + radius);
+            ctx.lineTo(x + (thickness / 2), y + radius);
+        }
+
+        ctx.arc(x - xOffset, y, Math.abs(rightRadius), arcStart, arcEnd);
+        if(rightRadius<0){
+            ctx.lineTo(x , y- radius);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.textAlign="Center";
+        ctx.fillStyle="darkgreen";
+        ctx.fillText("f="+getValueToDisplay(fLens), x,y-radius-30);
+    }
+
+    function getValueToDisplay(v,n){
+        if(n==undefined)n=1;
+        return (v.toFixed(n)+"cm")+(chkPower.checked?" ["+((100/v).toFixed(n)+"D]"):"");
+    }
+
+</script>
+</body>
+</html>

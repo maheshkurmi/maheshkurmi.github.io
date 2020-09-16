@@ -12,7 +12,7 @@
 <script id="csinit" type="text/x-cindyscript">
       use("CindyGL");
 
-			width = 960;
+			width = 600;
 			height = 540;
 
       L = [0, 0]; //bottom left corner
@@ -257,6 +257,21 @@ drawfield(f(#),stream->true,color->(0,0,0));
 				drawtext(P, if(scharge>0,"+","-"), alpha->|2*scharge|,color->[1,1,1],size->40,align->"mid");
 			);
 			//l.color = scolor;
+
+	  apply(-12..12,i,
+         apply(-12..12,j,
+            p=(i/12*2,j/12*2);
+            v=field(p);
+            //v=(1,i/12*2*j/12*2);
+            //v.x=1;
+            //v.y=i/12*2*j/12*2;
+            //v=p;
+            v=v*max(min(|v|,0.006),0.02);
+            si=|v|*3;
+            draw(p-v,p+v,color->(1,1,1),arrowshape->"full", arrowsides->"==>", arrowsize->si*2,size->si*3);
+         )
+      )
+
     </script>
 
 <div id="CSCanvas" style="width: 960px; height:540px"></div>

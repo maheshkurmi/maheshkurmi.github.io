@@ -454,6 +454,7 @@ function myTouchStart(event) {
 
 function myTouchEnd(event) {
     event.preventDefault()
+    var touch = event.touches[0]
     var mouseEvent = new MouseEvent('mouseup', {
         clientX: touch.clientX,
         clientY: touch.clientY,
