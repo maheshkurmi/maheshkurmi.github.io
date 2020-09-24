@@ -2,7 +2,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>Eye Defects Simulator</title>
+    <title>Simple Microscope</title>
     <style>
         body {
             background: white;
@@ -34,30 +34,32 @@
 <div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="1200px" height="480px">
     Your browser does not support the HTML5 canvas tag.
 </canvas>
-    <div id="divVirtual"><input id="chkVirtual" onchange="draw()" type="checkbox"> <label for="chkVirtual"> Check here to display virtual rays from lens </label></div>
-    <div id="divPower">
+    <div id="divVirtual"><input id="chkVirtual" checked=true" onchange="draw()" type="checkbox"> <label for="chkVirtual"> Check here to display virtual rays from lens </label></div>
+    <div id="divPower" style="display:none">
         <input id="chkPower" onchange="draw()" type="checkbox">
         <label for="chkPower"> Check here to display Powers in Diopter
         </label>
     </div>
     <div id="divNear"><b>Near Point: </b>5cm <input id="sldNear" max="105" min="5" step="5" type="range" oninput="draw();" onchange="draw();;" value="25"> 100cm <button onclick="fLens=0;sliderA.value=25; draw();"> Reset</button></div>
-    <div id="divFar"><b>Far Point: </b>40cm<input id="sldFar" max="205" min="40" step="5" type="range" oninput="draw();" onchange="draw();"="" value="205"> infinity<button onclick="fLens=0;sliderB.value=205; draw();"> Reset</button></div>
-    <div id="divFocus"><b>Focal length of Lens: </b>-200cm<input id="sldFocus" max="200" min="-200" step="1" type="range" oninput="draw();" onchange="draw();" value="0"> 200 cm <button onclick="fLens=0;sliderC.value=0; draw();"> Reset</button> </div>
-    <div id="divEye"><b>Eye anatomy: </b>0 %<input id="sldEye" max="100" min="0" step="1" type="range" oninput="draw();" onchange="draw();" value="0"> 100 %</div>
+    <div id="divFar" style="display:none"><b>Far Point: </b>40cm<input id="sldFar" max="205" min="40" step="5" type="range" oninput="draw();" onchange="draw();"="" value="205"> infinity<button onclick="fLens=0;sliderB.value=205; draw();"> Reset</button></div>
+    <div id="divFocus"><b>Focal length of Lens: </b>0cm<input id="sldFocus" max="100" min="0" step="1" type="range" oninput="draw();" onchange="draw();" value="0"> 100 cm <button onclick="fLens=0;sliderC.value=0; draw();"> Reset</button> </div>
+    <div id="divEye" style="display:none"><b>Eye anatomy: </b>0 %<input id="sldEye" max="100" min="0" step="1" type="range" oninput="draw();" onchange="draw();" value="0"> 100 %</div>
 
     <div id="txtInfo"></div>
     <div style="text-align: center;">
-        <h2>Focus adjustment of the camera</h2>
-        This is a simulation demonstrating the optics of the human eye. It also shows how various lenses can be used to correct for faulty vision. Be aware that it is a simplified version of what actually happens. In the simulation, there is no bending when light moves from the air into the eye (when most of the actual bending happens). Instead, in the simulation only the bendings that happen in the lens of the eye (or in the corrective lenses) is shown.
-
-        Move the object closer to or farther from the eye (drag the object or use the Object Position slider). Use the focus slider to change the shape of the lens of the eye to adjust its focal length. When the refracted rays in the eye come together on the retina, the image is in focus. In some special cases you have the option to see how corrective eyewear can be used to overcome vision problems like nearsightedness and farsightedness. Adjust the Overlay Eye Anatomy slider to see a detailed image of the anatomy of the eye.
-        <h3>Questions:</h3>
-        <ol>
-        <li>What is different about the rays of light that reach the eye from an object near the eye, as compared to rays that come from an object far from the eye?</li>
-        <li>What is nearsightedness? In nearsightedness, what is the issue with the lens? What type of lens can correct for this?</li>
-        <li>What is farsightedness? In farsightedness, what is the issue with the lens? What type of lens can correct for this?</li>
-        <li>What about a person that needs bi-focals? What is the issue with the lens? What type of lens can correct for this?</li>
-        </ol>
+        <h2>Simple Mircoscope</h2>
+        A simple microscope is a magnifying glass that has a double convex lens with a short focal length.
+        move the object closer to or farther from the eye (drag the object or use the Object Position slider). Use the focus slider to change the shape of the lens of the eye to adjust its focal length.
+        You will see that <br>
+        1. To get maximum magnification with sharp image at retina, image from lens must be located at Near Point.<br>
+        2. On moving object closer the image becomes blurred<br>
+        3. The eye lens tries to self adjust itself to bring image to retina.   <br>
+        <h3>Magnification:</h3>
+        The mathematical formula for maximum achievable Magnifying Power, M is
+        <br>
+        <b> M = D/u = 1+D/f</b>
+        <br>
+        Where, D is the least distance of distinct vision and f is focal length of lens used
     </div>
 
 </div>
@@ -188,10 +190,11 @@
         canvas.addEventListener('touchstart', touchStarted, false) // touch handler for iPhones, iPads, and Androids
         canvas.addEventListener('touchmove', touchMoved, false) // touch handler for iPhones, iPads, and Androids
         canvas.addEventListener('touchend', touchEnded, false) // touch handler for iPhones, iPads, and Androids
-        // window.addEventListener('keydown', onKeyEvent, false)
+       // window.addEventListener('keydown', onKeyEvent, false)
 
         draw();
-
+        //App.clearAllTimers();
+        //App.setInterval(draw, 1000/20);
     }
 
     /**
@@ -241,10 +244,31 @@
         ctx.strokeStyle="white";
         render();
         ctx.restore();
-
     }
     function render(){
-
+       /*
+        if(sliderA.getValue()==101){
+            sliderA.setText("Near point = Infinity");
+        }
+        if(sliderA.getValue()!=101){
+            sliderA.setText("Near point = "+sliderA.getValue()+" cm");
+        }
+        if(sliderB.getValue()==101){
+            sliderB.setText("Far point = Infinity");
+        }
+        else{
+            sliderB.setText("Far point = "+sliderB.getValue()+" cm");
+        }
+        if(sliderC.getValue()==101){
+            sliderC.setText("Focal length of lens = Infinity");
+        }
+        else if(sliderC.getValue()==-101){
+            sliderC.setText("Focal length of lens = -Infinity");
+        }
+        else{
+            sliderC.setText("Focal length of lens = "+sliderC.getValue().toFixed(0)+" cm(P="+(100/sliderC.getValue()).toFixed(2)+")");
+        }
+        */
         objectX=candleX;
         objectY=200;
         lensX=935;
@@ -269,7 +293,7 @@
 
         //Draw eye begin
         if(sliderD.value*1>0) {
-            ctx.globalAlpha=sliderD.value/100;
+            ctx.globalAlpha=sliderD.value/100+0.5;
             let scale=(retinaX-eyeX)/(eye_img.width-285);
             //ctx.drawImage(eye_img, 950, 100, 300, 300);
             ctx.drawImage(eye_img, lensX-100*scale, axisY-eye_img.height*scale/2, eye_img.width*scale, eye_img.height*scale);
@@ -540,7 +564,7 @@
             powerReq[0]=0;
             powerReq[1]=0;
         }
-        textArea.innerHTML=("Problem : "+disease+" \nPower Required : "+powerReq[0].toFixed(2) +"D and "+powerReq[1].toFixed(2)+"D");
+        textArea.innerHTML=("<br>Magnification <b>= "+(NP*g/(eyeX-objectX)).toFixed(2)+"X</b>  with  <b>"+(c[0]==retinaX?"<span style='color:darkgreen'>Sharp</span>":"<span style='color:red'>Blurred</span>")+ "</b> Image at retina");
         //fill eye lens
         ctx.fillStyle="cyan";
         var m=map(fEye,1.7,2,1.3,0.7);
@@ -549,26 +573,7 @@
         ctx.ellipse(975, 246,15*m, 55/m,0,0,Math.PI*2,false);
         ctx.fill();
         ctx.stroke();
-        /*
-        ctx.beginPath();
-        let cx0=975+15*m;
-        let cy0=200;
-        let cx1=975+15*m;
-        let cy1=246-24/m;
-        ctx.moveTo(cx0,cy0);
-        ctx.lineTo(cx1,cy1);
 
-        cx1=975-10*m;
-        cy1=246-14/m;
-        ctx.moveTo(cx0,cy0);
-        ctx.lineTo(cx1,cy1);
-        cx1=975+10*m;
-        cy1=246-14/m;
-        ctx.moveTo(cx0,cy0);
-        ctx.lineTo(cx1,cy1);
-        ctx.strokeStyle="red";
-        ctx.stroke();
-        */
 
         ctx.translate(-offsetX,-offsetY);
         ctx.textAlign="left";
@@ -593,8 +598,8 @@
 
     }
 
-    //  var dragged = false;
-    // var offsetX=0;
+  //  var dragged = false;
+   // var offsetX=0;
     var mouseX;
     var drag=0;
     function touchStarted(e) {
@@ -640,14 +645,14 @@
         }
     }
     function mouseWheelMoved(e){
-        /*
-         if(e.deltaY>0){
-             zoom*=1.05;
-         }else{
-             zoom*=0.96;
-         }
-         draw();
-         */
+       /*
+        if(e.deltaY>0){
+            zoom*=1.05;
+        }else{
+            zoom*=0.96;
+        }
+        draw();
+        */
     }
 
 
@@ -681,7 +686,7 @@
             arcEnd=Math.PI+tmp;
             ctx.moveTo(x, y - radius);
             ctx.lineTo(x - (thickness / 2), y - radius);
-        }
+       }
 
         ctx.arc(x + xOffset, y, Math.abs(leftRadius), arcStart, arcEnd);
         if(leftRadius<0){
@@ -721,6 +726,7 @@
         if(n==undefined)n=1;
         return (v.toFixed(n)+"cm")+(chkPower.checked?" ["+((100/v).toFixed(n)+"D]"):"");
     }
+
 </script>
 </body>
 </html>
