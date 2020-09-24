@@ -647,7 +647,7 @@ objTypes['halfplane'] = {
             objTypes['refractor'].fillGlass(obj.p);
         }
 
-        ctx.fillStyle = 'indigo';
+        ctx.fillStyle = 'red';
         ctx.fillRect(obj.p1.x - 2, obj.p1.y - 2, 3, 3);
         ctx.fillRect(obj.p2.x - 2, obj.p2.y - 2, 3, 3);
 
@@ -1051,7 +1051,7 @@ objTypes['refractor'] = {
     fillGlass: function (n) {
         if (n >= 1) {
             ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = ctx.fillStyle = "rgba(155,216,255)";//'white';
             //ctx.fillStyle="rgb(128,128,128)";
             //ctx.globalAlpha=1-(1/n);
             ctx.globalAlpha = Math.log(n) / Math.log(1.5) * 0.2;
@@ -1061,11 +1061,14 @@ objTypes['refractor'] = {
             //ctx.fill();
             ctx.globalAlpha = 1;
             ctx.globalCompositeOperation = 'source-over';
-
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgb(250,250,255,0.45)';//'rgb(70,70,70)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
         } else {
 
             ctx.globalAlpha = 1;
-            ctx.strokeStyle = 'rgb(70,70,70)';
+            ctx.strokeStyle = 'rgb(70,70,70,0.8)';//'rgb(70,70,70)';
             ctx.lineWidth = 1;
             ctx.stroke();
 
@@ -1679,8 +1682,8 @@ objTypes['lens'] = {
         var per_x = par_y;
         var per_y = -par_x;
 
-        var arrow_size_per = 5;
-        var arrow_size_par = 5;
+        var arrow_size_per = 3;
+        var arrow_size_par = 3;
         var center_size = 2;
 
         //畫線
@@ -1707,6 +1710,10 @@ objTypes['lens'] = {
         ctx.moveTo(center.x - per_x * center_size, center.y - per_y * center_size);
         ctx.lineTo(center.x + per_x * center_size, center.y + per_y * center_size);
         ctx.stroke();
+
+        ctx.fillRect(obj.p1.x-1,obj.p1.y-1,3,3);
+        ctx.fillRect(obj.p2.x-1,obj.p2.y-1,3,3);
+
         /*
         // Draw red triangles
         if (obj.p > 0) {
@@ -1746,36 +1753,36 @@ objTypes['lens'] = {
     },
 
 
-    //=============================當物件被光射到時================================
+    //=============================When the object is hit by light================================
     shot: function (lens, ray, rayIndex, shootPoint) {
 
         var lens_length = graphs.length_segment(lens);
         var main_line_unitvector_x = (-lens.p1.y + lens.p2.y) / lens_length;
         var main_line_unitvector_y = (lens.p1.x - lens.p2.x) / lens_length;
         //(-l1.p1.y+l1.p2.y+l1.p1.x+l1.p2.x)*0.5,(l1.p1.x-l1.p2.x+l1.p1.y+l1.p2.y)*0.5
-        var mid_point = graphs.midpoint(lens); //透鏡中心點
-
+        var mid_point = graphs.midpoint(lens); //Lens center point
+        //find center points on either side of lens
         var twoF_point_1 = graphs.point(mid_point.x + main_line_unitvector_x * 2 * lens.p, mid_point.y + main_line_unitvector_y * 2 * lens.p);  //兩倍焦距點1
         var twoF_point_2 = graphs.point(mid_point.x - main_line_unitvector_x * 2 * lens.p, mid_point.y - main_line_unitvector_y * 2 * lens.p);  //兩倍焦距點2
 
         var twoF_line_near, twoF_line_far;
         if (graphs.length_squared(ray.p1, twoF_point_1) < graphs.length_squared(ray.p1, twoF_point_2)) {
-            //兩倍焦距點1和光線在同一側
+            //Double focal length point 1 and the light on the same side
             twoF_line_near = graphs.parallel(lens, twoF_point_1);
             twoF_line_far = graphs.parallel(lens, twoF_point_2);
         } else {
-            //兩倍焦距點2和光線在同一側
+            //Double focal length point 2 and the light on the same side
             twoF_line_near = graphs.parallel(lens, twoF_point_2);
             twoF_line_far = graphs.parallel(lens, twoF_point_1);
         }
 
 
         if (lens.p > 0) {
-            //匯聚透鏡
+            //Convergent lens
             ray.p2 = graphs.intersection_2line(twoF_line_far, graphs.line(mid_point, graphs.intersection_2line(twoF_line_near, ray)));
             ray.p1 = shootPoint;
         } else {
-            //發散透鏡
+            //Divergent lens
             ray.p2 = graphs.intersection_2line(twoF_line_far, graphs.line(shootPoint, graphs.intersection_2line(twoF_line_near, graphs.line(mid_point, graphs.intersection_2line(twoF_line_far, ray)))));
             ray.p1 = shootPoint;
         }
@@ -1784,7 +1791,7 @@ objTypes['lens'] = {
 
 };
 
-//"idealmirror"(理想曲面鏡)物件
+//"idealmirror"(deal curved mirror) Property
 objTypes['idealmirror'] = {
 
     p_name: 'Focal length', //屬性名稱
@@ -1842,56 +1849,38 @@ objTypes['idealmirror'] = {
         ctx.lineTo(center.x + per_x * center_size, center.y + per_y * center_size);
         ctx.stroke();
 
+        ctx.strokeStyle = 'white';//rgba(128,128,128,255)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(obj.p1.x, obj.p1.y);
+        ctx.lineTo(obj.p2.x, obj.p2.y);
+        ctx.stroke();
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'butt';
 
-        //ctx.globalAlpha=1;
+        //Draw Flat silvered surface
         ctx.fillStyle = 'rgb(255,0,0)';
+        var a_l = Math.atan2(obj.p1.x - obj.p2.x, obj.p1.y - obj.p2.y) - Math.PI / 2;
+        ctx.strokeStyle = 'grey';//rgb(0,255,0)';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'butt';
+        ctx.beginPath();
+        ctx.moveTo(obj.p1.x + Math.sin(a_l) * 1.5, obj.p1.y + Math.cos(a_l) * 1.5);
+        ctx.lineTo(obj.p2.x + Math.sin(a_l) * 1.5, obj.p2.y + Math.cos(a_l) * 1.5);
+        ctx.stroke();
+        ctx.lineWidth = 1;
 
-        //單面版畫箭頭(兩方向焦距相反)
-        /*
-  if(obj.p>0)
-  {
-    //畫箭頭(p1)
-    ctx.beginPath();
-    ctx.moveTo(obj.p1.x+per_x*arrow_size_per2,obj.p1.y+per_y*arrow_size_per2);
-    ctx.lineTo(obj.p1.x-per_x*arrow_size_per,obj.p1.y-per_y*arrow_size_per);
-    ctx.lineTo(obj.p1.x+per_x*arrow_size_per2+par_x*arrow_size_par,obj.p1.y+per_y*arrow_size_per2+par_y*arrow_size_par);
-    ctx.fill();
 
-    //畫箭頭(p2)
-    ctx.beginPath();
-    ctx.moveTo(obj.p2.x+per_x*arrow_size_per2,obj.p2.y+per_y*arrow_size_per2);
-    ctx.lineTo(obj.p2.x-per_x*arrow_size_per,obj.p2.y-per_y*arrow_size_per);
-    ctx.lineTo(obj.p2.x+per_x*arrow_size_per2-par_x*arrow_size_par,obj.p2.y+per_y*arrow_size_per2-par_y*arrow_size_par);
-    ctx.fill();
-  }
-  if(obj.p<0)
-  {
-    //畫箭頭(p1)
-    ctx.beginPath();
-    ctx.moveTo(obj.p1.x-per_x*arrow_size_per2,obj.p1.y-per_y*arrow_size_per2);
-    ctx.lineTo(obj.p1.x+per_x*arrow_size_per,obj.p1.y+per_y*arrow_size_per);
-    ctx.lineTo(obj.p1.x-per_x*arrow_size_per2+par_x*arrow_size_par,obj.p1.y-per_y*arrow_size_per2+par_y*arrow_size_par);
-    ctx.fill();
-
-    //畫箭頭(p2)
-    ctx.beginPath();
-    ctx.moveTo(obj.p2.x-per_x*arrow_size_per2,obj.p2.y-per_y*arrow_size_per2);
-    ctx.lineTo(obj.p2.x+per_x*arrow_size_per,obj.p2.y+per_y*arrow_size_per);
-    ctx.lineTo(obj.p2.x-per_x*arrow_size_per2-par_x*arrow_size_par,obj.p2.y-per_y*arrow_size_per2-par_y*arrow_size_par);
-    ctx.fill();
-  }
-  */
-
-        //雙面版畫箭頭
+        //Double-sided engraving arrow
         if (obj.p < 0) {
-            //畫箭頭(p1)
+            //Draw arrows(p1)
             ctx.beginPath();
             ctx.moveTo(obj.p1.x - par_x * arrow_size_par, obj.p1.y - par_y * arrow_size_par);
             ctx.lineTo(obj.p1.x + par_x * arrow_size_par + per_x * arrow_size_per, obj.p1.y + par_y * arrow_size_par + per_y * arrow_size_per);
             ctx.lineTo(obj.p1.x + par_x * arrow_size_par - per_x * arrow_size_per, obj.p1.y + par_y * arrow_size_par - per_y * arrow_size_per);
             ctx.fill();
 
-            //畫箭頭(p2)
+            //Draw arrows(p2)
             ctx.beginPath();
             ctx.moveTo(obj.p2.x + par_x * arrow_size_par, obj.p2.y + par_y * arrow_size_par);
             ctx.lineTo(obj.p2.x - par_x * arrow_size_par + per_x * arrow_size_per, obj.p2.y - par_y * arrow_size_par + per_y * arrow_size_per);
@@ -1899,31 +1888,49 @@ objTypes['idealmirror'] = {
             ctx.fill();
         }
         if (obj.p > 0) {
-            //畫箭頭(p1)
+            //Draw arrows(p1)
             ctx.beginPath();
             ctx.moveTo(obj.p1.x + par_x * arrow_size_par, obj.p1.y + par_y * arrow_size_par);
             ctx.lineTo(obj.p1.x - par_x * arrow_size_par + per_x * arrow_size_per, obj.p1.y - par_y * arrow_size_par + per_y * arrow_size_per);
             ctx.lineTo(obj.p1.x - par_x * arrow_size_par - per_x * arrow_size_per, obj.p1.y - par_y * arrow_size_par - per_y * arrow_size_per);
             ctx.fill();
 
-            //畫箭頭(p2)
+            //Draw arrows(p2)
             ctx.beginPath();
             ctx.moveTo(obj.p2.x - par_x * arrow_size_par, obj.p2.y - par_y * arrow_size_par);
             ctx.lineTo(obj.p2.x + par_x * arrow_size_par + per_x * arrow_size_per, obj.p2.y + par_y * arrow_size_par + per_y * arrow_size_per);
             ctx.lineTo(obj.p2.x + par_x * arrow_size_par - per_x * arrow_size_per, obj.p2.y + par_y * arrow_size_par - per_y * arrow_size_per);
             ctx.fill();
+        }else{
+
         }
 
     },
 
 
-    //=============================當物件被光射到時================================
+    //=============================When the object is hit by light================================
     shot: function (obj, ray, rayIndex, shootPoint) {
-        //當成理想透鏡與平面鏡的結合
+        //block line if falls on face face of mirror
+        var rx = ray.p2.x - ray.p1.x;
+        var ry = ray.p2.y - ray.p1.y;
+
+        var mx = obj.p2.y - obj.p1.y;
+        var my = obj.p1.x - obj.p2.x;
+
+        if((rx*mx+ry*my)<=0){
+            ray.exist=false;
+            return;
+        }
+        //Special case for focal length =0 (flat mirror)
+        if(obj.p==0){
+            objTypes['mirror'].shot(obj, ray, rayIndex, shootPoint);
+            return;
+        }
+        //As a combination of ideal lens and flat mirror
         objTypes['lens'].shot(obj, ray, rayIndex, graphs.point(shootPoint.x, shootPoint.y));
 
 
-        //將光線往後拉
+        //Pull the light back
         ray.p1.x = 2 * ray.p1.x - ray.p2.x;
         ray.p1.y = 2 * ray.p1.y - ray.p2.y;
 
@@ -2171,6 +2178,7 @@ objTypes['radiant'] = {
                 continue;
             }
             addRay(ray1);
+            if( Math.abs(j - i) >=Math.PI)continue;
             j=2*i0-i;
             ray1 = graphs.ray(graphs.point(obj.p1.x, obj.p1.y), graphs.point(obj.p1.x + Math.cos(j), obj.p1.y + Math.sin(j)));
             ray1.brightness = Math.min(obj.p / getRayDensity(), 1);
