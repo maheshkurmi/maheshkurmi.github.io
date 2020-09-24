@@ -153,6 +153,8 @@
     var offsetX=-180;
     var offsetY=0;
     var zoom=1;
+    var candlewidth=12;
+    var candleheight=60;
 
 
     setup();
@@ -269,10 +271,11 @@
             sliderC.setText("Focal length of lens = "+sliderC.getValue().toFixed(0)+" cm(P="+(100/sliderC.getValue()).toFixed(2)+")");
         }
         */
+        axisY=250;
         objectX=candleX;
-        objectY=200;
-        lensX=935;
-        eyeX=975;
+        objectY=axisY-candleheight;
+        lensX=950;
+        eyeX=960;
         retinaX=1250;
         axisY=250;
         ctx.save();
@@ -314,20 +317,20 @@
         if(fLens<0 ){
             //ctx.drawImage(concave_img, 915, 150, 20, 200)
             drawlens(lensX, axisY,-200+fLens*2);
-        }
-        if(fLens>0 ){
+        }else if(fLens>0 ){
             //ctx.drawImage(convex_img, 915, 150, 20, 200)'
             drawlens(lensX, axisY,200+fLens*2);
         }
-
+        //Assume lensX and eyeX coincide since we have already drawn lens
+        lensX=eyeX;
         //draw object candle and displace its info
-        ctx.drawImage(candle_img, candleX-10, 200, 20, 100);
+        ctx.drawImage(candle_img, candleX-candlewidth/2, axisY-candleheight, candlewidth, candleheight);
         ctx.textAlign="center";
         ctx.fillText("u="+getValueToDisplay((candleX-eyeX)/g), candleX, axisY+80);
 
         //display near point and farpoint
-        NPx=975-NP*g;
-        FPx=975-FP*g;
+        NPx=eyeX-NP*g;
+        FPx=eyeX-FP*g;
         ctx.strokeStyle=Color(128,128,128);
         ctx.fillStyle=Color(0,155,0);
         ctx.moveTo(NPx,axisY)
@@ -347,24 +350,25 @@
 
         //find location of image wrt lens
 
-        if(fLens==0)lensX=eyeX;
         if(fLens!=0) {
-            cordinate = lens(objectX, objectY, lensX, fLens);
+            cordinate = lens(objectX, objectY, eyeX, fLens);
             virtualX = cordinate[0];
             virtualY = cordinate[1];
             magLens = (virtualX - lensX) / (lensX - objectX);
-            if (chkVirtual.checked && virtualX < lensX && fLens != 0) {
+            if (chkVirtual.checked &&  fLens != 0) {
                 if (magLens < 0) {
-                    ctx.drawImage(Img_candle_img0, virtualX - 10 * magLens, axisY - 50 * magLens, 20 * magLens, 100 * magLens);
+                    ctx.drawImage(Img_candle_img0, virtualX - candlewidth * magLens/2, axisY , candlewidth * magLens, candleheight * magLens);
                 } else if (magLens > 0) {
-                    ctx.drawImage(Img_candle_img1, virtualX - 10 * magLens, axisY - 50 * magLens, 20 * magLens, 100 * magLens);
+                    ctx.drawImage(Img_candle_img1, virtualX - candlewidth * magLens/2, axisY , candlewidth * magLens, candleheight * magLens);
                 }
             }
         }else{
             magLens=1;
             virtualX = objectX;
-            virtualY=objectY;
+            virtualY = objectY;
         }
+       // virtualX=virtualX+eyeX-lensX;
+
 
         //find focal length of eye
         let P=100*g/(eyeX-virtualX)+50;//g/(retinaX-eyeX);
@@ -500,7 +504,7 @@
 
 
         if(virtualX<=NPx&&virtualX>=FPx) {
-            ctx.drawImage(candle_img_inv, retinaX-l*10, c[1]-l*100, 20 * l, 100 * l);
+            ctx.drawImage(candle_img_inv, retinaX-l*candlewidth/2, c[1]-l*candleheight, candlewidth * l, candleheight * l);
             ctx.strokeStyle=Color(0,150,150);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
@@ -516,7 +520,7 @@
             for(let j=0;j<8;j++){
                 tmp=map(j,0,8,screeny1,screeny2);
                 l=Math.abs(magLens*(tmp-axisY)/(axisY-virtualY));
-                ctx.drawImage(candle_img_inv, retinaX-l*10, tmp-l*100, 20 * l, 100 * l);
+                ctx.drawImage(candle_img_inv, retinaX-l*candlewidth/2, tmp-l*candleheight, candlewidth * l, candleheight * l);
             }
 
             ctx.globalAlpha = 1;
