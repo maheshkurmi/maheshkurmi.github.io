@@ -31,7 +31,13 @@
 </head>
 
 <body onload="draw();">
-<div id="canvasdiv" class="container" align="center"><canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="1200px" height="480px">
+
+    <div id="canvasdiv" class="container" align="center">
+    <p> This is a simulation demonstrating the optics of the human eye. It also shows how various lenses can be used to correct for faulty vision. Be aware that it is a simplified version of what actually happens. In the simulation, there is no bending when light moves from the air into the eye (when most of the actual bending happens). Instead, in the simulation only the bendings that happen in the lens of the eye (or in the corrective lenses) is shown.
+
+        Move the object closer to or farther from the eye (drag the object or use the Object Position slider). Use the focus slider to change the shape of the lens of the eye to adjust its focal length. When the refracted rays in the eye come together on the retina, the image is in focus. In some special cases you have the option to see how corrective eyewear can be used to overcome vision problems like nearsightedness and farsightedness. Adjust the Overlay Eye Anatomy slider to see a detailed image of the anatomy of the eye.
+    </p>
+    <canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="1200px" height="480px">
     Your browser does not support the HTML5 canvas tag.
 </canvas>
     <div id="divVirtual"><input id="chkVirtual" onchange="draw()" type="checkbox"> <label for="chkVirtual"> Check here to display virtual rays from lens </label></div>
@@ -46,19 +52,7 @@
     <div id="divEye"><b>Eye anatomy: </b>0 %<input id="sldEye" max="100" min="0" step="1" type="range" oninput="draw();" onchange="draw();" value="0"> 100 %</div>
 
     <div id="txtInfo"></div>
-    <div style="text-align: center;">
-        <h2>Focus adjustment of the camera</h2>
-        This is a simulation demonstrating the optics of the human eye. It also shows how various lenses can be used to correct for faulty vision. Be aware that it is a simplified version of what actually happens. In the simulation, there is no bending when light moves from the air into the eye (when most of the actual bending happens). Instead, in the simulation only the bendings that happen in the lens of the eye (or in the corrective lenses) is shown.
 
-        Move the object closer to or farther from the eye (drag the object or use the Object Position slider). Use the focus slider to change the shape of the lens of the eye to adjust its focal length. When the refracted rays in the eye come together on the retina, the image is in focus. In some special cases you have the option to see how corrective eyewear can be used to overcome vision problems like nearsightedness and farsightedness. Adjust the Overlay Eye Anatomy slider to see a detailed image of the anatomy of the eye.
-        <h3>Questions:</h3>
-        <ol>
-        <li>What is different about the rays of light that reach the eye from an object near the eye, as compared to rays that come from an object far from the eye?</li>
-        <li>What is nearsightedness? In nearsightedness, what is the issue with the lens? What type of lens can correct for this?</li>
-        <li>What is farsightedness? In farsightedness, what is the issue with the lens? What type of lens can correct for this?</li>
-        <li>What about a person that needs bi-focals? What is the issue with the lens? What type of lens can correct for this?</li>
-        </ol>
-    </div>
 
 </div>
 
