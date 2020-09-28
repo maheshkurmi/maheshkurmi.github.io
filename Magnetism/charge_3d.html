@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>spiral</title>
+    <meta charset="UTF-8">
+    <script src="../jslibs/three.min.js"></script>
+    <script src="../jslibs/OrbitControls.js"></script>
+    <script src="../jslibs/dat.gui.min.js"></script>
+</head>
+<body style="font-family:sans-serif; font-size:15px; width:700px; margin-left:auto; margin-right:auto;">
+<header>
+    <h2> Motion of a charge in a uniform magnetic field</h2>
+</header>
+
+<p>A <span class = "redclass">proton (positive charge, red)</span> and an <span class = "blueclass">anti-proton (negative
+	charge, blue)</span> move in a magnetic field <b>B</b> = 10<sup>-3</sup> T <b>i</b>.&nbsp; At t = 0 both particles are at x = y = z = 0.&nbsp; You can choose the initial velocity components of the particles in units of 10<sup>3</sup> m/s.&nbsp; The tick marks on the axes are spaced in units of cm, and at a screen refresh rate of 60 Hz one second of real time represents ~ 0 microseconds of animation time.
+
+</p>
+
+<div id="mygui" class="rightfloat"></div>
+
+<div id="container">
+    <canvas id="can1" width="800" height=400" border="1"></canvas>
+</div>
+<p id="p1" style="text-align: center">Use the mouse to change your viewing angle and zoom in or out.</p>
+
+<script>
+
+    function draw() {
+        sphera.position.set(xs, ys, zs);
+        spherb.position.set(xs, ys, zs);
+        vx = vxs; vya = vys; vza = vzs;
+        vyb = vys; vzb = vzs;
+        pointsa = list(100);
+        fielda = starfielda();
+        fieldObject.add(fielda);
+        fieldObject.add(sphera);
+        if (single_q === 'no') {
+            pointsb = list(100);
+            fieldb = starfieldb();
+            fieldObject.add(spherb);
+            fieldObject.add(fieldb);
+        }
+        scene.add(fieldObject);
+        count = 0;
+        renderer.render(scene, camera);
+
+        function renderScene() {
+            for (k = 0; k < 5; k++) {
+                xold = sphera.position.x;
+                yolda = sphera.position.y;
+                zolda = sphera.position.z;
+                sphera.position.x = xold + vx * 0.01;
+                sphera.position.y = yolda + vya * 0.01;
+                sphera.position.z = zolda + vza * 0.01;
+                vya = vya + vza * 0.01;
+                vza = vza - vya * 0.01;
+
+                if (single_q === 'no') {
+                    yoldb = spherb.position.y;
+                    zoldb = spherb.position.z;
+                    spherb.position.x = xold + vx * 0.01;
+                    spherb.position.y = yoldb + vyb * 0.01;
+                    spherb.position.z = zoldb + vzb * 0.01;
+                    vyb = vyb - vzb * 0.01;
+                    vzb = vzb + vyb * 0.01;
+                }
+            }
+
+            count = count + 1;
+            if (count % 2 != 0) {
+                pointsa.shift();
+                pointsa.push([sphera.position.x, sphera.position.y, sphera.position.z]);
+                pointsa.forEach(updatePointa);
+                starsGeometrya.verticesNeedUpdate = true;
+
+                if (single_q === 'no') {
+                    pointsb.shift();
+                    pointsb.push([spherb.position.x, spherb.position.y, spherb.position.z]);
+                    pointsb.forEach(updatePointb);
+                    starsGeometryb.verticesNeedUpdate = true;
+                }
+            }
+
+            if (xold > 30) {
+                while (fieldObject.children.length) {
+                    fieldObject.remove(fieldObject.children[0]);
+                }
+                xstop = 1;
+            }
+
+            renderer.render(scene, camera);
+            if (xstop != 1) {
+                myReq = requestAnimationFrame(renderScene)
+            }
+            else {
+                cancelAnimationFrame(myReq);
+                xstop = 0;
+                draw();
+            }
+        }
+        myReq = requestAnimationFrame(renderScene);
+    }
+
+    function updatePointa(dots, i) {
+        x = dots[0], y = dots[1], z = dots[2];
+        starsGeometrya.vertices[i].set(x, y, z);
+    }
+
+    function updatePointb(dots, i) {
+        x = dots[0], y = dots[1], z = dots[2];
+        starsGeometryb.vertices[i].set(x, y, z);
+    }
+
+    //draw the B-field arrows
+    function myArrow() {
+        const material = new THREE.LineBasicMaterial({ color: "darkgrey", opacity: 0.1 });
+        const gridObject = new THREE.Object3D();
+        const gridGeo = new THREE.Geometry();
+
+        let dir = new THREE.Vector3(1, 0, 0);
+        let origin = new THREE.Vector3(0, 0, 0);
+        let hex = 0x000000;
+        for (k = -5; k < 6; k += 5) {
+            for (j = -5; j < 6; j += 5) {
+                origin.set(-16 + Math.floor((Math.random() * 20) + 1), j, k)
+                let arrowHelper = new THREE.ArrowHelper(dir, origin, 10, hex);
+                gridObject.add(arrowHelper);
+            }
+        }
+        gridGeo.vertices.push(new THREE.Vector3(-16, 0, 0));
+        gridGeo.vertices.push(new THREE.Vector3(14, 0, 0));
+
+        gridGeo.vertices.push(new THREE.Vector3(-16, -6, 0));
+        gridGeo.vertices.push(new THREE.Vector3(-16, 6, 0));
+
+        gridGeo.vertices.push(new THREE.Vector3(-16, 0, -6));
+        gridGeo.vertices.push(new THREE.Vector3(-16, 0, 6));
+
+        for (i = -16; i < 15; i += 1) {
+            gridGeo.vertices.push(new THREE.Vector3(i, -0.5, 0));
+            gridGeo.vertices.push(new THREE.Vector3(i, 0.5, 0));
+        }
+
+        for (i = -6; i < 7; i += 1) {
+            gridGeo.vertices.push(new THREE.Vector3(-16, -0.5, i));
+            gridGeo.vertices.push(new THREE.Vector3(-16, 0.5, i));
+        }
+
+        for (i = -6; i < 7; i += 1) {
+            gridGeo.vertices.push(new THREE.Vector3(-16, i, -0.5));
+            gridGeo.vertices.push(new THREE.Vector3(-16, i, 0.5));
+        }
+
+        const line = new THREE.LineSegments(gridGeo, material);
+        gridObject.add(line);
+
+        const spritex = makeTextSprite("x");
+        const spritey = makeTextSprite("y");
+        const spritez = makeTextSprite("z");
+        const spriteB = makeTextSprite("B");
+        spritex.position.set(15.5, 0, 0);
+        gridObject.add(spritex);
+        spritey.position.set(-16, 6.5, 0);
+        gridObject.add(spritey);
+        spritez.position.set(-16, 0, 6.5);
+        gridObject.add(spritez);
+        spriteB.position.set(14, 4.5, 0);
+        gridObject.add(spriteB);
+
+
+        scene.add(gridObject);
+    }
+
+    // define the initial points for the trail
+    function list(N) {
+        let allpoints = [];
+        for (i = 0; i < N + 1; i++) {
+            point = [];
+            x = xs;
+            y = ys;
+            z = zs;
+            point.push(x);
+            point.push(y);
+            point.push(z);
+            allpoints.push(point);
+        }
+        return allpoints;
+    }
+
+    function starfielda() {
+        pointsa.forEach(makePointa);
+        const starsMateriala = new THREE.PointsMaterial({ color: "red", size: 3 });
+        const starFielda = new THREE.Points(starsGeometrya, starsMateriala);
+        return (starFielda);
+    }
+    function starfieldb() {
+        pointsb.forEach(makePointb);
+        const starsMaterialb = new THREE.PointsMaterial({ color: "blue", size: 3 });
+        const starFieldb = new THREE.Points(starsGeometryb, starsMaterialb);
+        return (starFieldb);
+    }
+
+    function makePointa(dots) {
+        x = dots[0], y = dots[1], z = dots[2];
+        const star = new THREE.Vector3();
+        star.x = x;
+        star.y = y;
+        star.z = z;
+        starsGeometrya.vertices.push(star);
+    }
+
+    function makePointb(dots) {
+        x = dots[0], y = dots[1], z = dots[2];
+        const star = new THREE.Vector3();
+        star.x = x;
+        star.y = y;
+        star.z = z;
+        starsGeometryb.vertices.push(star);
+    }
+
+    function makeTextSprite(message) {
+        const ctx = document.createElement('canvas').getContext('2d');
+        ctx.canvas.width = 16;
+        ctx.canvas.height = 32;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+        ctx.font = "24px Arial";
+        ctx.fillText(message, 0, 24);
+        const texture = new THREE.CanvasTexture(ctx.canvas);
+        texture.needsUpdate = true;
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.scale.set(0.5, 1, 1);
+        return sprite;
+    }
+
+    let myReq;
+    let count = 0;
+    let xstop = 0;
+    let single_q = 'no';
+    let xs = -16; let ys = 0; let zs = 0;
+    let vxs = 1; let vys = 0; let vzs = -1.5;
+    let vxa = vxs; let vya = vys; let vza = vzs;
+    let vxb = vxs; let vyb = vys; let vzb = vzs;
+
+
+    //set up gui.
+    let guicontrols = new function () {
+        this.velocity_x = vxs;
+        this.velocity_y = vys;
+        this.velocity_z = vzs;
+        this.single_q = single_q;
+    };
+    const gui = new dat.GUI({ autoPlace: false });
+    let gui1 = gui.add(guicontrols, 'velocity_x', 0, 1);
+    let gui2 = gui.add(guicontrols, 'velocity_y', -2, 2);
+    let gui3 = gui.add(guicontrols, 'velocity_z', -2, 2);
+    let gui4 = gui.add(guicontrols, 'single_q', ['yes', 'no']);
+    const guiContainer = document.getElementById('mygui');
+    guiContainer.appendChild(gui.domElement);
+    const para = document.createElement("P");   // Create a <p> node
+    para.innerHTML = "<br> You can choose to only show <br> the motion of the proton";
+    guiContainer.appendChild(para);
+
+
+    const canvas = document.querySelector('#can1');
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    const camera = new THREE.OrthographicCamera(-16, 16, 8, -8, 0.1, 50);
+    camera.position.set(16, 1, 8);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xFFFFFF);
+    const orbitControls = new THREE.OrbitControls(camera, canvas);
+    const starsGeometrya = new THREE.Geometry();
+    const starsGeometryb = new THREE.Geometry();
+    let pointsa = list(100);
+    let pointsb = list(100);
+
+    //draw the field lines
+    myArrow();
+
+    //define the object whose geometry changes
+    const fieldObject = new THREE.Group();
+
+    //define the objects whose geometry will not change
+    const sgeo = new THREE.SphereGeometry(0.25, 16, 16);
+    const smata = new THREE.MeshBasicMaterial();
+    const sphera = new THREE.Mesh(sgeo, smata);
+    const smatb = new THREE.MeshBasicMaterial();
+    const spherb = new THREE.Mesh(sgeo, smatb);
+    sphera.material.color.set("red");
+    spherb.material.color.set("blue");
+
+
+    //react to user input
+    gui1.onFinishChange(function (value) {
+        cancelAnimationFrame(myReq);
+        vxs = 1 * value;
+        while (fieldObject.children.length) {
+            fieldObject.remove(fieldObject.children[0]);
+        }
+        xstop = 0;
+        draw();
+    });
+
+    gui2.onFinishChange(function (value) {
+        cancelAnimationFrame(myReq);
+        vys = 1 * value;
+        while (fieldObject.children.length) {
+            fieldObject.remove(fieldObject.children[0]);
+        }
+        xstop = 0;
+        draw();
+    });
+
+
+    gui3.onFinishChange(function (value) {
+        cancelAnimationFrame(myReq);
+        vzs = 1 * value;
+        while (fieldObject.children.length) {
+            fieldObject.remove(fieldObject.children[0]);
+        }
+        xstop = 0;
+        draw();
+    });
+
+    gui4.onFinishChange(function (value) {
+        cancelAnimationFrame(myReq);
+        single_q = value;
+        while (fieldObject.children.length) {
+            fieldObject.remove(fieldObject.children[0]);
+        }
+        xstop = 0;
+
+        draw();
+    });
+
+    draw();
+
+
+</script>
+</body>
+
+</html>

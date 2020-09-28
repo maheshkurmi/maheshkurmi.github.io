@@ -9,6 +9,9 @@
 
 <body style="font-family:sans-serif; font-size:15px; width:700px; margin-left:auto; margin-right:auto;">
 <center>
+    <p>
+        In this simulation, you can play with the direction of the magnetic field and the magnitude and sign of the charge to draw patterns on the screen. Explore the different patterns you can make. See how long you can run the simulation without the trail crossing and without the charge going outside the grid. Note that the field is either into the screen (marked with x's) or out of the screen (o's). Also note that charge is not deflected if is outside te field.
+    </p>
     <canvas id="myCanvas" width="700" height="440"></canvas>
     <div id="buttons">
         <input type="button" id="play" value="Play" onclick="play()">
@@ -18,12 +21,22 @@
         <input type="button" id="reset" value="Reset" onclick="reset()">
     </div>
 
-    <div>Value of the charge</div>
+    <div></span></div>
     <div id="slider1">
+        <p>Value of the charge <b><span id="initialQValue">1</span>C </b>
         -3 <input type="range" id="qValue" min="-3" max="3" value="1" step="0.1" oninput="showQ(this.value)" onchange="showQ(this.value)"> +3
-        <div id="initialQValue">1</div>
+        </p>
     </div>
-
+    <div id="slider2">
+        Value of the field <b><span id="initialBValue">1</span>T </b>
+        0 <input type="range" id="bValue" min="0" max="3" value="1" step="0.1" oninput="showB(this.value)" onchange="showB(this.value)"> +3
+        </p>
+    </div>
+    <div id="slider3">
+        <p>Value of the speed <b><span id="initialVValue">1</span>m/s </b>
+            0 <input type="range" id="vValue" min="0" max="3" value="1" step="0.1" oninput="showV(this.value)" onchange="showV(this.value)"> +3
+        </p>
+    </div>
     <div id="Buttons2">Magnetic Field:
         <input type="button" id="field1" value="Reverse the field" onclick="setField()">
     </div>
@@ -43,11 +56,16 @@
             chargeColor = "red";
         }
         else { chargeColor = "blue"; }
+        drawMotion();
     }
 
     function setField()
     {
         field = -field;
+        let dt=deltaT;
+        deltaT=0;
+        drawMotion();
+        deltaT=dt;
     }
 
     function showQ(newQ)
@@ -61,8 +79,39 @@
         if (charge1 > 0.1) charge1Color = 'red';
         if (charge1 < -0.1) charge1Color = 'blue';
         //        reset();
+        let dt=deltaT;
+        deltaT=0;
+        drawMotion();
+        deltaT=dt;
     }
 
+    function showB(newB)
+    {
+        //get the element
+        var display = document.getElementById("initialBValue");
+        //show the amount
+        display.innerHTML=newB;
+        field = (field<0?-1:1)*Number(newB);
+        let dt=deltaT;
+        deltaT=0;
+        drawMotion();
+        deltaT=dt;
+    }
+
+    function showV(newV)
+    {
+        //get the element
+        var display = document.getElementById("initialVValue");
+        //show the amount
+        display.innerHTML=newV;
+        let v=Math.hypot(v1x,v1y);
+        v1x*=newV/v;
+        v1y*=newV/v;
+        let dt=deltaT;
+        deltaT=0;
+        drawMotion();
+        deltaT=dt;
+    }
 
     function play() {
         window.clearTimeout(timer);
@@ -179,6 +228,11 @@
     var graphX = 10;
     var timer;
     var runFlag = 1;
+
+    function infield(x,y){
+        return (x>0 && x<10 && y>-4&& y<4);
+
+    }
 
     drawMotion();
 
@@ -303,13 +357,17 @@
 
                     }
                 }
-                if (index > 0.5) {
+                if (index > 0.5 ) {
                     var dT = deltaT/100.0;
                     for (i=1; i<=100; i++) {
                         a1x = -v1y;
                         a1y = v1x;
-                        v1x = v1x + charge1*field*a1x*dT;
-                        v1y = v1y + charge1*field*a1y*dT;
+                        if(!infield(x1,y1)) {
+                            a1x=0;
+                            a1y=0;
+                        }
+                        v1x = v1x + charge1 * field * a1x * dT;
+                        v1y = v1y + charge1 * field * a1y * dT;
                         x1 = x1 + v1x*dT;
                         y1 = y1 + v1y*dT;
                     }
@@ -408,7 +466,7 @@
 
 </script>
 
-<p>Simulation written by <a href="physics.bu.edu/~duffy">Prof. Andrew Duffy </a></p>
+<p>Originally written by <a href="physics.bu.edu/~duffy">Prof. Andrew Duffy </a> , modified by <a href="https://github.com/maheshkurmi/maheshkurmi.github.io">Mahesh Kurmi</a></p>
 
 
 </body>

@@ -7,7 +7,7 @@
 
 <body style="font-family:sans-serif; font-size:15px; width:700px; margin-left:auto; margin-right:auto;">
 <center>
-    <H3>Charge in a Magnetic Field</H3>
+    <p>In this simulation, you can investigate the force that a magnetic field exerts on a charged particle. This force has some things in common with the force an electric field exerts on a charged particle, but there are also key differences between them. One thing that is apparent in the simulation is that one possible outcome of a magnetic field applying a force on a charged particle is that the particle experiences uniform circular motion, so exploring the magnetic force will also give you a chance to review circular motion concepts.</p>
     <canvas id="myCanvas" width="700" height="440"></canvas>
     <div id="buttons">
         <input type="button" id="play" value="Play" onclick="play()">
@@ -409,6 +409,10 @@
     var timer;
     var runFlag = 1;
 
+    function infield(x,y){
+        return (x>0 && x<10 && y>-4&& y<4);
+
+    }
     drawMotion();
 
     function drawMotion() {
@@ -535,18 +539,29 @@
                     for (i=1; i<=100; i++) {
                         a1x = -v1y;
                         a1y = v1x;
+                        if(!infield(x1,y1)){
+                            a1x=0; a1y=0;
+                        }
                         v1x = v1x + a1x*dT;
                         v1y = v1y + a1y*dT;
                         x1 = x1 + v1x*dT;
                         y1 = y1 + v1y*dT;
+
                         a2x = -charge2*v2y;
                         a2y = charge2*v2x;
+                        if(!infield(x2,y2)){
+                            a2x=0; a2y=0;
+                        }
                         v2x = v2x + a2x*dT;
                         v2y = v2y + a2y*dT;
                         x2 = x2 + v2x*dT;
                         y2 = y2 + v2y*dT;
+
                         a3x = -charge3*v3y;
                         a3y = charge3*v3x;
+                        if(!infield(x3,y3)){
+                            a3x=0; a3y=0;
+                        }
                         v3x = v3x + a3x*dT;
                         v3y = v3y + a3y*dT;
                         x3 = x3 + v3x*dT;
@@ -706,7 +721,8 @@
 
 
 </script>
-<p>Simulation written by <a href="https://physics.bu.edu/~duffy">Prof. Andrew Duffy </a></p>
+<p>Originally written by <a href="physics.bu.edu/~duffy">Prof. Andrew Duffy </a> , modified by <a href="https://github.com/maheshkurmi/maheshkurmi.github.io">Mahesh Kurmi</a></p>
+
 
 </body>
 </html>
