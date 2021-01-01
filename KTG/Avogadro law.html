@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Avogadro law: JavaLabs.org</title>
+    <link href="javalab.css" rel="stylesheet">
+</head>
+<body>
+
+<h2>Avogadro law for gases</h2>
+<p>
+    Avogadro (1776-1856) introduced a molecular concept that regardless of the type of gas, the same volume of gas at
+    the same temperature and pressure contains the same number of molecules.
+</p>
+<div id="divFull" style="background-color: white;">
+    <div id="myContainer"></div>
+    <div class="flexContainer" style="justify-content: space-evenly;">
+        <div class="flexItem"><span id="radioA"></span><input id="rangeA" max="50" min="10" type="range" value="20">
+        </div>
+        <div class="flexItem"><span id="radioB"></span><span class="bluerange"><input id="rangeB" max="50" min="10"
+                                                                                      type="range" value="20"></span></div>
+    </div>
+</div>
+<div style="display: none;">
+    <script src="javalab.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+
+    <script>
+
+        let language = 2;
+        let buttonFull;
+        var imgBalloonTie;
+        var centerX = [0.25, 0.75];
+        var centerY = [0.2, 0.2];
+        var balloonRadius = [];
+        var balloonOR = [];
+        var balloonLeap = [1.000, 0.976, 0.905, 0.794, 0.655, 0.500, 0.346, 0.207, 0.096, 0.025, 0.000];
+        var moleMass = [1, 1];
+        var moleMax = [20, 20];
+        var moleX = [];
+        var moleY = [];
+        var moleV = [];
+        var moleA = [];
+        var moleR = [];
+        var moleBounced = [];
+        var rangeA;
+        var radioA;
+        var rangeB;
+        var radioB;
+
+        function preload() {
+           /// var url = getURL();
+          //  var regexp = "http";
+
+          //  var imagePrefix = "(m == "http") ? "//javalab.org/lee/image/" : "";
+            imgBalloonTie = loadImage("balloon_tie.png")
+        }
+
+        function setup() {
+            frameRate(20);
+            pixelDensity(2 * displayDensity());
+            var o = select("#myContainer");
+            var a = 0.45;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            myCanvas = createCanvas(w, h);
+            myCanvas.parent("myContainer");
+            myCanvas.id("myP5Canvas");
+            rangeA = select("#rangeA");
+            rangeB = select("#rangeB");
+            radioA = createRadio("radioA");
+            radioA.option("H₂ ", "H2");
+            radioA.option("He ", "He");
+            radioA.option("H₂O ", "H2O");
+            radioA.option("N₂ ", "N2");
+            radioA.option("O₂ ", "O2");
+            radioA.option("CO₂ ", "CO2");
+            radioA.option("Ne ", "Ne");
+            radioA.option("Ar ", "Ar");
+            radioA.parent("radioA");
+            radioA.value("H2");
+            radioA.changed(doRadioA);
+            radioB = createRadio("radioB");
+            radioB.option("H₂ ", "H2");
+            radioB.option("He ", "He");
+            radioB.option("H₂O ", "H2O");
+            radioB.option("N₂ ", "N2");
+            radioB.option("O₂ ", "O2");
+            radioB.option("CO₂ ", "CO2");
+            radioB.option("Ne ", "Ne");
+            radioB.option("Ar ", "Ar");
+            radioB.parent("radioB");
+            radioB.value("H2");
+            radioB.changed(doRadioB);
+            moleMax[0] = rangeA.value();
+            moleMax[1] = rangeB.value();
+
+            for (var n = 0; n < 2; n++) {
+                moleX[n] = [];
+                moleY[n] = [];
+                moleV[n] = [];
+                moleA[n] = [];
+                moleR[n] = [];
+                moleBounced[n] = [];
+                balloonRadius[n] = []
+            }
+            setup2(0, 0, moleMax[0]);
+            setup2(1, 0, moleMax[1]);
+        }
+
+        function windowResized() {
+            var o = select("#myContainer");
+            var a = 0.45;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            resizeCanvas(w, h)
+        }
+
+        function setBalloonSize() {
+            balloonOR[0] = 0.07 * sqrt(rangeA.value() / 10);
+            balloonOR[1] = 0.07 * sqrt(rangeB.value() / 10)
+        }
+
+        function setup2(n, start, end) {
+            setBalloonSize();
+            for (var a = 0; a < 360; a++) balloonRadius[n][a] = balloonOR[n];
+            moleMass[0] = getMass(radioA.value());
+            moleMass[1] = getMass(radioB.value());
+            moleMax[0] = rangeA.value();
+            moleMax[1] = rangeB.value();
+            var l1 = 0;
+            for (var i = 0; i < start; i++) {
+                var l2 = mag(moleX[n][i], moleY[n][i]);
+                if (l1 < l2) l1 = l2
+            }
+            if (l1 > balloonOR[n]) {
+                var r = balloonOR[n] / l1;
+                for (var i = 0; i < start; i++) {
+                    moleX[n][i] *= r;
+                    moleY[n][i] *= r
+                }
+            }
+            for (var i = start; i < end; i++) {
+                var a = int(random(360));
+                moleX[n][i] = balloonOR[n] * random(1) * dcos[a];
+                moleY[n][i] = balloonOR[n] * random(1) * dsin[a];
+                moleV[n][i] = 0.03 / sqrt(moleMass[n]);
+                moleA[n][i] = int(random(360));
+                moleR[n][i] = int(random(360));
+                moleBounced[n][i] = false
+            }
+        }
+
+        function doRadioA() {
+            setup2(0, 0, moleMax[0])
+        }
+
+        function doRadioB() {
+            setup2(1, 0, moleMax[1])
+        }
+
+        function draw() {
+           // console.log("draw");
+            if (touches.length > 1) return;
+            background(222);
+            textSize(width * 0.03);
+            textAlign(CENTER, BOTTOM);
+            if (moleMax[0] != rangeA.value()) setup2(0, moleMax[0], rangeA.value());
+            if (moleMax[1] != rangeB.value()) setup2(1, moleMax[1], rangeB.value());
+            running();
+            stroke(255);
+            strokeWeight(width / 1000);
+            for (var i = 1; i < 20; i++) {
+                var x = map(i, 0, 20, 0, width);
+                line(x, 0, x, height);
+                line(0, x, width, x)
+            }
+            for (var n = 0; n < 2; n++) image(imgBalloonTie, width * (centerX[n] - 0.02), width * (centerY[n] + balloonRadius[n][90]), width * 0.04, width * 0.08);
+            fill(255);
+            stroke(0);
+            strokeWeight(width / 500);
+            for (var i = 0; i < 2; i++) {
+                beginShape();
+                for (var j = 0; j < 360; j += 4) {
+                    vertex(width * (centerX[i] + dcos[j] * (0 + balloonRadius[i][j])), width * (centerY[i] + dsin[j] * (0 + balloonRadius[i][j])))
+                }
+                endShape(CLOSE)
+            }
+            stroke(255);
+            strokeWeight(width / 2000);
+            for (var i = 0; i < moleMax[0]; i++) {
+                drawMole(radioA.value(), width * (centerX[0] + moleX[0][i]), width * (centerY[0] + moleY[0][i]), moleR[0][i])
+            }
+            for (var i = 0; i < moleMax[1]; i++) {
+                drawMole(radioB.value(), width * (centerX[1] + moleX[1][i]), width * (centerY[1] + moleY[1][i]), moleR[1][i])
+            }
+            stroke(255);
+            for (var i = 0; i < 2; i++) {
+                if (i == 0) fill(255, 0, 0);
+                if (i == 1) fill(0, 0, 255);
+                text("n = " + moleMax[i], width * centerX[i], width * (centerY[1] - balloonOR[i]) - textSize() * 0.2)
+            }
+        }
+
+        function getMass(type) {
+            if (type == "H2") return 2.01588;
+            if (type == "He") return 4.002602;
+            if (type == "H2O") return 18.01528;
+            if (type == "N2") return 28.01348;
+            if (type == "O2") return 31.9988;
+            if (type == "CO2") return 44.0095;
+            if (type == "Ne") return 20.1797;
+            if (type == "Ar") return 39.948
+        }
+
+        function drawMole(type, x, y, r) {
+            var r15 = width * 0.0015;
+            var r3 = width * 0.003;
+            var r4 = width * 0.004;
+            var r5 = width * 0.005;
+            var r7 = width * 0.007;
+            var r9 = width * 0.009;
+            if (type == "H2") {
+                fill(0, 0, 255);
+                ellipse(x + r15 * dcos[r], y + r15 * dsin[r], r5, r5);
+                ellipse(x - r15 * dcos[r], y - r15 * dsin[r], r5, r5)
+            }
+            if (type == "He") {
+                fill(128);
+                ellipse(x, y, r5, r5)
+            }
+            if (type == "H2O") {
+                fill(0, 0, 255);
+                ellipse(x + (r4 * dcos[r]), y + (r4 * dsin[r]), r5, r5);
+                fill(255, 0, 0);
+                ellipse(x, y, r9, r9);
+                fill(0, 0, 255);
+                ellipse(x + (r4 * dcos[mod(r + 120, 360)]), y + (r4 * dsin[mod(r + 120, 360)]), r5, r5)
+            }
+            if (type == "N2") {
+                fill(0, 191, 191);
+                ellipse(x + r3 * dcos[r], y + r3 * dsin[r], r9, r9);
+                ellipse(x - r3 * dcos[r], y - r3 * dsin[r], r9, r9)
+            }
+            if (type == "O2") {
+                fill(255, 0, 0);
+                ellipse(x + r3 * dcos[r], y + r3 * dsin[r], r9, r9);
+                ellipse(x - r3 * dcos[r], y - r3 * dsin[r], r9, r9)
+            }
+            if (type == "CO2") {
+                fill(255, 0, 0);
+                ellipse(x + r4 * dcos[r], y + r4 * dsin[r], r9, r9);
+                fill(0);
+                ellipse(x, y, r9, r9);
+                fill(255, 0, 0);
+                ellipse(x - r4 * dcos[r], y - r4 * dsin[r], r9, r9)
+            }
+            if (type == "Ne") {
+                fill(128);
+                ellipse(x, y, r7, r7)
+            }
+            if (type == "Ar") {
+                fill(128);
+                ellipse(x, y, r9, r9)
+            }
+        }
+
+        function running() {
+            var tollerence = 0.015;
+            for (var n = 0; n < 2; n++) for (var i = 0; i < moleMax[n]; i++) for (var j = i + 1; j < moleMax[n]; j++) {
+                var pix = moleX[n][i] + moleV[n][i] * dcos[moleA[n][i]];
+                var piy = moleY[n][i] + moleV[n][i] * dsin[moleA[n][i]];
+                var pjx = moleX[n][j] + moleV[n][j] * dcos[moleA[n][j]];
+                var pjy = moleY[n][j] + moleV[n][j] * dsin[moleA[n][j]];
+                if (dist(moleX[n][i], moleY[n][i], moleX[n][j], moleY[n][j]) < tollerence) if (dist(moleX[n][i], moleY[n][i], moleX[n][j], moleY[n][j]) > dist(pix, piy, pjx, pjy)) {
+                    var vix = moleV[n][i] * dcos[moleA[n][i]];
+                    var viy = moleV[n][i] * dsin[moleA[n][i]];
+                    var vjx = moleV[n][j] * dcos[moleA[n][j]];
+                    var vjy = moleV[n][j] * dsin[moleA[n][j]];
+                    var vcx = (vix + vjx) / 2.;
+                    var vcy = (viy + vjy) / 2.;
+                    var vcix = vix - vcx;
+                    var vciy = viy - vcy;
+                    var vcjx = vjx - vcx;
+                    var vcjy = vjy - vcy;
+                    var vci = dist(0, 0, vcix, vciy);
+                    var vcj = dist(0, 0, vcjx, vcjy);
+                    var aci = getAngle(vcix, vciy);
+                    var acj = getAngle(vcjx, vcjy);
+                    var aij = getAngle(moleX[n][j] - moleX[n][i], moleY[n][j] - moleY[n][i]);
+                    var aji = getAngle(moleX[n][i] - moleX[n][j], moleY[n][i] - moleY[n][j]);
+                    aci = mod(2 * aij + 180 - aci, 360);
+                    acj = mod(2 * aji + 180 - acj, 360);
+                    vix = vci * dcos[aci];
+                    viy = vci * dsin[aci];
+                    vjx = vcj * dcos[acj];
+                    vjy = vcj * dsin[acj];
+                    vix += vcx;
+                    viy += vcy;
+                    vjx += vcx;
+                    vjy += vcy;
+                    var t = moleV[n][i] + moleV[n][j];
+                    moleV[n][i] = dist(0, 0, vix, viy);
+                    moleV[n][j] = t - moleV[n][i];
+                    moleA[n][i] = getAngle(vix, viy);
+                    moleA[n][j] = getAngle(vjx, vjy)
+                }
+            }
+            for (var n = 0; n < 2; n++) for (var i = 0; i < moleMax[n]; i++) {
+                moleR[n][i] += (mod(i, 2) == 0) ? +13 : -13;
+                moleR[n][i] = mod(moleR[n][i], 360);
+                var a = getAngle(moleX[n][i], moleY[n][i]);
+                var r1 = mag(moleX[n][i], moleY[n][i]);
+                var x = moleX[n][i] + moleV[n][i] * dcos[moleA[n][i]];
+                var y = moleY[n][i] + moleV[n][i] * dsin[moleA[n][i]];
+                var r2 = mag(x, y);
+                if (r2 >= balloonRadius[n][a]) {
+                    for (var j = 0; j < balloonLeap.length; j++) {
+                        balloonRadius[n][mod(a + j, 360)] += (r2 - r1) * moleMass[n] * balloonLeap[j] / 20;
+                        balloonRadius[n][mod(a - j, 360)] += (r2 - r1) * moleMass[n] * balloonLeap[j] / 20
+                    }
+                    moleA[n][i] = mod(a - (moleA[n][i] - a) * 1 / 1 + 180, 360)
+                } else {
+                    moleX[n][i] = x;
+                    moleY[n][i] = y
+                }
+            }
+            for (var n = 0; n < 2; n++) for (var i = 0; i < moleMax[n]; i++) {
+                var r1 = mag(moleX[n][i], moleY[n][i]);
+                if (r1 >= balloonOR[n]) {
+                    moleX[n][i] *= balloonOR[n] / r1;
+                    moleY[n][i] *= balloonOR[n] / r1
+                }
+            }
+            for (var n = 0; n < 2; n++) {
+                for (var i = 0; i < 360; i++) balloonRadius[n][i] = (balloonRadius[n][mod(i - 1, 360)] + 2 * balloonRadius[n][i] + balloonRadius[n][mod(i + 1, 360)]) / 4;
+                for (var i = 0; i < 360; i++) balloonRadius[n][i] = (balloonRadius[n][i] * 9 + balloonOR[n]) / 10
+            }
+        }
+
+    </script>
+</div>
+
+</body>
+
+</html>

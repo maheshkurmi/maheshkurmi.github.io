@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Avogadro law: JavaLabs.org</title>
+    <link href="javalab.css" rel="stylesheet">
+</head>
+<body>
+
+<h2>Avogadro law for gases</h2>
+<p>
+    Avogadro (1776-1856) introduced a molecular concept that regardless of the type of gas, the same volume of gas at
+    the same temperature and pressure contains the same number of molecules.
+</p>
+<div id="divFull" style="background-color: white;">
+    <div id="myContainer"></div>
+    <div class="flexContainer" style="justify-content: space-evenly;">
+    </div>
+</div>
+<div style="display: none;">
+    <script src="javalab.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+
+    <script>
+
+        var language = 2;
+        let buttonFull;
+        var img_bomb;
+        var oxGraph = 100;
+        var oyGraph = 400;
+        var wGraph = 500;
+        var hGraph = 400;
+        var p0 = 260;
+        var v0 = 130;
+        var p1 = 200;
+        var v1 = 260;
+        var vGraph = [];
+        var pGraph0 = [];
+        var pGraph1 = [];
+        var arrowGraph = [];
+
+        function preload() {
+            var url = getURL();
+            var regexp = "http";
+            var m = match(url, regexp);
+            var imagePrefix = (m == "http") ? "//javalab.org/lee/image/" : "";
+            img_bomb = loadImage("pressure_volume_diagram_bomb.png")
+        }
+
+        function setup() {
+            frameRate(20);
+            pixelDensity(2 * displayDensity());
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            myCanvas = createCanvas(w, h);
+            myCanvas.parent("myContainer");
+            myCanvas.id("myP5Canvas");
+            for (var i = 1; i < wGraph; i++) {
+                vGraph[i] = i
+            }
+            pGraph0[0] = [];
+            pGraph0[1] = [];
+            pGraph1[0] = [];
+            pGraph1[1] = []
+        }
+
+        function windowResized() {
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            resizeCanvas(w, h)
+        }
+
+        function draw() {
+            if (touches.length > 1) return;
+            background(233);
+            strokeWeight(2);
+            textSize(20);
+            push();
+            scale(width / 900);
+            var r = 99;
+            if (v0 != v1) r = log(p0 * 1.0 / p1) / log(v1 * 1.0 / v0);
+            if (abs(r) > 3) {
+                if (r > 0) r = 3; else r = -3
+            }
+            var w = 0;
+            var u = 0;
+            var q = 0;
+            if (abs(r) > 2.9) {
+                u = (p1 * v1 - p0 * v0) * 3.0 / 2.0;
+                w = (v1 - v0) * abs(p1 - p0) / 2.0;
+                q = u
+            } else {
+                u = (p1 * v1 - p0 * v0) * 3.0 / 2.0;
+                w = p1 * pow(v1, r) * pow(v1, 1 - r) / (1 - r) - p1 * pow(v1, r) * pow(v0, 1 - r) / (1 - r);
+                q = u + w
+            }
+            var maxx = max(max(abs(q), abs(u)), abs(w));
+            if (maxx > 60) {
+                q *= 60 / maxx;
+                u *= 60 / maxx;
+                w *= 60 / maxx
+            }
+            for (var i = 1; i < wGraph; i++) {
+                pGraph0[0][i] = p0 * v0 * 1.0 / vGraph[i];
+                pGraph0[1][i] = p0 * pow(v0 * 1.0 / vGraph[i], 5 / 3.0);
+                pGraph1[0][i] = p1 * v1 * 1.0 / vGraph[i];
+                pGraph1[1][i] = p1 * pow(v1 * 1.0 / vGraph[i], 5 / 3.0)
+            }
+            if (v0 != v1) {
+                r = log(p0 * 1.0 / p1) / log(v1 * 1.0 / v0);
+                for (var i = 1; i < wGraph; i++) arrowGraph[i] = p1 * pow(v1 / vGraph[i], r)
+            }
+            if (v0 != v1) {
+                noStroke();
+                fill(255, 255, 128);
+                beginShape();
+                for (var i = round(min(v0, v1)); i <= round(max(v0, v1)); i++) {
+                    vertex(oxGraph + i, oyGraph - arrowGraph[i])
+                }
+                vertex(oxGraph + max(v0, v1), oyGraph);
+                vertex(oxGraph + min(v0, v1), oyGraph);
+                endShape(CLOSE)
+            }
+            stroke(0);
+            line(oxGraph, oyGraph, oxGraph + wGraph, oyGraph);
+            line(oxGraph, oyGraph, oxGraph, oyGraph - hGraph);
+            fill(0);
+            noStroke();
+            textAlign(CENTER, TOP);
+            if (language == 0) text("부피 V", oxGraph + wGraph / 2, oyGraph + 10);
+            if (language == 1) text("体積 V", oxGraph + wGraph / 2, oyGraph + 10);
+            if (language == 2) text("Volume", oxGraph + wGraph / 2, oyGraph + 10);
+            textAlign(RIGHT, CENTER);
+            if (language == 0) text("압력 P", oxGraph - 5, oyGraph - hGraph / 2);
+            if (language == 1) text("圧力 P", oxGraph - 5, oyGraph - hGraph / 2);
+            if (language == 2) text("Pressure", oxGraph - 5, oyGraph - hGraph / 2);
+            noFill();
+            {
+                stroke(255, 191, 191);
+                beginShape();
+                for (var i = 1; i < wGraph; i++) vertex(oxGraph + i, oyGraph - pGraph1[0][i]);
+                endShape();
+                stroke(191, 191, 255);
+                beginShape();
+                for (var i = 1; i < wGraph; i++) vertex(oxGraph + i, oyGraph - pGraph1[1][i]);
+                endShape()
+            }
+            {
+                stroke(255, 191, 191);
+                beginShape();
+                for (var i = 1; i < wGraph; i++) vertex(oxGraph + i, oyGraph - pGraph0[0][i]);
+                endShape();
+                stroke(191, 191, 255);
+                beginShape();
+                for (var i = 1; i < wGraph; i++) vertex(oxGraph + i, oyGraph - pGraph0[1][i]);
+                endShape()
+            }
+            if (v0 == v1) {
+                stroke(0, 0, 255);
+                strokeWeight(2);
+                line(oxGraph + v0, oyGraph - p0, oxGraph + v1, oyGraph - p1);
+                strokeWeight(1)
+            } else {
+                noFill();
+                stroke(0);
+                strokeWeight(2);
+                beginShape();
+                for (var i = round(min(v0, v1)); i <= round(max(v0, v1)); i++) {
+                    vertex(oxGraph + i, oyGraph - arrowGraph[i])
+                }
+                endShape();
+                strokeWeight(1)
+            }
+            {
+                var x0 = oxGraph + v0;
+                var y0 = oyGraph - p0;
+                var x1 = oxGraph + v1;
+                var y1 = oyGraph - p1;
+                var t = atan2(y1 - y0, x1 - x0);
+                var cx = 15 * cos(t);
+                var cy = 15 * sin(t);
+                var x = (x0 + x1) / 2;
+                var y = (y0 + y1) / 2;
+                fill(0);
+                stroke(233);
+                strokeWeight(2);
+                drawArrow2D_thick(x - cx, y - cy, 2 * cx, 2 * cy, 4);
+                strokeWeight(1);
+                ellipse(x0, y0, 9, 9);
+                ellipse(x1, y1, 9, 9)
+            }
+            var oxBomb = 900 - 270;
+            var oyBomb = 50;
+            image(img_bomb, oxBomb, oyBomb, 223, 226);
+            noStroke();
+            if (abs(q) > 1) {
+                fill(255, 0, 0);
+                drawArrow2D_thick(oxBomb + 70, oyBomb + 210 + q, 0, -2 * q, 6);
+                fill(0);
+                textAlign(CENTER, TOP);
+                if (language == 0) text("열 Q", oxBomb + 70, oyBomb + 215 + abs(q));
+                if (language == 1) text("熱 Q", oxBomb + 70, oyBomb + 215 + abs(q));
+                if (language == 2) text("Heat Q", oxBomb + 70, oyBomb + 215 + abs(q))
+            }
+            if (abs(u) > 1) {
+                fill(0, 255, 0);
+                drawArrow2D_thick(oxBomb + 194, oyBomb + 210 + u, 0, -2 * u, 6);
+                fill(0);
+                textAlign(CENTER, TOP);
+                text("ΔU", oxBomb + 194, oyBomb + 220 + abs(u));
+                if (language == 0) text("온도 T", oxBomb + 194, oyBomb + 245 + abs(u));
+                if (language == 1) text("温度 T", oxBomb + 194, oyBomb + 245 + abs(u));
+                if (language == 2) text("Temperature", oxBomb + 194, oyBomb + 245 + abs(u))
+            }
+            if (abs(w) > 1) {
+                fill(128, 128, 0);
+                drawArrow2D_thick(oxBomb + 70, oyBomb + 80 + w, 0, -2 * w, 6);
+                fill(0);
+                textAlign(CENTER, BOTTOM);
+                if (language == 0) text("일 W", oxBomb + 70, oyBomb + 70 - abs(w));
+                if (language == 1) text("仕事 W", oxBomb + 70, oyBomb + 70 - abs(w));
+                if (language == 2) text("Work", oxBomb + 70, oyBomb + 70 - abs(w))
+            }
+            var cxBarGraph = oxGraph + v1 + 90 * (((v1 - v0) >= 0) ? 1.1 : -1);
+            var cyBarGraph = oyGraph - p1;
+            if (dist(v1, p1, v0, p0) > 10) {
+                noStroke();
+                fill(191);
+                rect(cxBarGraph - 70 + 4, cyBarGraph - 70 + 4, 140, 140);
+                fill(255);
+                rect(cxBarGraph - 70, cyBarGraph - 70, 140, 140);
+                if (q >= 0) {
+                    fill(255, 0, 0);
+                    rect(cxBarGraph - 60, cyBarGraph - q, 20, q);
+                    fill(0);
+                    noStroke();
+                    textAlign(CENTER, TOP);
+                    text("Q", cxBarGraph - 50, cyBarGraph + 5);
+                    text("=", cxBarGraph - 30, cyBarGraph + 5)
+                } else {
+                    fill(255, 0, 0);
+                    rect(cxBarGraph - 60, cyBarGraph, 20, -q);
+                    fill(0);
+                    noStroke();
+                    textAlign(CENTER, BOTTOM);
+                    text("Q", cxBarGraph - 50, cyBarGraph - 5);
+                    text("=", cxBarGraph - 30, cyBarGraph - 5)
+                }
+                if (u >= 0) {
+                    fill(0, 255, 0);
+                    rect(cxBarGraph - 10, cyBarGraph - u, 20, u);
+                    fill(0);
+                    noStroke();
+                    textAlign(CENTER, TOP);
+                    text("ΔU", cxBarGraph, cyBarGraph + 5);
+                    text("+", cxBarGraph + 30, cyBarGraph + 5)
+                } else {
+                    fill(0, 255, 0);
+                    rect(cxBarGraph - 10, cyBarGraph, 20, -u);
+                    fill(0);
+                    noStroke();
+                    textAlign(CENTER, BOTTOM);
+                    text("ΔU", cxBarGraph, cyBarGraph - 5);
+                    text("+", cxBarGraph + 30, cyBarGraph - 5)
+                }
+                if (w >= 0) {
+                    fill(255, 255, 0);
+                    rect(cxBarGraph + 40, cyBarGraph - w, 20, w);
+                    fill(0);
+                    noStroke();
+                    textAlign(CENTER, TOP);
+                    text("W", cxBarGraph + 50, cyBarGraph + 5)
+                } else {
+                    fill(255, 255, 0);
+                    rect(cxBarGraph + 40, cyBarGraph, 20, -w);
+                    fill(0);
+                    noStroke();
+                    textAlign(CENTER, BOTTOM);
+                    text("W", cxBarGraph + 50, cyBarGraph - 5)
+                }
+                stroke(0);
+                line(cxBarGraph - 65, cyBarGraph, cxBarGraph + 65, cyBarGraph);
+                noStroke()
+            }
+            pop();
+            drawButtonDrag()
+        }
+
+        var dragged = -1;
+        var offsetX;
+        var offsetY;
+
+        function touchStarted() {
+            if (!contain(mouseX, mouseY, 0, 0, width, height)) return;
+            var d0 = dist(oxGraph + v0, oyGraph - p0, mouseX * 900 / width, mouseY * 900 / width);
+            var d1 = dist(oxGraph + v1, oyGraph - p1, mouseX * 900 / width, mouseY * 900 / width);
+            if (d0 < d1) {
+                dragged = 0;
+                offsetX = mouseX * 900 / width - v0;
+                offsetY = mouseY * 900 / width + p0
+            } else {
+                dragged = 1;
+                offsetX = mouseX * 900 / width - v1;
+                offsetY = mouseY * 900 / width + p1
+            }
+        }
+
+        function touchMoved() {
+            if (touches.length > 1) return;
+            if (dragged >= 0) {
+                if (dragged == 0) {
+                    v0 = mouseX * 900 / width - offsetX;
+                    p0 = offsetY - mouseY * 900 / width;
+                    v0 = constrain(v0, 2, wGraph - 3);
+                    p0 = constrain(p0, 2, hGraph - 3)
+                }
+                if (dragged == 1) {
+                    v1 = mouseX * 900 / width - offsetX;
+                    p1 = offsetY - mouseY * 900 / width;
+                    v1 = constrain(v1, 2, wGraph - 3);
+                    p1 = constrain(p1, 2, hGraph - 3)
+                }
+                return false
+            }
+        }
+
+        function touchEnded() {
+            dragged = -1
+        }
+
+    </script>
+</div>
+
+</body>
+
+</html>

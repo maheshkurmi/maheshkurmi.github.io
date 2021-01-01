@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Brownian motion: JavaLabs.org</title>
+    <link href="javalab.css" rel="stylesheet">
+</head>
+<body>
+
+<h2>Brownian motion</h2>
+<p>
+    Botanist Robert Brown observed pollen on the surface of the water and found pollen moving constantly in a random direction. At that time (1827) Brown believed that this was driven by the extraordinary power of pollen as life.
+
+    But later it turned out that pollen moved by colliding with small particles around it. Einstein, a scientist famous for the theory of relativity, mathematically proved the Brownian movement.
+</p>
+<div id="divFull" style="background-color: white;">
+    <div id="myContainer"></div>
+    <div class="flexContainer">
+        <div class="flexItem"><button id="buttonFull"></button></div>
+    </div>
+</div>
+<div style="display: none;">
+    <script src="javalab.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+
+    <script>
+
+        let buttonFull;
+        var img_dish;
+        var xCenter = 225;
+        var yCenter = 225;
+        var maxParticle = 300;
+        var xParticle = [];
+        var yParticle = [];
+        var vParticle = [];
+        var aParticle = [];
+        var rParticle = [];
+        var mParticle = [];
+        var time = 0;
+        var maxTrace = 100;
+        var xTrace = [];
+        var yTrace = [];
+
+        function preload() {
+            var url = getURL();
+            var regexp = "http";
+            var m = match(url, regexp);
+            var imagePrefix = (m == "http") ? "//javalab.org/lee/image/" : "";
+            img_dish = loadImage("brownian_motion_dish.png")
+        }
+
+        function setup() {
+            frameRate(20);
+            pixelDensity(2 * displayDensity());
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            myCanvas = createCanvas(w, h);
+            myCanvas.parent("myContainer");
+            myCanvas.id("myP5Canvas");
+
+            for (var i = 0; i < maxParticle; i++) {
+                xParticle[i] = (i == 0) ? 0 : random(-180, 180);
+                yParticle[i] = (i == 0) ? 0 : random(-180, 180);
+                aParticle[i] = int(random(360));
+                vParticle[i] = 2;
+                rParticle[i] = (i == 0) ? 5 : 3;
+                mParticle[i] = (i == 0) ? 10 : 1
+            }
+            for (var i = 0; i < maxTrace; i++) {
+                xTrace[i] = xParticle[0];
+                yTrace[i] = yParticle[0]
+            }
+        }
+
+        function windowResized() {
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            resizeCanvas(w, h)
+        }
+
+        function draw() {
+            if (touches.length > 1) return;
+            background(214, 255, 255);
+            strokeWeight(1);
+            push();
+            scale(width / 900);
+            noStroke();
+            for (var i = 1; i < maxParticle; i++) {
+                fill(0, 191, 191);
+                ellipse(xCenter + xParticle[i], yCenter + yParticle[i], 2 * rParticle[i], 2 * rParticle[i]);
+                fill(0, 128, 128);
+                ellipse(xCenter + xParticle[i] + 450, yCenter + yParticle[i] / 4, 2 * rParticle[i], rParticle[i] / 2)
+            }
+            noStroke();
+            fill(214, 255, 255);
+            rect(draggedX, 0, 900 - draggedX, 450);
+            fill(255, 0, 0);
+            ellipse(xCenter + xParticle[0], yCenter + yParticle[0], 2 * rParticle[0], 2 * rParticle[0]);
+            fill(191, 0, 0);
+            ellipse(xCenter + xParticle[0] + 450, yCenter + yParticle[0] / 4, 2 * rParticle[0], rParticle[0] / 2);
+            noFill();
+            for (var i = 0; i < maxTrace - 1; i++) {
+                strokeWeight(1);
+                stroke(255, 0, 0, map(i, 0, maxTrace, 255, 0));
+                line(xCenter + xTrace[i], yCenter + yTrace[i], xCenter + xTrace[i + 1], yCenter + yTrace[i + 1]);
+                strokeWeight(0.5);
+                stroke(191, 0, 0, map(i, 0, maxTrace, 255, 0));
+                line(xCenter + xTrace[i] + 450, yCenter + yTrace[i] / 4, xCenter + xTrace[i + 1] + 450, yCenter + yTrace[i + 1] / 4)
+            }
+            image(img_dish, 0, 0, 900, 450);
+            stroke(0);
+            strokeWeight(1);
+            line(draggedX, 0, draggedX, 450);
+            pop();
+            drawButtonDrag();
+            collision()
+        }
+
+        function collision() {
+            for (var i = maxTrace - 1; i > 0; i--) {
+                xTrace[i] = xTrace[i - 1];
+                yTrace[i] = yTrace[i - 1]
+            }
+            xTrace[0] = xParticle[0];
+            yTrace[0] = yParticle[0];
+            var tollerence = 10;
+            for (var i = 0; i < maxParticle - 1; i++) for (var j = i + 1; j < maxParticle; j++) {
+                var pix = xParticle[i] + vParticle[i] * dcos[aParticle[i]];
+                var piy = yParticle[i] + vParticle[i] * dsin[aParticle[i]];
+                var pjx = xParticle[j] + vParticle[j] * dcos[aParticle[j]];
+                var pjy = yParticle[j] + vParticle[j] * dsin[aParticle[j]];
+                if (dist(xParticle[i], yParticle[i], xParticle[j], yParticle[j]) < tollerence) if (dist(xParticle[i], yParticle[i], xParticle[j], yParticle[j]) > dist(pix, piy, pjx, pjy)) {
+                    var vix = vParticle[i] * dcos[aParticle[i]];
+                    var viy = vParticle[i] * dsin[aParticle[i]];
+                    var vjx = vParticle[j] * dcos[aParticle[j]];
+                    var vjy = vParticle[j] * dsin[aParticle[j]];
+                    var vcx = (vix + vjx) / 2.;
+                    var vcy = (viy + vjy) / 2.;
+                    var vcix = vix - vcx;
+                    var vciy = viy - vcy;
+                    var vcjx = vjx - vcx;
+                    var vcjy = vjy - vcy;
+                    var vci = dist(0, 0, vcix, vciy);
+                    var vcj = dist(0, 0, vcjx, vcjy);
+                    var aci = getAngle(vcix, vciy);
+                    var acj = getAngle(vcjx, vcjy);
+                    var aij = getAngle(xParticle[j] - xParticle[i], yParticle[j] - yParticle[i]);
+                    var aji = getAngle(xParticle[i] - xParticle[j], yParticle[i] - yParticle[j]);
+                    aci = mod(2 * aij + 180 - aci, 360);
+                    acj = mod(2 * aji + 180 - acj, 360);
+                    vix = vci * dcos[aci];
+                    viy = vci * dsin[aci];
+                    vjx = vcj * dcos[acj];
+                    vjy = vcj * dsin[acj];
+                    vix += vcx;
+                    viy += vcy;
+                    vjx += vcx;
+                    vjy += vcy;
+                    var t = vParticle[i] + vParticle[j];
+                    vParticle[i] = dist(0, 0, vix, viy);
+                    vParticle[j] = t - vParticle[i];
+                    aParticle[i] = getAngle(vix, viy);
+                    aParticle[j] = getAngle(vjx, vjy)
+                }
+            }
+            for (var i = 0; i < maxParticle; i++) {
+                {
+                    xParticle[i] += vParticle[i] * dcos[aParticle[i]];
+                    yParticle[i] += vParticle[i] * dsin[aParticle[i]]
+                }
+                var d = pow(xParticle[i], 2) / pow(200, 2) + pow(yParticle[i], 2) / pow(200, 2);
+                var t = getAngle(xParticle[i], yParticle[i]);
+                if (d >= 1) if ((abs(aParticle[i] - t) < 90) || (abs(aParticle[i] - t) > 270)) {
+                    aParticle[i] = mod(2 * t + 180 - aParticle[i], 360);
+                    xParticle[i] = xParticle[i] * 0.98;
+                    yParticle[i] = yParticle[i] * 0.98
+                }
+            }
+        }
+
+        var dragged = false;
+        var draggedX = 0;
+        let offsetX;
+
+        function touchStarted() {
+            if (!contain(mouseX, mouseY, 0, 0, width, height)) return;
+            dragged = true;
+            offsetX = mouseX * 900 / width - draggedX
+        }
+
+        function touchMoved() {
+            if (touches.length > 1) return;
+            if (dragged) {
+                draggedX = mouseX * 900 / width - offsetX;
+                draggedX = constrain(draggedX, 0, 900);
+                if (abs(mouseX - pmouseX) > abs(mouseY - pmouseY)) return false
+            }
+        }
+
+        function touchEnded() {
+            dragged = false
+        }
+
+
+    </script>
+</div>
+
+</body>
+
+</html>

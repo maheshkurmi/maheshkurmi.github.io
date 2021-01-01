@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Carnot Cycle: JavaLabs.org</title>
+    <link href="javalab.css" rel="stylesheet">
+</head>
+<body>
+
+<h2>Avogadro law for gases</h2>
+<p>
+    Carnot engine is a type of ideal heat engine, this engine is not actually exist. Even if each process is reversible,
+    it becomes an irreversible process due to the friction that occurs during the operation. Also, the process of
+    adiabatic expansion and adiabatic compression can not actually occur. This is because there is no material that
+    completely blocks heat from the outside.
+    After all, the meaning of the Carnot engine is that it is the most efficient heat engine that is physically
+    possible.
+</p>
+<div id="divFull" style="background-color: white;">
+    <div id="myContainer"></div>
+    <div class="flexContainer" style="justify-content: space-evenly;">
+        <div class="flexContainer">
+            <div class="flexItem"><input type="checkbox" id="checkAuto" checked><label id="chalkAuto" for="checkAuto"></label></div>
+            <div class="flexItem"><button id="buttonFull"></button></div>
+        </div>
+
+    </div>
+</div>
+<div style="display: none;">
+    <script src="javalab.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+
+    <script>
+
+        var language = 2;
+        var checkAuto;
+        var chalkAuto;
+        let buttonFull;
+        var imgGraph;
+        var time = 0;
+        var xCarnot = [];
+        var yCarnot = [];
+
+        function preload() {
+            var url = getURL();
+            var regexp = "http";
+            var m = match(url, regexp);
+            var imagePrefix = (m == "http") ? "//javalab.org/lee/image/" : "";
+            imgGraph = loadImage("carnot_engines_graph.png")
+        }
+
+        function setup() {
+            frameRate(20);
+            pixelDensity(2 * displayDensity());
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            myCanvas = createCanvas(w, h);
+            myCanvas.parent("myContainer");
+            myCanvas.id("myP5Canvas");
+            checkAuto = select("#checkAuto");
+            chalkAuto = select("#chalkAuto");
+            if (language == 0) chalkAuto.html("실행");
+            if (language == 1) chalkAuto.html("実行");
+            if (language == 2) chalkAuto.html("Run");
+            buttonFull = select("#buttonFull");
+            buttonFull.mouseClicked(doFullScreen);
+            if (language == 0) buttonFull.html("전체화면");
+            if (language == 1) buttonFull.html("全画面表示");
+            if (language == 2) buttonFull.html("Fullscreen");
+            for (var i = 0; i < 24; i++) {
+                xCarnot[i] = map(map(i, 0, 24, 763, 957), 0, 1406, 0, 1);
+                yCarnot[i] = map(map(i, 0, 24, 188 + 49, 308 + 49), 0, 1406, 0, 1) + sin(map(i, 0, 24, 0, PI)) * 0.008
+            }
+            for (var i = 24; i < 36; i++) {
+                xCarnot[i] = map(map(i, 24, 36, 957, 1067), 0, 1406, 0, 1) - sin(map(i, 24, 36, 0, PI)) * 0.004;
+                yCarnot[i] = map(map(i, 24, 36, 308 + 49, 468 + 49), 0, 1406, 0, 1) + sin(map(i, 24, 36, 0, PI)) * 0.008
+            }
+            for (var i = 36; i < 58; i++) {
+                xCarnot[i] = map(map(i, 36, 58, 1067, 857), 0, 1406, 0, 1);
+                yCarnot[i] = map(map(i, 36, 58, 468 + 49, 402 + 49), 0, 1406, 0, 1) + sin(map(i, 36, 58, 0, PI)) * 0.006
+            }
+            for (var i = 58; i < 72; i++) {
+                xCarnot[i] = map(map(i, 58, 72, 857, 763), 0, 1406, 0, 1) - sin(map(i, 58, 72, 0, PI)) * 0.008;
+                yCarnot[i] = map(map(i, 58, 72, 402 + 49, 188 + 49), 0, 1406, 0, 1) + sin(map(i, 58, 72, 0, PI)) * 0.008
+            }
+        }
+
+        function windowResized() {
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            resizeCanvas(w, h)
+        }
+
+        function draw() {
+            if (touches.length > 1) return;
+            background(255);
+            strokeWeight(width / 1000);
+            textSize(width / 40);
+            textAlign(CENTER, CENTER);
+            if (checkAuto.checked()) {
+                time++;
+                if (time >= 72) time = 0
+            }
+            imageMode(CORNER);
+            image(imgGraph, 0, 0, width, height);
+            noStroke();
+            fill(128, 0, 128);
+            ellipse(width * xCarnot[time], width * yCarnot[time], width / 80, width / 80);
+            var xLeft = width * 0.06;
+            var xRight = width * 0.28;
+            var xMid = (xLeft + xRight) / 2;
+            var yTop = height * .2;
+            var yGround = height * 0.814;
+            var yCap = yGround - map(xCarnot[time], 0.4, 1, 0, height * 0.9);
+            var thick = width * 0.02;
+            if (0 <= time) if (time <= 24) fill(255, 128, 128);
+            if (24 < time) if (time < 36) fill(map(time, 20, 36, 255, 128), 128, map(time, 20, 36, 128, 255));
+            if (36 <= time) if (time <= 58) fill(128, 128, 255);
+            if (58 < time) if (time < 76) fill(map(time, 56, 76, 128, 255), 128, map(time, 56, 76, 255, 128));
+            noStroke();
+            rect(xLeft, yCap, xRight - xLeft, yGround - yCap);
+            if (0 <= time) if (time <= 20) {
+                fill(0);
+                textAlign(CENTER, TOP);
+                if (language == 0) text("가열", xMid, yGround + thick * 1.5);
+                if (language == 1) text("加熱", xMid, yGround + thick * 1.5);
+                if (language == 2) text("Heating", xMid, yGround + thick * 1.5)
+            }
+            if (36 <= time) if (time <= 58) {
+                fill(0);
+                textAlign(CENTER, TOP);
+                if (language == 0) text("냉각", xMid, yGround + thick * 1.5);
+                if (language == 1) text("冷却", xMid, yGround + thick * 1.5);
+                if (language == 2) text("Cooling", xMid, yGround + thick * 1.5)
+            }
+            fill(128);
+            stroke(0);
+            rect(xLeft - thick, yTop, thick, yGround - yTop + thick);
+            rect(xRight, yTop, thick, yGround - yTop + thick);
+            if (0 <= time) if (time <= 20) fill(255, 0, 0);
+            if (36 <= time) if (time <= 58) fill(0, 0, 255);
+            rect(xLeft, yGround, xRight - xLeft, thick);
+            fill(128);
+            stroke(0);
+            rect(xLeft, yCap - thick, xRight - xLeft, thick);
+            textAlign(CENTER, BOTTOM);
+            if (0 <= time) if (time < 36) {
+                noStroke();
+                fill(255, 0, 0);
+                drawArrow2D(xMid, yCap + thick * 0.5, 0, -thick * 4);
+                fill(0);
+                textAlign(CENTER, BOTTOM);
+                if (language == 0) text("일 work", xMid, yCap - thick * 4);
+                if (language == 1) text("仕事 work", xMid, yCap - thick * 4);
+                if (language == 2) text("Work", xMid, yCap - thick * 4)
+            } else {
+                noStroke();
+                fill(0, 0, 255);
+                drawArrow2D(xMid, yCap - thick * 3.5, 0, thick * 2);
+                fill(0);
+                textAlign(CENTER, BOTTOM);
+                if (language == 0) text("일 work", xMid, yCap - thick * 4);
+                if (language == 1) text("仕事 work", xMid, yCap - thick * 4);
+                if (language == 2) text("Work", xMid, yCap - thick * 4)
+            }
+            fill(0);
+            stroke(255);
+            textAlign(CENTER, BOTTOM);
+            var strMsg;
+            if (0 <= time) if (time <= 24) {
+                if (language == 0) strMsg = "등온 팽창";
+                if (language == 1) strMsg = "等温膨張";
+                if (language == 2) strMsg = "Isothermal expansion"
+            } else if (24 < time) if (time < 36) {
+                if (language == 0) strMsg = "단열 팽창";
+                if (language == 1) strMsg = "断熱膨張";
+                if (language == 2) strMsg = "Adiabatic expansion"
+            } else if (36 <= time) if (time <= 58) {
+                if (language == 0) strMsg = "등온 압축";
+                if (language == 1) strMsg = "等温圧縮";
+                if (language == 2) strMsg = "Isothermal compression"
+            } else if (58 < time) if (time < 76) {
+                if (language == 0) strMsg = "단열 압축";
+                if (language == 1) strMsg = "断熱圧縮";
+                if (language == 2) strMsg = "Adiabatic compression"
+            }
+            fill(255);
+            for (var x = -1; x <= 1; x++) for (var y = -1; y <= 1; y++) text(strMsg, xMid + x, height * 0.75 + y);
+            fill(0);
+            text(strMsg, xMid, height * 0.75);
+            fill(0);
+            noStroke();
+            textAlign(CENTER, TOP);
+            if (language == 0) text("압력", width * 0.39, height * 0.05);
+            if (language == 1) text("圧力", width * 0.39, height * 0.05);
+            if (language == 2) text("Pressure", width * 0.39, height * 0.05);
+            textAlign(LEFT, TOP);
+            if (language == 0) text("부피", width * 0.85, height * 0.9);
+            if (language == 1) text("体積", width * 0.85, height * 0.9);
+            if (language == 2) text("Volume", width * 0.85, height * 0.9);
+            textAlign(LEFT, CENTER);
+            if (language == 0) text("높은 온도", width * 0.86, height * 0.61);
+            if (language == 1) text("高い温度", width * 0.86, height * 0.61);
+            if (language == 2) text("High \nTemperature", width * 0.86, height * 0.61);
+            if (language == 0) text("낮은 온도", width * 0.86, height * 0.77);
+            if (language == 1) text("低い温度", width * 0.86, height * 0.77);
+            if (language == 2) text("Low \nTemperature", width * 0.86, height * 0.77)
+        }
+
+
+    </script>
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,378 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-8175315-19"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-8175315-19');
+    </script>
+
+    <meta charset="utf-8">
+    <title>Diffusion</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; width:500px; margin-left:auto; margin-right:auto;">
+<center>
+    <canvas id="myCanvas" width="500" height="465"></canvas>
+    <div id="buttons">
+        <input type="button" id="play" value="Play" onclick="play()">
+        <input type="button" id="pause" value="Pause" onclick="pause()">
+        <input type="button" id="reset" value="Reset" onclick="reset()">
+    </div>
+    <BR>
+    <div id="tempSlider">
+        Temperature: Cold <input type="range" id="tempValue" min="0.6"
+                                 max="3.4" value="1" step="0.05" oninput="showTempValue(this.value)" onchange="showTempValue(this.value)"> Hot &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+    </div>
+    <div id="viewbuttons">
+        <input type="button" id="v1" value="Add 50 red balls at bottom right" onclick="addBalls()">
+    </div>
+
+
+</center>
+
+<script>
+
+
+    function showNumberValue(newNumberValue)
+    {
+        //get the element
+        var display = document.getElementById("initialBallNumber");
+        //show the amount
+        display.innerHTML=newNumberValue;
+        numBalls = Number(newNumberValue);
+        //            reset();
+    }
+
+    function showBallSize(newBallSize)
+    {
+        //get the element
+        var display = document.getElementById("initialBallSize");
+        //show the amount
+        display.innerHTML=newBallSize;
+        ballRadius = Number(newBallSize);
+        diamSq = 2*ballRadius*2*ballRadius;
+        //            reset();
+    }
+
+    function showTempValue(newTempValue)
+    {
+        speedFactor = Math.sqrt(Number(newTempValue));
+        //            reset();
+    }
+
+
+    function play() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        runMotion();
+
+    }
+
+    function pause() {
+        window.clearTimeout(timer);
+        runFlag = 0;
+
+    }
+
+    function stepForward() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+    function stepBack() {
+        window.clearTimeout(timer);
+        index = index-2;
+        if (index < -1) index = -1;
+        time = index/20;
+        if (x1 >= (xBase+400)) x1 = xBase + 400;
+        if (x1 < xBase) x1 = xBase;
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+    function addBalls() {
+        numBalls = 250;
+        for (var i = 200; i < 250; i++) {
+            ball[i].xValue = (centerX+0.48*boxWidth-ballRadius);
+            ball[i].yValue = (centerY+0.48*boxWidth-ballRadius);
+            //       console.log("reset y = " + ball[i].yValue);
+        }
+
+        for (var i = 0; i < numBalls; i++) {
+            for (var j = 200; j< nBalls; j++) {
+                oldOverlap[i][j] = 1;
+            }
+        }
+
+
+        //       runFlag = 1;
+        //       runMotion();
+
+    }
+
+
+    function reset() {
+        window.clearTimeout(timer);
+        index = -1;
+        time = 0.0;
+        x1 = xBase + 120;
+        theta = 0.0;
+        a1 = 0.0;
+        v1 = 1.0;
+        maxTime = 50;
+        numBalls = 200;
+        for (var i = 0; i < numBalls; i++) {
+            ball[i].xValue = centerX;
+            ball[i].yValue = centerY;
+            //       console.log("reset y = " + ball[i].yValue);
+        }
+
+        for (var i = 0; i < numBalls; i++) {
+            for (var j = 0; j< nBalls; j++) {
+                oldOverlap[i][j] = 1;
+            }
+        }
+
+
+        runFlag = 1;
+        runMotion();
+
+    }
+
+
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+
+    var index = -1;
+    var xBase = 180;
+    var yBase = 260;
+    var xBase2 = 140;
+    var yBase2 = 60;
+    var xInit = 37;
+    var graphType = 1;
+    var simTitle = 'Ideal gas';
+    var graphTitle = 'Speed distribution';
+    var yAxisTitle = 'number';
+    //      var slope = 0.4;
+    var yIncrement = 20;
+    var xIncrement = 0.4;
+    var yNumDecimals = 0;
+    var xNumDecimals = 1;
+
+    var time = 0.0;
+    var timer;
+    var runFlag = 1;
+
+    var deltaT = 0.02;
+    var numBalls = 200;
+    //      var boxSize = 400;
+    var boxHeight = 400;
+    var boxWidth = 400;
+    var centerX = canvas.width/2;
+    var centerY = 235;
+    var ballRadius = 5;
+    var redness;
+    var greenness;
+    var blueness;
+    var redString = "0";
+    var greenString = "0";
+    var blueString = "0";
+    var colorString = "0";
+
+    var tempNumber;
+    var tempRed;
+    var tempGreen;
+    var tempBlue;
+    var tempTrans;
+    var tempSpeed;
+
+    var nBalls = 301;
+    var ball = new Array(nBalls+1);
+    for (var i = 0; i <= nBalls; i++) {
+        ball[i] = {};
+        ball[i].xValue = centerX;
+        ball[i].yValue = centerY;
+        ball[i].deltaX = -1.0+2.0*Math.random();
+        ball[i].deltaY = -1.0+2.0*Math.random();
+        //       		console.log("x = " + ball[i].xValue);
+
+        ball[i].color = "blue";
+
+    }
+    ball[0].color = "blue";
+    for (var i = 200; i < 250; i++ ) {
+        ball[i].color = "red";
+    }
+    var speedFactor = 1;
+    var useRandomColors;
+    var ballsCollide;
+    var vxi;
+    var vyi;
+    var vxj;
+    var vyj;
+    var sinTheta;
+    var cosTheta;
+    var distance;
+    var diamSq = 2*ballRadius*2*ballRadius;
+    var cOfMX;
+    var cOfMY;
+    var overlap = create2DArray(nBalls,nBalls,0);
+    var oldOverlap = create2DArray(nBalls,nBalls,1);
+    numBins = 20;
+    var speedHistogram = new Array(numBins);
+    for (var i = 0; i < numBins; i++) {
+        speedHistogram[i] = 0;
+    }
+
+    runMotion();
+
+    function drawMotion() {
+
+//    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+        if (time >= 50) runFlag = 0;
+
+//    console.log("In the drawMotion function, with runFlag = " + runFlag + " xBase = " + xBase + " x2 = " + x2 + " time = " + time);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            index = index + 1;
+
+            // set background color for the entire thing
+            context.fillStyle = "#0b6";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+//    console.log("drawing background");
+
+            // set background color for the box of gas
+            context.fillStyle = "#fff";
+            context.fillRect(centerX-0.5*boxWidth, centerY-0.5*boxHeight, boxWidth, boxHeight);
+
+
+// check to see if balls overlap
+
+            for (var i = 0; i<(numBalls-1); i++) {
+                for (var j = i+1; j<numBalls; j++) {
+                    if (((ball[j].xValue-ball[i].xValue)*(ball[j].xValue-ball[i].xValue)+(ball[j].yValue-ball[i].yValue)*(ball[j].yValue-ball[i].yValue)) < diamSq) {
+                        overlap[i][j] = 1;
+                    }
+                    else {
+                        overlap[i][j] = 0;
+                    }
+                }
+            }
+
+// if a new overlap occurs, the balls collide - find the new velocities
+
+            for (var i = 0; i<(numBalls-1); i++) {
+                for (var j = i+1; j<numBalls; j++) {
+                    if ((overlap[i][j] == 1) && (oldOverlap[i][j] == 0)) {
+                        vxi = ball[i].deltaX;
+                        vyi = ball[i].deltaY;
+                        vxj = ball[j].deltaX;
+                        vyj = ball[j].deltaY;
+                        distance = Math.sqrt((ball[j].xValue-ball[i].xValue)*(ball[j].xValue-ball[i].xValue)+(ball[j].yValue-ball[i].yValue)*(ball[j].yValue-ball[i].yValue));
+                        cosTheta = (ball[j].yValue-ball[i].yValue)/distance;
+                        sinTheta = (ball[j].xValue-ball[i].xValue)/distance;
+                        ball[i].deltaX = vxi + sinTheta*( -vxi*sinTheta + vxj*sinTheta - vyi*cosTheta + vyj*cosTheta);
+                        //				deltaX[j] = vxj + sinTheta*( -vxj*sinTheta + vxi*sinTheta - vyj*cosTheta + vyi*cosTheta);
+                        ball[j].deltaX = vxj + vxi - ball[i].deltaX;
+                        ball[i].deltaY = vyi + cosTheta*( -vyi*cosTheta + vyj*cosTheta - vxi*sinTheta + vxj*sinTheta);
+                        //				deltaY[j] = vyj + cosTheta*(-vyj*cosTheta + vyi*cosTheta - vxj*sinTheta + vxi*sinTheta);
+                        ball[j].deltaY = vyj + vyi - ball[i].deltaY;
+                    }
+                    oldOverlap[i][j] = overlap[i][j];
+                }
+            }
+
+
+// move and then draw the balls
+
+//	cOfMX = 0.0;
+//	cOfMY = 0.0;
+
+            for (var i = (numBalls-1); i>=0; i--) {
+                ball[i].xValue = ball[i].xValue + speedFactor*ball[i].deltaX;
+//		console.log("x = " + ball[i].xValue);
+
+                ball[i].yValue = ball[i].yValue + speedFactor*ball[i].deltaY;
+//		cOfMX = cOfMX + ball[i].xValue;
+//		cOfMY = cOfMY + ball[i].yValue;
+//		currentPoint = CGPointMake(xValues[i], yValues[i]);
+                // code for bouncing off walls
+                if (ball[i].xValue > (centerX+0.5*boxWidth-ballRadius)) ball[i].deltaX = -Math.abs(ball[i].deltaX);
+                if (ball[i].xValue < (centerX-0.5*boxWidth+ballRadius)) ball[i].deltaX = Math.abs(ball[i].deltaX);
+                if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].deltaY = -Math.abs(ball[i].deltaY);
+                if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius))ball[i].deltaY = Math.abs(ball[i].deltaY);
+//		if (ball[i].xValue > (boxSize-ballRadius)) ball[i].deltaX = -Math.abs(ball[i].deltaX);
+//		if (ball[i].xValue < ballRadius) ball[i].deltaX = Math.abs(ball[i].deltaX);
+//		if (ball[i].yValue > (boxSize-ballRadius)) ball[i].deltaY = -Math.abs(ball[i].deltaY);
+//		if (ball[i].yValue < ballRadius) ball[i].deltaY = Math.abs(ball[i].deltaY);
+
+                context.fillStyle = ball[i].color;
+
+                context.strokeStyle = ball[i].color;
+                context.beginPath();
+                context.arc(ball[i].xValue, ball[i].yValue, ballRadius, 0, 2 * Math.PI, false);
+                context.fill();
+//        context.stroke();
+            }
+
+//    cOfMX = cOfMX/numBalls;
+//	cOfMY = cOfMY/numBalls;
+
+
+
+            // graph title
+            context.font = 'bold 16pt Calibri';
+            context.fillStyle = 'purple';
+            context.textAlign = 'center';
+            context.fillText(simTitle, (canvas.width)/2, 25);
+
+
+//        var timeLabel = 't = ';
+//        timeLabel = timeLabel + time.toFixed(3) + ' s';
+//        context.textAlign = 'left';
+//        context.fillText(timeLabel, xBase-60, 370);
+
+
+        }
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 200/60);
+        }
+    }
+
+
+    function create2DArray(rows,columns,initialValue) {
+        var x = new Array(rows);
+        for (var i = 0; i < rows; i++) {
+            x[i] = new Array(columns);
+            for (var j = 0; j < columns; j++) {
+                x[i][j] = initialValue;
+            }
+        }
+        return x;
+    }
+
+</script>
+
+<center><p>This simulation shows the process of diffusion. You start with a container of 200 ideal gas molecules, in blue. Set the temperature with the slider. Then, add 50 additional molecules, which are red. How long does it take for them to diffuse? In other words, how long does it take for them to spread evenly throughout the box? Does this time have anything to do with temperature?</p></center>
+
+</body>
+</html>

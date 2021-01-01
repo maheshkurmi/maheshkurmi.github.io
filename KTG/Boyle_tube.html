@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Boyle's Tube: JavaLabs.org</title>
+    <link href="javalab.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="divFull" style="background-color: white;">
+    <div id="myContainer"></div>
+    <div class="flexContainer">
+        <div class="flexItem"><button id="buttonRun"></button></div>
+        <div class="flexItem"><button id="buttonRst"></button></div>
+    </div>
+</div>
+<div style="display: none;">
+    <script src="javalab.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+
+    <script>
+
+        var language = 2;
+        var buttonRst;
+        var buttonRun;
+        var img_tube;
+        var xCenter = 0.5;
+        var yCenter = 0.813;
+        var maxHeight = 0.3;
+        var destPressure;
+        var currPressure;
+
+        function preload() {
+            var url = getURL();
+            var regexp = "http";
+            var m = match(url, regexp);
+            var imagePrefix = (m == "http") ? "//javalab.org/lee/image/" : "";
+            img_tube = loadImage("boyles_j_tube_tube.png");
+        }
+
+        function setup() {
+            frameRate(20);
+            pixelDensity(2 * displayDensity());
+            var o = select("#myContainer");
+            var a = 1;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            myCanvas = createCanvas(w, h);
+            myCanvas.parent("myContainer");
+            myCanvas.id("myP5Canvas");
+            buttonRst = select("#buttonRst");
+            buttonRst.mouseClicked(setup2);
+            if (language == 0) buttonRst.html("리셋");
+            if (language == 1) buttonRst.html("リセット");
+            if (language == 2) buttonRst.html("Reset");
+            buttonRun = select("#buttonRun");
+            buttonRun.mouseClicked(dobuttonRun);
+            if (language == 0) buttonRun.html("수은 주입");
+            if (language == 1) buttonRun.html("水銀注入");
+            if (language == 2) buttonRun.html("Pour the Mercury");
+            setup2()
+        }
+
+        function windowResized() {
+            var o = select("#myContainer");
+            var a = 1;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            resizeCanvas(w, h)
+        }
+
+        function setup2() {
+            destPressure = 0;
+            currPressure = 0
+        }
+
+        function dobuttonRun() {
+            if (destPressure <= currPressure) {
+                destPressure += 0.1;
+                destPressure = min(destPressure, 1)
+            }
+        }
+
+        function draw() {
+            if (touches.length > 1) return;
+            background(255);
+            textSize(width * 0.035);
+            if (currPressure < destPressure) {
+                currPressure += 0.005;
+                currPressure = min(currPressure, destPressure);
+                stroke(191);
+                strokeWeight(width / 100);
+                line(width * 0.665, 0, width * 0.665, height)
+            }
+            var pressure1 = 1 + currPressure;
+            var volume1 = 1 / pressure1;
+            var height1 = maxHeight - maxHeight / pressure1;
+            var height2 = maxHeight * currPressure;
+            var height3 = height1 + height2;
+            noStroke();
+            fill(191);
+            rect(width * (xCenter - 0.2), width * (yCenter - height1), width * 0.2, width * (0.2 + height1));
+            rect(width * xCenter - 1, width * (yCenter - height3), width * 0.2, width * (0.2 + height3));
+            image(img_tube, width * xCenter - width * 0.5, 0, width, width * img_tube.height / img_tube.width);
+            stroke(0);
+            strokeWeight(width / 500);
+            line(width * 0.207, width * yCenter, width * 0.307, width * yCenter);
+            line(width * 0.207, width * (yCenter - height1), width * 0.307, width * (yCenter - height1));
+            line(width * 0.418, width * yCenter, width * 0.58, width * yCenter);
+            line(width * 0.418, width * (yCenter - height1), width * 0.58, width * (yCenter - height1));
+            line(width * 0.691, width * yCenter, width * 0.791, width * yCenter);
+            line(width * 0.691, width * (yCenter - height1), width * 0.791, width * (yCenter - height1));
+            line(width * 0.691, width * (yCenter - height3), width * 0.791, width * (yCenter - height3));
+            fill(0);
+            stroke(255);
+            textAlign(LEFT, TOP);
+            if (currPressure > 0) {
+                if (language == 0) text("튜브 안쪽의 \n압력 × 부피 \n = " + round(pressure1 * 100) / 100.0 + " × " + round(volume1 * 1000) / 1000.0 + "\n = 1", width * 0.02, height * 0.1);
+                if (language == 1) text("チューブの内側 の\n気圧 × 体積 \n = " + round(pressure1 * 100) / 100.0 + " × " + round(volume1 * 1000) / 1000.0 + "\n = 1", width * 0.02, height * 0.1);
+                if (language == 2) text("Inside the tube, \npressure × volume \n = " + round(pressure1 * 100) / 100.0 + " × " + round(volume1 * 1000) / 1000.0 + "\n = 1", width * 0.02, height * 0.1)
+            }
+            fill(255, 0, 0);
+            textAlign(RIGHT, BOTTOM);
+            if (language == 0) text("공기 압력 = " + round(pressure1 * 100) / 100.0 + "\n공기 부피 = " + +round(volume1 * 1000) / 1000.0, width * 0.307, width * (yCenter - height1 - 0.01));
+            if (language == 1) text("空気圧 = " + round(pressure1 * 100) / 100.0 + "\n空気体積 = " + +round(volume1 * 1000) / 1000.0, width * 0.307, width * (yCenter - height1 - 0.01));
+            if (language == 2) text("Air pressure = " + round(pressure1 * 100) / 100.0 + "\nAir volume = " + +round(volume1 * 1000) / 1000.0, width * 0.307, width * (yCenter - height1 - 0.01));
+            var x = xCenter + 0.068;
+            stroke(255);
+            fill(0, 0, 255);
+            textAlign(LEFT, CENTER);
+            if (language == 0) text("대기 압력 = 1", width * 0.73, width * (yCenter - height1 - height2 - maxHeight / 3));
+            if (language == 1) text("大気圧 = 1", width * 0.73, width * (yCenter - height1 - height2 - maxHeight / 3));
+            if (language == 2) text("Atmospheric \npressure = 1", width * 0.73, width * (yCenter - height1 - height2 - maxHeight / 3));
+            if (currPressure > 0) {
+                fill(0, 128, 0);
+                if (language == 0) text("수은압 = " + round(currPressure * 100) / 100.0, width * 0.73, width * (yCenter - height1 - height2 / 2));
+                if (language == 1) text("水銀圧 = " + round(currPressure * 100) / 100.0, width * 0.73, width * (yCenter - height1 - height2 / 2));
+                if (language == 2) text("Mercury pressure = " + round(currPressure * 100) / 100.0, width * 0.73, width * (yCenter - height1 - height2 / 2))
+            }
+            noFill();
+            stroke(0, 0, 255);
+            drawArrow_head(width * 0.715, width * (yCenter - height1 - height2 - maxHeight), 0, width * (maxHeight - 0.005), width * 0.02);
+            stroke(0, 128, 0);
+            if (height2 > 0.01) {
+                drawArrow_head(width * 0.715, width * (yCenter - height1 - height2 / 2), 0, -width * (height2 / 2 - 0.005), width * 0.02);
+                drawArrow_head(width * 0.715, width * (yCenter - height1 - height2 / 2), 0, width * (height2 / 2 - 0.005), width * 0.02)
+            }
+        }
+
+
+    </script>
+</div>
+
+</body>
+
+</html>

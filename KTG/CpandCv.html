@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cp and Cv: JavaLabs.org</title>
+    <link rel="stylesheet" href="javalab.css">
+</head>
+<body>
+
+<h2>Cp and Cv for gases</h2>
+<p>Change the temperature to see the difference when heated at constant pressure and at constant volume. The numerical values shown in this simulation are not absolute values and are intended to determine relative increase or decrease. Therefore, the unit is not displayed</p>
+
+    <div id="myContainer"></div>
+    <div class="flexContainer">
+        <div class="flexItem"><span id="labelA"></span></p>
+            <div class="bluerange"><input id="rangeA" max="100" min="20" type="range" value="1050"></div>
+        </div>
+        <div class="flexItem"><span id="labelB"></span><br/><input id="rangeB" max="100" min="20" type="range"
+                                                                   value="50"></div>
+        <div class="flexItem"><input id="checkA" type="checkbox" unchecked><label for="checkA" id="chalkA">PV Value</label>
+        </div>
+
+    </div>
+    <div style="display: none;">
+        <script src="javalab.js"></script>
+        <script src="p5.js"></script>
+
+        <script>
+
+            var language = 2;
+            var labelA;
+            var labelB;
+            var rangeA;
+            var rangeB;
+            var rangeAvalue = 20;
+            var rangeBvalue = 50;
+            var checkA;
+            var chalkA;
+            let buttonFull;
+            var minX = [0.04, 0.54];
+            var maxX = [0.34, 0.84];
+            var maxY = 0.48;
+            var minY = [maxY - 0.2, maxY - 0.2];
+            var moleMax = 200;
+            var moleR = [];
+            var moleX = [];
+            var moleY = [];
+            var moleV = [];
+            var moleA = [];
+            var moleM = [];
+            var moleRegion = [];
+
+            function setup() {
+                frameRate(20);
+                pixelDensity( 2*displayDensity());
+                var o = select("#myContainer");
+                var a = 0.5;
+                var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+                var h = int(w * a);
+                myCanvas = createCanvas(w, h);
+                myCanvas.parent("myContainer");
+                myCanvas.id("myP5Canvas");
+                labelA = select("#labelA");
+                labelB = select("#labelB");
+                rangeA = select("#rangeA");
+                rangeB = select("#rangeB");
+                checkA = select("#checkA");
+                chalkA = select("#chalkA");
+                chalkA.html=("PV value");
+
+                getMinY();
+                for (var i = 0; i < 200; i++) {
+                    var n = i % 2;
+                    moleRegion[i] = n;
+                    moleR[i] = 0.002;
+                    moleX[i] = random(minX[n] + moleR[i], maxX[n] - moleR[i]);
+                    moleY[i] = random(minY[n] + moleR[i], maxY - moleR[i]);
+                    moleA[i] = int(random(360));
+                    moleM[i] = 1
+                }
+                setup2()
+            }
+
+            function windowResized() {
+                var o = select("#myContainer");
+                var a = 0.5;
+                var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+                var h = int(w * a);
+                resizeCanvas(w, h)
+            }
+
+            function setup2() {
+                rangeAvalue = rangeA.value();
+                rangeBvalue = rangeB.value();
+                moleMax = 2 * rangeAvalue;
+                var minY0 = minY[0];
+                getMinY();
+                for (var i = 0; i < 200; i++) {
+                    if (moleRegion[i] == 0) moleY[i] = map(moleY[i], minY0, maxY, minY[0], maxY);
+                    moleV[i] = rangeB.value() * 0.0001
+                }
+            }
+
+            function getMinY() {
+                minY[0] = maxY - 0.2 * map(rangeA.value(), 0, 50, 0, 1) * map(rangeB.value(), 0, 100, 0, 1)
+            }
+
+            function draw() {
+                background(255);
+                strokeWeight(width / 1000);
+                textSize(width / 50);
+                textAlign(LEFT, TOP);
+                if (rangeAvalue != rangeA.value()) setup2();
+                if (rangeBvalue != rangeB.value()) setup2();
+                labelA.html("n = " + rangeA.value());
+                labelB.html("T = " + rangeB.value());
+                analysis();
+                fill(0);
+                noStroke();
+                rect(width * lerp(minX[0], maxX[0], 0.22), width * (minY[0] - 0.02), width * (maxX[0] - minX[0]) * 0.16, -width * 0.04);
+                rect(width * lerp(minX[0], maxX[0], 0.62), width * (minY[0] - 0.02), width * (maxX[0] - minX[0]) * 0.16, -width * 0.04);
+                stroke(127);
+                strokeWeight(width * 0.02);
+                for (var i = 0; i < 2; i++) {
+                    var y = (i == 0) ? 0.01 : minY[i] - 0.01;
+                    y *= width;
+                    stroke((i == 0) ? color(128, 64, 0) : 127);
+                    line(width * (minX[i] - 0.01), width * (minY[i] - 0.01), width * (maxX[i] + 0.01), width * (minY[i] - 0.01));
+                    stroke(127);
+                    line(width * (minX[i] - 0.01), y, width * (minX[i] - 0.01), width * (maxY + 0.01));
+                    line(width * (maxX[i] + 0.01), y, width * (maxX[i] + 0.01), width * (maxY + 0.01));
+                    line(width * (minX[i] - 0.01), width * (maxY + 0.01), width * (maxX[i] + 0.01), width * (maxY + 0.01))
+                }
+                getMinY();
+                noStroke();
+                for (var i = 0; i < moleMax; i++) {
+                    if (moleM[i] <= 1) {
+                        fill(0, 64, 191);
+                        ellipse(width * moleX[i], width * moleY[i], width * 2 * moleR[i], width * 2 * moleR[i])
+                    } else {
+                        fill(255, 0, 0);
+                        ellipse(width * moleX[i], width * moleY[i], width * 2 * moleR[i], width * 2 * moleR[i])
+                    }
+                }
+                fill(0);
+                var pv = rangeA.value() * rangeB.value() / 5000;
+                var p1 = 1;
+                var v1 = pv / p1;
+                var p2 = pv / 1;
+                var v2 = 1;
+                text("P = " + p1 + "\nV = " + v1 + "\n\nn = " + rangeA.value() + "\nT = " + rangeB.value(), width * (maxX[0] + 0.04), width * 0.25);
+                text("P = " + p2 + "\nV = " + v2 + "\n\nn = " + rangeA.value() + "\nT = " + rangeB.value(), width * (maxX[1] + 0.04), width * 0.25);
+                if (checkA.checked()) {
+                    text("PV = " + pv, width * (maxX[0] + 0.04), width * 0.19);
+                    text("PV = " + pv, width * (maxX[1] + 0.04), width * 0.19)
+                }
+            }
+
+            function analysis() {
+                for (var i = 0; i < moleMax - 1; i++) for (var j = i + 2; j < moleMax; j += 2) {
+                    var tollerence = moleR[i] + moleR[j];
+                    tollerence *= 2;
+                    if (abs(moleX[i] - moleX[j]) > tollerence) continue;
+                    if (abs(moleY[i] - moleY[j]) > tollerence) continue;
+                    var pix = moleX[i] + moleV[i] * dcos[moleA[i]];
+                    var piy = moleY[i] + moleV[i] * dsin[moleA[i]];
+                    var pjx = moleX[j] + moleV[j] * dcos[moleA[j]];
+                    var pjy = moleY[j] + moleV[j] * dsin[moleA[j]];
+                    if (dist(moleX[i], moleY[i], moleX[j], moleY[j]) < tollerence) if (dist(moleX[i], moleY[i], moleX[j], moleY[j]) > dist(pix, piy, pjx, pjy)) {
+                        var vix = moleV[i] * dcos[moleA[i]];
+                        var viy = moleV[i] * dsin[moleA[i]];
+                        var vjx = moleV[j] * dcos[moleA[j]];
+                        var vjy = moleV[j] * dsin[moleA[j]];
+                        var vcx = (moleM[i] * vix + moleM[j] * vjx) * 1.0 / (moleM[i] + moleM[j]);
+                        var vcy = (moleM[i] * viy + moleM[j] * vjy) * 1.0 / (moleM[i] + moleM[j]);
+                        var vcix = vix - vcx;
+                        var vciy = viy - vcy;
+                        var vcjx = vjx - vcx;
+                        var vcjy = vjy - vcy;
+                        var vci = dist(0, 0, vcix, vciy);
+                        var vcj = dist(0, 0, vcjx, vcjy);
+                        var aci = getAngle(vcix, vciy);
+                        var acj = getAngle(vcjx, vcjy);
+                        var aij = getAngle(moleX[j] - moleX[i], moleY[j] - moleY[i]);
+                        var aji = getAngle(moleX[i] - moleX[j], moleY[i] - moleY[j]);
+                        aci = mod(2 * aij + 180 - aci, 360);
+                        acj = mod(2 * aji + 180 - acj, 360);
+                        vix = vci * dcos[aci];
+                        viy = vci * dsin[aci];
+                        vjx = vcj * dcos[acj];
+                        vjy = vcj * dsin[acj];
+                        vix += vcx;
+                        viy += vcy;
+                        vjx += vcx;
+                        vjy += vcy;
+                        var t = moleV[i] + moleV[j];
+                        moleV[i] = dist(0, 0, vix, viy);
+                        moleV[j] = t - moleV[i];
+                        moleA[i] = getAngle(vix, viy);
+                        moleA[j] = getAngle(vjx, vjy)
+                    }
+                }
+                for (var i = 0; i < moleMax; i++) {
+                    moleX[i] += moleV[i] * dcos[moleA[i]];
+                    moleY[i] += moleV[i] * dsin[moleA[i]]
+                }
+                for (var i = 0; i < moleMax; i++) {
+                    if (moleX[i] < (minX[moleRegion[i]] + moleR[i])) {
+                        moleX[i] = 2 * (minX[moleRegion[i]] + moleR[i]) - moleX[i];
+                        moleA[i] = mod(180 - moleA[i], 360)
+                    }
+                    if (moleX[i] > (maxX[moleRegion[i]] - moleR[i])) {
+                        moleX[i] = 2 * (maxX[moleRegion[i]] - moleR[i]) - moleX[i];
+                        moleA[i] = mod(180 - moleA[i], 360)
+                    }
+                    if (moleY[i] < (minY[moleRegion[i]] + moleR[i])) {
+                        minY[0] -= 0.0005;
+                        moleY[i] = 2 * (minY[moleRegion[i]] + moleR[i]) - moleY[i];
+                        moleA[i] = 360 - moleA[i]
+                    }
+                    if (moleY[i] > (maxY - moleR[i])) {
+                        moleY[i] = 2 * (maxY - moleR[i]) - moleY[i];
+                        moleA[i] = 360 - moleA[i]
+                    }
+                }
+            }
+
+        </script>
+    </div>
+
+</body>
+
+</html>

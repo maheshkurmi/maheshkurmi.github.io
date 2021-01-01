@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cp and Cv: JavaLabs.org</title>
+    <link href="javalab.css" rel="stylesheet">
+</head>
+<body>
+
+<h2>Cp and Cv for gases</h2>
+<p>Change the temperature to see the difference when heated at constant pressure and at constant volume. The numerical
+    values shown in this simulation are not absolute values and are intended to determine relative increase or decrease.
+    Therefore, the unit is not displayed</p>
+
+<div id="myContainer"></div>
+<div class="flexContainer">
+    <div class="flexItem">
+        <div id="radioA"></div>
+    </div>
+</div>
+<div style="display: none;">
+    <script src="javalab.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+
+    <script>
+
+        var language = 2;
+        var radioA;
+        let buttonFull;
+        var minX = 0.04;
+        var maxX = 0.96;
+        var topY = 0.04;
+        var minY = 0.04;
+        var maxY = 0.46;
+        var moleMax = 54;
+        var moleX = [];
+        var moleY = [];
+        var moleV = [];
+        var moleA = [];
+
+        function setup() {
+            frameRate(30);
+            pixelDensity(2 * displayDensity());
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            myCanvas = createCanvas(w, h);
+            myCanvas.parent("myContainer");
+            myCanvas.id("myP5Canvas");
+            radioA = createRadio("radioA");
+
+            radioA.option("solid ", "solid");
+            radioA.option("liquid ", "liquid");
+            radioA.option("gas ", "gas");
+            radioA.parent("radioA");
+            radioA.value("gas");
+            radioA.changed(setup2);
+            setup2();
+            for (var i = 0; i < moleMax; i++) {
+                moleX[i] = random(minX, maxX);
+                moleY[i] = random(minY, maxY);
+                moleA[i] = round(random(360))
+            }
+        }
+
+        function windowResized() {
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            resizeCanvas(w, h)
+        }
+
+        function setup2() {
+            if (radioA.value() != "gas") {
+                for (var i = 0; i < moleMax; i++) {
+                    if (moleA[i] > 180) moleA[i] = int(random(40, 140))
+                }
+            }
+            if (radioA.value() == "solid") {
+                for (var i = 0; i < moleMax; i++) moleV[i] = 0.004
+            }
+            if (radioA.value() == "liquid") {
+                for (var i = 0; i < moleMax; i++) moleV[i] = 0.004
+            }
+            if (radioA.value() == "gas") {
+                for (var i = 0; i < moleMax; i++) moleV[i] = 0.008
+            }
+        }
+
+        function draw() {
+            if (touches.length > 1) return;
+            background(255);
+            strokeWeight(width * 0.002);
+            textSize(width / 40);
+            textAlign(CENTER, CENTER);
+            running();
+            noStroke();
+            fill(lerpColor(color(255), color(128, 255, 255), map(minY, topY, maxY, -1, 1)));
+            {
+                rect(width * (minX - 0.02), width * minY, width * (maxX - minX + 0.04), width * (maxY - minY + 0.04))
+            }
+            noFill();
+            stroke(255, 0, 0);
+            strokeWeight(width * 0.002);
+            if (radioA.value() != "gas") {
+                for (var i = 0; i < moleMax - 1; i++) for (var j = i + 1; j < moleMax; j++) {
+                    if (dist(moleX[i], moleY[i], moleX[j], moleY[j]) < 0.035) line(width * moleX[i], width * moleY[i], width * moleX[j], width * moleY[j])
+                }
+            }
+            noStroke();
+            for (var i = 0; i < moleMax; i++) {
+                var xOffset = (radioA.value() == "solid") ? random(-0.001, 0.001) : 0;
+                var yOffset = (radioA.value() == "solid") ? random(-0.001, 0.001) : 0;
+                fill(0, 0, 255);
+                ellipse(width * (moleX[i] + xOffset), width * (moleY[i] + yOffset), width * 0.01, width * 0.01)
+            }
+            noFill();
+            stroke(64);
+            strokeWeight(width * 0.04);
+            rect(width * (minX - 0.03), width * (topY - 0.03), width * (maxX - minX + 0.06), width * (maxY - topY + 0.06));
+            rect(width * (minX - 0.03), width * (topY - 0.03), width * (maxX - minX + 0.06), width * (maxY - topY + 0.06), width * 0.04)
+        }
+
+        function running() {
+            var solidLock = false;
+            if (radioA.value() == "gas") minY = topY; else {
+                minY = maxY;
+                for (var i = 0; i < moleMax; i++) {
+                    minY = min(minY, moleY[i])
+                }
+                if (minY >= (maxY - 0.06)) {
+                    if (radioA.value() == "solid") {
+                        solidLock = true;
+                        for (var i = 0; i < moleMax - 1; i++) for (var j = i + 1; j < moleMax; j++) {
+                            if (moleX[j] < moleX[i]) {
+                                var temp = moleX[i];
+                                moleX[i] = moleX[j];
+                                moleX[j] = temp;
+                                temp = moleY[i];
+                                moleY[i] = moleY[j];
+                                moleY[j] = temp
+                            }
+                        }
+                    }
+                }
+                if (!solidLock) {
+                    var moto = 0;
+                    for (var i = 1; i < moleMax; i++) {
+                        if (moleY[i] < moleY[moto]) moto = i
+                    }
+                    moleA[moto] = int(random(40, 140))
+                }
+                minY = min(minY, maxY - 0.06)
+            }
+            if (solidLock) {
+                for (var i = 0; i < moleMax; i += 2) {
+                    if (moleY[i + 1] < moleY[i]) {
+                        var temp = moleX[i];
+                        moleX[i] = moleX[i + 1];
+                        moleX[i + 1] = temp;
+                        temp = moleY[i];
+                        moleY[i] = moleY[i + 1];
+                        moleY[i + 1] = temp
+                    }
+                    var x = map(i, 0, moleMax - 2, minX + 0.013, maxX - 0.013);
+                    var y0 = maxY - 0.04;
+                    var y1 = maxY - 0.01;
+                    moleX[i + 0] = lerp(moleX[i], x, 0.1);
+                    moleX[i + 1] = lerp(moleX[i + 1], x, 0.1);
+                    moleY[i + 0] = lerp(moleY[i], y0, 0.1);
+                    moleY[i + 1] = lerp(moleY[i + 1], y1, 0.1)
+                }
+            }
+            var tollerence = 0.03;
+            for (var i = 0; i < moleMax - 1; i++) for (var j = i + 1; j < moleMax; j++) {
+                var pix = moleX[i] + moleV[i] * dcos[moleA[i]];
+                var piy = moleY[i] + moleV[i] * dsin[moleA[i]];
+                var pjx = moleX[j] + moleV[j] * dcos[moleA[j]];
+                var pjy = moleY[j] + moleV[j] * dsin[moleA[j]];
+                if (dist(moleX[i], moleY[i], moleX[j], moleY[j]) < tollerence) if (dist(moleX[i], moleY[i], moleX[j], moleY[j]) > dist(pix, piy, pjx, pjy)) {
+                    var vix = moleV[i] * dcos[moleA[i]];
+                    var viy = moleV[i] * dsin[moleA[i]];
+                    var vjx = moleV[j] * dcos[moleA[j]];
+                    var vjy = moleV[j] * dsin[moleA[j]];
+                    var vcx = (vix + vjx) / 2.;
+                    var vcy = (viy + vjy) / 2.;
+                    var vcix = vix - vcx;
+                    var vciy = viy - vcy;
+                    var vcjx = vjx - vcx;
+                    var vcjy = vjy - vcy;
+                    var vci = dist(0, 0, vcix, vciy);
+                    var vcj = dist(0, 0, vcjx, vcjy);
+                    var aci = getAngle(vcix, vciy);
+                    var acj = getAngle(vcjx, vcjy);
+                    var aij = getAngle(moleX[j] - moleX[i], moleY[j] - moleY[i]);
+                    var aji = getAngle(moleX[i] - moleX[j], moleY[i] - moleY[j]);
+                    aci = mod(2 * aij + 180 - aci, 360);
+                    acj = mod(2 * aji + 180 - acj, 360);
+                    vix = vci * dcos[aci];
+                    viy = vci * dsin[aci];
+                    vjx = vcj * dcos[acj];
+                    vjy = vcj * dsin[acj];
+                    vix += vcx;
+                    viy += vcy;
+                    vjx += vcx;
+                    vjy += vcy;
+                    var t = moleV[i] + moleV[j];
+                    if (radioA.value() == "gas") {
+                        moleV[i] = dist(0, 0, vix, viy);
+                        moleV[j] = dist(0, 0, vjx, vjy)
+                    }
+                    moleA[i] = getAngle(vix, viy);
+                    moleA[j] = getAngle(vjx, vjy)
+                }
+            }
+            for (var i = 0; i < moleMax; i++) {
+                if (!solidLock) {
+                    moleX[i] += moleV[i] * dcos[moleA[i]];
+                    moleY[i] += moleV[i] * dsin[moleA[i]]
+                }
+                if (moleX[i] < minX) {
+                    moleX[i] = 2 * minX - moleX[i];
+                    moleA[i] = mod(180 - moleA[i], 360)
+                }
+                if (moleX[i] > maxX) {
+                    moleX[i] = 2 * maxX - moleX[i];
+                    moleA[i] = mod(180 - moleA[i], 360)
+                }
+                if (moleY[i] < minY) {
+                    moleY[i] = 2 * minY - moleY[i];
+                    moleA[i] = 360 - moleA[i]
+                }
+                if (moleY[i] > maxY) {
+                    moleY[i] = 2 * maxY - moleY[i];
+                    moleA[i] = 360 - moleA[i]
+                }
+            }
+        }
+
+
+    </script>
+</div>
+
+</body>
+
+</html>

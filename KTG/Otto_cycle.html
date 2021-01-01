@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Otto Cyclew: JavaLabs.org</title>
+    <link href="javalab.css" rel="stylesheet">
+</head>
+<body>
+
+<h2>Otto Cycles</h2>
+<p>
+    The Otto cycle is an ideal thermodynamic cycle that describes the function of a typical spark ignition piston
+    engine. The Otto cycle describes the most common engine that burns gasoline and ignites the spark.
+</p>
+<div id="divFull" style="background-color: white;">
+    <div id="myContainer"></div>
+    <div class="flexContainer">
+        <div class="flexItem"><span id="radioA"></span></div>
+        <div class="flexItem">
+            <button id="buttonFull"></button>
+        </div>
+    </div>
+</div>
+<div style="display: none;">
+    <script src="javalab.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+
+    <script>
+
+        var language = 2;
+        let buttonFull;
+        var img_block;
+        var img_valve;
+        var img_crank;
+        var img_piston;
+        var img_bang;
+        var phase = 0;
+        var particleX = [];
+        var particleY = [];
+        var inFlowX = [];
+        var inFlowY = [];
+        var outFlowX = [];
+        var outFlowY = [];
+        var xGraph = 0.55;
+        var yGraph = 0.37;
+        var wGraph = 0.44;
+        var hGraph = -0.36;
+        var radioA;
+
+        function preload() {
+            var url = getURL();
+            var regexp = "http";
+            var m = match(url, regexp);
+            var imagePrefix = "";//(m == "http") ? "//javalab.org/lee/image/" : "";
+            img_block = loadImage("engine_otto_block.png");
+            img_valve = loadImage("engine_otto_valve.png");
+            img_crank = loadImage("engine_otto_crank.png");
+            img_piston = loadImage("engine_otto_piston.png");
+            img_bang = loadImage("engine_otto_bang.png")
+        }
+
+        function setup() {
+            frameRate(40);
+            pixelDensity(2 * displayDensity());
+            var o = select("#myContainer");
+            var a = 0.45;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            myCanvas = createCanvas(w, h);
+            myCanvas.parent("myContainer");
+            myCanvas.id("myP5Canvas");
+            radioA = createRadio("radioA");
+            radioA.option("Stop ", "stop");
+            radioA.option("Slow ", "slow");
+            radioA.option("Fast ", "fast");
+            radioA.parent("radioA");
+            radioA.value("stop");
+            radioA.changed(doRadioA);
+            buttonFull = select("#buttonFull");
+            buttonFull.mouseClicked(doFullScreen);
+            if (language == 0) buttonFull.html("전체화면");
+            if (language == 1) buttonFull.html("全画面表示");
+            if (language == 2) buttonFull.html("Fullscreen");
+            for (var i = 0; i < 100; i++) {
+                inFlowX[i] = random(1);
+                inFlowY[i] = random(1);
+                outFlowX[i] = random(1);
+                outFlowY[i] = random(1)
+            }
+            relocateParticle()
+        }
+
+        function relocateParticle() {
+            for (var i = 0; i < 200; i++) {
+                particleX[i] = random(1);
+                particleY[i] = random(1)
+            }
+        }
+
+        function windowResized() {
+            var o = select("#myContainer");
+            var a = 0.45;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            resizeCanvas(w, h)
+        }
+
+        function doRadioA() {
+            if (radioA.value() == "slow") frameRate(12);
+            if (radioA.value() == "fast") frameRate(120)
+        }
+
+        function draw() {
+            if (touches.length > 1) return;
+            background(255);
+            strokeWeight(width / 1000);
+            textSize(width / 40);
+            textAlign(CENTER, CENTER);
+            if (radioA.value() == "slow") phase += 0.1;
+            if (radioA.value() == "fast") phase += 0.4;
+            if (phase >= 2 * TWO_PI) {
+                phase -= 2 * TWO_PI;
+                relocateParticle()
+            }
+            imageMode(CENTER);
+            var scaleFactor = width * 0.0003;
+            var crankArm = width * 0.0528;
+            var axisX = width * 0.23;
+            var axisY = width * 0.37;
+            var crankX = axisX + crankArm * sin(phase);
+            var crankY = axisY - crankArm * cos(phase);
+            var pistonX = axisX;
+            var pistonY = axisY - width * 0.17 - crankArm * cos(phase);
+            noStroke();
+            if (phase < TWO_PI) fill(255, 128, 255); else fill(lerpColor(color(255, 128, 128), color(128), map(phase, TWO_PI, 2 * TWO_PI, 0, 2)));
+            var offsetY = -crankArm * (1 + cos(phase));
+            var x1 = axisX - width * 0.0684;
+            var x2 = axisX + width * 0.0684;
+            var y1 = width * 0.1;
+            var y2 = width * 0.215;
+            for (var i = 0; i < 200; i++) {
+                if ((phase < PI) || (3 * PI <= phase)) {
+                    var x = map(particleX[i], 0, 1, x1, x2);
+                    var y = map(particleY[i], 0, 1, y1, y2) + offsetY;
+                    if (y > y1) ellipse(x, y, width * 0.005, width * 0.005)
+                } else {
+                    var x = map(particleX[i], 0, 1, x1, x2);
+                    var y = map(particleY[i], 0, 1, y1, y2 + offsetY);
+                    ellipse(x, y, width * 0.005, width * 0.005)
+                }
+            }
+            noStroke();
+            fill(255, 128, 255);
+            x1 = axisX - width * 0.12;
+            x2 = axisX - width * 0.04;
+            y1 = width * 0.05;
+            y2 = width * 0.08;
+            for (var i = 0; i < 30; i++) {
+                if (phase < PI) {
+                    if (radioA.value() == "slow") inFlowX[i] += 0.04;
+                    if (radioA.value() == "fast") inFlowX[i] += 0.4;
+                    if (inFlowX[i] > 1) {
+                        inFlowX[i] -= 1;
+                        inFlowY[i] = random(1)
+                    }
+                }
+                var x = map(inFlowX[i], 0, 1, x1, x2);
+                var y = map(inFlowY[i], 0, 1, y1, y2);
+                ellipse(x, y, width * 0.005, width * 0.005)
+            }
+            noStroke();
+            fill(128);
+            x1 = axisX + width * 0.04;
+            x2 = axisX + width * 0.12;
+            y1 = width * 0.05;
+            y2 = width * 0.08;
+            for (var i = 0; i < 30; i++) {
+                if (phase > 3 * PI) {
+                    if (radioA.value() == "slow") outFlowX[i] += 0.04;
+                    if (radioA.value() == "fast") outFlowX[i] += 0.4;
+                    if (outFlowX[i] > 1) {
+                        outFlowX[i] -= 1;
+                        outFlowY[i] = random(1)
+                    }
+                }
+                var x = map(outFlowX[i], 0, 1, x1, x2);
+                var y = map(outFlowY[i], 0, 1, y1, y2);
+                ellipse(x, y, width * 0.005, width * 0.005)
+            }
+            stroke(127);
+            strokeWeight(width * 0.025);
+            line(pistonX, pistonY, crankX, crankY);
+            push();
+            translate(axisX, axisY);
+            rotate(phase);
+            image(img_crank, 0, 0, scaleFactor * img_crank.width, scaleFactor * img_crank.height);
+            pop();
+            image(img_block, axisX, axisY - width * 0.21, scaleFactor * img_block.width, scaleFactor * img_block.height);
+            image(img_piston, pistonX, pistonY, scaleFactor * img_piston.width, scaleFactor * img_piston.height);
+            if (2 * PI < phase) if (phase < 3 * PI) image(img_bang, axisX, axisY - width * 0.25, width * 0.0002 * img_bang.width, width * 0.0002 * img_bang.height);
+            if (phase < PI) image(img_valve, axisX - width * 0.04068, width * 0.06, scaleFactor * img_valve.width, scaleFactor * img_valve.height); else image(img_valve, axisX - width * 0.04068, width * 0.048, scaleFactor * img_valve.width, scaleFactor * img_valve.height);
+            if (phase > 3 * PI) image(img_valve, axisX + width * 0.04068, width * 0.06, scaleFactor * img_valve.width, scaleFactor * img_valve.height); else image(img_valve, axisX + width * 0.04068, width * 0.048, scaleFactor * img_valve.width, scaleFactor * img_valve.height);
+            noStroke();
+            fill(191, 64, 191);
+            textAlign(RIGHT, CENTER);
+            if (language == 0) text("연료와\n공기", axisX - width * 0.14, width * 0.065);
+            if (language == 1) text("燃料と\n空気", axisX - width * 0.14, width * 0.065);
+            if (language == 2) text("Fuel\nand Air", axisX - width * 0.14, width * 0.065);
+            fill(0);
+            textAlign(LEFT, CENTER);
+            if (language == 0) text("배기가스", axisX + width * 0.14, width * 0.065);
+            if (language == 1) text("排気ガス", axisX + width * 0.14, width * 0.065);
+            if (language == 2) text("Exhaust\ngas", axisX + width * 0.14, width * 0.065);
+            stroke(0);
+            strokeWeight(width / 500);
+            drawArrow(width * xGraph, width * yGraph, width * wGraph, 0);
+            drawArrow(width * xGraph, width * yGraph, 0, width * hGraph);
+            fill(255, 255, 128);
+            beginShape();
+            for (var i = 0; i < 120; i++) {
+                var p = map(i, 0, 120, 0, 2 * TWO_PI);
+                vertex(getGraphX(p), getGraphY(p))
+            }
+            endShape();
+            fill(0);
+            ellipse(getGraphX(phase), getGraphY(phase), width * 0.01, width * 0.01);
+            fill(0);
+            noStroke();
+            textAlign(CENTER, TOP);
+            if (language == 0) text("부피", width * (xGraph + wGraph / 2), width * yGraph + textSize());
+            if (language == 1) text("体積", width * (xGraph + wGraph / 2), width * yGraph + textSize());
+            if (language == 2) text("Volume", width * (xGraph + wGraph / 2), width * yGraph + textSize());
+            textAlign(RIGHT, CENTER);
+            if (language == 0) text("압력", width * xGraph - textSize(), width * (yGraph + hGraph / 2));
+            if (language == 1) text("圧力", width * xGraph - textSize(), width * (yGraph + hGraph / 2));
+            if (language == 2) text("Pressure", width * xGraph - textSize(), width * (yGraph + hGraph / 2))
+        }
+
+        function getGraphX(p) {
+            var v1 = width * (xGraph + 0.08);
+            var v2 = width * (xGraph + 0.36);
+            if (0 <= p) if (p < 1.0 * PI) return map(p, 0.0 * PI, 1.0 * PI, v1, v2);
+            if (1.0 * PI <= p) if (p < 1.8 * PI) return map(p, 1.0 * PI, 1.8 * PI, v2, v1) - width * 0.015 * sin(map(p, 1.0 * PI, 1.8 * PI, 0, PI));
+            if (1.8 * PI <= p) if (p < 2.0 * PI) return v1;
+            if (2.0 * PI <= p) if (p < 2.8 * PI) return map(p, 2.0 * PI, 2.8 * PI, v1, v2) - width * 0.02 * sin(map(p, 2.0 * PI, 2.8 * PI, 0, PI));
+            if (2.8 * PI <= p) if (p < 3.0 * PI) return v2;
+            if (3.0 * PI <= p) if (p < 4.0 * PI) return map(p, 3.0 * PI, 4.0 * PI, v2, v1)
+        }
+
+        function getGraphY(p) {
+            var p0 = width * (yGraph - 0.07);
+            var p1 = width * (yGraph - 0.18);
+            var p2 = width * (yGraph - 0.3);
+            var p3 = width * (yGraph - 0.13);
+            if (0 <= p) if (p < 1.0 * PI) return p0;
+            if (1.0 * PI <= p) if (p < 1.8 * PI) return map(p, 1.0 * PI, 1.8 * PI, p0, p1) + width * 0.015 * sin(map(p, 1.0 * PI, 1.8 * PI, 0, PI));
+            if (1.8 * PI <= p) if (p < 2.0 * PI) return map(p, 1.8 * PI, 2.0 * PI, p1, p2);
+            if (2.0 * PI <= p) if (p < 2.8 * PI) return map(p, 2.0 * PI, 2.8 * PI, p2, p3) + width * 0.02 * sin(map(p, 2.0 * PI, 2.8 * PI, 0, PI));
+            if (2.8 * PI <= p) if (p < 3.0 * PI) return map(p, 2.8 * PI, 3.0 * PI, p3, p0);
+            if (3.0 * PI <= p) if (p < 4.0 * PI) return p0
+        }
+
+
+    </script>
+</div>
+
+</body>
+
+</html>

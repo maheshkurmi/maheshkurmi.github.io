@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Charle's Law: JavaLabs.org</title>
+
+</head>
+<body>
+
+<h2>Charle's&#8217;s Law</h2>
+<p>Charles's law (also known as the law of volumes) is an experimental gas law that describes how gases tend to expand when heated. A modern statement of Charles's law is:
+
+    When the pressure on a sample of a dry gas is held constant, the Kelvin temperature and the volume will be in direct proportion</p>
+<div id="myContainer"></div>
+
+<div style="display: none;">
+    <script src="javalab.js"></script>
+    <script src="p5.js"></script>
+
+    <script>
+
+        let language = 2;
+        let buttonFull;
+        var maxMole = 40;
+        var xMole = [];
+        var yMole = [];
+        var vMole = [];
+        var aMole = [];
+        var mass = 2;
+        var xMid = 400;
+        var xMin;
+        var xMax;
+        var yMax = 350;
+        var oyMin = yMax - 150;
+        var yMin = yMax - 150;
+        var xTempMin = 100;
+        var xTempMid = 400;
+        var xTempMax = 700;
+        var xDrag = xMid;
+
+        function setup() {
+            frameRate(20);
+            pixelDensity(2 * displayDensity());
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            myCanvas = createCanvas(w, h);
+            myCanvas.parent("myContainer");
+            myCanvas.id("myP5Canvas");
+
+            for (var i = 0; i < maxMole; i++) {
+                xMole[i] = random(200);
+                yMole[i] = random(oyMin, yMax);
+                aMole[i] = round(random(360))
+            }
+            setup2()
+        }
+
+        function windowResized() {
+            var o = select("#myContainer");
+            var a = 0.5;
+            var w = int((o.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : o.width);
+            var h = int(w * a);
+            resizeCanvas(w, h)
+        }
+
+        function setup2() {
+            xMin = xMid - 100;
+            xMax = xMid + 100;
+            var b = oyMin;
+            var v = lerp(0, 300, (xMid - xTempMin) * 1.0 / (xTempMax - xTempMin));
+            oyMin = yMax - v;
+            for (var i = 0; i < maxMole; i++) {
+                yMole[i] = yMax - (yMax - yMole[i]) * (yMax - oyMin) / (yMax - b);
+                vMole[i] = v / 20.
+            }
+        }
+
+        function draw() {
+            if (touches.length > 1) return;
+            background(233);
+            strokeWeight(2);
+            textSize(20);
+            textAlign(CENTER, CENTER);
+            push();
+            scale(width / 900);
+            stroke(255);
+            for (var i = xTempMin; i < 900; i += 50) {
+                line(i, 0, i, 350)
+            }
+            for (var i = 50; i < 400; i += 50) {
+                line(xTempMin, i, 900, i)
+            }
+            fill(255);
+            rect(xMin, yMin, xMax - xMin, yMax - yMin);
+            fill(0, 0, 255);
+            stroke(0);
+            for (var i = 0; i < maxMole; i++) {
+                ellipse(xMin + xMole[i], yMole[i], 5, 5)
+            }
+            noStroke();
+            {
+                fill(128);
+                rect(xMin - 10, 30, 10, 330, 5, 5, 5, 5);
+                rect(xMin - 10, yMax, 220, 10, 5, 5, 5, 5);
+                rect(xMax, 30, 10, 330, 5, 5, 5, 5);
+                fill(255, 0, 0);
+                rect(xMin, yMin - 10, 200, 10)
+            }
+            var yTempLine = 350;
+            fill(0);
+            stroke(0);
+            strokeWeight(2);
+            ellipse(xTempMin, yTempLine, 10, 10);
+            line(xTempMin, yTempLine, 900, yTempLine);
+            line(xTempMin, 0, xTempMin, yTempLine + 20);
+            line(xTempMid, yTempLine - 20, xTempMid, yTempLine + 20);
+            line(xTempMax, yTempLine - 20, xTempMax, yTempLine + 20);
+            line(xTempMin - 20, yTempLine - 150, xTempMin + 20, yTempLine - 150);
+            line(xTempMin - 20, yTempLine - 300, xTempMin + 20, yTempLine - 300);
+            ellipse(xMid, yMin, 10, 10);
+            line(xTempMin, yTempLine, 900, -50);
+            noStroke();
+            fill(0);
+            text("0 K", xTempMin, 400);
+            text("-273 ℃", xTempMin, 430);
+            text("273 K", xTempMid, 400);
+            text("0 ℃", xTempMid, 430);
+            text("546 K", xTempMax, 400);
+            text("273 ℃", xTempMax, 430);
+            fill(0, 0, 255);
+            for (var i = 0; i < mass; i++) {
+                drawArrow2D_thick(lerp(xMin, xMax, (i + 1) * 1.0 / (mass + 1)), yMin - 55, 0, 40, 5)
+            }
+            running();
+            pop();
+            drawButton()
+        }
+
+        function running() {
+            yMin = lerp(yMin, oyMin, 0.5);
+            var tollerence = 10;
+            for (var i = 0; i < maxMole - 1; i++)
+                for (var j = i + 1; j < maxMole; j++) {
+                    var pix = xMole[i] + vMole[i] * dcos[aMole[i]];
+                    var piy = yMole[i] + vMole[i] * dsin[aMole[i]];
+                    var pjx = xMole[j] + vMole[j] * dcos[aMole[j]];
+                    var pjy = yMole[j] + vMole[j] * dsin[aMole[j]];
+                    if (dist(xMole[i], yMole[i], xMole[j], yMole[j]) < tollerence)
+                        if (dist(xMole[i], yMole[i], xMole[j], yMole[j]) > dist(pix, piy, pjx, pjy)) {
+                            var vix = vMole[i] * dcos[aMole[i]];
+                            var viy = vMole[i] * dsin[aMole[i]];
+                            var vjx = vMole[j] * dcos[aMole[j]];
+                            var vjy = vMole[j] * dsin[aMole[j]];
+                            var vcx = (vix + vjx) / 2.;
+                            var vcy = (viy + vjy) / 2.;
+                            var vcix = vix - vcx;
+                            var vciy = viy - vcy;
+                            var vcjx = vjx - vcx;
+                            var vcjy = vjy - vcy;
+                            var vci = dist(0, 0, vcix, vciy);
+                            var vcj = dist(0, 0, vcjx, vcjy);
+                            var aci = getAngle(vcix, vciy);
+                            var acj = getAngle(vcjx, vcjy);
+                            var aij = getAngle(xMole[j] - xMole[i], yMole[j] - yMole[i]);
+                            var aji = getAngle(xMole[i] - xMole[j], yMole[i] - yMole[j]);
+                            aci = mod(2 * aij + 180 - aci, 360);
+                            acj = mod(2 * aji + 180 - acj, 360);
+                            vix = vci * dcos[aci];
+                            viy = vci * dsin[aci];
+                            vjx = vcj * dcos[acj];
+                            vjy = vcj * dsin[acj];
+                            vix += vcx;
+                            viy += vcy;
+                            vjx += vcx;
+                            vjy += vcy;
+                            var t = vMole[i] + vMole[j];
+                            vMole[i] = dist(0, 0, vix, viy);
+                            vMole[j] = t - vMole[i];
+                            aMole[i] = getAngle(vix, viy);
+                            aMole[j] = getAngle(vjx, vjy)
+                        }
+                }
+            for (var i = 0; i < maxMole; i++) {
+                {
+                    xMole[i] += vMole[i] * dcos[aMole[i]];
+                    yMole[i] += vMole[i] * dsin[aMole[i]]
+                }
+                if (xMole[i] < (0)) {
+                    xMole[i] = 2 * (0) - xMole[i];
+                    aMole[i] = mod(180 - aMole[i], 360)
+                }
+                if (xMole[i] > (200)) {
+                    xMole[i] = 2 * (200) - xMole[i];
+                    aMole[i] = mod(180 - aMole[i], 360)
+                }
+                if (yMole[i] < (yMin)) {
+                    yMole[i] = 2 * (yMin) - yMole[i];
+                    aMole[i] = 360 - aMole[i];
+                    yMin--
+                }
+                if (yMole[i] > (yMax)) {
+                    yMole[i] = 2 * (yMax) - yMole[i];
+                    aMole[i] = 360 - aMole[i]
+                }
+            }
+        }
+
+        function drawButton() {
+            drawButtonDrag()
+        }
+
+        var bDragged = !1;
+        var xOffset;
+
+        function touchStarted() {
+            if (!contain(mouseX, mouseY, 0, 0, width, height)) return;
+            bDragged = !0;
+            xOffset = mouseX - xMid
+        }
+
+        function touchMoved() {
+            if (touches.length > 1) return;
+            if (bDragged) {
+                xMid = mouseX - xOffset;
+                xMid = xDrag = constrain(xMid, xTempMin + 50, xTempMax);
+                setup2();
+                if (abs(mouseX - pmouseX) > abs(mouseY - pmouseY)) return !1
+            }
+        }
+
+        function touchEnded() {
+            bDragged = !1
+        }
+    </script>
+</div>
+
+</body>
+
+</html>

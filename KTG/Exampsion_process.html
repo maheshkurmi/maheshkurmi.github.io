@@ -1,0 +1,797 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-8175315-19"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-8175315-19');
+    </script>
+
+    <meta charset="utf-8">
+    <title>Adiabatic</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; width:720px; margin-left:auto; margin-right:auto;">
+<center>
+    <H3>Comparing isothermal and adiabatic processes</H3>
+    <canvas id="myCanvas" width="640" height="440"></canvas>
+    <div id="buttons">
+        <input type="button" id="reset" value="Reset" onclick="reset()">
+    </div>
+
+    <div id="Buttons1">
+        <input type="button" id="iso2" value="Isothermal compression" onclick="isotherm(-1)">
+        <input type="button" id="iso1" value="Isothermal expansion" onclick="isotherm(1)">
+    </div>
+    <div id="Buttons2">
+        <input type="button" id="adia2" value="Adiabatic compression" onclick="adiabatic(-1)">
+        <input type="button" id="adia1" value="Adiabatic expansion" onclick="adiabatic(1)">
+    </div>
+
+
+</center>
+
+<script>
+
+    function isotherm(dV) {
+        deltaV = Number(dV);
+        if ((deltaV > 0.0) && (volume < 6.0)) {
+            heat = pressure*volume*Math.log((volume+deltaV)/volume);
+            conTemperature(heat);
+        }
+        if ((deltaV < 0.0) && (volume > 1.0)) {
+            heat = pressure*volume*Math.log((volume+deltaV)/volume);
+            conTemperature(heat);
+        }
+
+    }
+
+    function conVolume(heatVal) {
+        if (processCounter == 100) {
+            processCounter = 0;
+            processType = 1;
+            heat = Number(heatVal);
+            oldVolume = volume;
+            oldPressure = pressure;
+            heatDisplay = 0.0;
+            work = 0.0;
+            deltaEint = 0.0;
+        }
+    }
+
+    function conPressure(heatVal) {
+        if (processCounter == 100) {
+            processCounter = 0;
+            processType = 2;
+            heat = Number(heatVal);
+            oldVolume = volume;
+            oldPressure = pressure;
+            heatDisplay = 0.0;
+            work = 0.0;
+            deltaEint = 0.0;
+        }
+    }
+
+    function conTemperature(heatVal) {
+        if (processCounter == 100) {
+            processCounter = 0;
+            processType = 3;
+            heat = Number(heatVal);
+            oldVolume = volume;
+            oldPressure = pressure;
+            heatDisplay = 0.0;
+            work = 0.0;
+            deltaEint = 0.0;
+        }
+
+    }
+
+    function adiabatic(dV) {
+        deltaV = Number(dV);
+        if (((deltaV > 0.0) && (volume < 6.0)) ||  ((deltaV < 0.0) && (volume > 1.0))) {
+
+            if (processCounter == 100) {
+                processCounter = 0;
+                processType = 4;
+                heat = 0.0;
+                oldVolume = volume;
+                oldPressure = pressure;
+                heatDisplay = 0.0;
+                work = 0.0;
+                deltaEint = 0.0;
+            }
+        }
+
+    }
+
+
+    function play() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        runMotion();
+
+    }
+
+    function pause() {
+        window.clearTimeout(timer);
+        runFlag = 0;
+
+    }
+
+    function stepForward() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+    function stepBack() {
+        window.clearTimeout(timer);
+        index = index-2;
+        if (index < -1) index = -1;
+        time = index/100;
+        xPos = xBase;
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+
+    function reset() {
+        window.clearTimeout(timer);
+        index = -1;
+        time = 0.0;
+        xPos = xBase;
+        temperature = 600;
+        volume = 3.0;
+        pressure = temperature/volume;
+        heat = 0;
+        heatDisplay = 0;
+        internalEnergy = 1.5*pressure*volume;
+        deltaEint = 0.0;
+        work = 0.0;
+        processCounter = 100;
+        processType = 0;
+        boxHeight = 50*volume;
+        for (var i = 0; i <= nBalls; i++) {
+            if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].yValue = ball[i].yValue-50;
+            if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius)) ball[i].yValue = ball[i].yValue+50;
+            if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].yValue = centerY;
+            if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius)) ball[i].yValue = centerY;
+        }
+
+
+        runMotion();
+
+    }
+
+
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+    var index = -1;
+    var xBase = 64;
+    var xBase2 = 320;
+    var yBase = 30;
+    var yBase2 = 50;
+    var xInit = 37;
+    var graphType = 1;
+    var yStart = yBase+160;
+    var plotColor = '#ff00ff';
+    var v;
+    var radius = 6;
+    var time = 0.0;
+    var x = 0.0;
+    var temperature = 600;
+    var volume = 3.0;
+    var pressure = temperature/volume;
+    var oldVolume = volume;
+    var oldPressure = pressure;
+    var VLo = volume;
+    var VHi = volume;
+    var maxTime = (24-(pressure/3.0))/(100.0*pressure/3.0);
+    var graphLabel = 'Pressure vs. volume';
+    var yAxisLabel = 'P (kPa)';
+    var xAxisLabel = 'V (L)';
+    var graphX = 6;
+    var graphY = 6;
+    var xMajorTicks = 1;
+    var xDecimals = 0;
+    var yMajorTicks = 100;
+    var yDecimals = 0;
+    var xAxisOffset = 0;
+
+    var heat = 0;
+    var heatDisplay = 0;
+    var internalEnergy = 1.5*pressure*volume;
+    var deltaEint = 0.0;
+    var work = 0.0;
+    var processCounter = 100;
+    var processType = 0;
+    var deltaV = 0.0;
+
+    var timer;
+    var runFlag = 1;
+
+    var deltaT = 0.02;
+    var numBalls = 100;
+    //      var boxSize = 400;
+    var boxHeight = 300;
+    var boxWidth = 200;
+    var centerX = 120;
+    var centerY = 160;
+    var ballRadius = 3;
+    var redness;
+    var greenness;
+    var blueness;
+    var redString = "0";
+    var greenString = "0";
+    var blueString = "0";
+    var colorString = "0";
+
+    var tempNumber;
+    var tempRed;
+    var tempGreen;
+    var tempBlue;
+    var tempTrans;
+    var tempSpeed;
+
+    var nBalls = 301;
+    var ball = new Array(nBalls+1);
+    for (var i = 0; i <= nBalls; i++) {
+        ball[i] = {};
+        ball[i].xValue = centerX;
+        ball[i].yValue = centerY;
+        ball[i].deltaX = -1.0+2.0*Math.random();
+        ball[i].deltaY = -1.0+2.0*Math.random();
+        //           console.log("x = " + ball[i].xValue);
+
+
+        // choose a random color for each ball
+        redness = Math.floor(1+254*Math.random());
+        redString = redness.toString(16);
+        if (redString.length == 1) redString = "0"+redString;
+        greenness = Math.floor(1+254*Math.random());
+        greenString = greenness.toString(16);
+        if (greenString.length == 1) greenString = "0"+greenString;
+        blueness = Math.floor(1+254*Math.random());
+        blueString = blueness.toString(16);
+        if (blueString.length == 1) blueString = "0"+blueString;
+        colorString = "#" + redString+greenString+blueString;
+
+        ball[i].color = colorString;
+
+    }
+    ball[0].color = "#f00";
+
+    var speedFactor = Math.sqrt(Number(temperature/100));
+    var useRandomColors;
+    var ballsCollide;
+    var vxi;
+    var vyi;
+    var vxj;
+    var vyj;
+    var sinTheta;
+    var cosTheta;
+    var distance;
+    var diamSq = 2*ballRadius*2*ballRadius;
+    var cOfMX;
+    var cOfMY;
+    var overlap = create2DArray(nBalls,nBalls,0);
+    var oldOverlap = create2DArray(nBalls,nBalls,1);
+    arraySize = 101;
+    var isoThermal = new Array(arraySize);
+    for (var i = 0; i < arraySize; i++) {
+        isoThermal[i] = {};
+        isoThermal[i].volume = 0;
+        isoThermal[i].pressure = 0;
+    }
+
+
+    runMotion();
+
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+//      if ((time >= maxTime))index = 0;
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " xPos = " + xPos);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            index = index + 1;
+            time = index/100.0;
+
+
+            // set background color for the entire thing
+            context.fillStyle = "#ffd";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // set background color for the graph
+//           context.fillStyle = "#eff";
+//           context.fillRect(xBase, yBase, 400, 160);
+
+            // set line color
+            context.strokeStyle = '#999';
+            context.lineWidth = 3;
+
+
+            var axisLabel = '';
+            var axisValue = 0;
+
+            boxHeight = 50*volume;
+
+            // set background color for the box of gas
+            context.fillStyle = "#fff";
+            context.fillRect(centerX-0.5*boxWidth, centerY-0.5*boxHeight, boxWidth, boxHeight);
+            context.strokeStyle = 'black';
+            context.lineWidth = 1;
+            context.strokeRect(centerX-0.5*boxWidth, centerY-0.5*boxHeight, boxWidth, boxHeight);
+            // draw box outline
+
+
+// check to see if balls overlap
+
+            for (var i = 0; i<(numBalls-1); i++) {
+                for (var j = i+1; j<numBalls; j++) {
+                    if (((ball[j].xValue-ball[i].xValue)*(ball[j].xValue-ball[i].xValue)+(ball[j].yValue-ball[i].yValue)*(ball[j].yValue-ball[i].yValue)) < diamSq) {
+                        overlap[i][j] = 1;
+                    }
+                    else {
+                        overlap[i][j] = 0;
+                    }
+                }
+            }
+
+// if a new overlap occurs, the balls collide - find the new velocities
+
+            for (var i = 0; i<(numBalls-1); i++) {
+                for (var j = i+1; j<numBalls; j++) {
+                    if ((overlap[i][j] == 1) && (oldOverlap[i][j] == 0)) {
+                        vxi = ball[i].deltaX;
+                        vyi = ball[i].deltaY;
+                        vxj = ball[j].deltaX;
+                        vyj = ball[j].deltaY;
+                        distance = Math.sqrt((ball[j].xValue-ball[i].xValue)*(ball[j].xValue-ball[i].xValue)+(ball[j].yValue-ball[i].yValue)*(ball[j].yValue-ball[i].yValue));
+                        cosTheta = (ball[j].yValue-ball[i].yValue)/distance;
+                        sinTheta = (ball[j].xValue-ball[i].xValue)/distance;
+                        ball[i].deltaX = vxi + sinTheta*( -vxi*sinTheta + vxj*sinTheta - vyi*cosTheta + vyj*cosTheta);
+                        //        deltaX[j] = vxj + sinTheta*( -vxj*sinTheta + vxi*sinTheta - vyj*cosTheta + vyi*cosTheta);
+                        ball[j].deltaX = vxj + vxi - ball[i].deltaX;
+                        ball[i].deltaY = vyi + cosTheta*( -vyi*cosTheta + vyj*cosTheta - vxi*sinTheta + vxj*sinTheta);
+                        //        deltaY[j] = vyj + cosTheta*(-vyj*cosTheta + vyi*cosTheta - vxj*sinTheta + vxi*sinTheta);
+                        ball[j].deltaY = vyj + vyi - ball[i].deltaY;
+                    }
+                    oldOverlap[i][j] = overlap[i][j];
+                }
+            }
+
+
+// move and then draw the balls
+
+
+            for (var i = (numBalls-1); i>=0; i--) {
+                ball[i].xValue = ball[i].xValue + speedFactor*ball[i].deltaX;
+//    console.log("x = " + ball[i].xValue);
+
+                ball[i].yValue = ball[i].yValue + speedFactor*ball[i].deltaY;
+                // code for bouncing off walls
+                if (ball[i].xValue > (centerX+0.5*boxWidth-ballRadius)) ball[i].deltaX = -Math.abs(ball[i].deltaX);
+                if (ball[i].xValue < (centerX-0.5*boxWidth+ballRadius)) ball[i].deltaX = Math.abs(ball[i].deltaX);
+                if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].deltaY = -Math.abs(ball[i].deltaY);
+                if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius))ball[i].deltaY = Math.abs(ball[i].deltaY);
+
+                context.fillStyle = ball[i].color;
+
+                context.strokeStyle = ball[i].color;
+                context.beginPath();
+                context.arc(ball[i].xValue, ball[i].yValue, ballRadius, 0, 2 * Math.PI, false);
+                context.fill();
+//        context.stroke();
+            }
+
+
+            // set up the graph
+            drawAxes (xBase2, yBase2, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+
+
+// draw the isotherms
+            for (var T = 200; T<= 3400; T = T+200) {
+                drawIsotherm(T);
+            }
+
+            // draw graph
+
+            if (processType == 1) {      // constant volume
+                if (processCounter < 100) {
+                    processCounter = processCounter + 1;
+                    pressure = pressure + (2.0/(3.0*volume))*heat/100.0;
+                    heatDisplay = heatDisplay + heat/100.0;
+                    deltaEint = deltaEint + heat/100.0;
+
+                    if (pressure > 600.0) {
+                        var deltaP = pressure - 600.0;
+                        pressure = 600.0;
+                        heatDisplay = heatDisplay - 1.5*deltaP*volume;
+                        deltaEint = heatDisplay;
+                    }
+                    if (pressure < 0.0) {
+                        var deltaP = pressure - 0.01;
+                        pressure = 0.01;
+                        heatDisplay = heatDisplay - 1.5*deltaP*volume;
+                        deltaEint = heatDisplay;
+                    }
+
+                    temperature = pressure*volume;
+                }
+                context.beginPath();
+                context.moveTo(xBase2+40*volume, yBase2+40*graphY-(40/yMajorTicks)*oldPressure);
+                context.lineTo(xBase2+40*volume, yBase2+40*graphY-(40/yMajorTicks)*pressure);
+                context.lineWidth = 4;
+                context.strokeStyle = 'blue';
+                context.stroke();
+
+            }
+
+            if (processType == 2) {      // constant pressure
+                if (processCounter < 100) {
+                    processCounter = processCounter + 1;
+                    volume = volume + (2.0/(5.0*pressure))*heat/100.0;
+                    heatDisplay = heatDisplay + heat/100.0;
+                    work = work + 0.4*heat/100.0;
+                    deltaEint = deltaEint + 0.6*heat/100.0;
+                    if (volume > 6.0) {
+                        volume = 6.0;
+                        work = pressure*(volume - oldVolume);
+                        deltaEint = 1.5*work;
+                        heatDisplay = work + deltaEint;
+                    }
+                    if (volume < 0.2) {
+                        volume = 0.2;
+                        work = pressure*(volume - oldVolume);
+                        deltaEint = 1.5*work;
+                        heatDisplay = work + deltaEint;
+                    }
+
+                    temperature = pressure*volume;
+                    boxHeight = 50*volume;
+
+                    if (heat < 0.0) {
+                        for (var i = 0; i <= nBalls; i++) {
+                            if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].yValue = ball[i].yValue-50;
+                            if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius)) ball[i].yValue = ball[i].yValue+50;
+                            if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].yValue = centerY;
+                            if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius)) ball[i].yValue = centerY;
+                        }
+                    }
+
+                }
+
+
+                context.beginPath();
+                // drawintegral
+                context.fillStyle = "red";
+                if (heat < 0.0) context.fillStyle = "blue";
+                context.beginPath();
+                context.fillRect(xBase2+40*oldVolume, yBase2+40*graphY-(40/yMajorTicks)*oldPressure, 40*(volume-oldVolume), (40/yMajorTicks)*oldPressure);
+                //  draw path
+                context.moveTo(xBase2+40*oldVolume, yBase2+40*graphY-(40/yMajorTicks)*oldPressure);
+                context.lineTo(xBase2+40*volume, yBase2+40*graphY-(40/yMajorTicks)*pressure);
+                context.lineWidth = 4;
+                context.strokeStyle = 'green';
+                context.stroke();
+
+
+            }
+
+            if (processType == 3) {      // constant temperature
+                if (processCounter < 100) {
+                    heatDisplay = heatDisplay + heat/100.0;
+                    work = work + heat/100.0;
+                    processCounter = processCounter + 1;
+                    volume = oldVolume*Math.exp(work/(oldPressure*oldVolume));
+                    if (volume > 6.0) {
+                        volume = 6.0;
+                        work = oldPressure*oldVolume*Math.log(volume/oldVolume);
+                        heatDisplay = work;
+                    }
+                    pressure = temperature/volume;
+                    if (pressure > 600.0) {
+                        pressure = 600.0;
+                        volume = temperature/pressure;
+                        work = oldPressure*oldVolume*Math.log(volume/oldVolume);
+                        heatDisplay = work;
+                    }
+                    boxHeight = 50*volume;
+                    isoThermal[processCounter].volume = volume;
+                    isoThermal[processCounter].pressure = pressure;
+
+                    if (heat < 0.0) {
+                        for (var i = 0; i <= nBalls; i++) {
+                            if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].yValue = ball[i].yValue-50;
+                            if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius)) ball[i].yValue = ball[i].yValue+50;
+                            if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].yValue = centerY;
+                            if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius)) ball[i].yValue = centerY;
+                        }
+                    }
+
+                }
+
+
+                // drawintegral
+                context.strokeStyle = "red";
+                context.lineWidth = 3;
+                if (heat < 0.0) context.strokeStyle = "blue";
+                context.beginPath();
+                context.moveTo(xBase2+40*oldVolume, yBase2+40*graphY);
+                context.lineTo(xBase2+40*oldVolume, yBase2+40*graphY-(40/yMajorTicks)*oldPressure);
+                context.stroke();
+
+                for (var i = 1; i < processCounter; i++) {
+                    context.beginPath();
+                    context.moveTo(xBase2+40*isoThermal[i].volume, yBase2+40*graphY);
+                    context.lineTo(xBase2+40*isoThermal[i].volume, yBase2+40*graphY-(40/yMajorTicks)*isoThermal[i].pressure);
+                    context.stroke();
+
+                }
+                context.lineWidth = 4;
+                context.strokeStyle = 'green';
+                context.beginPath();
+                context.moveTo(xBase2+40*oldVolume, yBase2+40*graphY-(40/yMajorTicks)*oldPressure);
+                for (var i = 1; i < processCounter; i++) {
+                    context.lineTo(xBase2+40*isoThermal[i].volume, yBase2+40*graphY-(40/yMajorTicks)*isoThermal[i].pressure);
+
+                }
+                context.stroke();
+
+            }
+
+            if (processType == 4) {      // adiabatic
+                if (processCounter < 100) {
+                    processCounter = processCounter + 1;
+                    volume = oldVolume + 0.01*processCounter*deltaV;
+                    if (volume > 6.0) volume = 6.0;
+                    pressure = oldPressure*Math.pow(oldVolume/volume,5/3);
+                    if (pressure > 600.0) {
+                        pressure = 600.0;
+                        volume = oldVolume*Math.pow(oldPressure/pressure,3/5);;
+                    }
+
+                    temperature = pressure*volume;
+                    deltaEint = 1.5*(pressure*volume-oldPressure*oldVolume);
+                    work = -1.0*deltaEint;
+                    boxHeight = 50*volume;
+                    isoThermal[processCounter].volume = volume;
+                    isoThermal[processCounter].pressure = pressure;
+
+                    if (deltaV < 0.0) {
+                        for (var i = 0; i <= nBalls; i++) {
+                            if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].yValue = ball[i].yValue-50;
+                            if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius)) ball[i].yValue = ball[i].yValue+50;
+                            if (ball[i].yValue > (centerY+0.5*boxHeight-ballRadius)) ball[i].yValue = centerY;
+                            if (ball[i].yValue < (centerY-0.5*boxHeight+ballRadius)) ball[i].yValue = centerY;
+                        }
+                    }
+
+                }
+
+
+                // drawintegral
+                context.strokeStyle = "red";
+                context.lineWidth = 3;
+                if (deltaV < 0.0) context.strokeStyle = "blue";
+                context.beginPath();
+                context.moveTo(xBase2+40*oldVolume, yBase2+40*graphY);
+                context.lineTo(xBase2+40*oldVolume, yBase2+40*graphY-(40/yMajorTicks)*oldPressure);
+                context.stroke();
+
+                for (var i = 1; i < processCounter; i++) {
+                    context.beginPath();
+                    context.moveTo(xBase2+40*isoThermal[i].volume, yBase2+40*graphY);
+                    context.lineTo(xBase2+40*isoThermal[i].volume, yBase2+40*graphY-(40/yMajorTicks)*isoThermal[i].pressure);
+                    context.stroke();
+
+                }
+                context.lineWidth = 4;
+                context.strokeStyle = 'green';
+                context.beginPath();
+                context.moveTo(xBase2+40*oldVolume, yBase2+40*graphY-(40/yMajorTicks)*oldPressure);
+                for (var i = 1; i < processCounter; i++) {
+                    context.lineTo(xBase2+40*isoThermal[i].volume, yBase2+40*graphY-(40/yMajorTicks)*isoThermal[i].pressure);
+
+                }
+                context.stroke();
+
+            }
+
+
+            speedFactor = Math.sqrt(Number(temperature/100));
+
+            context.beginPath();
+            context.arc(xBase2+40*volume, yBase2+40*graphY-(40/yMajorTicks)*temperature/volume, 0.8*radius, 0, 2 * Math.PI, false);
+            context.fillStyle = "green";
+            context.fill();
+            context.lineWidth = 2;
+            context.strokeStyle = '#000000';
+            context.stroke();
+
+
+            context.font = '16pt Calibri';
+            context.fillStyle = 'black';
+
+
+            var tempsLabel = 'Temp. = ' + temperature.toFixed(0) + ' K';
+            context.textAlign = 'left';
+            context.fillText(tempsLabel, 450, 340);
+
+            var VLabel = 'Volume = ' + volume.toFixed(2) + ' L';
+            //     if (volume > 1.1) RLabel = RLabel + 's';
+            context.textAlign = 'left';
+            context.fillText(VLabel, 280, 340);
+
+            var PLabel = 'Pressure = ' + pressure.toFixed(2) + ' kPA';
+            context.textAlign = 'left';
+            context.fillText(PLabel, 30, 340);
+
+            internalEnergy = 1.5*pressure*volume;
+            var ULabel = 'Internal energy = ' + internalEnergy.toFixed(1) + ' J';
+            context.textAlign = 'left';
+            context.fillText(ULabel, 30, 380);
+
+            var QLabel = 'Heat = ' + heatDisplay.toFixed(1) + ' J';
+            context.textAlign = 'left';
+            context.fillText(QLabel, 30, 420);
+
+            var dULabel = 'Change in int. energy = ' + deltaEint.toFixed(1) + ' J';
+            context.textAlign = 'left';
+            context.fillText(dULabel, 180, 420);
+
+            var WLabel = 'Work = ' + work.toFixed(1) + ' J';
+            context.textAlign = 'left';
+            context.fillText(WLabel, 470, 420);
+
+        }
+    }
+
+    function drawIsotherm(isoTemp) {
+        var pMax = 600;
+        var vMax = 6.0;
+        var vHigh = vMax;
+        var vLow = isoTemp/pMax;
+        context.strokeStyle = plotColor;
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(xBase2+40*vLow, yBase2+40*graphY-(40/yMajorTicks)*isoTemp/vLow);
+        //     console.log(temperature, isoTemp);
+        var interval = (vHigh-vLow)/100;
+        for (var i = 1; i <=100; i++) {
+            context.lineTo(xBase2+40*(vLow+i*interval), yBase2+40*graphY-(40/yMajorTicks)*isoTemp/(vLow+i*interval));
+        }
+        context.stroke();
+
+    }
+
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 600/30);
+        }
+    }
+
+    function drawAxes(xAxisStart,yAxisStart,xNum, yNum, xOffset, xIncrement, yIncrement, xNumDecimals, yNumDecimals, xAxisTitle, yAxisTitle, graphTitle) {
+        // set background color for the graph
+        context.fillStyle = "#eff";
+        context.fillRect(xAxisStart, yAxisStart, 40*xNum, 40*yNum);
+
+        var axisLabel = '';
+        var axisValue = 0;
+
+        // vertical grid lines
+        context.lineWidth = 2;
+        context.strokeStyle = '#888';
+
+        for (var i = 0; i <= xNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart+40*i, yAxisStart);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum+10);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = xOffset+xIncrement*(i);
+            axisLabel = axisValue.toFixed(xNumDecimals);
+            context.fillText(axisLabel, xAxisStart+40*i, yAxisStart+40*yNum+20);
+        }
+
+        // horizontal grid lines
+        for (i = 0; i <= yNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart-10, yAxisStart+40*i);
+            context.lineTo(xAxisStart+40*xNum, yAxisStart+40*i);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = yIncrement*(yNum-i);
+            axisLabel = axisValue.toFixed(yNumDecimals);
+            context.fillText(axisLabel, xAxisStart-30, yAxisStart+40*i);
+
+        }
+
+        // x-axis
+        context.strokeStyle = '#000';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(xAxisStart-1, yAxisStart+40*yNum);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum-6);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum);
+        context.lineTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum+6);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.fillText(xAxisTitle, xAxisStart+40*xNum+24, yAxisStart+40*yNum);
+
+        // y-axis
+        context.strokeStyle = '#000';
+        context.beginPath();
+        context.moveTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart-6, yAxisStart-10);
+        context.lineTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart+6, yAxisStart-10);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.strokeStyle = '#000';
+        context.textAlign = 'center';
+        //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xAxisStart );
+
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(yAxisTitle, xAxisStart-30, yAxisStart - 35);
+
+        // graph title
+        context.font = 'bold 18pt Calibri';
+        context.fillStyle = 'purple';
+        context.textAlign = 'center';
+        context.fillText(graphTitle, xAxisStart+40*xNum/2, yAxisStart-24);
+
+    }
+
+    function create2DArray(rows,columns,initialValue) {
+        var x = new Array(rows);
+        for (var i = 0; i < rows; i++) {
+            x[i] = new Array(columns);
+            for (var j = 0; j < columns; j++) {
+                x[i][j] = initialValue;
+            }
+        }
+        return x;
+    }
+
+
+</script>
+
+<p>In this simulation, you can look at the difference between a constant temperature (isothermal) process and an adiabatic process. The paths look somewhat similar on the P-V diagram, but you should notice clear differences. Note that an isothermal process has no
+    change in temperature, so the change in internal energy is zero, but in an adiabatic process the heat transferred is zero.</p>
+
+<p>Note that for each press of a button, the volume will change by 1 liter, unless that carries the system off the graph. What are some things that you notice about an isothermal process vs. an adiabatic process?  </p>
+
+</body>
+</html>
