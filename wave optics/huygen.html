@@ -1,0 +1,336 @@
+<!doctype html>
+<html>
+<head>
+    <title>Huygen's Principle</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div id="canvasdiv" class="container" align="center">
+    <canvas id="myCanvas" style="border: 1px solid #c3c3c3;" width="720px" height="400px">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div >
+        <span class="white">Check to create Spherical wavefront: </span>
+        <label class="white"><input id="chkSrcLoc" onchange="chkSrcLoc_onChange(null,this.checked)" type="checkbox" checked></label>
+        <br>
+    </div>
+
+    <div id="slider1"><b>Number of sources </b>1 <input id="a" max="20" min="1" step="1" type="range"
+                                                   oninput="a_onChange(this,this.value);"
+                                                   onchange="a_onChange(this,this.value);" value="12"> 20
+    </div>
+    <div id="slider2"><b>WaveLength </b>5 <input id="b" max="200" min="5" step="1" type="range"
+                                              oninput="b_onChange(this,this.value);"
+                                              onchange="b_onChange(this,this.value);" value="60"> 200
+    </div>
+
+    <div id="slider3"><b>Speed of Wave </b>0.2 <input id="c" max="5" min="0.2" step="0.1" type="range"
+                                                  oninput="c_onChange(this,this.value);"
+                                                  onchange="c_onChange(this,this.value);" value="1"> 5
+    </div>
+
+
+</div>
+
+<script type='text/javascript'>
+    // XYZPoint
+
+
+
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    var isDragging = false;
+
+
+    canvas.addEventListener('mousewheel', mouseWheelMoved);
+    canvas.addEventListener('mousemove', mouseDragged);
+    canvas.addEventListener('mousedown', mousePressed);
+    canvas.addEventListener('mouseup', mouseReleased)
+    canvas.addEventListener('touchstart', myTouchStart, false); // touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener('touchmove', myTouchMove, false); // touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener('touchend', myTouchEnd, false); // touch handler for iPhones, iPads, and Androids
+    window.addEventListener('keydown', onKeyEvent, false);
+
+
+
+    function myTouchMove(event) {
+        let touch = event.touches[0];
+        let mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function myTouchStart(event) {
+        event.preventDefault();
+        let touch = event.touches[0]
+        let mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function myTouchEnd(event) {
+        event.preventDefault();
+        let mouseEvent = new MouseEvent('mouseup', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function getTouchPos(event) {
+        event.preventDefault();
+        let rect = canvas.getBoundingClientRect();
+        return {
+            x: event.touches[0].clientX - rect.left,
+            y: event.touches[0].clientY - rect.top,
+        };
+    }
+
+    function getMousePos(event) {
+        let rect = canvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+        };
+        //return {
+        //x: event.pageX - canvasdiv.offsetLeft ,
+        //y: event.pageY - canvasdiv.offsetTop
+        //};
+    }
+
+    function mousePressed(me) {
+        let m = getMousePos(me);
+        mx = m.x;
+        my = m.y;
+        isDragging= true;//ctx.isPointInPath(vernier.path, mx, my) //((mx-ox*scale)/scale, (my-oy*scale)/scale);
+        updateView()
+    }
+
+    function mouseReleased(me) {
+        isDragging = false;
+        updateView()
+    }
+
+    function mouseWheelMoved(me) {
+        me.preventDefault();
+        let scroll=me.wheelDelta>0?2:-2;
+        rho+=scroll;
+        updateView()
+    }
+
+    function mouseDragged(me) {
+        me.preventDefault();
+        if (!isDragging) return;
+        let dx, dy;
+        let m = getMousePos(me);
+        dx = (m.x - mx) ;
+        dy = (m.y - my) ;
+        mx = m.x;
+        my = m.y;
+        theta+=dx/50;
+        phi-=dy/50;
+        updateView();
+    }
+
+
+    function onKeyEvent(e) {
+        e.preventDefault;
+        if (e.keyCode == 37) {
+            vernier.translate(-1);
+
+            return true;
+        } else if (e.keyCode == 39) {
+            vernier.translate(1);
+
+            return true;
+        }
+        updateView()
+    }
+
+
+    var s;
+    var screenGC;
+
+    var sourceLambda =60; // wavelength
+    var sourcePhase=0;  // phase, sort of
+
+    var numSources = 19;
+
+    var numWaves=12;
+
+    var loopTimeout;
+    var loopWait = 50; // ms.
+
+    var sourceX;
+    var sourceY;
+    var sourceX0;
+    var sourceY0;
+    var sourceR;
+
+    var halfPi = Math.PI / 2;
+    var twoPi  = 2 * Math.PI;
+    var circularSources=true;
+    var speed =1;
+
+    var initialize = function()
+    {
+        screenGC = canvas.getContext("2d");
+        sourceX = new Array();
+        sourceY = new Array();
+
+        screenGC.strokeWidth = 2;
+        screenGC.strokeStyle = 'darkgreen';
+        screenGC.fillStyle   = 'red';
+        setup();
+
+        loop();
+    };
+
+
+    var setup = function() {
+        sourceX0 = 0;
+        sourceR = 5;
+
+        if (!circularSources ||numSources==1) {
+            let sourceDy = canvas.height / (numSources + 1);
+            sourceY0 = sourceDy;
+            for (let i = 0; i < numSources; i++) {
+                 sourceX[i] = sourceX0;
+                 sourceY[i] = sourceY0 + (i * sourceDy);
+           }
+        } else {
+            let th=-Math.PI/2;
+            sourceY0 = canvas.height/2;
+            for (let i = 0; i < numSources; i++) {
+                sourceX[i] = sourceX0 + sourceLambda * Math.cos(th);
+                sourceY[i] = sourceY0 + sourceLambda * Math.sin(th);
+                th+=Math.PI/(numSources-1);
+            }
+        }
+    };
+
+
+    var loop = function()
+    {
+        clearTimeout(loopTimeout);
+        update();
+
+        render();
+
+        loopTimeout = setTimeout(loop, loopWait);
+    };
+
+
+    var update = function()
+    {
+        sourcePhase+=speed;
+        if(sourcePhase >= sourceLambda)
+        {
+            sourcePhase = 0;
+        }
+    };
+
+
+    var render = function()
+    {
+        screenGC.clearRect(0, 0, 800, 400);
+
+        var y;
+
+        var th=-Math.PI/2;
+        screenGC.fillStyle="red";
+        for(let i = 0; i < numSources; i++)
+        {
+
+            if(!circularSources ||numSources<3)th=0;
+            screenGC.beginPath();
+            screenGC.arc(sourceX[i], y = sourceY[i], sourceR, 0, twoPi);
+            //screenGC.closePath();
+            screenGC.fill();
+
+            for(let j = 0; j < numWaves; j++)
+            {
+                screenGC.beginPath();
+                screenGC.arc(sourceX[i], y, sourcePhase + (sourceLambda * j), th-halfPi, th+halfPi);
+                //screenGC.closePath();
+                screenGC.stroke();
+            }
+            th+=Math.PI/(numSources-1);
+
+        }
+
+        if(circularSources & numSources>2){
+            screenGC.fillStyle="darkred";
+            screenGC.beginPath();
+            screenGC.arc(sourceX0, sourceY0, sourceR, 0, twoPi);
+            screenGC.fill();
+            screenGC.beginPath();
+            screenGC.arc(sourceX0, sourceY0, sourcePhase , -halfPi, +halfPi);
+            screenGC.stroke();
+        }
+    };
+
+
+    initialize();
+
+    function a_onChange(widget,value){
+        numSources=Number(value);
+        initialize();
+    }
+
+    function b_onChange(widget,value){
+        sourceLambda=Number(value);;
+        numWaves=canvas.width/sourceLambda
+    }
+
+    function c_onChange(widget,value) {
+        speed = Number(value);
+    }
+
+    function chkPhase_onChange(widget,value)
+    {
+        //phaseDifference = value?lambda / 2:0;
+    }
+
+
+
+    function chkSrcLoc_onChange(widget,value)
+    {
+        circularSources=value?true:false;
+        initialize();
+    }
+
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!doctype html>
+<html>
+<head>
+    <title>Polarisation of Wave</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div id="canvasdiv" class="container" align="center">
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" width="900px" height="480px">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div style="padding-left:20px">
+        <div id="rangeA"><b>Angle of Analyser: </b>-90 <input id="a" max="90" min="-90" step="1" type="range"
+                                                      oninput="a_onChange(this,this.value);"
+                                                      onchange="a_onChange(this,this.value);" value="0"> 90
+        </div>
+    </div>
+
+</div>
+
+<script type='text/javascript' src="canvasUtils.js"></script>
+<script type='text/javascript'>
+    // XYZPoint
+
+    var rangeA;
+    var xRot = 0.4;
+    var yRot = -0.7;
+    var zRot = 0;
+    var amp = 30;
+    var phase = 0;
+    var polar = 0;
+    var timer;
+    setup();
+    function constrain(n, low, high) {
+        return Math.max(Math.min(n, high), low);
+    }
+
+    function contain(x, y, x1, y1, w1, h1){
+
+        if (x < x1) return false;
+        if (x > (x1 + w1)) return false;
+        if (y < y1) return false;
+        if (y > (y1 + h1)) return false;
+        return true;
+    }
+    function line(x,y,x1,y1){
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x1, y1)
+        ctx.stroke();
+    }
+    function map(n,start1,stop1,start2,stop2){
+        if(n<start1)n=start1;
+        if(n>stop1)n=stop1;
+        return (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    }
+    function get_x_radian(x, y, z, rx, ry, rz)
+    {
+        var d;
+        d = Math.cos(ry)*Math.cos(rz)*x + Math.cos(ry)*Math.sin(rz)*y + Math.sin(ry)*z;
+        return d;
+    }
+    function get_y_radian(x, y, z, rx, ry, rz)
+    {
+        var d;
+        d = - Math.cos(rx)*Math.sin(rz)*x - Math.sin(rx)*Math.sin(ry)*Math.cos(rz)*x + Math.cos(rx)*Math.cos(rz)*y - Math.sin(rx)*Math.sin(ry)*Math.sin(rz)*y + Math.sin(rx)*Math.cos(ry)*z;
+        return d;
+    }
+    function get_z_radian(x, y, z, rx, ry, rz)
+    {
+        var d;
+        d = Math.sin(rx)*Math.sin(rz)*x - Math.cos(rx)*Math.sin(ry)*Math.cos(rz)*x - Math.sin(rx)*Math.cos(rz)*y - Math.cos(rx)*Math.sin(ry)*Math.sin(rz)*y + Math.cos(rx)*Math.cos(ry)*z;
+        return d;
+    }
+    function setup() {
+        //frameRate(20);
+        //pixelDensity(2 * displayDensity());
+        //var o = select("#myContainer");
+        var a = 0.45;
+        rangeA = document.getElementById("rangeA");
+        rangeA.value=(0);
+        if(timer)clearInterval();
+        draw();
+        timer=setInterval(draw, 1000/20);
+    }
+
+    function draw() {
+        //if (touches.length > 1) return;
+        //background(233, 255, 255);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle="darkgreen";//new Color(canvas,255,255);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth=1;
+        ctx.font="Arial 16px";
+        ctx.save();
+        ctx.scale(canvas.width / 900,canvas.width / 900);
+        amp=30;
+        phase += 5;
+       // polar = map(1*rangeA.value, -90, 90, -Math.PI/2, Math.PI/2);
+        ctx.save(); {
+            ctx.translate(450, 200);
+            //noStroke();
+            ctx.fillStyle="white";//new Color(128, 0, 0);
+            drawLine3D(-350, 0, 0, 350, 0, 0);
+            ctx.textAlign="CENTER";
+            drawString3D("Light", -440, -25, 0);
+            ctx.textAlign="CENTER";
+            drawString3D("e-field", -440, -2, 0);
+            ctx.lineWidth=1.5;
+            // ctx.strokeStyle=new Color(0, 0, 255);
+            // drawLine3D(-350, 0, 0, -150, 0, 0);
+            ctx.strokeStyle="yellow";//new Color(255, 0, 0);
+            ctx.lineWidth=1.5;
+            for (var x = -350; x < -150; x += 2) {
+                var z = amp * Math.sin((x - phase) / 10.0);
+                var a = amp * Math.sin((x - phase + 2) / 10.0);
+                drawLine3D(x, 0, z, x + 2, 0, a)
+            }
+            //noStroke();
+            //ctx.fillStyle="white";//new Color(128, 0, 0);
+            ctx.textAlign="CENTER";
+            ////drawString3D("Wire Grid", -150, 0, -80);
+            //ctx.lineWidth=2;
+            //ctx.fillStyle=new Color(222, 222,222,0.5);
+            ctx.strokeStyle="cyan";//new Color(64,64,64);
+            drawRect3D(-150, -70, -70, -150, 70, -70, -150, 70, 70, -150, -70, 70);
+            ctx.lineWidth=0.8;
+            for (var z = -70; z <= 70; z += 7) {
+                //drawLine3D(-150, -70, z, -150, 70, z);
+                drawLine3D(-150, z,-70, -150,z, 70);
+            }
+            ctx.lineWidth=1.5;//2;
+            // drawLine3D(-150, 0, 0, 150, 0, 0);
+            ctx.strokeStyle="yellow"//new Color(0, 0, 255);
+            for (var x = -150; x < 150; x += 2) {
+                var z = amp * Math.sin((x - phase) / 10.0);
+                var a = amp * Math.sin((x - phase + 2) / 10.0);
+                drawLine3D(x, 0, z, x + 2, 0, a);
+            }
+            // ctx.lineWidth=2;
+            //noStroke();
+            ctx.fillStyle="cyan";//new Color(222, 222,222,0.5);
+            polar=-polar;
+            drawRect3D(150,get_z_radian(150, -70, -70, polar, 0, 0),  get_y_radian(150, -70, -70, polar, 0, 0), 150, get_z_radian(150, -70, 70, polar, 0, 0),get_y_radian(150, -70, 70, polar, 0, 0),  150, get_z_radian(150, 70, 70, polar, 0, 0),get_y_radian(150, 70, 70, polar, 0, 0),  150, get_z_radian(150, 70, -70, polar, 0, 0),get_y_radian(150, 70, -70, polar, 0, 0) );
+            ctx.strokeStyle="cyan"//new Color(64,64,64);
+            ctx.lineWidth=0.8;
+            for (var z = -70; z <= 70; z += 7) {
+                //drawLine3D(150, get_y_radian(150, -70, z, polar, 0, 0), get_z_radian(150, -70, z, polar, 0, 0), 150, get_y_radian(150, 70, z, polar, 0, 0), get_z_radian(150, 70, z, polar, 0, 0))
+                drawLine3D(150,get_z_radian(150, -70, z, polar, 0, 0), get_y_radian(150, -70, z, polar, 0, 0), 150,get_z_radian(150, 70, z, polar, 0, 0), get_y_radian(150, 70, z, polar, 0, 0));
+
+            }
+            polar=-polar;
+            //ctx.lineWidth=2;
+            amp*=Math.cos(polar);
+            //ctx.strokeStyle=new Color(0, 0, 255);
+            // drawLine3D(150, 0, 0, 450, 0, 0);
+            ctx.strokeStyle="yellow";//new Color(255, 0, 0);
+            ctx.lineWidth=1.5;
+            if (Math.cos(polar) > 0.001) {
+                for (var x = 150; x < 450; x += 2) {
+                    var z = Math.cos(polar) * amp * Math.sin((x - phase) / 10.0);
+                    var a = Math.cos(polar) * amp * Math.sin((x - phase + 2) / 10.0);
+                    drawLine3D(get_x_radian(x, 0, z, polar, 0, 0), get_y_radian(x, 0, z, polar, 0, 0), get_z_radian(x, 0, z, polar, 0, 0), get_x_radian(x + 2, 0, a, polar, 0, 0), get_y_radian(x + 2, 0, a, polar, 0, 0), get_z_radian(x + 2, 0, a, polar, 0, 0));
+                }
+            }
+        }
+        ctx.restore();;
+        ctx.restore();
+        drawButton();
+    }
+
+    function drawRect3D(a, b, c, d, e, f, g, h, i, j, k, l) {
+        var m = get_x_radian(a, b, c, xRot, yRot, zRot);
+        var n = get_y_radian(a, b, c, xRot, yRot, zRot);
+        var o = get_z_radian(a, b, c, xRot, yRot, zRot);
+        var p = get_x_radian(d, e, f, xRot, yRot, zRot);
+        var q = get_y_radian(d, e, f, xRot, yRot, zRot);
+        var r = get_z_radian(d, e, f, xRot, yRot, zRot);
+        var s = get_x_radian(g, h, i, xRot, yRot, zRot);
+        var t = get_y_radian(g, h, i, xRot, yRot, zRot);
+        var u = get_z_radian(g, h, i, xRot, yRot, zRot);
+        var v = get_x_radian(j, k, l, xRot, yRot, zRot);
+        var w = get_y_radian(j, k, l, xRot, yRot, zRot);
+        var x = get_z_radian(j, k, l, xRot, yRot, zRot);
+        var y = 1 + o / 1000;
+        var z = 1 + r / 1000;
+        var A = 1 + u / 1000;
+        var B = 1 + x / 1000;
+        ctx.beginPath();
+        ctx.moveTo(y * m, y * n);
+        ctx.lineTo(z * p, z * q);
+        ctx.lineTo(A * s, A * t);
+        ctx.lineTo(B * v, B * w);
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    function drawOval(x, y, z, r) {
+        beginShape();
+        for (var t = 0; t < TWO_PI; t += 0.1) {
+            var a = x + r * cos(t);
+            var b = y + r * sin(t);
+            var c = get_x_radian(a, b, z, xRot, yRot, zRot);
+            var d = get_y_radian(a, b, z, xRot, yRot, zRot);
+            var e = get_z_radian(a, b, z, xRot, yRot, zRot);
+            var f = 1 + e / 1000;
+            vertex(f * c, f * d)
+        }
+        endShape(CLOSE)
+    }
+
+    function drawDot3D(a, b, c) {
+        var d = get_x_radian(a, b, c, xRot, yRot, zRot);
+        var e = get_y_radian(a, b, c, xRot, yRot, zRot);
+        var f = get_z_radian(a, b, c, xRot, yRot, zRot);
+        var g = 1 + f / 1000;
+        ellipse(g * d, g * e, 6, 6)
+    }
+
+    function drawLine3D(a, b, c, d, e, f) {
+        var g = get_x_radian(a, b, c, xRot, yRot, zRot);
+        var h = get_y_radian(a, b, c, xRot, yRot, zRot);
+        var i = get_z_radian(a, b, c, xRot, yRot, zRot);
+        var j = get_x_radian(d, e, f, xRot, yRot, zRot);
+        var k = get_y_radian(d, e, f, xRot, yRot, zRot);
+        var l = get_z_radian(d, e, f, xRot, yRot, zRot);
+        var m = 1 + i / 1000;
+        var n = 1 + l / 1000;
+        line(m * g, m * h, n * j, n * k);
+    }
+
+    function drawString3D(a, b, c, d) {
+        var e = get_x_radian(b, c, d, xRot, yRot, zRot);
+        var f = get_y_radian(b, c, d, xRot, yRot, zRot);
+        var g = get_z_radian(b, c, d, xRot, yRot, zRot);
+        var h = 1 + g / 1000;
+        ctx.fillText(a, h * e, h * f);
+    }
+
+    function drawButton() {
+        //drawButtonDrag()
+    }
+    var dragged = false;
+    var pmx;
+    var pmy;
+
+
+    /* *
+        mouseHandler Method to be invoked on mouse or touch action
+     *  @param        id : 0=move,1=pressed,2=dragged,3=released,4=clicked,5=wheel scroll
+     *  @param         x : mouse x wrt origin at canvas top left
+     *   @param        y : mouse y ....
+     *   @param   button : 0=left, 1=middle, 2=right
+     *   @param    value : clickcount in click event else scroll amount in wheel event
+     */
+    function onMouseEvent(id,x,y,button,value){
+        if(id==1) {
+            mouseX = x;
+            mouseY = y;
+            if (!contain(mouseX, mouseY, 0, 0, canvas.width, canvas.height)) return;
+            dragged = true;
+            pmx = mouseX * 900 / canvas.width;
+            pmy = mouseY * 900 / canvas.width;
+        }else if(id==3){
+            dragged = false;
+        }else if(id==2 && dragged){
+            mouseX=x;
+            mouseY=y;
+            //if (touches.length > 1) return;
+            if (dragged) {
+                yRot += (mouseX * 900 / canvas.width - pmx) * 0.005;
+                xRot += (mouseY * 900 / canvas.width - pmy) * 0.005;
+                yRot = constrain(yRot, 0.2 - Math.PI, -0.2);
+                xRot = constrain(xRot, -0.8, 0.8);
+                pmx = mouseX * 900 / canvas.width;
+                pmy = mouseY * 900 / canvas.width;
+                return false
+            }
+        }
+    }
+
+
+    /** keyHandler Method to be invoked on keyevent
+     *     @param       id : 0=keydown,1=keyup, 2=keypressed
+     *     @param  keycode : Unicode key code of the key(ex. 37 =left, 38=up, 39=right, 40=down
+     *     @param  keyChar : the Unicode character code of the key that triggered the onkeypress event,
+     */
+    function onKeyEvent(id, keyCode,kkeyChar){
+
+    }
+
+    function a_onChange(widget,value){
+        polar = map(1*value, -90, 90, -Math.PI/2, Math.PI/2);
+
+    }
+</script>
+</body>
+</html>
