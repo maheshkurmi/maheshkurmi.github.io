@@ -1,0 +1,418 @@
+<!doctype html>
+<html>
+<head>
+<title>Ideal Mirror Simulator</title>
+<style>
+body {
+  background: white;
+  color: #323232;
+  font-weight: 300;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: Helvetica neue, roboto;
+}
+
+img {
+  width: 56px;
+  height: 48px;
+}
+
+h1 {
+  font-weight: 200;
+  font-style: 26px;
+  margin: 10px;
+}
+</style>
+<script  src="dat.gui.min.js"></script>
+<style src="dat.gui.css"></style>
+
+</head>
+	
+<body>
+<div id="canvasdiv" class="container" align="center">
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
+
+</div>
+	
+<script type='text/javascript'>
+
+    var canvas =document.getElementById('canvas');
+    var ctx=canvas.getContext("2d");
+    ctx.font="Arial 12 bold";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+
+    window.addEventListener('resize',function(ev) { return resize(ev); });
+    window.addEventListener('resize',function(ev) { return resize(ev); });
+    canvas.addEventListener('mousemove',function(ev) { return doMouse(ev); });
+    canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
+    canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
+    canvas.addEventListener('touchstart',function(ev) { return doMouse(ev); });
+    canvas.addEventListener('touchmove',function(ev) { return doMouse(ev); });
+    canvas.addEventListener('touchend',function(ev) { return doMouse(ev); });
+    canvas.addEventListener('wheel',function(event){
+        zoom(event);
+        event.preventDefault();
+    }, false);
+
+    function resize(){
+       canvas.width = window.innerWidth;
+       canvas.height = window.innerHeight;
+       update();
+    }
+    function zoom(ev){
+        if(ev.wheelDelta>0){
+            scale*=1.025;
+        }else {
+            scale *= 0.98;
+        }
+        for (var i in gui.__controllers) {
+            gui.__controllers[i].updateDisplay();
+        }
+        update();
+    }
+
+    function doMouse(ev){
+        let xy = getEventXY(ev);
+        let x = xy.x;
+        let y = xy.y;
+
+        if(ev.type === 'mousedown' || ev.type ==='touchstart') {
+            // See if we're clicking a charge.
+            prevMouseDown={x:x,y:y};
+            x-=(offset.x+canvas.width/2);
+            y-=(offset.y+canvas.height/2);
+            x/=scale;
+            y/=scale;
+            if(x>u-10*scale && x<u+30*scale&& y>-100*scale && y<0){
+                dragMode=1;
+            }else{
+                dragMode=0;
+            }
+            update();
+        }
+        if(ev.type === 'mousemove' || ev.type ==='touchmove') {
+            if(prevMouseDown!=null) {
+                let dx=(x - prevMouseDown.x);
+                let dy=(y - prevMouseDown.y);
+                if(dragMode==0){
+                    offset.x += dx;
+                    offset.y += dy;
+                }else{
+                    u+=dx;
+                    if(u<-400)u=-400;
+                    if(u>-10)u=-10;
+                }
+
+                prevMouseDown={x:x,y:y};
+                update();
+                for (var i in gui.__controllers) {
+                    gui.__controllers[i].updateDisplay();
+                }
+            }
+        }
+        if(ev.type === 'mouseup' || ev.type ==='touchend') {
+            prevMouseDown=null;
+            update();
+        }
+
+
+    }
+
+
+    function getAbsolutePosition(element) {
+        var r = { x: element.offsetLeft, y: element.offsetTop };
+        if (element.offsetParent) {
+            var tmp = getAbsolutePosition(element.offsetParent);
+            r.x += tmp.x;
+            r.y += tmp.y;
+        }
+        return r;
+    }
+
+    function getEventXY(ev)
+    {
+        // Convert mouse click coordinates to the mathematical plane.
+        var offset = getAbsolutePosition(canvas);
+        var x = ev.pageX;
+        var y = ev.pageY;
+
+        if((ev.type =='touchstart') || (ev.type =='touchmove') || (ev.type =='touchend')) {
+            ev.preventDefault();
+            x = ev.originalEvent.touches[0].pageX;
+            y = ev.originalEvent.touches[0].pageY;
+        }
+        x = x - offset.x;
+        y = y - offset.y;
+        return {x:x, y:y};
+    }
+
+
+    function sign(f){
+        return f>0?1:(f<0?-1:0);
+    }
+
+    var u=-90,v=180,f=60,m=-2;
+
+    var displayEye=true;
+    var displayRays=true;
+    var displayResult=true;
+    var scale=1;
+    var offset={x:0,y:0};
+    var prevMouseDown=null;
+    var dragMode=0; //0 ==drag world, 1=drag object
+    //create gui
+    var gui = new dat.GUI({name:"Field Controllers"});
+
+    // String field
+    gui.add(window, "u").name("Object Position  ").min(-400).max(-5).step(1).onChange(update);
+    gui.add(window, "f").name("Focal length").min(-225).max(225).step(1).onChange(update);
+    gui.add(window, "displayEye").name("Draw Image").onChange(update);
+    gui.add(window, "displayRays").name("Draw Rays").onChange(update);
+    gui.add(window, "displayResult").name("Display Result").onChange(update);
+    gui.add(window, "scale").name("Scale  ").min(0.1).max(5).step(0.01).onChange(update);
+
+    var bg_color="rgb(0,64,84)";
+    var lensHeight=100;
+    var objHeight=lensHeight*0.6;
+    var dragMode=0;
+    //0 means none, 1 means object and 2 means lens
+    var imageEye=new Image();
+    imageEye.src="eye.png";
+    var imageRO=new Image();
+    imageRO.src="img_Object.png";
+    var imageVO=new Image();
+    imageVO.src="img_Virtual.png";
+
+    imageVO.onload=update;
+    resize();
+    update();
+    function update(){
+        if(f==0){
+            v=-u;
+            m=1;
+        }else if(u==f){
+            v=Infinity;
+            m=Infinity;
+        }else{
+            v=u*f/(u-f);
+            m=-v/u;
+        }
+        draw();
+        draw();
+    }
+
+    //render with center at world
+    function draw(){
+        this.ctx.font = '12pt sans-serif';
+
+        ctx.fillStyle=bg_color;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.resetTransform();
+        //scale=World.getCamera().getScale()/100;
+        //let tx=World.getCamera().getOffset();
+        ctx.translate(canvas.width/2+offset.x,canvas.height/2+offset.y);
+        ctx.scale(scale,scale);
+        //ctx.translate(canvas.width/2+offset.x,canvas.height/2+offset.y);
+        drawAxis();
+        drawLens();
+        drawObject();
+        if(m!=Infinity && displayEye)drawImage();
+        if(displayRays){
+            drawRays();
+        }
+        ctx.resetTransform();
+        if(displayResult)drawSolution();
+    }
+
+    function drawSolution(){
+        ctx.textAlign="left";
+        ctx.font="Arial 18 bold";
+        let x=10,y=canvas.height-100;
+
+        if(f!=0){
+            ctx.fillText("u = "+u.toFixed(0)+"cm ," +" f = "+f.toFixed(0)+"cm", x, y);
+            y+=30;
+            ctx.fillText("using 1/u+1/v = 1/f  \u{27F9} "+"v = "+v.toFixed(1)+"cm", x, y);
+            y+=30;
+            ctx.fillStyle="yellow";
+            ctx.fillText("Nature of image is "+(v<0?"Real,":"Virtual,")+(m>0?" Erect &":" Inverted &") +(Math.abs(m)>1?" Magnified":" Diminished")+" (m="+m.toFixed(2)+")", x, y);
+        }else{
+            ctx.fillText("u = "+u.toFixed(0)+"cm ," +" f = ∞ cm", x, y);
+            y+=30;
+            ctx.fillText("Plane Mirror ⟹ "+"v = -u = "+v.toFixed(1)+"cm", x, y);
+            y+=30;
+            ctx.fillStyle="yellow";
+            ctx.fillText("Nature of image is Virtual, Erect and same Size (m = 1)",x,y);
+        }
+        y+=30;
+        ctx.fillStyle="green";
+        ctx.fillText("Drag the object by mouse to change its location, Use mouse wheel to zoom", x, y);
+        ctx.textAlign="center";
+    }
+
+
+    function drawRay(x1,y1,x2,y2,t){
+        if(!t)t=0.5;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        let x=x1*(1-t)+x2*t;
+        let y=y1*(1-t)+y2*t;
+        ctx.moveTo(x,y);
+        let d=Math.hypot(x2-x1,y2-y1);
+        let qx=8*(x2-x1)/d;
+        let qy=8*(y2-y1)/d;
+
+        let px=-0.5*qy;
+        let py= 0.5*qx;
+        //  p.setMagnitude(5).rotate(3*Math.PI/4);
+        ctx.moveTo(x+qx,y+qy);
+        ctx.lineTo(x+px,y+py);
+        ctx.moveTo(x+qx,y+qy);
+        ctx.lineTo(x-px,y-py);
+        ctx.stroke();
+
+    }
+
+    function drawRays(){
+        ctx.strokeStyle="yellow";
+        ctx.lineWidth=1.5;
+
+        if(m==Infinity){
+            ctx.beginPath();
+            drawRay(0, -objHeight,4*f, objHeight*3,0.5);
+            drawRay(0, 0,4*f, objHeight*4*f/u);
+        }else{
+            let vy=-objHeight*m;
+            if(v<0){
+                ctx.beginPath();
+                drawRay(0, -objHeight,v, vy,0.2);
+                drawRay(0, 0,v, vy,0.2);
+            }
+            else{
+                let i=sign(f);
+                ctx.beginPath();
+
+                ctx.lineWidth=2;
+                ctx.save();
+                ctx.strokeStyle="orange";
+                ctx.setLineDash([5, 3]);
+                ctx.moveTo(0, -objHeight);
+                ctx.lineTo(v, vy);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(v, vy);
+                ctx.stroke();
+                ctx.restore();
+                ctx.beginPath();
+                ctx.lineWidth=1.5;
+                ctx.strokeStyle="yellow";
+                if(f==0){
+                    drawRay(0, -objHeight,3*u, -objHeight,0.5);
+                    drawRay(0, 0, 3*u, objHeight*3,0.5);
+                }else{
+                    drawRay(0, -objHeight,-i*10*f, -i*9*objHeight,0.2);
+                    drawRay(0, 0,-i*10*f, -i*objHeight*10*f/u,0.2);
+                }
+            }
+        }
+        ctx.strokeStyle="yellow";
+        drawRay(u, -objHeight,0, -objHeight);
+        drawRay(u, -objHeight,0, 0);
+        ctx.strokeStyle="white";
+    }
+
+
+    function drawAxis(){
+        ctx.strokeStyle="white";
+        ctx.fillStyle=ctx.strokeStyle;
+        ctx.beginPath();
+        ctx.moveTo(-canvas.width/2*scale, 0);
+        ctx.lineTo(canvas.width/2*scale, 0);
+        ctx.stroke();
+        if(f!=0)ctx.fillText("F", f,15);
+    }
+
+    function drawObject(){
+        let img=u<0?imageRO:imageVO;
+        ctx.drawImage(img, 0,0,img.width,img.height,u-objHeight/10,-objHeight,objHeight/5,objHeight);
+        ctx.fillText("O", u,15);
+    }
+
+    function drawImage(){
+        let img=u<0?imageRO:imageVO;
+        if(f>0)ctx.drawImage(img, 0,0,img.width,img.height,v-m*objHeight/10,-m*objHeight,m*objHeight/5,m*objHeight);
+        img=v<0?imageRO:imageVO;
+        ctx.drawImage(img, 0,0,img.width,img.height,v-m*objHeight/10,-m*objHeight,m*objHeight/5,m*objHeight);
+        ctx.fillText("I", v,m>0?15:-5);
+    }
+
+
+    function drawLens(){
+        ctx.lineWidth = 2;
+        ctx.fillStyle="rgba(135,206,235,0.6)";
+        ctx.beginPath();
+        ctx.strokeStyle="black";
+        if(f==0){
+            ctx.translate(3,0);
+            ctx.moveTo(0,-lensHeight);
+            ctx.lineTo(0,lensHeight);
+            ctx.stroke();
+            ctx.translate(-3,0);
+            ctx.beginPath();
+            ctx.moveTo(0,-lensHeight);
+            ctx.lineTo(0,lensHeight);
+            ctx.strokeStyle="silver";
+            ctx.stroke();
+        } else if (f>0){
+            var th = 2*Math.atan((10-(f-1)/100)/100);
+            var R = 100/Math.sin(th);
+            ctx.translate(3,0);
+            ctx.arc(R+1, 0, R, Math.PI-th, Math.PI+th);
+            ctx.stroke();
+            ctx.translate(-3,0);
+            ctx.beginPath();
+            ctx.arc(R+1, 0, R, Math.PI-th, Math.PI+th);
+            ctx.strokeStyle="silver";
+            ctx.stroke();
+        }
+        else{
+            var th = 2*Math.atan((10-(1-f)/100)/100);
+            var R = 100/Math.sin(th);
+            ctx.translate(3,0);
+            ctx.arc(-R+1, 0, R+2, -th, th);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.translate(-3,0);
+            ctx.arc(-R+1, 0, R+2, -th, th);
+            ctx.strokeStyle="silver";
+            ctx.stroke();
+        }
+        ctx.lineWidth = 5;
+        ctx.strokeStyle="grey";
+        ctx.translate(5,0);
+        ctx.stroke();
+        ctx.translate(-2,0);
+        ctx.strokeStyle="white";
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        if (true){
+            ctx.fillStyle = "white";//(255, 255, 255);
+            // ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.arc(f, 0, 2, 0,Math.PI*2);
+            ctx.fill();
+            //ctx.fillOval(0, 0, 4, 4);
+        }
+    }
+
+
+
+</script>
+</body>
+</html>
