@@ -195,7 +195,7 @@ h1 {
     function getEventXY(ev)
     {
         // Convert mouse click coordinates to the mathematical plane.
-        var offset = getMousePos(canvas);
+        var offset = getMousePos(canvas,ev);
         var x = ev.pageX;
         var y = ev.pageY;
 
