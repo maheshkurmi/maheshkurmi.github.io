@@ -123,7 +123,7 @@ h1 {
         let x = xy.x;
         let y = xy.y;
 
-        if(ev.type === 'mousedown' || ev.type ==='touchstart') {
+        if(ev.type === 'mousedown' ){//|| ev.type ==='touchstart') {
             // See if we're clicking a charge.
             prevMouseDown={x:x,y:y};
             x-=(offset.x+canvas.width/2);
@@ -137,7 +137,7 @@ h1 {
             }
             update();
         }
-        if(ev.type === 'mousemove' || ev.type ==='touchmove') {
+        if(ev.type === 'mousemove' ){//|| ev.type ==='touchmove') {
             if(prevMouseDown!=null) {
                 let dx=(x - prevMouseDown.x);
                 let dy=(y - prevMouseDown.y);
@@ -157,13 +157,14 @@ h1 {
                 }
             }
         }
-        if(ev.type === 'mouseup' || ev.type ==='touchend') {
+        if(ev.type === 'mouseup' ){//|| ev.type ==='touchend') {
             prevMouseDown=null;
             update();
         }
 
 
     }
+
 
 
     function getAbsolutePosition(element) {
@@ -176,18 +177,14 @@ h1 {
         return r;
     }
 
-    function getEventXY(ev)
+    function getEventXY(canvas,ev)
     {
         // Convert mouse click coordinates to the mathematical plane.
-        var offset = getAbsolutePosition(canvas);
-        var x = ev.clientX;
-        var y = ev.clientY;
+        var offset = getAbsolutePosition(canvas,ev);
 
-        if((ev.type =='touchstart') || (ev.type =='touchmove') || (ev.type =='touchend')) {
-            ev.preventDefault();
-            x = ev.originalEvent.touches[0].clientX;
-            y = ev.originalEvent.touches[0].clientY;
-        }
+        var x = ev.pageX;
+        var y = ev.pageY;
+
         x = x - offset.x;
         y = y - offset.y;
         return {x:x, y:y};

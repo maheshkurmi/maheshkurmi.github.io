@@ -112,7 +112,7 @@ body {
     }
 
     function doMouse(ev){
-        let xy = getEventXY(canvas,ev);
+        let xy = getEventXY(ev);
         let x = xy.x;
         let y = xy.y;
 	
@@ -158,16 +158,6 @@ body {
 
     }
 
-    // Get the position of a touch relative to the canvas
-    function getTouchPos(canvas, touchEvent) {
-        var rect = canvas.getBoundingClientRect();
-        return {
-            x: touchEvent.touches[0].clientX - rect.left,
-            y: touchEvent.touches[0].clientY - rect.top
-        };
-        //
-    }
-
 
     function getAbsolutePosition(element) {
         var r = { x: element.offsetLeft, y: element.offsetTop };
@@ -179,12 +169,12 @@ body {
         return r;
     }
 
-    function getEventXY(canvas,ev)
+    function getEventXY(ev)
     {
         // Convert mouse click coordinates to the mathematical plane.
-        var offset = getAbsolutePosition(canvas,ev);
+        var offset = getAbsolutePosition(canvas);
   
- 	var x = ev.pageX;
+ 	    var x = ev.pageX;
         var y = ev.pageY;
 
         x = x - offset.x;
