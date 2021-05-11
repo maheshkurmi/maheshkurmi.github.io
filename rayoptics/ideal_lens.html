@@ -51,7 +51,6 @@ h1 {
     ctx.textBaseline="middle";
 
     window.addEventListener('resize',function(ev) { return resize(ev); });
-    window.addEventListener('resize',function(ev) { return resize(ev); });
     canvas.addEventListener('mousemove',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
@@ -177,10 +176,10 @@ h1 {
         return r;
     }
 
-    function getEventXY(canvas,ev)
+    function getEventXY(ev)
     {
         // Convert mouse click coordinates to the mathematical plane.
-        var offset = getAbsolutePosition(canvas,ev);
+        var offset = getAbsolutePosition(canvas);
 
         var x = ev.pageX;
         var y = ev.pageY;
