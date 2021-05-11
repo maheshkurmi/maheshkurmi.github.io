@@ -7,35 +7,29 @@ body {
   background: white;
   color: #323232;
   font-weight: 300;
-  height: 100vh;
+  width:  100%;
+  height: 100%;
+  //height: 100vh;
   margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-family: Helvetica neue, roboto;
+  overflow: hidden; /*  Disable scrollbars */
+  display: block;  /* No floating content on sides */
+  //display: flex;
+  //align-items: center;
+  //justify-content: center;
+  //text-align: center;
+  //font-family: Helvetica neue, roboto;
 }
 
-img {
-  width: 56px;
-  height: 48px;
-}
 
-h1 {
-  font-weight: 200;
-  font-style: 26px;
-  margin: 10px;
-}
 </style>
-<script  src="dat.gui.min.js"></script>
-<script src="zingtouch.js"></script>
+<script  src="dat.gui.js"></script>
 <style src="dat.gui.css"></style>
 
 </head>
 	
 <body>
 <div id="canvasdiv" class="container" align="center">
-    <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
+    <canvas id="canvas" >Your browser does not support the HTML5 canvas tag.</canvas>
 
 </div>
 	
@@ -53,11 +47,12 @@ h1 {
     canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
     canvas.addEventListener('wheel',function(event){
-        zoom(event);
+        zoom(event.wheelDelta);
         event.preventDefault();
     }, false);
 
-    // Set up touch events for mobile, etc
+  
+   // Set up touch events for mobile, etc
     canvas.addEventListener("touchstart", function (e) {
         let touch = e.touches[0];
         let mouseEvent = new MouseEvent("mousedown", {
@@ -79,46 +74,33 @@ h1 {
             clientY: touch.clientY
         });
         canvas.dispatchEvent(mouseEvent);
-    }, false);
-
+    }, {passive: false});
+  
     // Prevent scrolling when touching the canvas
-    document.body.addEventListener("touchstart", function (e) {
-        if (e.target == canvas) {
-            //e.preventDefault();
-            return false;
-        }
-    }, false);
-    document.body.addEventListener("touchend", function (e) {
-        if (e.target == canvas) {
-            //e.preventDefault();
-            return false;
-        }
-    }, false);
-    document.body.addEventListener("touchmove", function (e) {
-        if (e.target == canvas) {
-            //e.preventDefault();
-            return false;
-        }
-    }, false);
+	document.body.addEventListener("touchstart", function (e) {
+			if (e.target == canvas) {
+				e.preventDefault();
+			}
+	});
+	document.body.addEventListener("touchend", function (e) {
+				if (e.target == canvas) {
+					e.preventDefault();
+				}
+	}, {passive: false});
+	document.body.addEventListener("touchmove", function (e) {
+			//if (e.target == canvas) {
+				e.preventDefault();
+			//}
+	},{passive: false});
 
-    //listen gestures
-    var zt = new ZingTouch.Region(canvas);
-    zt.bind(canvas,'distance',function(event){
-        let mouseEvent = new MouseEvent("wheel", {
-            clientX: center.X,
-            clientY: center.Y,
-            wheelDelta:event.distance
-        });
-        canvas.dispatchEvent(mouseEvent);
-    }, false);
 
     function resize(){
        canvas.width = window.innerWidth;
        canvas.height = window.innerHeight;
        update();
     }
-    function zoom(ev){
-        if(ev.wheelDelta>0){
+    function zoom(wheelDelta){
+        if(wheelDelta>0){
             scale*=1.025;
         }else {
             scale *= 0.98;
@@ -133,22 +115,22 @@ h1 {
         let xy = getEventXY(canvas,ev);
         let x = xy.x;
         let y = xy.y;
-
-        if(ev.type === 'mousedown' || ev.type ==='touchstart') {
+	
+        if(ev.type === 'mousedown' ){//|| ev.type ==='touchstart') {
             // See if we're clicking a charge.
             prevMouseDown={x:x,y:y};
             x-=(offset.x+canvas.width/2);
             y-=(offset.y+canvas.height/2);
             x/=scale;
             y/=scale;
-            if(x>u-10*scale && x<u+30*scale&& y>-100*scale && y<0){
+            if(x>u-3*scale && x<u+6.5*scale&& y>-100 && y<0){
                 dragMode=1;
             }else{
                 dragMode=0;
             }
             update();
         }
-        if(ev.type === 'mousemove' || ev.type ==='touchmove') {
+        if(ev.type === 'mousemove' ){//|| ev.type ==='touchmove') {
             if(prevMouseDown!=null) {
                 let dx=(x - prevMouseDown.x);
                 let dy=(y - prevMouseDown.y);
@@ -156,7 +138,7 @@ h1 {
                     offset.x += dx;
                     offset.y += dy;
                 }else{
-                    u+=dx;
+                    u+=dx/scale;
                     if(u<-400)u=-400;
                     if(u>-10)u=-10;
                 }
@@ -168,7 +150,7 @@ h1 {
                 }
             }
         }
-        if(ev.type === 'mouseup' || ev.type ==='touchend') {
+        if(ev.type === 'mouseup' ){//|| ev.type ==='touchend') {
             prevMouseDown=null;
             update();
         }
@@ -197,11 +179,12 @@ h1 {
         return r;
     }
 
-    function getEventXY(ev)
+    function getEventXY(canvas,ev)
     {
         // Convert mouse click coordinates to the mathematical plane.
         var offset = getAbsolutePosition(canvas,ev);
-        var x = ev.pageX;
+  
+ 	var x = ev.pageX;
         var y = ev.pageY;
 
         x = x - offset.x;
@@ -219,21 +202,22 @@ h1 {
     var displayEye=true;
     var displayRays=true;
     var displayResult=true;
-    var scale=1;
+    var scale=window.innerWidth/800;
     var offset={x:0,y:0};
     var prevMouseDown=null;
     var dragMode=0; //0 ==drag world, 1=drag object
     //create gui
-    var gui = new dat.GUI({name:"Field Controllers"});
+    var gui = new dat.GUI({name:"Field Controllers"});//,autoPlace: false});
 
     // String field
-    gui.add(window, "u").name("Object Position  ").min(-400).max(-5).step(1).onChange(update);
+    //gui.add(window, "u").name("Object Position  ").min(-400).max(-5).step(1).onChange(update);
     gui.add(window, "f").name("Focal length").min(-225).max(225).step(1).onChange(update);
     gui.add(window, "displayEye").name("Draw Image").onChange(update);
     gui.add(window, "displayRays").name("Draw Rays").onChange(update);
     gui.add(window, "displayResult").name("Display Result").onChange(update);
     gui.add(window, "scale").name("Scale  ").min(0.1).max(5).step(0.01).onChange(update);
 
+    //var customContainer = document.getElementsByClassName('moveGUI')[0].append(gui.domElement);
     var bg_color="rgb(0,64,84)";
     var lensHeight=100;
     var objHeight=lensHeight*0.6;
@@ -288,9 +272,9 @@ h1 {
     }
 
     function drawSolution(){
-        ctx.textAlign="left";
-        ctx.font="Arial 18 bold";
-        let x=10,y=canvas.height-100;
+        this.ctx.font = '12pt sans-serif';
+		ctx.textAlign="left";
+        let x=100,y=canvas.height-150;
 
         if(f!=0){
             ctx.fillText("u = "+u.toFixed(0)+"cm ," +" f = "+f.toFixed(0)+"cm", x, y);
