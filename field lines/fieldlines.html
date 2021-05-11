@@ -41,11 +41,7 @@
     <div id="canvasdiv" class="container" align="center">
         <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
 
-        <div style="text-align: center;">
-            <p>
-                <b>Try Dragging object and lens to focus image on screen, note that not every position of object can be focussed.</b>
-            </p>
-        </div>
+
         <script type='text/javascript'>
 
 
@@ -55,6 +51,7 @@
             var k = 10; // 1/4 pi epsilon naught
             var estModeRK =false; //1==euler, 4==rk4
             var do_equipotential=false;
+            var displayInfo=true;
             // configuration:
             // var step = 0.06;
             var step = 0.06;
@@ -82,6 +79,7 @@
             gui.add(window, "addCharge").name("Add Charge");
             gui.add(window, "clearLast").name("Remove Last Added Charge");
             gui.add(window, "clearAll").name("Remove all Charges");
+            gui.add(window, "displayInfo").name("Show Help");
             gui.add(window, "hide_charge_values").name("Hide charge values").onChange(update);
             gui.add(window, "estModeRK").name("Use RK4 Solver").onChange(update);
             gui.add(window, "do_equipotential").name("Show potential").onChange(update);
@@ -102,7 +100,7 @@
             for(var r=2;r<1000;r++) myRandom.push(Math.random()*Math.PI*2);
 
 
-             var origin_x = 0.0;
+            var origin_x = 0.0;
             var origin_y = 0.0;
             var width_x  = 10.0;
             var dragging = false;
@@ -113,8 +111,8 @@
             var ctx = canvas.getContext('2d');
 
             //ctx.reset();
-
-
+            var info1="Add Charges by clicking button 'Add charge'" ;
+            var info2="To remove a charge drag the charge out of the window";
 
             function Applet( options)
             {
@@ -842,7 +840,7 @@
                 this.DrawFieldLines();
                 this.DrawCharges();
                 if(do_equipotential && this.charge_dragged==null) this.DrawEquipotentialLines();
-
+                if(displayInfo)this.DrawInfo();
                 this.ctx.restore();
 
             }
@@ -999,8 +997,23 @@
                         this.ctx.fillText(s,0,0);
                     this.ctx.restore();
                 }
-
             }
+
+            Applet.prototype.DrawInfo=function(){
+                this.ctx.save();
+                this.ctx.resetTransform();
+                this.ctx.font = '16pt sans-serif';
+                ctx.textAlign="left";
+                let x=20,y=canvas.height-70;
+                ctx.fillStyle=potColor;
+                ctx.fillText(info1, x, y);
+                y+=30;
+                //ctx.fillStyle="green";
+                ctx.fillText(info2, x, y);
+                ctx.textAlign="center";
+                this.ctx.restore();
+            }
+
             function getAbsolutePosition(element) {
                 var r = { x: element.offsetLeft, y: element.offsetTop };
                 if (element.offsetParent) {
