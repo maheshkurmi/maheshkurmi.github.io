@@ -185,20 +185,21 @@ h1 {
         };
     }
 
-    // Get the position of the mouse relative to the canvas
-    function getMousePos(canvas, mouseEvent) {
-        var rect = canvas.getBoundingClientRect();
-        return {
-            x: mouseEvent.clientX - rect.left,
-            y: mouseEvent.clientY - rect.top
-        };
-    }
 
+    function getAbsolutePosition(element) {
+        var r = { x: element.offsetLeft, y: element.offsetTop };
+        if (element.offsetParent) {
+            var tmp = getAbsolutePosition(element.offsetParent);
+            r.x += tmp.x;
+            r.y += tmp.y;
+        }
+        return r;
+    }
 
     function getEventXY(ev)
     {
         // Convert mouse click coordinates to the mathematical plane.
-        var offset = getMousePos(canvas,ev);
+        var offset = getAbsolutePosition(canvas,ev);
         var x = ev.pageX;
         var y = ev.pageY;
 
