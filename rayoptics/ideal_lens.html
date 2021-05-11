@@ -4,16 +4,20 @@
 <title>Ideal Lens Simulator</title>
 <style>
 body {
-  background: white;
-  color: #323232;
-  font-weight: 300;
-  height: 100vh;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-family: Helvetica neue, roboto;
+    background: white;
+    color: #323232;
+    font-weight: 300;
+    width:  100%;
+    height: 100%;
+//height: 100vh;
+    margin: 0;
+    overflow: hidden; /*  Disable scrollbars */
+    display: block;  /* No floating content on sides */
+//display: flex;
+//align-items: center;
+//justify-content: center;
+//text-align: center;
+//font-family: Helvetica neue, roboto;
 }
 
 img {
@@ -51,21 +55,59 @@ h1 {
     canvas.addEventListener('mousemove',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('touchstart',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('touchmove',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('touchend',function(ev) { return doMouse(ev); });
     canvas.addEventListener('wheel',function(event){
-        zoom(event);
+        zoom(event.wheelDelta);
         event.preventDefault();
     }, false);
+
+    // Set up touch events for mobile, etc
+    canvas.addEventListener("touchstart", function (e) {
+        let touch = e.touches[0];
+        let mouseEvent = new MouseEvent("mousedown", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }, false);
+
+    canvas.addEventListener("touchend", function (e) {
+        let mouseEvent = new MouseEvent("mouseup", {});
+        canvas.dispatchEvent(mouseEvent);
+    }, false);
+
+    canvas.addEventListener("touchmove", function (e) {
+        let touch = e.touches[0];
+        let mouseEvent = new MouseEvent("mousemove", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }, {passive: false});
+
+    // Prevent scrolling when touching the canvas
+    document.body.addEventListener("touchstart", function (e) {
+        if (e.target == canvas) {
+            e.preventDefault();
+        }
+    });
+    document.body.addEventListener("touchend", function (e) {
+        if (e.target == canvas) {
+            e.preventDefault();
+        }
+    }, {passive: false});
+    document.body.addEventListener("touchmove", function (e) {
+        //if (e.target == canvas) {
+        e.preventDefault();
+        //}
+    },{passive: false});
 
     function resize(){
        canvas.width = window.innerWidth;
        canvas.height = window.innerHeight;
        update();
     }
-    function zoom(ev){
-        if(ev.wheelDelta>0){
+    function zoom(wheelDelta){
+        if(wheelDelta>0){
             scale*=1.025;
         }else {
             scale *= 0.98;
@@ -169,7 +211,7 @@ h1 {
     var gui = new dat.GUI({name:"Field Controllers"});
 
     // String field
-    gui.add(window, "u").name("Object Position  ").min(-400).max(-5).step(1).onChange(update);
+    //gui.add(window, "u").name("Object Position  ").min(-400).max(-5).step(1).onChange(update);
     gui.add(window, "f").name("Focal length").min(-225).max(225).step(1).onChange(update);
     gui.add(window, "displayEye").name("Draw Eye").onChange(update);
     gui.add(window, "displayRays").name("Draw Rays").onChange(update);
@@ -235,7 +277,7 @@ h1 {
         ctx.textAlign="left";
         this.ctx.font = '14pt sans-serif';
 
-        let x=10,y=canvas.height-100;
+        let x=20,y=canvas.height-100;
 
         ctx.fillText("u = "+u.toFixed(0)+" cm ," +" f = "+f.toFixed(0)+" cm", x, y);
         y+=30;
