@@ -28,6 +28,7 @@ h1 {
 }
 </style>
 <script  src="dat.gui.min.js"></script>
+<script src='zingtouch.min.js'></script>
 <style src="dat.gui.css"></style>
 
 </head>
@@ -45,15 +46,19 @@ h1 {
     ctx.font="Arial 12 bold";
     ctx.textAlign="center";
     ctx.textBaseline="middle";
-
+    var zt = new ZingTouch.Region(canvas);
+    zt.bind(canvas,'distance',function(event){
+        zoom(event.distance);
+        //event.preventDefault();
+    }, false);
     window.addEventListener('resize',function(ev) { return resize(ev); });
     window.addEventListener('resize',function(ev) { return resize(ev); });
     canvas.addEventListener('mousemove',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('touchstart',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('touchmove',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('touchend',function(ev) { return doMouse(ev); });
+    canvas.addEventListener('touchstart',function(ev) { return doMouse(ev); },false);
+    canvas.addEventListener('touchmove',function(ev) { return doMouse(ev); },false);
+    canvas.addEventListener('touchend',function(ev) { return doMouse(ev); }),false;
     canvas.addEventListener('wheel',function(event){
         zoom(event);
         event.preventDefault();
@@ -143,8 +148,8 @@ h1 {
 
         if((ev.type =='touchstart') || (ev.type =='touchmove') || (ev.type =='touchend')) {
             ev.preventDefault();
-            x = ev.originalEvent.touches[0].pageX;
-            y = ev.originalEvent.touches[0].pageY;
+            x = ev.touches[0].pageX;
+            y = ev.touches[0].pageY;
         }
         x = x - offset.x;
         y = y - offset.y;
