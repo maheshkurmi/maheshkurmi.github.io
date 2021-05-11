@@ -42,7 +42,6 @@ body {
     ctx.textBaseline="middle";
 
     window.addEventListener('resize',function(ev) { return resize(ev); });
-    window.addEventListener('resize',function(ev) { return resize(ev); });
     canvas.addEventListener('mousemove',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
@@ -264,7 +263,7 @@ body {
     function drawSolution(){
         this.ctx.font = '12pt sans-serif';
 		ctx.textAlign="left";
-        let x=100,y=canvas.height-150;
+        let x=20,y=canvas.height-150;
 
         if(f!=0){
             ctx.fillText("u = "+u.toFixed(0)+"cm ," +" f = "+f.toFixed(0)+"cm", x, y);
