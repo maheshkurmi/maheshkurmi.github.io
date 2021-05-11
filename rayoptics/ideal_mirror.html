@@ -46,22 +46,67 @@ h1 {
     ctx.font="Arial 12 bold";
     ctx.textAlign="center";
     ctx.textBaseline="middle";
-    var zt = new ZingTouch.Region(canvas);
-    zt.bind(canvas,'distance',function(event){
-        zoom(event.distance);
-        //event.preventDefault();
-    }, false);
+
     window.addEventListener('resize',function(ev) { return resize(ev); });
     window.addEventListener('resize',function(ev) { return resize(ev); });
     canvas.addEventListener('mousemove',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
     canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('touchstart',function(ev) { return doMouse(ev); },false);
-    canvas.addEventListener('touchmove',function(ev) { return doMouse(ev); },false);
-    canvas.addEventListener('touchend',function(ev) { return doMouse(ev); }),false;
     canvas.addEventListener('wheel',function(event){
         zoom(event);
         event.preventDefault();
+    }, false);
+
+    // Set up touch events for mobile, etc
+    canvas.addEventListener("touchstart", function (e) {
+        let touch = e.touches[0];
+        let mouseEvent = new MouseEvent("mousedown", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }, false);
+
+    canvas.addEventListener("touchend", function (e) {
+        let mouseEvent = new MouseEvent("mouseup", {});
+        canvas.dispatchEvent(mouseEvent);
+    }, false);
+
+    canvas.addEventListener("touchmove", function (e) {
+        let touch = e.touches[0];
+        let mouseEvent = new MouseEvent("mousemove", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }, false);
+
+    // Prevent scrolling when touching the canvas
+    document.body.addEventListener("touchstart", function (e) {
+        if (e.target == canvas) {
+            e.preventDefault();
+        }
+    }, false);
+    document.body.addEventListener("touchend", function (e) {
+        if (e.target == canvas) {
+            e.preventDefault();
+        }
+    }, false);
+    document.body.addEventListener("touchmove", function (e) {
+        if (e.target == canvas) {
+            e.preventDefault();
+        }
+    }, false);
+
+    //listen gestures
+    var zt = new ZingTouch.Region(canvas);
+    zt.bind(canvas,'distance',function(event){
+        let mouseEvent = new MouseEvent("wheel", {
+            clientX: center.X,
+            clientY: center.Y,
+            wheelDelta:event.distance
+        });
+        canvas.dispatchEvent(mouseEvent);
     }, false);
 
     function resize(){
@@ -128,16 +173,24 @@ h1 {
 
     }
 
-
-    function getAbsolutePosition(element) {
-        var r = { x: element.offsetLeft, y: element.offsetTop };
-        if (element.offsetParent) {
-            var tmp = getAbsolutePosition(element.offsetParent);
-            r.x += tmp.x;
-            r.y += tmp.y;
-        }
-        return r;
+    // Get the position of a touch relative to the canvas
+    function getTouchPos(canvas, touchEvent) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+            x: touchEvent.touches[0].clientX - rect.left,
+            y: touchEvent.touches[0].clientY - rect.top
+        };
     }
+
+    // Get the position of the mouse relative to the canvas
+    function getMousePos(canvas, mouseEvent) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+            x: mouseEvent.clientX - rect.left,
+            y: mouseEvent.clientY - rect.top
+        };
+    }
+
 
     function getEventXY(ev)
     {
