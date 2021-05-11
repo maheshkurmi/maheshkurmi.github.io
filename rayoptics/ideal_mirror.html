@@ -74,14 +74,14 @@ body {
             clientY: touch.clientY
         });
         canvas.dispatchEvent(mouseEvent);
-    }, {passive: false});
+    }, false);
   
     // Prevent scrolling when touching the canvas
 	document.body.addEventListener("touchstart", function (e) {
 			if (e.target == canvas) {
 				e.preventDefault();
 			}
-	});
+	},{passive: false});
 	document.body.addEventListener("touchend", function (e) {
 				if (e.target == canvas) {
 					e.preventDefault();
