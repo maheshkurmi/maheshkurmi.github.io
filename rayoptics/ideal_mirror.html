@@ -195,15 +195,10 @@ h1 {
     function getEventXY(ev)
     {
         // Convert mouse click coordinates to the mathematical plane.
-        var offset = getAbsolutePosition(canvas);
+        var offset = getMousePos(canvas);
         var x = ev.pageX;
         var y = ev.pageY;
 
-        if((ev.type =='touchstart') || (ev.type =='touchmove') || (ev.type =='touchend')) {
-            ev.preventDefault();
-            x = ev.touches[0].clientX;
-            y = ev.touches[0].clientY;
-        }
         x = x - offset.x;
         y = y - offset.y;
         return {x:x, y:y};
