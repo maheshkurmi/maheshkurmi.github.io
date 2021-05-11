@@ -148,8 +148,8 @@ h1 {
 
         if((ev.type =='touchstart') || (ev.type =='touchmove') || (ev.type =='touchend')) {
             ev.preventDefault();
-            x = ev.touches[0].pageX;
-            y = ev.touches[0].pageY;
+            x = ev.touches[0].clientX;
+            y = ev.touches[0].clientY;
         }
         x = x - offset.x;
         y = y - offset.y;
