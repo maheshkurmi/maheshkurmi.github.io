@@ -90,7 +90,7 @@ s
     var csr=0;
     var zeroError=0;
     var displayInfo=false;
-
+    var objectWidthPixel=25;
      //create gui
     var gui = new dat.GUI({name:"MicrometerSimulation"});//,autoPlace: false});
     gui.add(window, "msdValue").name("Main scale Division  ").min(0.1).max(5).step(0.1).onChange(update);
@@ -149,7 +149,9 @@ s
             msr=mainScaleDivisions;
             csr=0;
         }
-
+        if(objectWidthPixel!=0){
+            //if(msr*circularScaleDivisions+csr)*mainScaleLengthPixels
+        }
         update();
     }
 
@@ -371,6 +373,7 @@ s
         mx = m.x;
         my = m.y;
         isdragging=true;
+        me.preventDefault();
     }
 
     function mouseReleased( me) {
@@ -389,26 +392,30 @@ s
         let m=getMousePos(me);
         //console.log(m);
         let dx,dy;
-        dx = (m.x- mx)/scale;
-        dy = (m.y- my)/scale;
+        dx = (m.x- mx);///scale;
+        dy = (m.y- my);///scale;
         mx = m.x;
         my = m.y;
         if(isMainDragging){
-            ox+=dx;
-            oy+=dy;
-            paint();
-            return;
+            //ox+=dx;
+            //oy+=dy;
+            //paint();
+           // return;
         }
 
-        if (msr>=mainScaleDivisions&&dy<0){
+        if (msr>=mainScaleDivisions&&dy>0){
             paint();
             return;
         }
-        if (msr== 0&& csr==0 && (dy>0)){
+        if (msr== 0&& csr==0 && (dy<0)){
             paint();
             return;
         }
+        //console.log(m);
+        //console.log("dx="+dx+" , dy="+dy);
         rotateVernier( Math.round(dy));
+        //update();
+        me.preventDefault();
     }
 
 
