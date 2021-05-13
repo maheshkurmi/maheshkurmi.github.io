@@ -1,0 +1,446 @@
+<!doctype html>
+<html>
+<head>
+    <title>Micrometer Simulator</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+    </style>
+    <script src="dat.gui.js"></script>
+    <style src="dat.gui.css"></style>
+</head>
+
+<body>
+<div id="canvasdiv" class="container" align="center">
+    <canvas id="myCanvas" style="border: 1px solid #c3c3c3;">
+             Your browser does not support the HTML5 canvas tag.
+    </canvas>
+</div>
+s
+<script type='text/javascript'>
+    /*drawing offset*/
+    var scale=window.innerWidth/1000;
+    var Xoffset=30*scale;
+    var Yoffset=30*scale;
+    var isdragging=false;
+    var isMainDragging=false;
+    var mx, my; //prev mouse positions
+    var bgColor = "rgb(0,64,84)";
+    var fgColor="rgb(255,255,255)";
+
+    //gauge variables
+    var imgThimble=new Image();
+    imgThimble.src="thimble.png"
+    var imgSpindle=new Image();
+    imgSpindle.src="spindle.png"
+    var imgBase=new Image();
+    imgBase.src="micrometer_base.png"
+    var imgTexture=new Image();
+    imgTexture.src="texture .png"
+    imgTexture.onload=init;
+    var textPattern=null;
+    var gradient=null;
+
+    const scaleOriginX=539;
+    const scaleOriginY=100;
+
+    const spindleOriginX=200;
+    const spindleOriginY=79;
+
+    const thimbleY1=49;
+    const thimbleY2=40;
+    const thimbleY3=31;
+    const thimbleX1=0; //thimble leftmost pos in  thimble.png
+    const thimbleX2=40; //thimbal division display location in thimble.png
+    const thimbleX3=440; //thimble leftmost pos in  thimble.png
+
+    const mainScaleDivisions=30;
+    const mainScaleLengthPixels=200;
+    const msd_pixels=mainScaleLengthPixels/mainScaleDivisions;
+    const majorTickLengthPixels=20;
+    const minorTickLengthPixels=10;
+    const vernierMajorTickLengthPixels=30;
+    const vernierMinorTickLengthPixels=18;
+    const scaleColor="black";
+
+    var msdValue=0.1;
+    var circularScaleDivisions=50;
+    var msr=0;
+    var csr=0;
+    var zeroError=0;
+    var displayInfo=false;
+
+     //create gui
+    var gui = new dat.GUI({name:"MicrometerSimulation"});//,autoPlace: false});
+    gui.add(window, "msdValue").name("Main scale Division  ").min(0.1).max(5).step(0.1).onChange(update);
+    gui.add(window, "circularScaleDivisions").name("Circular Divisions").min(10).max(100).step(5).onChange(update);
+    gui.add(window, "zeroError").name("Zero Error").min(-40).max(40).step(1).onChange(update);
+    gui.add(window, "scale").name("Scale  ").min(0.1).max(5).step(0.01).onChange(update);
+    gui.add(window, "displayInfo").name("Display values").onChange(update);
+    gui.addColor(window, "bgColor").name("Backround  ").onChange(update);
+    gui.addColor(window, "fgColor").name("Foreround  ").onChange(update);
+
+    var canvas=document.getElementById("myCanvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    var ctx=canvas.getContext("2d");
+
+    //Add event listeners
+    window.addEventListener('resize',function(ev) { return resize(ev); });
+    canvas.addEventListener("mousewheel",mouseWheelMoved);
+    canvas.addEventListener("mousemove",mouseDragged);
+    canvas.addEventListener("mousedown",mousePressed);
+    canvas.addEventListener("mouseup",mouseReleased);
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+    window.addEventListener('keydown',onKeyEvent,false);
+
+    function resize(){
+        scale*=window.innerWidth/canvas.width;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        update();
+    }
+
+    init();
+
+    function init(){
+        resize();
+    }
+
+    function rotateVernier(div){
+        csr+=div;
+        if (csr<0) {
+            csr=circularScaleDivisions+csr;
+            msr-=1;
+
+        }else if(csr>=circularScaleDivisions){
+            csr=csr-circularScaleDivisions;
+            msr+=1;
+
+        }
+        if(msr<=-1){
+            msr=0;
+            csr=0;
+        }
+        if(msr>=mainScaleDivisions){
+            msr=mainScaleDivisions;
+            csr=0;
+        }
+
+        update();
+    }
+
+    function update(){
+        paint();
+    }
+
+
+    function paint(){
+         //	ctx.clear();
+        ctx.resetTransform();
+        ctx.fillStyle=bgColor;
+        ctx.strokeStyle=fgColor;
+        ctx.save();
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        //draw  Spindle first
+        let shift=(msr+csr/circularScaleDivisions)*msd_pixels;
+        ctx.drawImage(imgSpindle,spindleOriginX+shift,spindleOriginY);
+
+        //draw Base of gauge
+        ctx.drawImage(imgBase,0,0);
+
+        //draw ruler on main scale
+        ctx.translate(scaleOriginX,scaleOriginY);
+        //Rectangle2D.Double rect = new Rectangle2D.Double(Xoffset,Yoffset,mainscaleWidth,mainscaleHeight);
+        ctx.fillStyle=scaleColor;//"rgb(210,210,210)";
+        ctx.strokeStyle=scaleColor;
+        let x=0,y=0,ticklength=0;
+        this.ctx.font = '8pt sans-serif';
+        //ctx.strokeStyle="orange";
+        for (var i=0;i<=mainScaleDivisions;i++){
+
+            ticklength=(i % 5==0)?majorTickLengthPixels:minorTickLengthPixels;
+            //ticklength=(i % 2==0)?ticklength:-5;
+            drawLine(x,y,x,y-ticklength);
+            //ctx.font="Arial 10px";
+            if (i%10==0)outString(x, (y-ticklength-3),i*msdValue,1,2 );
+            x+=msd_pixels;
+        }
+
+        ctx.restore();
+
+        ctx.fillStyle=fgColor;
+        ctx.font = '12pt sans-serif';
+
+        //ctx.translate(scaleOriginX+shift,scaleOriginY)
+        outString(300, 475,"1 msd = pitch = 0.50 mm",1,1);
+
+        ctx.save();
+        //draw Circular scale
+        let N=circularScaleDivisions/4;
+        let R=scaleOriginY-thimbleY1;
+        ctx.drawImage(imgThimble,scaleOriginX+shift,thimbleY3);
+        ctx.rect(scaleOriginX+shift,thimbleY3,(thimbleX3-thimbleX2-153),2*(scaleOriginY-thimbleY3-1));
+       // ctx.clip();
+        if(textPattern==null){
+            textPattern= ctx.createPattern( imgTexture, 'repeat' );
+        }
+
+        let offsetY=(msr*circularScaleDivisions+csr)*R*Math.PI/N/2;
+        let s=0.5;
+        ctx.translate(scaleOriginX+shift+thimbleX2+49,scaleOriginY);
+        ctx.fillStyle=textPattern;
+        ctx.scale(s,s);
+        R=scaleOriginY-thimbleY3;
+        ctx.translate(0,offsetY/s);
+
+        ctx.fillRect(0,-(R+offsetY)/s,(thimbleX3-thimbleX2-153)/s,2*R/s);
+        //ctx.fillRect(0,-4*(scaleOriginY-thimbleY3-1)/s,(thimbleX3-thimbleX2-153)/s,4*(scaleOriginY-thimbleY3-1)/s);
+
+        ctx.restore();
+        // ctx.clip=null;
+        ctx.save();
+        if(gradient==null){
+            gradient=ctx.createLinearGradient(thimbleX2,thimbleY3,thimbleX2,thimbleY3+2*R);
+            gradient.addColorStop(0,"black");//rgb(46,57,46)");
+            gradient.addColorStop(0.5,"rgb(184,203,184)");
+            gradient.addColorStop(1,"black");//rgb(46,57,46)");
+        }
+
+        x=scaleOriginX+shift;
+        ctx.globalAlpha=0.6;
+        ctx.fillStyle=gradient;
+        ctx.fillRect(x+thimbleX2+49,thimbleY3,(thimbleX3-thimbleX2-153),2*R);
+        ctx.globalAlpha=1;
+
+
+
+        ctx.fillStyle=scaleColor;
+        ctx.strokeStyle=scaleColor;
+        //draw Divisions on circular scale
+        //ctx.translate(scaleOriginX+shift,scaleOriginY); //translate origin to circular scale zero
+        x=scaleOriginX+shift;
+        y=scaleOriginY;
+        ctx.font = '9pt sans-serif';
+
+        R=scaleOriginY-thimbleY1;
+        let dy1=0,dy2=0;
+        let dth=Math.PI/2/N;
+        let divPos;
+        let sinTh=0
+        drawLine(x,thimbleY1-1,x,thimbleY1+2*R+1);
+        for (let i=0;i<N;i++){
+            sinTh=Math.sin(i*dth);
+            if(sinTh>0.7)ctx.globalAlpha=1-3*(sinTh-0.7)
+            dy1=R*sinTh;
+            dy2=dy1*(R+4)/R;
+            y=scaleOriginY-dy1;
+            divPos=csr+i;
+            if(divPos>=circularScaleDivisions)divPos=divPos-circularScaleDivisions;
+            ticklength=vernierMinorTickLengthPixels;
+            if(divPos%5==0){
+                ticklength=vernierMajorTickLengthPixels;
+                dy2=dy1*(R+8)/R;
+                if(i<N-2)outString(x+thimbleX2+5, scaleOriginY-dy2,divPos,0,1 );
+            }
+            drawLine(x,y,x+ticklength,scaleOriginY-dy2);
+            if(i==0)continue;
+            dy2=dy1*(R+4)/R;
+            y=scaleOriginY+dy1;
+            divPos=csr-i;
+            if(divPos<0)divPos=circularScaleDivisions+divPos;
+            ticklength=vernierMinorTickLengthPixels;
+            if(divPos%5==0){
+                ticklength=vernierMajorTickLengthPixels;
+                dy2=dy1*(R+8)/R;
+                if(i<N-2)outString(x+thimbleX2+5, scaleOriginY+dy2,divPos,0,1 );
+            }
+            drawLine(x,y,x+ticklength,scaleOriginY+dy2);
+        }
+        ctx.restore();
+        ctx.fillStyle=fgColor;
+        ctx.font = '12pt sans-serif';
+
+        outString(20, 575,"msr="+msr+"  csr="+csr,0,2);
+
+
+    }
+
+    function drawLine(x1,y1,x2,y2){
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+    }
+
+    function outString( x,y, s, x_align, y_align) {
+        var fm=ctx.measureText(s);
+        var h=10;//fm.height not supported in browsers
+        switch (y_align) {
+            case 0:
+                y += h;
+                break;
+            case 1:
+                y += h / 2;
+                break;
+            case 2:
+                break;
+        }
+        switch (x_align) {
+            case 0:
+                ctx.fillText(s, x+3, y);
+                break;
+            case 1:
+                ctx.fillText(s, x - fm.width/2, y);
+                break;
+            case 2:
+                ctx.fillText(s, x - fm.width / 2, y);
+                break;
+        }
+    }
+
+
+    function myTouchMove(te){
+        te.preventDefault();
+        var touch = te.touches[0];
+        var mouseEvent = new MouseEvent("mousemove", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function myTouchStart(te){
+        te.preventDefault();
+        var touch = te.touches[0];
+        var mouseEvent = new MouseEvent("mousedown", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function myTouchEnd(te){
+        te.preventDefault();
+        var touch = te.touches[0];
+        var mouseEvent = new MouseEvent("mouseup", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function getMousePos(event){
+        var rect = canvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+        //return {
+        //x: event.pageX - canvasdiv.offsetLeft ,
+        //y: event.pageY - canvasdiv.offsetTop
+        //};
+    }
+
+    function mousePressed( me) {
+        let m=getMousePos(me);
+        mx = m.x;
+        my = m.y;
+        isdragging=true;
+    }
+
+    function mouseReleased( me) {
+        isdragging = false;
+    }
+
+    function mouseWheelMoved(me) {
+        //console.log(e.wheelDelta);
+        var scroll=me.wheelDelta>0?1:-1;
+        rotateVernier(scroll);
+        me.preventDefault();
+    }
+
+    function mouseDragged( me) {
+        if (!isdragging && !isMainDragging) return false;
+        let m=getMousePos(me);
+        //console.log(m);
+        let dx,dy;
+        dx = (m.x- mx)/scale;
+        dy = (m.y- my)/scale;
+        mx = m.x;
+        my = m.y;
+        if(isMainDragging){
+            ox+=dx;
+            oy+=dy;
+            paint();
+            return;
+        }
+
+        if (msr>=mainScaleDivisions&&dy<0){
+            paint();
+            return;
+        }
+        if (msr== 0&& csr==0 && (dy>0)){
+            paint();
+            return;
+        }
+        rotateVernier( Math.round(dy));
+    }
+
+
+
+    /**
+     * Runs when widget recieves key event (events are similar to java.awt events).
+     * @param keyChar {char} : the character(if any) associated with keyevent
+     * @param keyCode {Number} : key code {@see https://docs.oracle.com/javase/7/docs/api/java/awt/event/KeyEvent.html} for keycodes
+     * @param key {String} : the identifier of the key (like 'ArrowLeft','a','Enter','F11) that was pressed when a key event occured
+     * @param id {Number} : EventType 401(keyPressed), 402(KeyReleased)
+     * @return if true is returned event is consumed and not further handled by simphy world*/
+    function onKeyEvent(e){
+        //if(id==401){
+        if(e.keyCode==37 ||e.keyCode==38){
+            rotateVernier(-1);
+        }
+        else if (e.keyCode==39||e.keyCode==40){
+            rotateVernier(1);
+        }
+        else if (e.keyCode==33){//page up
+            scale*=1.04;
+            update();
+        }
+        else if (e.keyCode==34){//page down
+            scale*=0.96;
+            update();
+        }else {
+            return false;
+        }
+
+        e.preventDefault();
+    }
+</script>
+</body>
+</html>
