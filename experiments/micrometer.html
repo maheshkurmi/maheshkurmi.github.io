@@ -561,10 +561,10 @@ s
 
     function myTouchEnd(te){
         te.preventDefault();
-        var touch = te.touches[0];
+       // var touch = te.touches[0];
         var mouseEvent = new MouseEvent("mouseup", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
+            clientX: -1,
+            clientY: -1
         });
         canvas.dispatchEvent(mouseEvent);
     }
