@@ -26,30 +26,128 @@
             font-style: 26px;
             margin: 10px;
         }
+        #container canvas{
+            position: relative;
+        }
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
     </style>
     <script src="dat.gui.js"></script>
+    <script src="hammer.js"></script>
     <style src="dat.gui.css"></style>
 </head>
 
 <body>
 
 
-<div id="canvasdiv" class="container" align="center">
+<div id="container" align="center">
     <canvas id="myCanvas" style="border: 1px solid #c3c3c3;">
              Your browser does not support the HTML5 canvas tag.
     </canvas>
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Virnier Simulation</h3>
+                <p> Customise main scale divisions, vernier scale divisions and zero error using the sliders at the top right panel.<br/>
+                    Create problem by clicking create problem button, and drag the created object near the <i>internal jaws</i>, <i>external jaws</i> or <i> depth blade</i> to snap, now move vernier to read its width.
+                <h4>Controls</h4>
+                Pinch or use scale option in gui panel to zoom.
+                Use mouse wheel, drag vernier or use arrow keys to move the vernier.<br>
+                </p>
+            </div>
+        </div>
+    </div>
+
 </div>
 s
 <script type='text/javascript'>
     /*drawing offset*/
     var scale=window.innerWidth/1200;
     var xOffset=30;
-    var yOffset=30;
+    var yOffset=40;
     var dragMode=0;//0==none, 1=world, 2=vernier, 3= object
 
     var mx, my; //prev mouse positions
     var bgColor = "rgb(0,64,84)";
-    var fgColor="rgb(255,255,255)";
+    var fgColor="orange";//rgb(255,255,255)";
     const scaleColor="black";
 
     var loadedItems=0;
@@ -123,7 +221,10 @@ s
     var objectTobeMeasured={path:null,x:0,y:0,length:100,w:100,h:100,R1:30,R2:50,h2:100,h1:80,th:0,mode:0,state:0};//state =0=hide, 1= visible but not snapped, 2=snapped
 
     //create gui
-    var gui = new dat.GUI({name:"MicrometerSimulation"});//,autoPlace: false});
+    var gui = new dat.GUI();//{name:"MicrometerSimulation",localStorage:true});//,autoPlace: false});
+    gui.remember(window);
+   // gui.remember(window.displayInfo);
+    //gui.remember(window.zeroError);
     var deviceFolder=gui.addFolder("Device Settings")
     deviceFolder.add(window, "msdValue").name("MSD").min(0.05).max(5).step(0.5).onChange(update);
     deviceFolder.add(window, "mainScaleDivisions").name("MSD Count").min(20).max(200).step(10).onChange(update);
@@ -151,14 +252,73 @@ s
     function itemloaded(){
         loadedItems++;
         if(loadedItems==itemsToLoad){
+            hammertime = new Hammer(canvas);
+            hammertime.get('pinch').set({ enable: true });
+            hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
+            hammertime.on('panstart', function(ev) {
+                let mouseEvent = new MouseEvent("mousedown", {
+                    clientX: ev.center.x,
+                    clientY: ev.center.y
+                });
+                //console.log(ev);
+                mousePressed(mouseEvent);
+                //canvas.dispatchEvent(mouseEvent);
+            });
+            hammertime.on('panend', function(ev) {
+                let mouseEvent = new MouseEvent("mouseup", {
+                    clientX: ev.center.x,
+                    clientY: ev.center.y
+                });
+                // console.log(ev.type);
+                // canvas.dispatchEvent(mouseEvent);
+                mouseReleased(mouseEvent);
+            });
+            hammertime.on('panmove', function(ev) {
+
+                let mouseEvent = new MouseEvent("mousemove", {
+                    clientX: ev.center.x,
+                    clientY: ev.center.y
+                });
+                mouseDragged(mouseEvent);
+                // console.log(ev.type);
+                // canvas.dispatchEvent(mouseEvent);
+            });
+
+
+            hammertime.on('pinchstart', function(ev) {
+                intiScale=scale;
+
+            });
+
+            //can use pinch in pinchout separately
+            hammertime.on('pinch', function(ev) {
+
+                console.log(ev.type+" scale="+ev.scale);
+                let oldScale=scale;
+
+                let x = ev.center.x/scale;
+                let y = ev.center.y/scale;
+                scale=intiScale*ev.scale;
+
+                xOffset-= x*(scale-oldScale);
+                yOffset-= y*(scale-oldScale);
+
+                //xOffset=(xOffset+canvas.width/2-ev.center.x);//*scale;
+                //yOffset=(yOffset+canvas.height/2-ev.center.y)//*scale;
+                paint();
+            });
+
+
             canvas.addEventListener("mousewheel",mouseWheelMoved);
-            canvas.addEventListener("mousemove",mouseDragged);
-            canvas.addEventListener("mousedown",mousePressed);
-            canvas.addEventListener("mouseup",mouseReleased);
-            canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
-            canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
-            canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
-            window.addEventListener('keydown',onKeyEvent,false);
+            document.querySelector(".trigger_popup_fricc").onclick=function(){
+                document.querySelector('.hover_bkgr_fricc').style.display = "block";
+            };
+            document.querySelector('.hover_bkgr_fricc').onclick =function(){
+                document.querySelector('.hover_bkgr_fricc').style.display = "none";
+            };
+            document.querySelector('.popupCloseButton').onclick=function(){
+                document.querySelector('.hover_bkgr_fricc').style.display = "none";
+            };
         }
         paint();
     }
@@ -381,7 +541,9 @@ s
 
         //ctx.translate(scaleOriginX+shift,scaleOriginY)
         outString(844, 117,"1 MSD = "+msdValue+unit,1,0);
-
+        ctx.fillStyle=fgColor;
+        outString(844, 135,"www.simphy.com",1,0);
+        ctx.fillStyle=scaleColor;
         //draw Vernier scale
         x=scaleOriginX-offsetOriginX+shift-vernierOriginX;
         y=scaleOriginY-vernierOriginY;
@@ -447,7 +609,7 @@ s
         if(displayInfo)drawInfo();
         ctx.resetTransform();
 
-        ctx.drawImage(imgSimphy,5,5,100,30);
+       // ctx.drawImage(imgSimphy,5,5,100,30);
     }
 
     function drawInfo(){
@@ -464,7 +626,7 @@ s
 
         //Draw VSD Hint
         let gappixel=msd_pixels*(msr+vsr/vernierScaleDivisions);
-        x=scaleOriginX+gappixel+offsetOriginX+vsr*vsd_pixels;
+        x=scaleOriginX+gappixel+offsetOriginX+getVernierScaleReading()*vsd_pixels;
         y=scaleOriginY+majorTickLengthPixels;
         drawLineWithArrows(x,y,x, y+20,arrowSize,arrowSize,true,false);
         outString(x, y+22,getVernierScaleReading()+"VSD = "+formatValue(msdValue*getVernierScaleReading()/vernierScaleDivisions),1,0);
@@ -625,10 +787,10 @@ s
 
     function myTouchEnd(te){
         te.preventDefault();
-        var touch = te.touches[0];
+        //var touch = te.touches[0];
         var mouseEvent = new MouseEvent("mouseup", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
+            clientX: -1,
+            clientY: -1
         });
         canvas.dispatchEvent(mouseEvent);
     }
