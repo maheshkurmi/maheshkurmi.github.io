@@ -106,20 +106,63 @@
             height: 30px;
             text-align: center;
         }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            //transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            //--tp-font-family: Helvetica neue, roboto;
+            //--tp-font-size: 10px;
+            //--tp-font-weight: bold;
+            --tp-base-background-color: hsla(0, 0%, 10%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.2);
+            --tp-button-background-color: hsla(0, 0%, 80%, 1);
+            --tp-button-background-color-active: hsla(0, 0%, 100%, 1);
+            --tp-button-background-color-focus: hsla(0, 0%, 95%, 1);
+            --tp-button-background-color-hover: hsla(0, 0%, 85%, 1);
+            --tp-button-foreground-color: hsla(0, 0%, 0%, 0.8);
+            --tp-container-background-color: hsla(0, 0%, 0%, 0.3);
+            --tp-container-background-color-active: hsla(0, 0%, 0%, 0.6);
+            --tp-container-background-color-focus: hsla(0, 0%, 0%, 0.5);
+            --tp-container-background-color-hover: hsla(0, 0%, 0%, 0.4);
+            --tp-container-foreground-color: hsla(0, 0%, 100%, 0.5);
+            --tp-groove-foreground-color: hsla(0, 0%, 0%, 0.2);
+            --tp-input-background-color: hsla(0, 0%, 0%, 0.3);
+            --tp-input-background-color-active: hsla(0, 0%, 0%, 0.6);
+            --tp-input-background-color-focus: hsla(0, 0%, 0%, 0.5);
+            --tp-input-background-color-hover: hsla(0, 0%, 0%, 0.4);
+            --tp-input-foreground-color: hsla(0, 0%, 100%, 0.5);
+            --tp-label-foreground-color: hsla(0, 0%, 100%, 0.5);
+            --tp-monitor-background-color: hsla(0, 0%, 0%, 0.3);
+            --tp-monitor-foreground-color: hsla(0, 0%, 100%, 0.3);
+        }
+
     </style>
-    <script src="dat.gui.js"></script>
     <script src="hammer.js"></script>
-    <style src="dat.gui.css"></style>
+    <script src="tweakpane-3.0.0.js"></script>
 </head>
 
 <body>
 
 
-<div id="container" >
+<div class="container">
+    <div id="gui" style="position: absolute">
 
+    </div>
     <canvas id="myCanvas" style="border: 1px solid #c3c3c3;">
-             Your browser does not support the HTML5 canvas tag.
+        Your browser does not support the HTML5 canvas tag.
     </canvas>
+
     <a class="trigger_popup_fricc">	&#8505;</a>
     <div id="overlay">
 
@@ -210,6 +253,7 @@
     var displayInfo=false;
     var objectWidthPixel=25;
 
+    var precision;
     var randomZeroError=true;
     var randomMainScaleDivisions=true;
     var randomCircularScaleDivision=true;
@@ -217,23 +261,33 @@
     var objectTobeMeasured={x:xOffset+ window.innerWidth-40,y:yOffset+window.innerHeight-110,w:30,h:100,state:1};//state =0=hide, 1= visible but not snapped, 2=snapped
 
     //create gui
-    var gui = new dat.GUI({name:"MicrometerSimulation"});//,autoPlace: false});
-    gui.remember(window);
-    var deviceFolder=gui.addFolder("Device Settings")
-    deviceFolder.add(window, "msdValue").name("MSD").min(0.05).max(5).step(0.5).onChange(update);
-    deviceFolder.add(window, "mainScaleDivisions").name("MSD Count").min(10).max(50).step(10).onChange(update);
-    deviceFolder.add(window, "circularScaleDivisions").name("CSD Count").min(25).max(100).step(25).onChange(update);
-    deviceFolder.add(window, "zeroError").name("Zero Error").min(-circularScaleDivisions+1).max(circularScaleDivisions-1).step(1).onChange(update);
-    var displayFolder=gui.addFolder("Display Settings")
-    displayFolder.add(window, "scale").name("Scale  ").min(0.1).max(5).step(0.01).onChange(update);
-    displayFolder.add(window, "displayInfo").name("Display values").onChange(update);
-    displayFolder.addColor(window, "bgColor").name("Backround  ").onChange(update);
-    var problemFolder=gui.addFolder("Create problem");
-    problemFolder.add(window,"randomZeroError");
-    problemFolder.add(window,"randomMainScaleDivisions");
-    problemFolder.add(window,"randomCircularScaleDivision");
-    problemFolder.add(window,"randomObjectWidthPixel");
-    problemFolder.add(window,"createProblem");
+    const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Micrometer Settings"});
+
+    const tab = pane.addTab({
+        pages: [
+            {title: 'Device settings'},
+            {title: 'Create Problem'},
+        ],
+    });
+    //gui.remember(window);
+   // var deviceFolder=pane.addFolder({title:"Device Settings",expanded:true});
+    tab.pages[0].addInput(window, "msdValue",{label:"MSD",min:0.05,max:5,step:0.5}).on('change',update);
+    tab.pages[0].addInput(window, "mainScaleDivisions",{label:"MSD Count",min:10,max:50,step:10}).on('change',update);
+    var csController=tab.pages[0].addInput(window, "circularScaleDivisions",{label:"CSD Count",min:25,max:100,step:25});
+    csController.on('change',update);
+    var zeController=tab.pages[0].addInput(window, "zeroError",{label:"Zero Error",min:-circularScaleDivisions+1,max:circularScaleDivisions-1,step:1});
+    zeController.on('change',update);
+    tab.pages[0].addInput(window, "displayInfo",{label:"Display values"}).on('change',update);
+    tab.pages[0].addInput(window, "bgColor",{label:"Background",picker: 'inline'}).on('change',paint);
+
+   // var problemFolder=pane.addFolder({title:"Problem Settings",expanded:false});
+
+    var problemFolder=tab.pages[1].addFolder({title:"Check Options to randomize"});
+    problemFolder.addInput(window,"randomZeroError",{label:"Zero Error"});
+    problemFolder.addInput(window,"randomMainScaleDivisions",{label:"MSD Count"});
+    problemFolder.addInput(window,"randomCircularScaleDivision",{label:"CSD Count"});
+    problemFolder.addInput(window,"randomObjectWidthPixel",{label:"Object Dimensions"});
+    tab.pages[1].addButton({title:"createProblem"}).on('click',createProblem);
 
     var canvas=document.getElementById("myCanvas");
     canvas.width = window.innerWidth;
@@ -306,6 +360,7 @@
 
 
             canvas.addEventListener("mousewheel",mouseWheelMoved);
+            window.addEventListener('keydown',onKeyEvent,false);
              /*canvas.addEventListener("mousemove",mouseDragged);
             canvas.addEventListener("mousedown",mousePressed);
             canvas.addEventListener("mouseup",mouseReleased);
@@ -357,13 +412,8 @@
             objectTobeMeasured.x = canvas.width-objectTobeMeasured.w-20;
             objectTobeMeasured.y = canvas.width-objectTobeMeasured.h-20
         }
-        for (let i in deviceFolder.__controllers) {
-            if (deviceFolder.__controllers[i].property == "zeroError"){
-                deviceFolder.__controllers[i].min(-circularScaleDivisions+1).max(circularScaleDivisions-1).step(1);
-            }
-            deviceFolder.__controllers[i].updateDisplay();
+        pane.refresh();
 
-        }
         rotateVernier(0);
     }
 
@@ -400,6 +450,8 @@
 
     function update(){
         msd_pixels=mainScaleLengthPixels/mainScaleDivisions;
+        precision=(circularScaleDivisions%3==0||circularScaleDivisions%7==0)?3:2;
+
         if(objectTobeMeasured.state==2){
             let v=(msr+csr/circularScaleDivisions)*msd_pixels
             if(v<objectTobeMeasured.w){
@@ -622,7 +674,7 @@
     }
 
     function formatValue(s){
-        return s.toFixed(2)+unit;
+        return s.toFixed(precision)+unit;
     }
     function getMainScaleReading(){
         return Math.floor((msr*circularScaleDivisions+csr+zeroError)/circularScaleDivisions);

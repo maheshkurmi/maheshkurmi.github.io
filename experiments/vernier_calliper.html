@@ -105,18 +105,61 @@
             height: 30px;
             text-align: center;
         }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+        //transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+        //--tp-font-family: Helvetica neue, roboto;
+        //--tp-font-size: 10px;
+        //--tp-font-weight: bold;
+            --tp-base-background-color: hsla(0, 0%, 10%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.2);
+            --tp-button-background-color: hsla(0, 0%, 80%, 1);
+            --tp-button-background-color-active: hsla(0, 0%, 100%, 1);
+            --tp-button-background-color-focus: hsla(0, 0%, 95%, 1);
+            --tp-button-background-color-hover: hsla(0, 0%, 85%, 1);
+            --tp-button-foreground-color: hsla(0, 0%, 0%, 0.8);
+            --tp-container-background-color: hsla(0, 0%, 0%, 0.3);
+            --tp-container-background-color-active: hsla(0, 0%, 0%, 0.6);
+            --tp-container-background-color-focus: hsla(0, 0%, 0%, 0.5);
+            --tp-container-background-color-hover: hsla(0, 0%, 0%, 0.4);
+            --tp-container-foreground-color: hsla(0, 0%, 100%, 0.5);
+            --tp-groove-foreground-color: hsla(0, 0%, 0%, 0.2);
+            --tp-input-background-color: hsla(0, 0%, 0%, 0.3);
+            --tp-input-background-color-active: hsla(0, 0%, 0%, 0.6);
+            --tp-input-background-color-focus: hsla(0, 0%, 0%, 0.5);
+            --tp-input-background-color-hover: hsla(0, 0%, 0%, 0.4);
+            --tp-input-foreground-color: hsla(0, 0%, 100%, 0.5);
+            --tp-label-foreground-color: hsla(0, 0%, 100%, 0.5);
+            --tp-monitor-background-color: hsla(0, 0%, 0%, 0.3);
+            --tp-monitor-foreground-color: hsla(0, 0%, 100%, 0.3);
+        }
+
     </style>
-    <script src="dat.gui.js"></script>
     <script src="hammer.js"></script>
-    <style src="dat.gui.css"></style>
+    <script src="tweakpane-3.0.0.js"></script>
 </head>
 
 <body>
 
 
-<div id="container" align="center">
+<div class="container">
+    <div id="gui" style="position: absolute">
+
+    </div>
     <canvas id="myCanvas" style="border: 1px solid #c3c3c3;">
-             Your browser does not support the HTML5 canvas tag.
+        Your browser does not support the HTML5 canvas tag.
     </canvas>
     <a class="trigger_popup_fricc">	&#8505;</a>
     <div id="overlay">
@@ -125,7 +168,7 @@
             <span class="helper"></span>
             <div>
                 <div class="popupCloseButton">&times;</div>
-                <h3>Virnier Simulation</h3>
+                <h3>Vernier Simulation</h3>
                 <p> Customise main scale divisions, vernier scale divisions and zero error using the sliders at the top right panel.<br/>
                     Create problem by clicking create problem button, and drag the created object near the <i>internal jaws</i>, <i>external jaws</i> or <i> depth blade</i> to snap, now move vernier to read its width.
                 <h4>Controls</h4>
@@ -137,7 +180,7 @@
     </div>
 
 </div>
-s
+
 <script type='text/javascript'>
     /*drawing offset*/
     var scale=window.innerWidth/1200;
@@ -221,25 +264,35 @@ s
     var objectTobeMeasured={path:null,x:0,y:0,length:100,w:100,h:100,R1:30,R2:50,h2:100,h1:80,th:0,mode:0,state:0};//state =0=hide, 1= visible but not snapped, 2=snapped
 
     //create gui
-    var gui = new dat.GUI();//{name:"MicrometerSimulation",localStorage:true});//,autoPlace: false});
-    gui.remember(window);
-   // gui.remember(window.displayInfo);
-    //gui.remember(window.zeroError);
-    var deviceFolder=gui.addFolder("Device Settings")
-    deviceFolder.add(window, "msdValue").name("MSD").min(0.05).max(5).step(0.5).onChange(update);
-    deviceFolder.add(window, "mainScaleDivisions").name("MSD Count").min(20).max(200).step(10).onChange(update);
-    deviceFolder.add(window, "vernierScaleDivisions").name("VSD Count").min(5).max(100).step(5).onChange(update);
-    deviceFolder.add(window, "zeroError").name("Zero Error").min(-vernierScaleDivisions+1).max(vernierScaleDivisions-1).step(1).onChange(update);
-    var displayFolder=gui.addFolder("Display Settings")
-    displayFolder.add(window, "scale").name("Scale  ").min(0.1).max(5).step(0.01).onChange(update);
-    displayFolder.add(window, "displayInfo").name("Display values").onChange(update);
-    displayFolder.addColor(window, "bgColor").name("Backround  ").onChange(update);
-    var problemFolder=gui.addFolder("Create problem");
-    problemFolder.add(window,"randomZeroError");
-    problemFolder.add(window,"randomMainScaleDivisions");
-    problemFolder.add(window,"randomVernierScaleDivision");
-    problemFolder.add(window,"randomObjectWidthPixel");
-    problemFolder.add(window,"createProblem");
+    const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Vernier Settings"});
+
+    const tab = pane.addTab({
+        pages: [
+            {title: 'Device settings'},
+            {title: 'Create Problem'},
+        ],
+    });
+    //gui.remember(window);
+    // var deviceFolder=pane.addFolder({title:"Device Settings",expanded:true});
+    tab.pages[0].addInput(window, "mainScaleDivisions",{label:"MSD Count",min:50,max:100,step:10}).on('change',update);
+    var csController= tab.pages[0].addInput(window, "vernierScaleDivisions",{label:"VSD Count",min:5,max:25,step:5});
+    csController.on('change',update);
+    var zeController=tab.pages[0].addInput(window, "zeroError",{label:"Zero Error",min:-vernierScaleDivisions+1,max:vernierScaleDivisions-1,step:1});
+    zeController.on('change',update);
+
+    tab.pages[0].addInput(window, "displayInfo",{label:"Display values"}).on('change',update);
+    tab.pages[0].addSeparator();
+    tab.pages[0].addInput(window, "bgColor",{label:"Background",picker: 'inline'}).on('change',paint);
+
+    // var problemFolder=pane.addFolder({title:"Problem Settings",expanded:false});
+
+    var problemFolder=tab.pages[1].addFolder({title:"Check to randomize"});
+    problemFolder.addInput(window,"randomZeroError",{label:"Zero Error"});
+    problemFolder.addInput(window,"randomMainScaleDivisions",{label:"MSD Count"});
+    problemFolder.addInput(window,"randomVernierScaleDivision",{label:"VSD Count"});
+    problemFolder.addInput(window,"randomObjectWidthPixel",{label:"Object Dimensions"});
+    tab.pages[1].addButton({title:"createProblem"}).on('click',createProblem);
+
 
     var canvas=document.getElementById("myCanvas");
     canvas.width = window.innerWidth;
@@ -310,6 +363,7 @@ s
 
 
             canvas.addEventListener("mousewheel",mouseWheelMoved);
+            window.addEventListener('keydown',onKeyEvent,false);
             document.querySelector(".trigger_popup_fricc").onclick=function(){
                 document.querySelector('.hover_bkgr_fricc').style.display = "block";
             };
@@ -319,6 +373,7 @@ s
             document.querySelector('.popupCloseButton').onclick=function(){
                 document.querySelector('.hover_bkgr_fricc').style.display = "none";
             };
+
         }
         paint();
     }
@@ -413,6 +468,12 @@ s
            // if(objectTobeMeasured.y>-yOffset+canvas.height-objectTobeMeasured.h-50) objectTobeMeasured.y = -yOffset+canvas.height-objectTobeMeasured.h-100;
 
         }
+
+        csController.maxValue= mainScaleDivisions/3;
+        zeController.minValue=-vernierScaleDivisions+1;
+        zeController.maxValue= vernierScaleDivisions-1;
+
+        /*
         for (let i in deviceFolder.__controllers) {
             if (deviceFolder.__controllers[i].property == "zeroError"){
                 deviceFolder.__controllers[i].min(-vernierScaleDivisions+1).max(vernierScaleDivisions-1).step(1);
@@ -422,7 +483,8 @@ s
             }
             deviceFolder.__controllers[i].updateDisplay();
 
-        }
+        }*/
+        pane.refresh();
 
 
         translateVernier(0);
@@ -464,7 +526,7 @@ s
         msd_pixels=mainScaleLengthPixels/mainScaleDivisions;
         vsd_pixels=msd_pixels*(1-1/vernierScaleDivisions);
         vernierScaleLengthPixels=Math.max(imgVernier1.width+imgVernier3.width,50+vsd_pixels*vernierScaleDivisions+50);//imgVernier3.width;
-        precision=(vernierScaleDivisions%3==0||vernierScaleDivisions%7==0)?3:0;
+         precision=(vernierScaleDivisions%3==0||vernierScaleDivisions%7==0)?3:2;
         if(objectTobeMeasured.state==2){
             let v=(msr+vsr/vernierScaleDivisions)*msd_pixels
             let ol=objectTobeMeasured.length;
@@ -474,18 +536,12 @@ s
                 if(tickSound.paused)tickSound.play();
             }
         }
-
-
-        for (let i in deviceFolder.__controllers) {
-            if (deviceFolder.__controllers[i].property == "zeroError"){
-                deviceFolder.__controllers[i].min(-vernierScaleDivisions+1).max(vernierScaleDivisions-1).step(1);
-            }
-            if (deviceFolder.__controllers[i].property == "vernierScaleDivisions"){
-                deviceFolder.__controllers[i].min(5).max(mainScaleDivisions/3).step(5   );
-            }
-            deviceFolder.__controllers[i].updateDisplay();
-
+        if(csController) {
+            csController.maxValue = mainScaleDivisions / 3;
+            zeController.minValue = -vernierScaleDivisions + 1;
+            zeController.maxValue = vernierScaleDivisions - 1;
         }
+
         paint();
     }
 
@@ -674,7 +730,7 @@ s
     }
 
     function formatValue(s){
-        return s.toFixed(2)+unit;
+        return s.toFixed(precision)+unit;
     }
     function getMainScaleReading(){
         return Math.floor((msr*vernierScaleDivisions+vsr+zeroError)/vernierScaleDivisions);
@@ -922,6 +978,7 @@ s
      * @return if true is returned event is consumed and not further handled by simphy world*/
     function onKeyEvent(e){
         //if(id==401){
+
         if(e.keyCode==37 ||e.keyCode==38){
             translateVernier(-1);
         }
@@ -929,7 +986,7 @@ s
             translateVernier(1);
         }
         else if (e.keyCode==33){//page up
-            scale*=1.04;
+            scale*=1.05;
             update();
         }
         else if (e.keyCode==34){//page down
