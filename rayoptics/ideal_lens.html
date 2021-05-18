@@ -33,7 +33,7 @@ h1 {
 </style>
 <script  src="dat.gui.js"></script>
 <style src="dat.gui.css"></style>
-
+    <script src="hammer.js"></script>
 </head>
 	
 <body>
@@ -51,92 +51,136 @@ h1 {
     ctx.textBaseline="middle";
 
     window.addEventListener('resize',function(ev) { return resize(ev); });
-    canvas.addEventListener('mousemove',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
+    var initScale;
+   var hammertime = new Hammer(canvas);
+    hammertime.get('pinch').set({ enable: true });
+    hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
+    hammertime.on('panstart', function(ev) {
+        doMouse(ev.center.x,ev.center.y,"mousedown");
+    });
+    hammertime.on('panend', function(ev) {
+        doMouse(ev.center.x,ev.center.y,"mouseup");
+    });
+    hammertime.on('panmove', function(ev) {
+        doMouse(ev.center.x,ev.center.y,"mousemove");
+
+    });
+
+
+    hammertime.on('pinchstart', function(ev) {
+        intiScale=scale;
+
+    });
+
+    //can use pinch in pinchout separately
+    hammertime.on('pinch', function(ev) {
+
+       // console.log(ev.type+" scale="+ev.scale);
+        let oldScale=scale;
+
+        let x = ev.center.x/scale;
+        let y = ev.center.y/scale;
+        scale=intiScale*ev.scale;
+
+        offset.x-= x*(scale-oldScale);
+        offset.y-= y*(scale-oldScale);
+
+        //xOffset=(xOffset+canvas.width/2-ev.center.x);//*scale;
+        //yOffset=(yOffset+canvas.height/2-ev.center.y)//*scale;
+        paint();
+    });
+
+
+
     canvas.addEventListener('wheel',function(event){
         zoom(event.wheelDelta);
         event.preventDefault();
     }, false);
 
-    // Set up touch events for mobile, etc
-    canvas.addEventListener("touchstart", function (e) {
-        let touch = e.touches[0];
-        let mouseEvent = new MouseEvent("mousedown", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    }, false);
 
-    canvas.addEventListener("touchend", function (e) {
-        let mouseEvent = new MouseEvent("mouseup", {});
-        canvas.dispatchEvent(mouseEvent);
-    }, false);
-
-    canvas.addEventListener("touchmove", function (e) {
-        let touch = e.touches[0];
-        let mouseEvent = new MouseEvent("mousemove", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    }, {passive: false});
-
-    // Prevent scrolling when touching the canvas
-    document.body.addEventListener("touchstart", function (e) {
-        if (e.target == canvas) {
-            e.preventDefault();
-        }
-    },{passive: false});
-    document.body.addEventListener("touchend", function (e) {
-        if (e.target == canvas) {
-            e.preventDefault();
-        }
-    }, {passive: false});
-    document.body.addEventListener("touchmove", function (e) {
-        //if (e.target == canvas) {
-        e.preventDefault();
-        //}
-    },{passive: false});
+    window.addEventListener('keydown',doKeyBoard,false);
+    //window.addEventListener('keyup',keyUpListener,false);
 
     function resize(){
-       canvas.width = window.innerWidth;
-       canvas.height = window.innerHeight;
-       update();
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        update();
     }
+
     function zoom(wheelDelta){
         if(wheelDelta>0){
             scale*=1.025;
+            if(scale>5)scale=5;
         }else {
             scale *= 0.98;
+            if(scale<0.1)scale=0.1;
         }
+
         for (var i in gui.__controllers) {
             gui.__controllers[i].updateDisplay();
         }
         update();
     }
 
-    function doMouse(ev){
-        let xy = getEventXY(ev);
-        let x = xy.x;
-        let y = xy.y;
+    function doKeyBoard(e) {
+        var code = e.keyCode;
+        let consumed=true;
+        switch (code) {
+            case 37:
+                if(e.ctrlKey)u-=1;
+                else if(e.shiftKey)f-=1;
+                else offset.x-=5;//alert("Left"); break; //Left key
+                break;
+            case 39: //Right key
+                if(e.ctrlKey)u+=1;
+                else if(e.shiftKey)f+=1;
+                else offset.x+=5;
+                if(u>-10)u=-10;
+                break;
+            case 38: //up
+                offset.y-=5;
+                break;
+            case 40: //down
+                offset.y+=5;
+                break;
+            case 33: //page up
+                zoom(1);
+                break;
+            case 34: //page down
+                zoom(-1);
+                break;
+            default:
+                consumed=false;
+        }
 
-        if(ev.type === 'mousedown' ){//|| ev.type ==='touchstart') {
+        if(consumed){
+            if(f<-300)f=-300;
+            if(f>300)f=300;
+
+            for (var i in gui.__controllers) {
+                gui.__controllers[i].updateDisplay();
+            }
+            update();
+        }
+    }
+
+    function doMouse(x,y,type){
+
+        if(type === 'mousedown' ){//|| ev.type ==='touchstart') {
             // See if we're clicking a charge.
             prevMouseDown={x:x,y:y};
             x-=(offset.x+canvas.width/2);
             y-=(offset.y+canvas.height/2);
             x/=scale;
             y/=scale;
-            if(x>u-3*scale && x<u+6.5*scale&& y>-100 && y<0){
+            if(x>u-6*scale && x<u+8.5*scale&& y>-100 && y<0){
                 dragMode=1;
             }else{
                 dragMode=0;
             }
             update();
         }
-        if(ev.type === 'mousemove' ){//|| ev.type ==='touchmove') {
+        if(type === 'mousemove' ){//|| ev.type ==='touchmove') {
             if(prevMouseDown!=null) {
                 let dx=(x - prevMouseDown.x);
                 let dy=(y - prevMouseDown.y);
@@ -145,7 +189,7 @@ h1 {
                     offset.y += dy;
                 }else{
                     u+=dx/scale;
-                    if(u<-400)u=-400;
+                    //if(u<-400)u=-400;
                     if(u>-10)u=-10;
                 }
 
@@ -156,7 +200,7 @@ h1 {
                 }
             }
         }
-        if(ev.type === 'mouseup' ){//|| ev.type ==='touchend') {
+        if(type === 'mouseup' ){//|| ev.type ==='touchend') {
             prevMouseDown=null;
             update();
         }
@@ -164,30 +208,6 @@ h1 {
 
     }
 
-
-
-    function getAbsolutePosition(element) {
-        var r = { x: element.offsetLeft, y: element.offsetTop };
-        if (element.offsetParent) {
-            var tmp = getAbsolutePosition(element.offsetParent);
-            r.x += tmp.x;
-            r.y += tmp.y;
-        }
-        return r;
-    }
-
-    function getEventXY(ev)
-    {
-        // Convert mouse click coordinates to the mathematical plane.
-        var offset = getAbsolutePosition(canvas);
-
-        var x = ev.pageX;
-        var y = ev.pageY;
-
-        x = x - offset.x;
-        y = y - offset.y;
-        return {x:x, y:y};
-    }
 
 
     function sign(f){
@@ -199,7 +219,7 @@ h1 {
     var displayEye=true;
     var displayRays=true;
     var displayResult=true;
-    var scale=1;
+    var scale=window.innerWidth/800;
     var offset={x:0,y:0};
     var prevMouseDown=null;
     var dragMode=0; //0 ==drag world, 1=drag object
@@ -208,7 +228,7 @@ h1 {
 
     // String field
     //gui.add(window, "u").name("Object Position  ").min(-400).max(-5).step(1).onChange(update);
-    gui.add(window, "f").name("Focal length").min(-225).max(225).step(1).onChange(update);
+    gui.add(window, "f").name("Focal length").min(-300).max(300).step(1).onChange(update);
     gui.add(window, "displayEye").name("Draw Eye").onChange(update);
     gui.add(window, "displayRays").name("Draw Rays").onChange(update);
     gui.add(window, "displayResult").name("Display Result").onChange(update);
@@ -273,7 +293,7 @@ h1 {
         ctx.textAlign="left";
         this.ctx.font = '14pt sans-serif';
 
-        let x=20,y=canvas.height-100;
+        let x=40,y=canvas.height-100;
 
         ctx.fillText("u = "+u.toFixed(0)+" cm ," +" f = "+f.toFixed(0)+" cm", x, y);
         y+=30;
@@ -282,12 +302,10 @@ h1 {
         y+=30;
         ctx.fillStyle="yellow";
         ctx.fillText("Nature of image is "+(v>0?"Real,":"Virtual,")+(m>0?" Erect &":" Inverted &") +(Math.abs(m)==1?" Same Size":(Math.abs(m)>1?" Magnified":" Diminished"))+" (m = "+m.toFixed(2)+")", x, y);
-
-        y+=30;
-
         ctx.font="Arial 12 bold";
-        ctx.fillStyle="green";
-        ctx.fillText("Drag the object by mouse to change its location, Use mouse wheel to zoom", x, y);
+        y+=30;
+        ctx.fillStyle="lightgreen";
+        ctx.fillText("Arrow Keys(drag with mouse): Move Scene,  Ctr+Arrow Keys (drag with mouse): Move Object,  Shift+Arrow keys: Change focal length , Page Up/Down to zoom",x,y);
         ctx.textAlign="center";
     }
 
@@ -391,17 +409,17 @@ h1 {
         ctx.strokeStyle="white";
     }
 
-
     function drawAxis(){
         ctx.strokeStyle="white";
         ctx.fillStyle=ctx.strokeStyle;
         ctx.beginPath();
-        ctx.moveTo(-canvas.width/2, 0);
-        ctx.lineTo(canvas.width/2, 0);
+        ctx.moveTo((-offset.x-canvas.width/2)/scale, 0);
+        ctx.lineTo((-offset.x+canvas.width/2)/scale, 0);
         ctx.stroke();
         ctx.fillText("F\u{2081}", f,15);
         ctx.fillText("F\u{2082}", -f,15);
     }
+
 
     function drawObject(){
         let img=u<0?imageRO:imageVO;

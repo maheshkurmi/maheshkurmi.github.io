@@ -1,39 +1,45 @@
 <!doctype html>
 <html>
 <head>
-<title>Ideal Mirror Simulator</title>
-<style>
-body {
-  background: white;
-  color: #323232;
-  font-weight: 300;
-  width:  100%;
-  height: 100%;
-  //height: 100vh;
-  margin: 0;
-  overflow: hidden; /*  Disable scrollbars */
-  display: block;  /* No floating content on sides */
-  //display: flex;
-  //align-items: center;
-  //justify-content: center;
-  //text-align: center;
-  //font-family: Helvetica neue, roboto;
-}
+    <title>Ideal Mirror Simulator</title>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            width:  100%;
+            height: 100%;
+        //height: 100vh;
+            margin: 0;
+            overflow: hidden; /*  Disable scrollbars */
+            display: block;  /* No floating content on sides */
+        //display: flex;
+        //align-items: center;
+        //justify-content: center;
+        //text-align: center;
+        //font-family: Helvetica neue, roboto;
+        }
 
 
-</style>
-<script  src="dat.gui.js"></script>
-<style src="dat.gui.css"></style>
-
+    </style>
+    <script  src="dat.gui.js"></script>
+    <style src="dat.gui.css"></style>
+    <script src="hammer.js"></script>
 </head>
-	
+
 <body>
 <div id="canvasdiv" class="container" align="center">
     <canvas id="canvas" >Your browser does not support the HTML5 canvas tag.</canvas>
 
 </div>
-	
+
 <script type='text/javascript'>
+    //keyboad support arrow, zoom, f
+    //?virtual object
+    //?option for point object
+    //color of mirror
+    //range of u
+    //axis render
 
     var canvas =document.getElementById('canvas');
     var ctx=canvas.getContext("2d");
@@ -42,94 +48,134 @@ body {
     ctx.textBaseline="middle";
 
     window.addEventListener('resize',function(ev) { return resize(ev); });
-    canvas.addEventListener('mousemove',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('mousedown',function(ev) { return doMouse(ev); });
-    canvas.addEventListener('mouseup',function(ev) { return doMouse(ev); });
+    var initScale;
+    var hammertime = new Hammer(canvas);
+    hammertime.get('pinch').set({ enable: true });
+    hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
+    hammertime.on('panstart', function(ev) {
+        doMouse(ev.center.x,ev.center.y,"mousedown");
+    });
+    hammertime.on('panend', function(ev) {
+        doMouse(ev.center.x,ev.center.y,"mouseup");
+    });
+    hammertime.on('panmove', function(ev) {
+        doMouse(ev.center.x,ev.center.y,"mousemove");
+
+    });
+
+
+    hammertime.on('pinchstart', function(ev) {
+        intiScale=scale;
+
+    });
+
+    //can use pinch in pinchout separately
+    hammertime.on('pinch', function(ev) {
+
+        // console.log(ev.type+" scale="+ev.scale);
+        let oldScale=scale;
+
+        let x = ev.center.x/scale;
+        let y = ev.center.y/scale;
+        scale=intiScale*ev.scale;
+
+        offset.x-= x*(scale-oldScale);
+        offset.y-= y*(scale-oldScale);
+
+        //xOffset=(xOffset+canvas.width/2-ev.center.x);//*scale;
+        //yOffset=(yOffset+canvas.height/2-ev.center.y)//*scale;
+        paint();
+    });
+
+
+
     canvas.addEventListener('wheel',function(event){
         zoom(event.wheelDelta);
         event.preventDefault();
     }, false);
 
-  
-   // Set up touch events for mobile, etc
-    canvas.addEventListener("touchstart", function (e) {
-        let touch = e.touches[0];
-        let mouseEvent = new MouseEvent("mousedown", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    }, false);
 
-    canvas.addEventListener("touchend", function (e) {
-        let mouseEvent = new MouseEvent("mouseup", {});
-        canvas.dispatchEvent(mouseEvent);
-    }, false);
-
-    canvas.addEventListener("touchmove", function (e) {
-        let touch = e.touches[0];
-        let mouseEvent = new MouseEvent("mousemove", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    }, false);
-  
-    // Prevent scrolling when touching the canvas
-	document.body.addEventListener("touchstart", function (e) {
-			if (e.target == canvas) {
-				e.preventDefault();
-			}
-	},{passive: false});
-	document.body.addEventListener("touchend", function (e) {
-				if (e.target == canvas) {
-					e.preventDefault();
-				}
-	}, {passive: false});
-	document.body.addEventListener("touchmove", function (e) {
-			//if (e.target == canvas) {
-				e.preventDefault();
-			//}
-	},{passive: false});
-
+    window.addEventListener('keydown',doKeyBoard,false);
 
     function resize(){
-       canvas.width = window.innerWidth;
-       canvas.height = window.innerHeight;
-       update();
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        update();
     }
+
     function zoom(wheelDelta){
         if(wheelDelta>0){
             scale*=1.025;
+            if(scale>5)scale=5;
         }else {
             scale *= 0.98;
+            if(scale<0.1)scale=0.1;
         }
+
         for (var i in gui.__controllers) {
             gui.__controllers[i].updateDisplay();
         }
         update();
     }
 
-    function doMouse(ev){
-        let xy = getEventXY(ev);
-        let x = xy.x;
-        let y = xy.y;
-	
-        if(ev.type === 'mousedown' ){//|| ev.type ==='touchstart') {
+    function doKeyBoard(e) {
+        var code = e.keyCode;
+        let consumed=true;
+        switch (code) {
+            case 37:
+                if(e.ctrlKey)u-=1;
+                else if(e.shiftKey)f-=1;
+                else offset.x-=5;//alert("Left"); break; //Left key
+                break;
+            case 39: //Right key
+                if(e.ctrlKey)u+=1;
+                else if(e.shiftKey)f+=1;
+                else offset.x+=5;
+                if(u>-10)u=-10;
+                break;
+            case 38: //up
+                offset.y-=5;
+                break;
+            case 40: //down
+                offset.y+=5;
+                break;
+            case 33: //page up
+                zoom(1);
+                break;
+            case 34: //page down
+                zoom(-1);
+                break;
+            default:
+                consumed=false;
+        }
+
+        if(consumed){
+            if(f<-300)f=-300;
+            if(f>300)f=300;
+
+            for (var i in gui.__controllers) {
+                gui.__controllers[i].updateDisplay();
+            }
+            update();
+        }
+    }
+    function doMouse(x,y,type){
+
+        if(type === 'mousedown' ){//|| ev.type ==='touchstart') {
             // See if we're clicking a charge.
             prevMouseDown={x:x,y:y};
             x-=(offset.x+canvas.width/2);
             y-=(offset.y+canvas.height/2);
             x/=scale;
             y/=scale;
-            if(x>u-3*scale && x<u+6.5*scale&& y>-100 && y<0){
+            if(x>u-6*scale && x<u+8.5*scale&& y>-100 && y<0){
                 dragMode=1;
             }else{
                 dragMode=0;
             }
             update();
         }
-        if(ev.type === 'mousemove' ){//|| ev.type ==='touchmove') {
+        if(type === 'mousemove' ){//|| ev.type ==='touchmove') {
             if(prevMouseDown!=null) {
                 let dx=(x - prevMouseDown.x);
                 let dy=(y - prevMouseDown.y);
@@ -138,7 +184,7 @@ body {
                     offset.y += dy;
                 }else{
                     u+=dx/scale;
-                    if(u<-400)u=-400;
+                    //if(u<-400)u=-400;
                     if(u>-10)u=-10;
                 }
 
@@ -149,7 +195,7 @@ body {
                 }
             }
         }
-        if(ev.type === 'mouseup' ){//|| ev.type ==='touchend') {
+        if(type === 'mouseup' ){//|| ev.type ==='touchend') {
             prevMouseDown=null;
             update();
         }
@@ -157,29 +203,6 @@ body {
 
     }
 
-
-    function getAbsolutePosition(element) {
-        var r = { x: element.offsetLeft, y: element.offsetTop };
-        if (element.offsetParent) {
-            var tmp = getAbsolutePosition(element.offsetParent);
-            r.x += tmp.x;
-            r.y += tmp.y;
-        }
-        return r;
-    }
-
-    function getEventXY(ev)
-    {
-        // Convert mouse click coordinates to the mathematical plane.
-        var offset = getAbsolutePosition(canvas);
-  
- 	    var x = ev.pageX;
-        var y = ev.pageY;
-
-        x = x - offset.x;
-        y = y - offset.y;
-        return {x:x, y:y};
-    }
 
 
     function sign(f){
@@ -200,7 +223,7 @@ body {
 
     // String field
     //gui.add(window, "u").name("Object Position  ").min(-400).max(-5).step(1).onChange(update);
-    gui.add(window, "f").name("Focal length").min(-225).max(225).step(1).onChange(update);
+    gui.add(window, "f").name("Focal length").min(-300).max(300).step(1).onChange(update);
     gui.add(window, "displayEye").name("Draw Image").onChange(update);
     gui.add(window, "displayRays").name("Draw Rays").onChange(update);
     gui.add(window, "displayResult").name("Display Result").onChange(update);
@@ -223,6 +246,7 @@ body {
     resize();
     update();
     function update(){
+
         if(f==0){
             v=-u;
             m=1;
@@ -250,7 +274,7 @@ body {
         ctx.scale(scale,scale);
         //ctx.translate(canvas.width/2+offset.x,canvas.height/2+offset.y);
         drawAxis();
-        drawLens();
+        drawMirror();
         drawObject();
         if(m!=Infinity && displayEye)drawImage();
         if(displayRays){
@@ -262,8 +286,8 @@ body {
 
     function drawSolution(){
         this.ctx.font = '12pt sans-serif';
-		ctx.textAlign="left";
-        let x=20,y=canvas.height-150;
+        ctx.textAlign="left";
+        let x=40,y=canvas.height-130;
 
         if(f!=0){
             ctx.fillText("u = "+u.toFixed(0)+"cm ," +" f = "+f.toFixed(0)+"cm", x, y);
@@ -281,8 +305,8 @@ body {
             ctx.fillText("Nature of image is Virtual, Erect and same Size (m = 1)",x,y);
         }
         y+=30;
-        ctx.fillStyle="green";
-        ctx.fillText("Drag the object by mouse to change its location, Use mouse wheel to zoom", x, y);
+        ctx.fillStyle="lightgreen";
+        ctx.fillText("Arrow Keys(drag with mouse): Move Scene,  Ctr+Arrow Keys (drag with mouse): Move Object,  Shift+Arrow keys: Change focal length , Page Up/Down to zoom",x,y);
         ctx.textAlign="center";
     }
 
@@ -362,8 +386,8 @@ body {
         ctx.strokeStyle="white";
         ctx.fillStyle=ctx.strokeStyle;
         ctx.beginPath();
-        ctx.moveTo(-canvas.width/2*scale, 0);
-        ctx.lineTo(canvas.width/2*scale, 0);
+        ctx.moveTo((-offset.x-canvas.width/2)/scale, 0);
+        ctx.lineTo((-offset.x+canvas.width/2)/scale, 0);
         ctx.stroke();
         if(f!=0)ctx.fillText("F", f,15);
     }
@@ -383,17 +407,17 @@ body {
     }
 
 
-    function drawLens(){
-        ctx.lineWidth = 2;
+    function drawMirror(){
+        ctx.lineWidth = 2.5;
         ctx.fillStyle="rgba(135,206,235,0.6)";
         ctx.beginPath();
-        ctx.strokeStyle="black";
+        ctx.strokeStyle="green";
         if(f==0){
-            ctx.translate(3,0);
+            ctx.translate(4,0);
             ctx.moveTo(0,-lensHeight);
             ctx.lineTo(0,lensHeight);
             ctx.stroke();
-            ctx.translate(-3,0);
+            ctx.translate(-4,0);
             ctx.beginPath();
             ctx.moveTo(0,-lensHeight);
             ctx.lineTo(0,lensHeight);
@@ -402,10 +426,10 @@ body {
         } else if (f>0){
             var th = 2*Math.atan((10-(f-1)/100)/100);
             var R = 100/Math.sin(th);
-            ctx.translate(3,0);
+            ctx.translate(4,0);
             ctx.arc(R+1, 0, R, Math.PI-th, Math.PI+th);
             ctx.stroke();
-            ctx.translate(-3,0);
+            ctx.translate(-4,0);
             ctx.beginPath();
             ctx.arc(R+1, 0, R, Math.PI-th, Math.PI+th);
             ctx.strokeStyle="silver";
@@ -414,11 +438,11 @@ body {
         else{
             var th = 2*Math.atan((10-(1-f)/100)/100);
             var R = 100/Math.sin(th);
-            ctx.translate(3,0);
+            ctx.translate(4,0);
             ctx.arc(-R+1, 0, R+2, -th, th);
             ctx.stroke();
             ctx.beginPath();
-            ctx.translate(-3,0);
+            ctx.translate(-4,0);
             ctx.arc(-R+1, 0, R+2, -th, th);
             ctx.strokeStyle="silver";
             ctx.stroke();
