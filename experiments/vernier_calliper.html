@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>Vernier Calliper Simulator</title>
+    <title>Vernier Caliper Simulator</title>
     <meta name="keywords" content="vernier simulation physics measurement">
     <meta name="author" content="Mahesh Kurmi">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
@@ -256,7 +256,7 @@
     var zeroError=0;
     var displayInfo=false;
     var objectWidthPixel=25;
-
+    var drawSubDivision=false;
     var randomZeroError=true;
     var randomMainScaleDivisions=true;
     var randomVernierScaleDivision=true;
@@ -274,16 +274,18 @@
     });
     //gui.remember(window);
     // var deviceFolder=pane.addFolder({title:"Device Settings",expanded:true});
-    tab.pages[0].addInput(window, "mainScaleDivisions",{label:"MSD Count",min:50,max:100,step:10}).on('change',update);
+    tab.pages[0].addInput(window, "mainScaleDivisions",{label:"MSD Count",min:20,max:100,step:10}).on('change',update);
     var csController= tab.pages[0].addInput(window, "vernierScaleDivisions",{label:"VSD Count",min:5,max:25,step:5});
     csController.on('change',update);
     var zeController=tab.pages[0].addInput(window, "zeroError",{label:"Zero Error",min:-vernierScaleDivisions+1,max:vernierScaleDivisions-1,step:1});
     zeController.on('change',update);
+    tab.pages[0].addInput(window, "drawSubDivision",{label:"Virtual SubDivisions"}).on('change',paint);
 
-    tab.pages[0].addInput(window, "displayInfo",{label:"Display values"}).on('change',update);
+    tab.pages[0].addInput(window, "displayInfo",{label:"Display values"}).on('change',paint);
     tab.pages[0].addSeparator();
     tab.pages[0].addInput(window, "bgColor",{label:"Background",picker: 'inline'}).on('change',paint);
 
+    console.log(csController);
     // var problemFolder=pane.addFolder({title:"Problem Settings",expanded:false});
 
     var problemFolder=tab.pages[1].addFolder({title:"Check to randomize"});
@@ -521,7 +523,8 @@
         update();
     }
 
-    function update(){
+    function update(ev){
+        if(ev)console.log(ev.value.toFixed(2));
         LC=msdValue/vernierScaleDivisions;
         msd_pixels=mainScaleLengthPixels/mainScaleDivisions;
         vsd_pixels=msd_pixels*(1-1/vernierScaleDivisions);
@@ -541,14 +544,16 @@
             zeController.minValue = -vernierScaleDivisions + 1;
             zeController.maxValue = vernierScaleDivisions - 1;
         }
-
+        csController.maxValue= mainScaleDivisions/3;
+        zeController.minValue=-vernierScaleDivisions+1;
+        zeController.maxValue= vernierScaleDivisions-1;
         paint();
     }
 
 
     function paint(){
          //	ctx.clear();
-
+        ctx.lineWidth=1.5;
         ctx.fillStyle=bgColor;
         ctx.strokeStyle=fgColor;
         ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -589,6 +594,18 @@
             drawLine(x,y,x,y-ticklength);
             if (i%labelGap==0)outString(x, (y-ticklength-3),i*msdValue,1,2);
             x+=msd_pixels;
+        }
+
+        if(drawSubDivision){
+            ctx.lineWidth=0.5;
+            let dx=msd_pixels/vernierScaleDivisions;
+            let x=-msd_pixels*zeroError/vernierScaleDivisions + getMainScaleReading()*msd_pixels;
+            ticklength=minorTickLengthPixels-3;
+            for (let i=0;i<=vernierScaleDivisions;i++){
+                drawLine(x,y,x,y-ticklength);
+                x+=dx;
+            }
+            ctx.lineWidth=1.5;
         }
 
         ctx.restore();
@@ -648,7 +665,6 @@
         }
         */
 
-
         //draw Base of gauge
         ctx.drawImage(imgBase,0,0,64,102,0,0,64,102);
         if(objectTobeMeasured.state>0){
@@ -670,7 +686,7 @@
 
     function drawInfo(){
         //draw MSD Info and VSD Info
-        ctx.lineWidth=1.5;
+
         ctx.fillStyle=fgColor;
         ctx.strokeStyle=fgColor;
         //dra MSD Hint

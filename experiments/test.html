@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+
+        .mainheading {
+            font-weight: 200;
+            font-style: 36px;
+            margin: 10px;
+            color:red;
+        }
+
+        #container{
+            color:blue;
+        }
+     </style>
+    <meta charset="utf-8">
+    <title>Newton's Cannon</title>
+    <script src="dat.gui.js"></script>
+    <style src="dat.gui.css"></style>
+</head>
+
+<body >
+
+<h1>
+    Normal heading
+</h1>
+
+
+<h1 class="mainheading">
+    Main heading
+</h1>
+
+<div class="mainheading">
+   Hello I am mainHeading in div
+</div>
+
+<p id="container">This simulation is based on Isaac Newton's famous thought
+    experiment and illustration of firing a projectile from a high
+    mountaintop at various speeds, as he described in
+    <a href="http://books.google.com/books?id=DXE9AAAAcAAJ">A
+        Treatise of the System of the World</a>.</p>
+
+</body>
+
+<label for="points">Points (between 0 and 10):</label>
+<input id="sld" type="range" id="points" name="points" min="0" max="10">
+<button id="btn" type="button" onclick="btnClicked()">Click Me!</button>
+<div>
+    <canvas id="theCanvas" width="500" height="500">
+        Canvas not supported; please update your browser.
+    </canvas>
+
+</div>
+<script>
+    var slider=document.getElementById("sld");
+    var btn=document.getElementById("btn");
+    var container=document.getElementById("container");
+
+    var count=2;
+
+    var gui = new dat.GUI();//,autoPlace: false});
+    var obj={bool:false,color:"rgb(255,0,0)"};
+
+    gui.add(window, "count").name("MSD").min(1).max(50).step(0.5).onChange(update);
+    gui.add(obj, "bool").name("boolean val").onChange(update);
+    gui.addColor(obj ,"color").name("Color").onChange(update);
+    function btnClicked(){
+        container.innerHTML="I am changed by button to "+slider.value;
+        var c=document.getElementsByClassName("mainheading");
+        for(let i=0;i<c.length;i++){
+            c[i].style.color="pink";
+        }
+    }
+
+    function update(){
+        container.innerHTML="I am changed by button to "+count +" bool="+obj.bool;
+        var c=document.getElementsByClassName("mainheading");
+        for(let i=0;i<c.length;i++){
+            c[i].style.color=obj.color;
+        }
+        console.log(obj);
+        draw();
+    }
+
+    var canvas = document.getElementById("theCanvas");
+    var theContext = canvas.getContext("2d");
+
+    var x,y;
+    var isDrawing=false;
+    // Add the event listeners for mousedown, mousemove, and mouseup
+    canvas.addEventListener('mousedown', e => {
+        x = e.offsetX;
+        y = e.offsetY;
+        isDrawing = true;
+    });
+
+    canvas.addEventListener('mousemove', e => {
+        if (isDrawing === true) {
+            drawLine(theContext, x, y, e.offsetX, e.offsetY);
+            x = e.offsetX;
+            y = e.offsetY;
+        }
+    });
+
+    canvas.addEventListener('mouseup', e => {
+        if (isDrawing === true) {
+            drawLine(theContext, x, y, e.offsetX, e.offsetY);
+            x = 0;
+            y = 0;
+            isDrawing = false;
+        }
+    });
+    draw();
+
+    function drawLine(context, x1, y1, x2, y2) {
+
+        context.beginPath();
+        context.strokeStyle = 'black';
+        context.lineWidth = 1;
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+        context.closePath();
+    }
+    function draw(){
+        theContext.fillStyle="grey";
+        theContext.fillRect(0,0,canvas.width,canvas.height)
+        theContext.beginPath();
+        theContext.arc(300, 50, count, 0, 2*Math.PI);
+        theContext.fillStyle = "red";
+        theContext.fill();
+    }
+
+</script>
+</html>
