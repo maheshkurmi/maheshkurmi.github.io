@@ -398,12 +398,19 @@
         ctx.fillText("O", u,15);
     }
 
-    function drawImage(){
-        let img=u<0?imageRO:imageVO;
-        if(f>0)ctx.drawImage(img, 0,0,img.width,img.height,v-m*objHeight/10,-m*objHeight,m*objHeight/5,m*objHeight);
-        img=v<0?imageRO:imageVO;
-        ctx.drawImage(img, 0,0,img.width,img.height,v-m*objHeight/10,-m*objHeight,m*objHeight/5,m*objHeight);
+    function drawImage() {
+        let img = u < 0 ? imageRO : imageVO;
+        if (f > 0) ctx.drawImage(img, 0, 0, img.width, img.height, v - m * objHeight / 10, -m * objHeight, m * objHeight / 5, m * objHeight);
+        img = v < 0 ? imageRO : imageVO;
+        if (v < 0) {
+            ctx.scale(1, -1);
+            ctx.drawImage(imageRO, 0, 0, img.width, img.height, v - m * objHeight / 10, m * objHeight, m * objHeight / 5, -m * objHeight);
+            ctx.scale(1,-1);
+        }else {
+            ctx.drawImage(imageVO, 0, 0, img.width, img.height, v - m * objHeight / 10, -m * objHeight, m * objHeight / 5, m * objHeight);
+        }
         ctx.fillText("I", v,m>0?15:-5);
+
     }
 
 
