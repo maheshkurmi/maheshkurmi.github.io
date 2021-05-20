@@ -238,18 +238,31 @@ h1 {
     var lensHeight=100;
     var objHeight=lensHeight*0.6;
     var dragMode=0;
-    //0 means none, 1 means object and 2 means lens
+
+    var loadedItems=0;
+    const itemsToLoad=3;
+
     var imageEye=new Image();
     imageEye.src="eye.png";
+    imageEye.onload=itemloaded;
     var imageRO=new Image();
     imageRO.src="img_Object.png";
+    imageRO.onload=itemloaded;
     var imageVO=new Image();
     imageVO.src="img_Virtual.png";
+    imageVO.onload=itemloaded;
 
-    imageVO.onload=update;
     resize();
     update();
-    function update(){
+
+    function itemloaded() {
+        loadedItems++;
+        if (loadedItems == itemsToLoad) {
+            update();
+        }
+    }
+
+     function update(){
         //Console.println("f="+f);
         if(f==0){
             f=Infinity;
@@ -268,10 +281,17 @@ h1 {
 
     //render with center at world
     function draw(){
-        this.ctx.font = '12pt sans-serif';
-
         ctx.fillStyle=bg_color;
         ctx.fillRect(0,0,canvas.width,canvas.height);
+        if(loadedItems<itemsToLoad){
+            ctx.font = "30px Arial";
+            ctx.fillStyle=fgColor;
+            outString(canvas.width/2,canvas.height/2,"Loading ..."+(loadedItems*100/itemsToLoad).toFixed(0)+"%",1,1);
+            return;
+        }
+        this.ctx.font = '12pt sans-serif';
+
+
         ctx.resetTransform();
         //scale=World.getCamera().getScale()/100;
         //let tx=World.getCamera().getOffset();

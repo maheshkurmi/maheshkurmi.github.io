@@ -241,10 +241,29 @@
     imageRO.src="img_Object.png";
     var imageVO=new Image();
     imageVO.src="img_Virtual.png";
+    var loadedItems=0;
+    const itemsToLoad=3;
 
-    imageVO.onload=update;
+    var imageEye=new Image();
+    imageEye.src="eye.png";
+    imageEye.onload=itemloaded;
+    var imageRO=new Image();
+    imageRO.src="img_Object.png";
+    imageRO.onload=itemloaded;
+    var imageVO=new Image();
+    imageVO.src="img_Virtual.png";
+    imageVO.onload=itemloaded;
+
     resize();
     update();
+
+    function itemloaded() {
+        loadedItems++;
+        if (loadedItems == itemsToLoad) {
+            update();
+        }
+    }
+
     function update(){
 
         if(f==0){
@@ -258,15 +277,21 @@
             m=-v/u;
         }
         draw();
-        draw();
+
     }
 
     //render with center at world
     function draw(){
-        this.ctx.font = '12pt sans-serif';
-
         ctx.fillStyle=bg_color;
         ctx.fillRect(0,0,canvas.width,canvas.height);
+        if(loadedItems<itemsToLoad){
+            ctx.font = "30px Arial";
+            ctx.fillStyle=fgColor;
+            outString(canvas.width/2,canvas.height/2,"Loading ..."+(loadedItems*100/itemsToLoad).toFixed(0)+"%",1,1);
+            return;
+        }
+        this.ctx.font = '12pt sans-serif';
+
         ctx.resetTransform();
         //scale=World.getCamera().getScale()/100;
         //let tx=World.getCamera().getOffset();
