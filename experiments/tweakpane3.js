@@ -499,7 +499,19 @@
         element.style.transition = t;
     }
     function supportsTouch(doc) {
-        return doc.ontouchstart !== undefined;
+       // return doc.ontouchstart !== undefined;
+        // For most touch devices: iOS, Android, etc.
+        if (document.ontouchstart !== undefined) {
+            return true;
+        }
+        // For touchscreen Windows
+        if (
+            "maxTouchPoints" in window.navigator &&
+            window.navigator.maxTouchPoints > 1
+        ) {
+            return true;
+        }
+        return false;
     }
     function getGlobalObject() {
         return new Function('return this')();
@@ -2799,14 +2811,14 @@
             this.elem_ = element;
             this.emitter = new Emitter();
             const doc = this.elem_.ownerDocument;
-            if (supportsTouch(doc)) {
+           // if (supportsTouch(doc)) {
                 element.addEventListener('touchstart', this.onTouchStart_);
                 element.addEventListener('touchmove', this.onTouchMove_);
                 element.addEventListener('touchend', this.onTouchEnd_);
-            }
-            else {
+           // }
+            //else {
                 element.addEventListener('mousedown', this.onMouseDown_);
-            }
+            //}
         }
         computePosition_(offset) {
             const rect = this.elem_.getBoundingClientRect();
