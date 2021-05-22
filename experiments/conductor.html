@@ -693,12 +693,14 @@
             let s=h>0?minusSign:plusSign;
             ctx.fillStyle=h<0?plusColor:minusColor;
 
+            let arrowStepPos=10;
             for(let i=0;i<N;i++){
                 x=innerCharge.x+innerCharge.r*Math.cos(2*i*Math.PI/N);
                 y=innerCharge.y+innerCharge.r*Math.sin(2*i*Math.PI/N);
                 ctx.beginPath();
                 ctx.moveTo(x,y);
                 let steps=0;
+
                 while(true){
                     E=calcField(innerCharges,x,y);
                     if(E.E==0)break;
@@ -706,9 +708,9 @@
                     x+=E.dEx*h;
                     y+=E.dEy*h;
                     steps++;
-                    if(steps==5){
+                    if(steps==arrowStepPos){
                         ctx.lineTo(x,y);
-                        h=abs_h/1.5;
+                        h=abs_h/1.2;
                         ctx.moveTo(x+h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
                         ctx.lineTo(x,y);
                         ctx.moveTo(x-h*E.dEy-h*E.dEx,y+h*E.dEx-h*E.dEy);
@@ -755,7 +757,7 @@
             let thetaLimit=0;
             let CQ=new Vector2(outerCharge.x-outerCircle.x,outerCharge.y-outerCircle.y);
             let th=0;
-
+            arrowStepPos=18;
             for(let i=0;i<N;i++){
                 x=outerCharge.x+outerCharge.r*Math.cos(2*i*Math.PI/N);
                 y=outerCharge.y+outerCharge.r*Math.sin(2*i*Math.PI/N);
@@ -770,9 +772,9 @@
                     y+=E.dEy*h;
 
                     steps++;
-                    if(steps==5){
+                    if(steps==arrowStepPos){
                         ctx.lineTo(x,y);
-                        h=abs_h/1.5;
+                        h=abs_h;
                         ctx.moveTo(x+abs_h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
                         ctx.lineTo(x,y);
                         ctx.moveTo(x-h*E.dEy-h*E.dEx,y+h*E.dEx-h*E.dEy);
@@ -829,6 +831,7 @@
             let th0=CQ.horizontalAngle()+thetaLimit;
             //console.log("outerQ="+outerCharges[2].q+" linesout="+lineOutFromSphere+" N="+N+ " h="+h+" thRange"+thRange);
             let R=outerCircle.r;
+            arrowStepPos=25;
             for(let i=0;i<N;i++){
                 th=th0+thRange*(outerCharge.q==0?i/N:(oneByPi*Math.acos(1-2*i/N)));
                 x=outerCircle.x+R*Math.cos(th);
@@ -848,8 +851,8 @@
                         y+=E.dEy*h;
 
                         steps++;
-                        if(steps==5){
-                            h=abs_h/1.5;
+                        if(steps==arrowStepPos){
+                            h=abs_h/1;
                             ctx.lineTo(x,y);
                             ctx.moveTo(x+abs_h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
                             ctx.lineTo(x,y);
