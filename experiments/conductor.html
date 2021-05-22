@@ -202,8 +202,8 @@
         //center assumed at origin
         var x_max=5;
         var x_min=-5;
-        var y_min;
-        var y_max;
+        var y_max=x_max*canvas.height/canvas.width;
+        var y_min=-y_max;
 
         var scale=canvas.width/(x_max-x_min);
 
@@ -216,14 +216,14 @@
         }
 
         function setScale(s){
+            if(s<50)s=50;
+            if(s>300)s=300;
+            let f=s/this.scale;
             this.scale=s;
-            if(scale<50)scale=50;
-            if(scale>300)scale=300;
-
-            x_max=canvas.width/2/scale;
-            x_min=-x_max;
-            y_max=x_max*canvas.height/canvas.width;
-            y_min=-y_max;
+            x_max/=f;
+            x_min/=f;
+            y_max/=f;
+            y_min/=f;
             update();
         }
 
@@ -475,7 +475,7 @@
         const plusSign="\u{002B}";
         const minusSign="\u{2212}";
         const plusColor=[255,0,0];
-        const minusColor=[0,0,255];
+        const minusColor=[166, 225, 243];//[0,0,255];
         var initScale;
         init();
 
@@ -496,10 +496,17 @@
             const hammertime = new Hammer(canvas);
             hammertime.get('pinch').set({ enable: true });
             hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
-            // hammertime.get('press').set({ threshold: 1, time:0 });
-            hammertime.on('panstart panend panmove', function(ev) {
+
+            hammertime.on('panstart', function(ev) {
                 onMouseEvent(ev);
             });
+            hammertime.on('panend', function(ev) {
+                onMouseEvent(ev);
+            });
+            hammertime.on('panmove', function(ev) {
+                onMouseEvent(ev);
+            });
+
             hammertime.on('pinchstart', function(ev) {
                 initScale=scale;
 
@@ -628,6 +635,7 @@
             ctx.fillRect(0,0,canvas.width,canvas.height);
             ctx.translate(canvas.width/2,canvas.height/2);
             ctx.scale(scale,-scale);
+            ctx.translate(-(x_min+x_max)/2,-(y_min+y_max)/2);
             outerCircle.render();
             innerCircle.color=bgColor;
             innerCircle.render();
@@ -753,6 +761,7 @@
                         break;
                     }
                     if(steps==200||x<x_min||x>x_max||y<y_min||y>y_max){
+                        console.log("min="+x_min+" max="+x_max);
                         if(drawFields) ctx.stroke();
                         break;
                     }
@@ -838,11 +847,13 @@
             if(outerCharge.q!=0)outerCharge.render();
             //outerCharges[1].render();
             if(innerCharge.q!=0)innerCharge.render();
+            /*
             x=outerCircle.x;
             y=outerCircle.y+outerCircle.r*0.7;
             ctx.fillStyle=fieldColor;
             ctx.scale(1 / scale, -1/ scale);
             ctx.fillText("Potential maintained at "+spherePotential.toFixed(1)+" statVolts",x*scale,y*scale);
+            */
             /*
             s=1;
             for(let x=x_min;x<x_max;x+=dx){
@@ -872,7 +883,7 @@
         }
 
         function canvasToWorld(x,y){
-            return new Vector2((x-canvas.width/2)/scale,(canvas.height/2-y)/scale);
+            return new Vector2((x_min+x_max)/2+(x-canvas.width/2.0)/scale, (y_min+y_max)/2+(canvas.height/2.0-y)/scale);
         }
 
         function onMouseEvent(ev){
@@ -890,9 +901,11 @@
                //outerCharge.highlight=false;
                render();
            }else if(ev.type=="panmove"){
+               let dx=x-mouse.x;
+               let dy=y-mouse.y;
+
                if(innerCharge.highlight||outerCharge.highlight){
-                   let dx=x-mouse.x;
-                   let dy=y-mouse.y;
+
                    if(innerCharge.highlight){
                        innerCharge.x+=dx;
                        innerCharge.y+=dy;
@@ -900,19 +913,26 @@
                        outerCharge.x+=dx;
                        outerCharge.y+=dy;
                    }
+                   mouse.set(x,y);
+                   update();
+               }else{
+                   x_min-=dx;
+                   x_max-=dx;
+                   y_min-=dy;
+                   y_max-=dy;
+                   mouse.set(x-dx,y-dy);
                    update();
                }
-               mouse.set(x,y);
+
            }
         }
 
         function mouseWheelMoved(me) {
             if(me.wheelDelta>0>0){
-                scale*=1.02;
+                setScale(scale*1.02);
             }else{
-                scale*=0.98;
+                setScale(scale*0.98);
             }
-            setScale(scale);
             me.preventDefault();
         }
 
@@ -920,34 +940,40 @@
             let draggingCharge=null;
             if(innerCharge.highlight)draggingCharge=innerCharge;
             else  if(outerCharge.highlight)draggingCharge=outerCharge;
-            if(draggingCharge==null)return;
-            let dx=0,dy=0;
+            let dx = 0, dy = 0;
             //if(id==401){
-            if(e.keyCode==37){
-                dx=-2/scale;
+            if (e.keyCode == 37) {
+                dx = -5 / scale;
             }
-            if (e.keyCode==39){
-                dx=2/scale;
+            if (e.keyCode == 39) {
+                dx = 5 / scale;
             }
-            if(e.keyCode==38){
-                dy=2/scale;
+            if (e.keyCode == 38) {
+                dy = 2 / scale;
             }
-            if (e.keyCode==40){
-                dy=-2/scale;
+            if (e.keyCode == 40) {
+                dy = -2 / scale;
             }
-            draggingCharge.x+=dx;
-            draggingCharge.y+=dy;
+            if(draggingCharge!=null) {
+
+                draggingCharge.x += dx;
+                draggingCharge.y += dy;
+            }else {
+                x_min -= dx;
+                x_max -= dx;
+                y_min -= dy;
+                y_max -= dy;
+            }
+
             if(dx!=0||dy!=0){
                 update();
                 return;
             }
             if (e.keyCode==33){//page up
-                scale*=1.02;
-                setScale(scale);
+                setScale(scale*1.02);
             }
             else if (e.keyCode==34){//page down
-                scale*=0.98;
-                setScale(scale);
+                setScale(scale*0.98);
             }else {
                 return false;
             }
