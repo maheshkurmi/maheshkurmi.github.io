@@ -906,8 +906,8 @@
            let y=v.y;
            // console.log(ev.type+":"+v.x+","+v.y);
            if(ev.type=="panstart" ||ev.type=="press"){
-               innerCharge.highlight=innerCharge.q!=0 && distance(innerCharge.x,innerCharge.y,x,y)<2*innerCharge.r;
-               outerCharge.highlight=outerCharge.q!=0 && distance(outerCharge.x,outerCharge.y,x,y)<2*outerCharge.r;
+               innerCharge.highlight=innerCharge.q!=0 && distance(innerCharge.x,innerCharge.y,x,y)<3.5*innerCharge.r;
+               outerCharge.highlight=outerCharge.q!=0 && distance(outerCharge.x,outerCharge.y,x,y)<2.5*outerCharge.r;
                mouse.set(x,y);
                render();
            }else if(ev.type=="panend"||ev.type=="pressup"){
