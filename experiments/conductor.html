@@ -1,0 +1,959 @@
+<!doctype html>
+<html>
+<head>
+    <title>Conductor field Lines</title>
+    <meta name="keywords" content="Electric field charge simulation physics">
+    <meta name="author" content="Mahesh Kurmi">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+
+        #container canvas{
+            position: relative;
+        }
+
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+            --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+            --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+            --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+            --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+            --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+            --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+            --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+            --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+            --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+            --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+            --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+            --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+            --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+            --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+            --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+            --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+            --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+            --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+            --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+        }
+    </style>
+    <script src="hammer.js"></script>
+    <script src="tweakpane3.js"></script>
+</head>
+
+<body>
+
+<div id="canvasdiv" class="container" align="center">
+    <div id="gui" style="position: absolute">
+
+    </div>
+
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
+
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Conductor Simulation</h3>
+                <p>
+                    The simulation demonstrates effect on charge distribution and corresponding field lines for the spherical conductor due to charges inside the  cavity
+                    and outside the sphere. All values used in the simulation are in CGS-ESU System.<br><br>
+                    OuterRadius = 2cm , InnerRadius = 0.8cm
+
+                </p>
+
+                <h4>Controls</h4>
+                Drag the selected charge (press on charge to select) using mouse or arrow keys and use mouse scroll or pinch to zoom. <br>
+                Conductor dimensions: <br>
+
+
+            </div>
+        </div>
+    </div>
+
+    </div>
+    <script type='text/javascript'>
+        var canvas= document.getElementById("canvas");
+        var ctx=canvas.getContext("2d");
+        var bgColor = "rgb(0,64,84)";
+        var fieldColor="rgb(255,255,255)";
+
+        ctx.fillStyle=bgColor;
+        ctx.strokeStyle=fieldColor;
+        ctx.font = '12pt sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        //right edge of canvas in world units, oter edges are automatically calculated;
+        //center assumed at origin
+        var x_max=5;
+        var x_min=-5;
+        var y_min;
+        var y_max;
+
+        var scale=canvas.width/(x_max-x_min);
+
+        function resize(){
+            canvas.width=window.innerWidth;
+            canvas.height=window.innerHeight;
+            scale=canvas.width/(x_max-x_min);
+            setScale(scale);
+            update();
+        }
+
+        function setScale(s){
+            this.scale=s;
+            if(scale<50)scale=50;
+            if(scale>300)scale=300;
+
+            x_max=canvas.width/2/scale;
+            x_min=-x_max;
+            y_max=x_max*canvas.height/canvas.width;
+            y_min=-y_max;
+            update();
+        }
+
+        function distance(x1,y1,x2,y2){
+            return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+        }
+
+        function drawLine(x1,y1,x2,y2){
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+
+        // x0,y0: the line's starting point
+        // x1,y1: the line's ending point
+        // width: the distance the arrowhead perpendicularly extends away from the line
+        // height: the distance the arrowhead extends backward from the endpoint
+        // arrowStart: true/false directing to draw arrowhead at the line's starting point
+        // arrowEnd: true/false directing to draw arrowhead at the line's ending point
+        function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd){
+            var dx=x1-x0;
+            var dy=y1-y0;
+            var angle=Math.atan2(dy,dx);
+            var length=Math.sqrt(dx*dx+dy*dy);
+            //
+            ctx.save();
+            ctx.translate(x0,y0);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0,0);
+            ctx.lineTo(length,0);
+            if(arrowStart){
+                ctx.moveTo(aLength,-aWidth);
+                ctx.lineTo(0,0);
+                ctx.lineTo(aLength,aWidth);
+            }
+            if(arrowEnd){
+                ctx.moveTo(length-aLength,-aWidth);
+                ctx.lineTo(length,0);
+                ctx.lineTo(length-aLength,aWidth);
+            }
+            //
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function outString( x,y, s, x_align, y_align) {
+            var fm=ctx.measureText(s);
+            var h=10;//fm.height not supported in browsers
+            switch (y_align) {
+                case 0:
+                    y += h;
+                    break;
+                case 1:
+                    y += h / 2;
+                    break;
+                case 2:
+                    break;
+            }
+            switch (x_align) {
+                case 0:
+                    ctx.fillText(s, x+3, y);
+                    break;
+                case 1:
+                    ctx.fillText(s, x - fm.width/2, y);
+                    break;
+                case 2:
+                    ctx.fillText(s, x - fm.width / 2, y);
+                    break;
+            }
+        }
+
+
+        function Vector2(x,y){
+            this.x=x;
+            this.y=y;
+
+            this.set =function(x,y){
+                this.x=x;
+                this.y=y;
+                return this;
+            }
+            this.length=function(){
+                return Math.sqrt(this.x*this.x+this.y*this.y);
+            }
+            this.distance =function(x,y){
+                return dist(x,y,this.x,this.y);
+            }
+            this.normalize=function(){
+                let l=this.length();
+                this.x/=l;
+                this.y/=l;
+                return l;
+            }
+            this.unitVector=function(){
+                let l=this.length;
+                return new Vector2(this.x/l,this.y/l);
+            }
+            this.add=function(dx,dy){
+                this.x+=dx;
+                this.y+=dy;
+                return this;
+            }
+            this.multiply=function(s){
+                this.x*=s;
+                this.y*=s;
+                return this;
+            }
+            this.dot=function(x,y){
+                return x*this.x +y*this.y;
+            }
+            /**
+             * Returns angle with positive x axis in -PI to PI
+             */
+            this.horizontalAngle=function(){
+                return Math.atan2(this.y,this.x);
+            }
+
+            /**
+             * Returns the smallest angle between this vector and specified vector in -PI to PI
+             */
+            this.angleWith=function(x,y){
+                let a = Math.atan2(y, x) - Math.atan2(this.y, this.x);
+                if (a > Math.PI) return a - 2*Math.PI;
+                if (a < -Math.PI) return a + 2*Math.PI;
+                return a;
+            }
+
+            this.lerp=function(x,y,k){
+                this.x=this.x*(1-k)+x*k;
+                this.y=this.y*(1-k)+y*k;
+                return this;
+            }
+        }
+
+
+        function Charge(x,y,r,q){
+            this.q=q;
+            this.x=x;
+            this.y=y;
+            this.r=r;
+            this.highlight=false;
+            this.contains=function(x,y){
+                return distance(x,y,this.x,this.y)<this.r;
+            };
+
+
+            this.render=function()
+            {
+                ctx.fillStyle = 'blue';
+                if (this.q > 0) ctx.fillStyle = 'red';
+                if (this.highlight) ctx.lineWidth = 4 / scale;
+                else ctx.lineWidth = 2 / scale;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, true);
+                ctx.fill();
+                ctx.stroke();
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.scale(1 / scale, -1 / scale);
+                ctx.fillStyle = "white";
+
+                let s;
+                if (this.q < 0) s = "-";
+                else s = "+";
+                s += Math.abs(this.q).toFixed(1);
+                ctx.fillText(s, 0, 0);
+                ctx.restore();
+            };
+        }
+
+        function Circle(x,y,r,color){
+            this.x=x;
+            this.y=y;
+            this.r=r;
+            this.color=color;
+            //signed distance
+            this.distance=function(x,y){
+                return distance(x,y,this.x,this.y)-this.r;
+            };
+
+            this.contains=function(x,y){
+                return distance(x,y,this.x,this.y)<this.r;
+            };
+
+            this.project=function(x,y){
+                tmp_Vec.set(x-this.x,y-this.y).normalize();
+                tmp_Vec.multiply(this.r).add(this.x,this.y);
+                return tmp_Vec;
+            }
+            this.render=function()
+            {
+                ctx.lineWidth = 2 / scale;
+                ctx.fillStyle = (this==outerCircle)?calcPotentialColor(spherePotential):this.color;
+                ctx.strokeStyle=fieldColor;
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, true);
+                ctx.fill();
+                ctx.stroke();
+            };
+        }
+
+        /**
+         * Result holding Electric field info
+         * Ex and Ey are components
+         * dEx and dEy are unit vector components
+         * E is magnitude
+         * @type {{Ex: number, Ey: number, E: number, dEx: number, dEy: number}}
+         */
+        Field =function(Ex,Ey){
+            this.Ex=Ex;
+            this.Ey=Ey;
+            this.E=Math.sqrt(Ex*Ex + Ey*Ey);
+            this.dEx=Ex/this.E;
+            this.dEy=Ey/this.E;
+            this.set=function(Ex,Ey,dEx,dEy,E){
+                this.Ex=Ex;
+                this.Ey=Ey;
+                this.E=E;
+                this.dEx=dEx;
+                this.dEy=dEy;
+            }
+        }
+
+        FieldLine=function(x,y,dir){
+            this.x=x;
+            this.y=y;
+            this.dir=dir;
+            this.points
+        }
+        var result={Ex:0,Ey:0,dEx:0,dEy:0,E:0}
+
+        var outerCircle=new Circle(0,0,2,"rgba(200,30,20,0.6)")
+        var innerCircle=new Circle(0.5,0,1,bgColor);
+        var outerCharge=new Charge(3,0,0.2,2);
+        var innerCharge=new Charge(1,0,0.15,2);
+        var drawCharges=true;
+        var drawFields=true;
+        var source_lines_per_unit_charge=10;
+        var spherePotential=3;
+        var mouse=new Vector2();
+        var tmp_Vec=new Vector2();
+        var tmp_Field=new Field(1,0);
+        var outerCharges=[outerCharge,new Charge(0,0,0.1),new Charge(0,0,0.1)];
+        var innerCharges=[innerCharge,new Charge(0,0,0.1)];
+
+        const plusSign="\u{002B}";
+        const minusSign="\u{2212}";
+        const plusColor=[255,0,0];
+        const minusColor=[0,0,255];
+        var initScale;
+        init();
+
+
+        function init(){
+            //create gui
+            const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Micrometer Settings"});
+            pane.addInput(outerCharge, "q",{label:"Charge 1",min:-5,max:5,step:0.1}).on('change',update);
+            pane.addInput(innerCharge, "q",{label:"Charge 2",min:-5,max:5,step:0.1}).on('change',update);
+            pane.addInput(window, "spherePotential",{label:"Conductor Potential",min:-5,max:5,step:0.1}).on('change',update);
+
+            pane.addInput(innerCircle, "x",{label:"cavity location",min:-0.9,max:0.9,step:0.1}).on('change',update);
+            pane.addInput(window, "drawCharges",{label:"Draw Charges"}).on('change',render);
+            pane.addInput(window, "drawFields",{label:"Draw Fields"}).on('change',render);
+            pane.addInput(window, "source_lines_per_unit_charge",{label:"Line Density",min:4,max:50,step:1}).on('change',update);
+            pane.addInput(window, "bgColor",{label:"Background"}).on('change',render);
+            pane.addInput(window, "fieldColor",{label:"Field Color"}).on('change',render);
+            const hammertime = new Hammer(canvas);
+            hammertime.get('pinch').set({ enable: true });
+            hammertime.get('pan').set({ threshold: 0});
+            hammertime.on('pinchstart', function(ev) {
+                initScale=scale;
+
+            });
+
+            //can use pinch in pinchout separately
+            hammertime.on('pinch', function(ev) {
+                scale=initScale*ev.scale;
+                setScale(scale);
+                update();
+            });
+
+            // hammertime.get('press').set({ threshold: 1, time:0 });
+            hammertime.on('panstart panend panmove', function(ev) {
+                onMouseEvent(ev);
+            });
+            window.addEventListener('resize',function(ev) { return resize(ev); });
+            canvas.addEventListener("mousewheel",mouseWheelMoved);
+            window.addEventListener('keydown',onKeyEvent,false);
+
+            document.querySelector(".trigger_popup_fricc").onclick=function(){
+                document.querySelector('.hover_bkgr_fricc').style.display = "block";
+            };
+            document.querySelector('.hover_bkgr_fricc').onclick =function(){
+                document.querySelector('.hover_bkgr_fricc').style.display = "none";
+            };
+            document.querySelector('.popupCloseButton').onclick=function(){
+                document.querySelector('.hover_bkgr_fricc').style.display = "none";
+            };
+            ctx.fillStyle=bgColor;
+            ctx.strokeStyle=fieldColor;
+            ctx.font = '12pt sans-serif';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+
+            resize();
+        }
+
+
+        function update(){
+            let R=innerCircle.r-innerCharge.r;
+            if(distance(innerCharge.x,innerCharge.y,innerCircle.x,innerCircle.y)>R) {
+                tmp_Vec.set(innerCharge.x-innerCircle.x,innerCharge.y-innerCircle.y);
+                tmp_Vec.normalize();
+                innerCharge.x = innerCircle.x+R*tmp_Vec.x;
+                innerCharge.y = innerCircle.y+R*tmp_Vec.y;
+            }
+
+            R=outerCircle.r+outerCharge.r;
+            if(distance(outerCharge.x,outerCharge.y,outerCircle.x,outerCircle.y)<R) {
+                tmp_Vec.set(outerCharge.x-outerCircle.x,outerCharge.y-outerCircle.y);
+                tmp_Vec.normalize();
+                outerCharge.x = outerCircle.x+R*tmp_Vec.x;
+                outerCharge.y = outerCircle.y+R*tmp_Vec.y;
+            }
+
+            //find image charges for calculation of E outside consuctor
+            tmp_Vec.set(outerCharge.x-outerCircle.x,outerCharge.y-outerCircle.y);
+            R=outerCircle.r;
+            let d=tmp_Vec.normalize();
+            let x=R*R/d;
+            //console.log("x="+x);
+            outerCharges[1].x = outerCircle.x+x*tmp_Vec.x;
+            outerCharges[1].y = outerCircle.y+x*tmp_Vec.y;
+            outerCharges[1].q = -outerCharge.q*R/d;
+
+            outerCharges[2].x=outerCircle.x;
+            outerCharges[2].y=outerCircle.y;
+            let V=outerCharge.q*R/d+innerCharge.q/R;
+            outerCharges[2].q=(spherePotential-V)/R;
+
+            //find image charges for calculation of E inside cavity
+            R=innerCircle.r;
+            tmp_Vec.set(innerCharge.x-innerCircle.x,innerCharge.y-innerCircle.y);
+            x=tmp_Vec.normalize();
+            d=R*R/x;
+            innerCharges[1].x = innerCircle.x+d*tmp_Vec.x;
+            innerCharges[1].y = innerCircle.y+d*tmp_Vec.y;
+            innerCharges[1].q = -innerCharge.q*d/R;
+
+            //createFieldLines();
+            render();
+        }
+
+        /**
+         * V max= 5 ==plus color
+         * V min=-5 ==minusColor
+         */
+        function calcPotentialColor(v){
+            let f=0.5+v/10;
+            let r=minusColor[0]*(1-f)+plusColor[0]*f;
+            let g=minusColor[1]*(1-f)+plusColor[1]*f;
+            let b=minusColor[2]*(1-f)+plusColor[2]*f;
+            return 'rgb('+r+','+g+','+b+')';
+
+        }
+
+        function calcField(charges,x,y){
+            let Ex=0,Ey=0;
+            for(let i=0 ;i<charges.length; i++) {
+                let c = charges[i];
+                if(c.q==0)continue;
+                let dx = x-c.x;
+                let dy = y-c.y;
+                let r2 = dx*dx+dy*dy;
+                let r = Math.sqrt(r2);
+                let E = c.q/r2;        // These are really charged rods in 2d space, not point charges in 3d
+                // var E = c.q/r;
+                Ex += dx/r*E;
+                Ey += dy/r*E;
+            }
+            let E = Math.sqrt(Ex*Ex + Ey*Ey);
+            tmp_Field.set(Ex,Ey,Ex/E,Ey/E,E);
+            return tmp_Field;
+        }
+
+
+        var E;
+        function render(){
+            ctx.save();
+
+            ctx.fillStyle=bgColor;
+            ctx.strokeStyle=fieldColor;
+            ctx.font = '18pt sans-serif';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+
+
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.translate(canvas.width/2,canvas.height/2);
+            ctx.scale(scale,-scale);
+            outerCircle.render();
+            innerCircle.color=bgColor;
+            innerCircle.render();
+
+            ctx.lineWidth = 1.5 / scale;
+
+            let x,y;
+            let N=Math.abs(innerCharge.q)*source_lines_per_unit_charge;
+            const abs_h=0.05;
+            let h=innerCharge.q>0?abs_h:-abs_h;
+
+            let s=h>0?minusSign:plusSign;
+            ctx.fillStyle=h<0?calcPotentialColor(-5):calcPotentialColor(5);
+
+            for(let i=0;i<N;i++){
+                x=innerCharge.x+innerCharge.r*Math.cos(2*i*Math.PI/N);
+                y=innerCharge.y+innerCharge.r*Math.sin(2*i*Math.PI/N);
+                ctx.beginPath();
+                ctx.moveTo(x,y);
+                let steps=0;
+                while(true){
+                    E=calcField(innerCharges,x,y);
+                    if(E.E==0)break;
+
+                    x+=E.dEx*h;
+                    y+=E.dEy*h;
+                    steps++;
+                    if(steps==5){
+                        ctx.lineTo(x,y);
+                        h=abs_h/1.5;
+                        ctx.moveTo(x+h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
+                        ctx.lineTo(x,y);
+                        ctx.moveTo(x-h*E.dEy-h*E.dEx,y+h*E.dEx-h*E.dEy);
+                        ctx.lineTo(x,y);
+                        h=innerCharge.q>0?abs_h:-abs_h;
+                        continue;
+                    }
+
+                    if(innerCircle.distance(x,y)>-abs_h){
+                        tmp_Vec=innerCircle.project(x,y);
+                        x=tmp_Vec.x;
+                        y=tmp_Vec.y;
+
+                        ctx.lineTo(x,y);
+                        if(drawFields)ctx.stroke();
+                        if(drawCharges) {
+                            E=calcField(innerCharges,x,y);
+                            x=innerCircle.x+0.96*(x-innerCircle.x);
+                            y=innerCircle.y+0.96*(y-innerCircle.y);
+                            ctx.save();
+                            ctx.scale(1 / scale, -1 / scale);
+                            ctx.translate(x * scale , -y * scale );
+                            ctx.rotate(-tmp_Vec.set(-E.dEy, E.dEx).horizontalAngle());
+                            ctx.fillText(s, 0, 0);
+                            ctx.restore();
+                        }
+                        break;
+                    }
+                    ctx.lineTo(x,y);
+                    if(steps==150){
+                        break;
+                    }
+                }
+
+            }
+
+            N=Math.abs(outerCharge.q)*source_lines_per_unit_charge;
+            h=outerCharge.q>0?abs_h:-abs_h;
+            s=h>0?minusSign:plusSign;
+            ctx.fillStyle=h<0?calcPotentialColor(5):calcPotentialColor(-5);
+
+            let lineOutFromSphere=0;
+            let thetaLimit=0;
+            let CQ=new Vector2(outerCharge.x-outerCircle.x,outerCharge.y-outerCircle.y);
+            let th=0;
+
+            for(let i=0;i<N;i++){
+                x=outerCharge.x+outerCharge.r*Math.cos(2*i*Math.PI/N);
+                y=outerCharge.y+outerCharge.r*Math.sin(2*i*Math.PI/N);
+                ctx.beginPath();
+                ctx.moveTo(x,y);
+                let steps=0;
+                while(true){
+                    E=calcField(outerCharges,x,y);
+                    if(E.E==0)break;
+
+                    x+=E.dEx*h;
+                    y+=E.dEy*h;
+
+                    steps++;
+                    if(steps==5){
+                        ctx.lineTo(x,y);
+                        h=abs_h/1.5;
+                        ctx.moveTo(x+abs_h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
+                        ctx.lineTo(x,y);
+                        ctx.moveTo(x-h*E.dEy-h*E.dEx,y+h*E.dEx-h*E.dEy);
+                        ctx.lineTo(x,y);
+                        h=outerCharge.q>0?abs_h:-abs_h;
+                        continue;
+                    }
+
+                    if(outerCircle.distance(x,y)<abs_h){
+                        tmp_Vec=outerCircle.project(x,y);
+                        x=tmp_Vec.x;
+                        y=tmp_Vec.y;
+                        ctx.lineTo(x,y);
+                        th=Math.abs(CQ.angleWith(x-outerCircle.x,y-outerCircle.y));
+                        if(thetaLimit<th)thetaLimit=th;
+                        lineOutFromSphere+=((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy)>0?1:-1;
+                        if(drawFields) ctx.stroke();
+                        if(drawCharges){
+                            E=calcField(outerCharges,x,y);
+                            x=outerCircle.x+1.02*(x-outerCircle.x);
+                            y=outerCircle.y+1.02*(y-outerCircle.y);
+                            ctx.save();
+                            ctx.scale(1/scale,-1/scale);
+                            ctx.translate(x*scale,-y*scale);
+                            ctx.rotate(-tmp_Vec.set(-E.dEy,E.dEx).horizontalAngle());
+                            ctx.fillText(s,0,0);
+                            ctx.restore();
+                        }
+
+                        break;
+                    }
+                    if(steps==200||x<x_min||x>x_max||y<y_min||y>y_max){
+                        if(drawFields) ctx.stroke();
+                        break;
+                    }
+                    ctx.lineTo(x,y);
+                }
+
+
+            }
+
+
+            N=Math.round(outerCharges[2].q*source_lines_per_unit_charge)-lineOutFromSphere;
+            h=abs_h;
+            if(N<0)h=-abs_h;
+            s=h>0?plusSign:minusSign;
+            ctx.fillStyle=h>0?calcPotentialColor(5):calcPotentialColor(-5);
+            N=Math.abs(N+1);
+            //let linesDrawn=0;
+
+            let thRange=(2*Math.PI-2*thetaLimit);
+            let oneByPi=1/Math.PI;
+            let th0=CQ.horizontalAngle()+thetaLimit;
+            //console.log("outerQ="+outerCharges[2].q+" linesout="+lineOutFromSphere+" N="+N+ " h="+h+" thRange"+thRange);
+            let R=outerCircle.r;
+            for(let i=0;i<N;i++){
+                th=th0+thRange*(outerCharge.q==0?i/N:(oneByPi*Math.acos(1-2*i/N)));
+                x=outerCircle.x+R*Math.cos(th);
+                y=outerCircle.y+R*Math.sin(th);
+                E=calcField(outerCharges,x,y);
+
+                if(((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy)*h>0){
+                    console.log((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy);
+
+                    ctx.beginPath();
+                    ctx.moveTo(x,y);
+                    let steps=0;
+                    while(true){
+                        E=calcField(outerCharges,x,y);
+
+                        x+=E.dEx*h;
+                        y+=E.dEy*h;
+
+                        steps++;
+                        if(steps==5){
+                            h=abs_h/1.5;
+                            ctx.lineTo(x,y);
+                            ctx.moveTo(x+abs_h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
+                            ctx.lineTo(x,y);
+                            ctx.moveTo(x-h*E.dEy-h*E.dEx,y+h*E.dEx-h*E.dEy);
+                            ctx.lineTo(x,y);
+                            h=outerCharges[2].q>0?abs_h:-abs_h;
+                            continue;
+                        }
+
+                        if(outerCharge.q!=0 && distance(outerCharge.x,outerCharge.y,x,y)<abs_h){
+                             break;
+                        }
+                        if(steps==200||x<x_min||x>x_max||y<y_min||y>y_max){
+                            if(drawFields) ctx.stroke();
+                            break;
+                        }
+                        ctx.lineTo(x,y);
+                    }
+                    //console.log(E);
+
+                    if(drawFields)ctx.stroke();
+                    //linesDrawn++;
+                    if(drawCharges) {
+                        x=outerCircle.x+R*1.02*Math.cos(th);
+                        y=outerCircle.y+R*1.02*Math.sin(th);
+                        E=calcField(outerCharges,x,y);
+                        ctx.save();
+                        ctx.scale(1 / scale, -1/ scale);
+                        ctx.translate(x * scale , -y * scale );
+                        ctx.rotate(-tmp_Vec.set(-E.dEy, E.dEx).horizontalAngle());
+                        ctx.fillText(s, 0, 0);
+                        ctx.restore();
+                    }
+                }
+            }
+
+            ctx.font = '14pt sans-serif';
+
+            if(outerCharge.q!=0)outerCharge.render();
+            //outerCharges[1].render();
+            if(innerCharge.q!=0)innerCharge.render();
+            x=outerCircle.x;
+            y=outerCircle.y+outerCircle.r*0.7;
+            ctx.fillStyle=fieldColor;
+            ctx.scale(1 / scale, -1/ scale);
+            ctx.fillText("Potential maintained at "+spherePotential.toFixed(1)+" statVolts",x*scale,y*scale);
+            /*
+            s=1;
+            for(let x=x_min;x<x_max;x+=dx){
+
+                for(let y=y_min;y<y_max;y+=dx){
+                    E=null;
+                    if(outerCircle.contains(x,y)==false){
+                        E=calcField(outerCharges,x,y)
+                    }else if(innerCircle.contains(x,y)){
+                       // E=calcField(innerCharges,x,y)
+                    }
+                    if(E!=null && E.E>0){
+                        //console.log(E);
+                        s=E.E>0.2?0.2/E.E:1;
+                        ctx.strokeStyle='red';
+                        drawLineWithArrows(x,y,x+E.Ex*s,y+E.Ey*s,5/scale,5/scale,false,true);
+                    }
+                }
+            }
+             */
+            ctx.restore();
+        }
+
+
+        function worldToCanvas(x,y){
+            return new Vector2(x*scale+canvas.width/2,-y*scale+canvas.height/2);
+        }
+
+        function canvasToWorld(x,y){
+            return new Vector2((x-canvas.width/2)/scale,(canvas.height/2-y)/scale);
+        }
+
+        function onMouseEvent(ev){
+           let v=canvasToWorld(ev.center.x,ev.center.y);
+           let x=v.x;
+           let y=v.y;
+           // console.log(ev.type+":"+v.x+","+v.y);
+           if(ev.type=="panstart" ||ev.type=="press"){
+               innerCharge.highlight=innerCharge.q!=0 && innerCharge.contains(x,y);
+               outerCharge.highlight=outerCharge.q!=0 && outerCharge.contains(x,y);
+               mouse.set(x,y);
+               render();
+           }else if(ev.type=="panend"||ev.type=="pressup"){
+               //innerCharge.highlight=false;
+               //outerCharge.highlight=false;
+               render();
+           }else if(ev.type=="panmove"){
+               if(innerCharge.highlight||outerCharge.highlight){
+                   let dx=x-mouse.x;
+                   let dy=y-mouse.y;
+                   if(innerCharge.highlight){
+                       innerCharge.x+=dx;
+                       innerCharge.y+=dy;
+                   }else{
+                       outerCharge.x+=dx;
+                       outerCharge.y+=dy;
+                   }
+                   update();
+               }
+               mouse.set(x,y);
+           }
+        }
+
+        function mouseWheelMoved(me) {
+            if(me.wheelDelta>0>0){
+                scale*=1.02;
+            }else{
+                scale*=0.98;
+            }
+            setScale(scale);
+            me.preventDefault();
+        }
+
+        function onKeyEvent(e){
+            let draggingCharge=null;
+            if(innerCharge.highlight)draggingCharge=innerCharge;
+            else  if(outerCharge.highlight)draggingCharge=outerCharge;
+            if(draggingCharge==null)return;
+            let dx=0,dy=0;
+            //if(id==401){
+            if(e.keyCode==37){
+                dx=-2/scale;
+            }
+            if (e.keyCode==39){
+                dx=2/scale;
+            }
+            if(e.keyCode==38){
+                dy=2/scale;
+            }
+            if (e.keyCode==40){
+                dy=-2/scale;
+            }
+            draggingCharge.x+=dx;
+            draggingCharge.y+=dy;
+            if(dx!=0||dy!=0){
+                update();
+                return;
+            }
+            if (e.keyCode==33){//page up
+                scale*=1.02;
+                setScale(scale);
+            }
+            else if (e.keyCode==34){//page down
+                scale*=0.98;
+                setScale(scale);
+            }else {
+                return false;
+            }
+
+            e.preventDefault();
+        }
+
+    </script>
+</body>
+</html>
