@@ -495,7 +495,11 @@
             pane.addInput(window, "fieldColor",{label:"Field Color"}).on('change',render);
             const hammertime = new Hammer(canvas);
             hammertime.get('pinch').set({ enable: true });
-            hammertime.get('pan').set({ threshold: 0});
+            hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
+            // hammertime.get('press').set({ threshold: 1, time:0 });
+            hammertime.on('panstart panend panmove', function(ev) {
+                onMouseEvent(ev);
+            });
             hammertime.on('pinchstart', function(ev) {
                 initScale=scale;
 
@@ -508,10 +512,7 @@
                 update();
             });
 
-            // hammertime.get('press').set({ threshold: 1, time:0 });
-            hammertime.on('panstart panend panmove', function(ev) {
-                onMouseEvent(ev);
-            });
+
             window.addEventListener('resize',function(ev) { return resize(ev); });
             canvas.addEventListener("mousewheel",mouseWheelMoved);
             window.addEventListener('keydown',onKeyEvent,false);
