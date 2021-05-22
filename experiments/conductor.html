@@ -210,7 +210,20 @@
         function resize(){
             canvas.width=window.innerWidth;
             canvas.height=window.innerHeight;
-            scale=canvas.width/(x_max-x_min);
+            if(canvas.width>canvas.height){
+                x_max=5;
+                x_min=-5;
+                scale=canvas.width/(x_max-x_min);
+                y_max=x_max*canvas.height/canvas.width;
+                y_min=-y_max;
+            }else{
+                y_max=6;
+                y_min=-6;
+                scale=canvas.width/(y_max-y_min);
+                x_max=y_max*canvas.width/canvas.height;
+                x_min=-x_max;
+            }
+
             setScale(scale);
             update();
         }
@@ -311,7 +324,7 @@
                 return Math.sqrt(this.x*this.x+this.y*this.y);
             }
             this.distance =function(x,y){
-                return dist(x,y,this.x,this.y);
+                return distance(x,y,this.x,this.y);
             }
             this.normalize=function(){
                 let l=this.length();
@@ -367,6 +380,7 @@
             this.y=y;
             this.r=r;
             this.highlight=false;
+
             this.contains=function(x,y){
                 return distance(x,y,this.x,this.y)<this.r;
             };
@@ -892,8 +906,8 @@
            let y=v.y;
            // console.log(ev.type+":"+v.x+","+v.y);
            if(ev.type=="panstart" ||ev.type=="press"){
-               innerCharge.highlight=innerCharge.q!=0 && innerCharge.contains(x,y);
-               outerCharge.highlight=outerCharge.q!=0 && outerCharge.contains(x,y);
+               innerCharge.highlight=innerCharge.q!=0 && distance(innerCharge.x,innerCharge.y,x,y)<2*innerCharge.r;
+               outerCharge.highlight=outerCharge.q!=0 && distance(outerCharge.x,outerCharge.y,x,y)<2*outerCharge.r;
                mouse.set(x,y);
                render();
            }else if(ev.type=="panend"||ev.type=="pressup"){
