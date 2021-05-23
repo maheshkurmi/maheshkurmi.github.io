@@ -179,9 +179,10 @@
 
                 <h4>Controls</h4>
                 Drag the selected charge (press on charge to select) using mouse or arrow keys and use mouse scroll or pinch to zoom. <br>
-                Conductor dimensions: <br>
-
-
+                <span color="red">
+                Note 1: Lines are terminated at screen edges so they may not be drawn if charge is out of screen bounds.
+                Note 2: Lines may behave weird(may not appear to follow gauss law) in region where line density is very small
+                </span>
             </div>
         </div>
     </div>
@@ -206,6 +207,7 @@
         var y_min=-y_max;
 
         var scale=canvas.width/(x_max-x_min);
+        const PI=Math.PI;
 
         function resize(){
             canvas.width=window.innerWidth;
@@ -398,7 +400,7 @@
                 ctx.stroke();
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                ctx.scale(1 / scale, -1 / scale);
+                ctx.scale(1 / 130, -1 / 130);
                 ctx.fillStyle = "white";
 
                 let s;
@@ -479,8 +481,10 @@
         var estModeRK=true;
         var outerCircle=new Circle(0,0,2,conductorColor)
         var innerCircle=new Circle(0.5,0,1,bgColor);
-        var outerCharge=new Charge(3,0,0.2,2);
-        var innerCharge=new Charge(1,0,0.15,2);
+        var outerCharge=new Charge(3,0,0.2,2.5);
+        var innerCharge=new Charge(1,0,0.15,1);
+        var conductorCharge=-2.5;
+
         var drawCharges=true;
         var drawFields=true;
         var source_lines_per_unit_charge=10;
@@ -490,7 +494,6 @@
         var tmp_Field=new Field(1,0);
         var outerCharges=[outerCharge,new Charge(0,0,0.1),new Charge(0,0,0.1)];
         var innerCharges=[innerCharge,new Charge(0,0,0.1)];
-
 
         var initScale;
         init();
@@ -509,7 +512,7 @@
 
             tab.pages[0].addInput(outerCharge, "q",{label:"Charge 1",min:-5,max:5,step:0.5}).on('change',update);
             tab.pages[0].addInput(innerCharge, "q",{label:"Charge 2",min:-5,max:5,step:0.5}).on('change',update);
-            tab.pages[0].addInput(window, "spherePotential",{label:"Conductor Potential",min:-5,max:5,step:0.5}).on('change',update);
+            tab.pages[0].addInput(window, "conductorCharge",{label:"Conductor charge",min:-5,max:5,step:0.5}).on('change',update);
 
             tab.pages[0].addInput(innerCircle, "x",{label:"cavity location",min:-0.9,max:0.9,step:0.1}).on('change',update);
             tab.pages[0].addInput(window, "drawCharges",{label:"Draw Charges"}).on('change',render);
@@ -603,8 +606,12 @@
 
             outerCharges[2].x=outerCircle.x;
             outerCharges[2].y=outerCircle.y;
+            spherePotential=(conductorCharge+innerCharge.q-outerCharge.q*R/d)/R+outerCharge.q/d;
+
             let V=outerCharge.q*R/d+innerCharge.q/R;
-            outerCharges[2].q=(spherePotential-V)/R;
+            outerCharges[2].q=conductorCharge+innerCharge.q+outerCharge.q*R/d;///(spherePotential-V)*R;
+
+
 
             //find image charges for calculation of E inside cavity
             R=innerCircle.r;
@@ -694,18 +701,21 @@
 
             let s=h>0?minusSign:plusSign;
             ctx.fillStyle=h<0?plusColor:minusColor;
+            let max_steps=100;
+            let arrowStepPos=8;
 
-            let arrowStepPos=10;
+            CQ=new Vector2(innerCharge.x-innerCircle.x,innerCharge.y-innerCircle.y);
+            let th0=0;//CQ.horizontalAngle();
             for(let i=0;i<N;i++){
-                x=innerCharge.x+innerCharge.r*Math.cos(2*i*Math.PI/N);
-                y=innerCharge.y+innerCharge.r*Math.sin(2*i*Math.PI/N);
+                x=innerCharge.x+innerCharge.r*Math.cos(th0+2*i*Math.PI/N);
+                y=innerCharge.y+innerCharge.r*Math.sin(th0+2*i*Math.PI/N);
                 ctx.beginPath();
                 ctx.moveTo(x,y);
                 let steps=0;
 
                 while(true){
                     E=calcField(innerCharges,x,y);
-                    if(E.E==0)break;
+                    //if(E.E<epsilonE)break;
                     if(!estModeRK) {
                         x+=E.dEx*h;
                         y+=E.dEy*h;
@@ -724,16 +734,6 @@
 
                     }
                     steps++;
-                    if(steps==arrowStepPos){
-                        ctx.lineTo(x,y);
-                        h=abs_h/1.2;
-                        ctx.moveTo(x+h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
-                        ctx.lineTo(x,y);
-                        ctx.moveTo(x-h*E.dEy-h*E.dEx,y+h*E.dEx-h*E.dEy);
-                        ctx.lineTo(x,y);
-                        h=innerCharge.q>0?abs_h:-abs_h;
-                        continue;
-                    }
 
                     if(innerCircle.distance(x,y)>-abs_h){
                         tmp_Vec=innerCircle.project(x,y);
@@ -747,8 +747,8 @@
                             x=innerCircle.x+0.96*(x-innerCircle.x);
                             y=innerCircle.y+0.96*(y-innerCircle.y);
                             ctx.save();
-                            ctx.scale(1 / scale, -1 / scale);
-                            ctx.translate(x * scale , -y * scale );
+                            ctx.scale(1 / 125, -1 / 125);
+                            ctx.translate(x * 125 , -y * 125 );
                             ctx.rotate(-tmp_Vec.set(-E.dEy, E.dEx).horizontalAngle());
                             ctx.fillText(s, 0, 0);
                             ctx.restore();
@@ -756,7 +756,15 @@
                         break;
                     }
                     ctx.lineTo(x,y);
-                    if(steps==150){
+                    if(steps==arrowStepPos){
+                        ctx.moveTo(x-h*E.dEy+h*E.dEx,y+h*E.dEx+h*E.dEy);
+                        ctx.lineTo(x,y);
+                        ctx.moveTo(x+h*E.dEy+h*E.dEx,y-h*E.dEx+h*E.dEy);
+                        ctx.lineTo(x,y);
+                    }
+
+
+                    if(steps==max_steps){
                         break;
                     }
                 }
@@ -771,18 +779,22 @@
 
             let lineOutFromSphere=0;
             let thetaLimit=0;
-            let CQ=new Vector2(outerCharge.x-outerCircle.x,outerCharge.y-outerCircle.y);
+            CQ.set(outerCharge.x-outerCircle.x,outerCharge.y-outerCircle.y);
             let th=0;
-            arrowStepPos=18;
+            arrowStepPos=15;
+            max_steps=300;
+            th0=CQ.horizontalAngle();
+            let prevE=new Vector2();
             for(let i=0;i<N;i++){
-                x=outerCharge.x+outerCharge.r*Math.cos(2*i*Math.PI/N);
-                y=outerCharge.y+outerCharge.r*Math.sin(2*i*Math.PI/N);
+                x=outerCharge.x+outerCharge.r*Math.cos(th0+2*i*Math.PI/N);
+                y=outerCharge.y+outerCharge.r*Math.sin(th0+2*i*Math.PI/N);
                 ctx.beginPath();
                 ctx.moveTo(x,y);
                 let steps=0;
+                E=calcField(outerCharges,x,y);
+                prevE.set(E.dEx,E.dEy);
                 while(true){
                     E=calcField(outerCharges,x,y);
-                    if(E.E==0)break;
 
                     if(!estModeRK) {
                         x+=E.dEx*h;
@@ -803,16 +815,6 @@
                     }
 
                     steps++;
-                    if(steps==arrowStepPos){
-                        ctx.lineTo(x,y);
-                        h=abs_h;
-                        ctx.moveTo(x+abs_h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
-                        ctx.lineTo(x,y);
-                        ctx.moveTo(x-h*E.dEy-h*E.dEx,y+h*E.dEx-h*E.dEy);
-                        ctx.lineTo(x,y);
-                        h=outerCharge.q>0?abs_h:-abs_h;
-                        continue;
-                    }
 
                     if(outerCircle.distance(x,y)<abs_h){
                         tmp_Vec=outerCircle.project(x,y);
@@ -828,8 +830,8 @@
                             x=outerCircle.x+1.02*(x-outerCircle.x);
                             y=outerCircle.y+1.02*(y-outerCircle.y);
                             ctx.save();
-                            ctx.scale(1/scale,-1/scale);
-                            ctx.translate(x*scale,-y*scale);
+                            ctx.scale(1/125,-1/125);
+                            ctx.translate(x*125,-y*125);
                             ctx.rotate(-tmp_Vec.set(-E.dEy,E.dEx).horizontalAngle());
                             ctx.fillText(s,0,0);
                             ctx.restore();
@@ -837,47 +839,115 @@
 
                         break;
                     }
-                    if(steps==200||x<x_min||x>x_max||y<y_min||y>y_max){
-                        console.log("min="+x_min+" max="+x_max);
+
+
+
+                    //line turned back means there is possible null point
+                    if(prevE.dot(E.dEx,E.dEy)<0||steps==max_steps||x<x_min||x>x_max||y<y_min||y>y_max){
+                        //console.log("min="+x_min+" max="+x_max);
+                        console.log("line turned at "+x+","+y);
                         if(drawFields) ctx.stroke();
                         break;
                     }
+                    prevE.set(E.dEx,E.dEy);
                     ctx.lineTo(x,y);
+                    if(steps==arrowStepPos){
+                        ctx.lineTo(x,y);
+                        ctx.moveTo(x-h*E.dEy+h*E.dEx,y+h*E.dEx+h*E.dEy);
+                        ctx.lineTo(x,y);
+                        ctx.moveTo(x+h*E.dEy+h*E.dEx,y-h*E.dEx+h*E.dEy);
+                        ctx.lineTo(x,y);
+                        // continue;
+                    }
                 }
-
-
             }
 
 
-            N=Math.round(outerCharges[2].q*source_lines_per_unit_charge)-lineOutFromSphere;
+            N=Math.round((conductorCharge+innerCharge.q)*source_lines_per_unit_charge)-lineOutFromSphere;
             h=abs_h;
             if(N<0)h=-abs_h;
             s=h>0?plusSign:minusSign;
             ctx.fillStyle=h>0?plusColor:minusColor;
-            N=Math.abs(N+1);
+            N=Math.abs(N)+1;
             //let linesDrawn=0;
 
             let thRange=(2*Math.PI-2*thetaLimit);
             let oneByPi=1/Math.PI;
-            let th0=CQ.horizontalAngle()+thetaLimit;
-            //console.log("outerQ="+outerCharges[2].q+" linesout="+lineOutFromSphere+" N="+N+ " h="+h+" thRange"+thRange);
+            th0=CQ.horizontalAngle()+thetaLimit;
+            console.log("outerShellQ="+outerCharges[2].q+" linesout="+lineOutFromSphere+" N="+N+ " h="+h+" thRange"+thRange);
+
             let R=outerCircle.r;
-            arrowStepPos=25;
-            for(let i=0;i<N;i++){
-                th=th0+thRange*(outerCharge.q==0?i/N:(oneByPi*Math.acos(1-2*i/N)));
-                x=outerCircle.x+R*Math.cos(th);
+            //find theta at which lines start emitting from surface
+            while(thetaLimit<Math.PI) {
+                thetaLimit = thetaLimit + 0.01;
+                th=CQ.horizontalAngle()+thetaLimit;
+                x = outerCircle.x + R * Math.cos(th);
+                y = outerCircle.y + R * Math.sin(th);
+                E = calcField(outerCharges, x, y);
+                if(((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy)*h>0){
+                    thRange=(2*Math.PI-2*thetaLimit);
+                    th0=th;
+                    console.log("new thRange found as "+thRange);
+                    break;
+                }
+            }
+            /*
+            if(N==2 ){
+                th=CQ.horizontalAngle()+Math.PI;
+                x = outerCircle.x + R * Math.cos(th);
+                y = outerCircle.y + R * Math.sin(th);
+
+                E=calcField(outerCharges,x,y);
+                if(((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy)*h<0){
+                    N=3;
+                    h=-h;
+
+                    drawLineWithArrows(x,y,outerCircle.x + Math.cos(th),outerCircle.y + Math.sin(th),false,h<0);
+                    drawLineWithArrows(outerCircle.x + Math.cos(th),outerCircle.y + Math.sin(th),outerCircle.x + 3*R*Math.cos(th),outerCircle.y +  3*R*Math.sin(th),h>0,false);
+
+                    if(drawCharges) {
+                        s=h>0?plusSign:minusSign;
+                        ctx.fillStyle=h>0?plusColor:minusColor;
+                        x=outerCircle.x+R*1.02*Math.cos(th);
+                        y=outerCircle.y+R*1.02*Math.sin(th);
+                        E=calcField(outerCharges,x,y);
+                        ctx.save();
+                        ctx.scale(1 / 125, -1/ 125);
+                        ctx.translate(x * 125 , -y * 125 );
+                        ctx.rotate(-tmp_Vec.set(-E.dEy, E.dEx).horizontalAngle());
+                        ctx.fillText(s, 0, 0);
+                        ctx.restore();
+                        ctx.fillStyle=h<0?plusColor:minusColor;
+                        s=h<0?plusSign:minusSign;
+                    }
+                    h=-h;
+
+                }
+            }
+            */
+            arrowStepPos=15;
+            max_steps=200;
+            let i=1;
+            while(i<N){
+
+                //th=th0+thRange*(outerCharge.q==0?i/(N-1):(oneByPi*Math.acos(1-2*i/N)));
+                th=th0+thRange*i/N;
+                x=outerCircle.x+R*Math.cos(th);s
                 y=outerCircle.y+R*Math.sin(th);
                 E=calcField(outerCharges,x,y);
-
-                if(((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy)*h>0){
-                    console.log((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy);
+                prevE.set(E.dEx,E.dEy);
+                //if(true){//((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy)*h>0){
+                    //console.log((x-outerCircle.x)*E.dEx+(y-outerCircle.y)*E.dEy);
 
                     ctx.beginPath();
                     ctx.moveTo(x,y);
                     let steps=0;
+                    inner:
                     while(true){
+                        steps++;
                         E=calcField(outerCharges,x,y);
 
+                        prevE.set(E.dEx,E.dEy);
                         if(!estModeRK) {
                             x+=E.dEx*h;
                             y+=E.dEy*h;
@@ -895,43 +965,47 @@
                             // dist += Math.sqrt(dx*dx + dy*dy);
                         }
 
-                        steps++;
-                        if(steps==arrowStepPos){
-                            h=abs_h;
-                            ctx.lineTo(x,y);
-                            ctx.moveTo(x+abs_h*E.dEy-h*E.dEx,y-h*E.dEx-h*E.dEy);
-                            ctx.lineTo(x,y);
-                            ctx.moveTo(x-h*E.dEy-h*E.dEx,y+h*E.dEx-h*E.dEy);
-                            ctx.lineTo(x,y);
-                            h=outerCharges[2].q>0?abs_h:-abs_h;
-                            continue;
+
+
+                        //line turned back means there is possible null point
+                        if(prevE.dot(E.dEx,E.dEy)<-0.9){
+                            console.log("line turned at "+x+","+y);
+                            //break;
                         }
 
-                        if(outerCharge.q!=0 && distance(outerCharge.x,outerCharge.y,x,y)<abs_h){
-                             break;
+                        if(steps==max_steps||x<x_min||x>x_max||y<y_min||y>y_max||prevE.dot(E.dEx,E.dEy)<-0.9||(outerCharge.q!=0 && distance(outerCharge.x,outerCharge.y,x,y)<outerCharge.r)){
+                            //ctx.lineTo(x,y);
+                            if(drawFields)ctx.stroke();
+                            //linesDrawn++;
+                            if(drawCharges) {
+                                x=outerCircle.x+R*1.02*Math.cos(th);
+                                y=outerCircle.y+R*1.02*Math.sin(th);
+                                E=calcField(outerCharges,x,y);
+                                ctx.save();
+                                ctx.scale(1 / 125, -1/ 125);
+                                ctx.translate(x * 125 , -y * 125 );
+                                ctx.rotate(-tmp_Vec.set(-E.dEy, E.dEx).horizontalAngle());
+                                ctx.fillText(s, 0, 0);
+                                ctx.restore();
+                            }
+                            break inner;
                         }
-                        if(steps==200||x<x_min||x>x_max||y<y_min||y>y_max){
-                            if(drawFields) ctx.stroke();
-                            break;
-                        }
+
+                        prevE.set(E.dEx,E.dEy)
                         ctx.lineTo(x,y);
-                    }
-                    //console.log(E);
+                        if(steps==arrowStepPos){
 
-                    if(drawFields)ctx.stroke();
-                    //linesDrawn++;
-                    if(drawCharges) {
-                        x=outerCircle.x+R*1.02*Math.cos(th);
-                        y=outerCircle.y+R*1.02*Math.sin(th);
-                        E=calcField(outerCharges,x,y);
-                        ctx.save();
-                        ctx.scale(1 / scale, -1/ scale);
-                        ctx.translate(x * scale , -y * scale );
-                        ctx.rotate(-tmp_Vec.set(-E.dEy, E.dEx).horizontalAngle());
-                        ctx.fillText(s, 0, 0);
-                        ctx.restore();
-                    }
-                }
+                            ctx.lineTo(x,y);
+                            ctx.moveTo(x-h*E.dEy+h*E.dEx,y+h*E.dEx+h*E.dEy);
+                            ctx.lineTo(x,y);
+                            ctx.moveTo(x+h*E.dEy+h*E.dEx,y-h*E.dEx+h*E.dEy);
+                            ctx.lineTo(x,y);
+
+                            //continue inner;
+                        }
+                    }//End while
+                i++;
+
             }
 
             ctx.font = '14pt sans-serif';
