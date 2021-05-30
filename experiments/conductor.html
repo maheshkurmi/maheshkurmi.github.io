@@ -473,6 +473,50 @@
             this.points
         }
 
+
+        function Probe(x,y){
+            this.x=x;
+            this.y=y;
+            this.w=1.3;
+            this.h=0.7;
+            this.arrowSOffset=0.1    ;
+            this.active=false;
+            this.contains=function(x,y){
+                return (x>this.x && x<this.x+this.w && y<this.y && y>this.y-this.h)
+            }
+            this.drag=function(dx,dy){
+                this.x += dx;
+                this.y += dy;
+               // if(this.x<x_min+this.arrowSOffset)this.x=x_min+this.arrowSOffset;
+               // if(this.y<y_min+this.arrowSOffset)this.y=y_min+this.arrowSOffset;
+               // if(this.x>x_max-this.w)this.x=x_max-this.w;
+               // if(this.y>y_max-this.h)this.y=y_max-this.h;
+            }
+
+            this.render=function(){
+
+                ctx.save();
+                ctx.translate(this.x,-this.y);
+                ctx.scale(1/scale,-1/scale);
+
+                ctx.fillStyle="black";
+                ctx.strokeStyle=this.active?"yellow":fieldColor;
+                ctx.textAlign="left";
+                ctx.fillRect(0,0,this.w*scale,this.h*scale);
+                ctx.strokeRect(0,0,this.w*scale,this.h*scale);
+                ctx.fillStyle=this.active?"yellow":fieldColor;
+                ctx.fillText("E = "+calcField(-this.arrowSOffset,+this.arrowSOffset).E+fieldUnit, 10, 20);
+               // ctx.fillText("V = "+calcPotential(x-this.arrowSOffset,y-this.arrowSOffset).toFixed(3)+potentialUnit, this.x+0.1, this.y+0.5);
+                drawLineWithArrows(0,0,-this.arrowSOffset*scale,this.arrowSOffset*scale,4,4,false,true);
+                ctx.restore();
+            }
+        }
+
+        const chargeUnit="\u{00B5}C";
+        const fieldUnit="kN/C";
+        const potentialUnit="kV";
+        const distanceUnit="cm";
+
         const plusSign="\u{002B}";
         const minusSign="\u{2212}";
         var plusColor='#ff0000';
@@ -481,9 +525,9 @@
         var estModeRK=true;
         var outerCircle=new Circle(0,0,2,conductorColor)
         var innerCircle=new Circle(0.5,0,1,bgColor);
-        var outerCharge=new Charge(3,0,0.2,2.5);
+        var outerCharge=new Charge(3,0,0.2,2);
         var innerCharge=new Charge(1,0,0.15,1);
-        var conductorCharge=-2.5;
+        var conductorCharge=0;
 
         var drawCharges=true;
         var drawFields=true;
@@ -494,6 +538,7 @@
         var tmp_Field=new Field(1,0);
         var outerCharges=[outerCharge,new Charge(0,0,0.1),new Charge(0,0,0.1)];
         var innerCharges=[innerCharge,new Charge(0,0,0.1)];
+        var probe=new Probe(10,-10);
 
         var initScale;
         init();
@@ -510,15 +555,15 @@
             });
 
 
-            tab.pages[0].addInput(outerCharge, "q",{label:"Charge 1",min:-5,max:5,step:0.5}).on('change',update);
-            tab.pages[0].addInput(innerCharge, "q",{label:"Charge 2",min:-5,max:5,step:0.5}).on('change',update);
+            tab.pages[0].addInput(outerCharge, "q",{label:"Outer Charge",min:-5,max:5,step:0.5}).on('change',update);
+            tab.pages[0].addInput(innerCharge, "q",{label:"Inner Charge",min:-5,max:5,step:0.5}).on('change',update);
             tab.pages[0].addInput(window, "conductorCharge",{label:"Conductor charge",min:-5,max:5,step:0.5}).on('change',update);
 
-            tab.pages[0].addInput(innerCircle, "x",{label:"cavity location",min:-0.9,max:0.9,step:0.1}).on('change',update);
+            tab.pages[0].addInput(innerCircle, "x",{label:"Cavity location",min:-0.9,max:0.9,step:0.1}).on('change',update);
             tab.pages[0].addInput(window, "drawCharges",{label:"Draw Charges"}).on('change',render);
             tab.pages[0].addInput(window, "drawFields",{label:"Draw Fields"}).on('change',render);
-            tab.pages[0].addInput(window, "estModeRK",{label:"Use RK4 Solver"}).on('change',render);
-            tab.pages[0].addInput(window, "source_lines_per_unit_charge",{label:"Line Density",min:4,max:50,step:1}).on('change',update);
+            //tab.pages[0].addInput(window, "estModeRK",{label:"Use RK4 Solver"}).on('change',render);
+            tab.pages[0].addInput(window, "source_lines_per_unit_charge",{label:"Line Density",min:5,max:50,step:5}).on('change',update);
 
 
             tab.pages[1].addInput(window, "bgColor",{label:"Background"}).on('change',render);
@@ -669,7 +714,32 @@
             tmp_Field.set(Ex,Ey,Ex/E,Ey/E,E);
             return tmp_Field;
         }
+        function calcPotential(charges,x,y){
+            let V=0;
+            let r=tmp_Vec.set(x,y).length();
+            let r1=tmp_Vec.set(x-innerCircle.x,y-innerCircle.y).length();
 
+            if(innerCircle.distance(x,y)<0) {
+
+            }
+
+            let Ex=0,Ey=0;
+            for(let i=0 ;i<charges.length; i++) {
+                let c = charges[i];
+                if(c.q==0)continue;
+                let dx = x-c.x;
+                let dy = y-c.y;
+                let r2 = dx*dx+dy*dy;
+                let r = Math.sqrt(r2);
+                let E = c.q/r2;        // These are really charged rods in 2d space, not point charges in 3d
+                // var E = c.q/r;
+                Ex += dx/r*E;
+                Ey += dy/r*E;
+            }
+            let E = Math.sqrt(Ex*Ex + Ey*Ey);
+            tmp_Field.set(Ex,Ey,Ex/E,Ey/E,E);
+            return tmp_Field;
+        }
 
         var E;
         function render(){
@@ -757,9 +827,10 @@
                     }
                     ctx.lineTo(x,y);
                     if(steps==arrowStepPos){
-                        ctx.moveTo(x-h*E.dEy+h*E.dEx,y+h*E.dEx+h*E.dEy);
                         ctx.lineTo(x,y);
-                        ctx.moveTo(x+h*E.dEy+h*E.dEx,y-h*E.dEx+h*E.dEy);
+                        ctx.moveTo(x+abs_h*E.dEy-abs_h*E.dEx,y-abs_h*E.dEx-abs_h*E.dEy);
+                        ctx.lineTo(x,y);
+                        ctx.moveTo(x-abs_h*E.dEy-abs_h*E.dEx,y+abs_h*E.dEx-abs_h*E.dEy);
                         ctx.lineTo(x,y);
                     }
 
@@ -853,9 +924,9 @@
                     ctx.lineTo(x,y);
                     if(steps==arrowStepPos){
                         ctx.lineTo(x,y);
-                        ctx.moveTo(x-h*E.dEy+h*E.dEx,y+h*E.dEx+h*E.dEy);
+                        ctx.moveTo(x+abs_h*E.dEy-abs_h*E.dEx,y-abs_h*E.dEx-abs_h*E.dEy);
                         ctx.lineTo(x,y);
-                        ctx.moveTo(x+h*E.dEy+h*E.dEx,y-h*E.dEx+h*E.dEy);
+                        ctx.moveTo(x-abs_h*E.dEy-abs_h*E.dEx,y+abs_h*E.dEx-abs_h*E.dEy);
                         ctx.lineTo(x,y);
                         // continue;
                     }
@@ -863,7 +934,7 @@
             }
 
 
-            N=Math.round((conductorCharge+innerCharge.q)*source_lines_per_unit_charge)-lineOutFromSphere;
+            N=Math.floor((conductorCharge+innerCharge.q)*source_lines_per_unit_charge)-lineOutFromSphere;
             h=abs_h;
             if(N<0)h=-abs_h;
             s=h>0?plusSign:minusSign;
@@ -932,7 +1003,7 @@
 
                 //th=th0+thRange*(outerCharge.q==0?i/(N-1):(oneByPi*Math.acos(1-2*i/N)));
                 th=th0+thRange*i/N;
-                x=outerCircle.x+R*Math.cos(th);s
+                x=outerCircle.x+R*Math.cos(th);
                 y=outerCircle.y+R*Math.sin(th);
                 E=calcField(outerCharges,x,y);
                 prevE.set(E.dEx,E.dEy);
@@ -970,7 +1041,7 @@
                         //line turned back means there is possible null point
                         if(prevE.dot(E.dEx,E.dEy)<-0.9){
                             console.log("line turned at "+x+","+y);
-                            //break;
+                            break;
                         }
 
                         if(steps==max_steps||x<x_min||x>x_max||y<y_min||y>y_max||prevE.dot(E.dEx,E.dEy)<-0.9||(outerCharge.q!=0 && distance(outerCharge.x,outerCharge.y,x,y)<outerCharge.r)){
@@ -994,16 +1065,13 @@
                         prevE.set(E.dEx,E.dEy)
                         ctx.lineTo(x,y);
                         if(steps==arrowStepPos){
-
                             ctx.lineTo(x,y);
-                            ctx.moveTo(x-h*E.dEy+h*E.dEx,y+h*E.dEx+h*E.dEy);
+                            ctx.moveTo(x+abs_h*E.dEy-abs_h*E.dEx,y-abs_h*E.dEx-abs_h*E.dEy);
                             ctx.lineTo(x,y);
-                            ctx.moveTo(x+h*E.dEy+h*E.dEx,y-h*E.dEx+h*E.dEy);
-                            ctx.lineTo(x,y);
-
-                            //continue inner;
+                            ctx.moveTo(x-abs_h*E.dEy-abs_h*E.dEx,y+abs_h*E.dEx-abs_h*E.dEy);
+                            ctx.lineTo(x,y);                            //continue inner;
                         }
-                    }//End while
+                    }//End inner while
                 i++;
 
             }
@@ -1040,6 +1108,7 @@
                 }
             }
              */
+            //probe.render();
             ctx.restore();
         }
 
@@ -1057,9 +1126,13 @@
            let x=v.x;
            let y=v.y;
            // console.log(ev.type+":"+v.x+","+v.y);
-           if(ev.type=="panstart"){
-               innerCharge.highlight=innerCharge.q!=0 && distance(innerCharge.x,innerCharge.y,x,y)<3*innerCharge.r;
-               outerCharge.highlight=outerCharge.q!=0 && distance(outerCharge.x,outerCharge.y,x,y)<2*outerCharge.r;
+           if(ev.type=="panstart" || ev.type=="tap") {
+               if (probe.contains(x, y)) {
+                    probe.active = true;
+               } else {
+                    innerCharge.highlight = innerCharge.q != 0 && distance(innerCharge.x, innerCharge.y, x, y) < 3 * innerCharge.r;
+                    outerCharge.highlight = outerCharge.q != 0 && distance(outerCharge.x, outerCharge.y, x, y) < 2 * outerCharge.r;
+               }
                mouse.set(x,y);
                render();
            }else if(ev.type=="panend"){
@@ -1069,8 +1142,10 @@
            }else if(ev.type=="panmove"){
                let dx=x-mouse.x;
                let dy=y-mouse.y;
-
-               if(innerCharge.highlight||outerCharge.highlight){
+               if (probe.active) {
+                   probe.drag(dx,dy);
+                   mouse.set(x,y);
+               }else if(innerCharge.highlight||outerCharge.highlight){
 
                    if(innerCharge.highlight){
                        innerCharge.x+=dx;
