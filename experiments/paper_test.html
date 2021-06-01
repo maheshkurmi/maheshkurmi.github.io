@@ -1,0 +1,52 @@
+
+    <html>
+    <head>
+        <script type="text/javascript" src="paper-full.js"></script>
+        <script type="text/paperscript" canvas="myCanvas">
+// Create a Paper.js Path to draw a line into it:
+// Create a new path once, when the script is executed:
+var myPath = new Path();
+myPath.strokeColor = 'black';
+
+// This function is called whenever the user
+// clicks the mouse in the view:
+function onMouseMove(event) {
+	// Add a segment to the path at the position of the mouse:
+	myPath.add(event.point);
+}
+var path = new Path();
+path.strokeColor = 'black';
+var start = new Point(100, 100);
+path.moveTo(start);
+
+// Use the global variables a and b defined in the JavaScript
+path.lineTo(start + [ globals.a, globals.b ]);
+
+// Define a global function inside the window scope.
+globals.lineTo = function(c,d) {
+path.lineTo(new Point(c, d));
+}
+</script>
+
+        <script type="text/javascript">
+            // To avoid race problem, the following should not be in window.onload as the PaperScript might run before.
+            window.globals = { a:50, b:-50 };
+
+            // Update the path from the JavaScript code.
+            window.onload = function() {
+                document.getElementById('lineToBtn').onclick = function() {
+                    let x = Number(document.getElementById('x').value);
+                    let y = Number(document.getElementById('y').value);
+                    window.globals.lineTo(x,y);
+                };
+            };
+        </script>
+    </head>
+    <body>
+    <input type="range" id="x" from="0" to="150" default="75"></input>
+    <input type="range" id="y" from="0" to="150" default="75" ></input>
+    <button type="number" id="lineToBtn">LineTo</button>
+    <br>
+    <canvas id="myCanvas" resize></canvas>
+    </body>
+    </html>

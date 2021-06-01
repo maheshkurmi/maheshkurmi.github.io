@@ -1,0 +1,802 @@
+<!doctype html>
+<html>
+<head>
+    <title>Capacitor with Dielectric</title>
+    <meta name="keywords" content="Electric field charge capacitor dielectric simulation physics">
+    <meta name="author" content="Mahesh Kurmi">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+
+        #container canvas{
+            position: relative;
+        }
+
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+            --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+            --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+            --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+            --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+            --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+            --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+            --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+            --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+            --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+            --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+            --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+            --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+            --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+            --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+            --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+            --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+            --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+            --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+            --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+        }
+    </style>
+    <script src="hammer.js"></script>
+    <script src="tweakpane3.js"></script>
+</head>
+
+<body>
+
+<div id="canvasdiv" class="container" align="center">
+    <div id="gui" style="position: absolute">
+
+    </div>
+
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
+
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Electroscope Simulation</h3>
+                <p>
+                    if an electroscope acquires an overall positive/negative charge, this net charge will be spread about the entire electroscope - plate, support and needle. Since like charges repel, the charged leaves will repel each other, causing a deflection of the needle.
+
+                    When the charged electroscope is touched, its charge becomes grounded (or neutralized) leading the leaves to retract.<br>
+
+                    Keep touching the electroscope and bring the charged rod near to see effect of ground.
+                </p>
+
+                <h4>Controls</h4>
+                Drag the charged rod and hand to play with simulation
+            </div>
+        </div>
+    </div>
+
+</div>
+<script type='text/javascript'>
+    var canvas=document.getElementById("canvas");
+    var ctx=canvas.getContext("2d");
+
+    const PI=Math.PI;
+    const HALF_PI=Math.PI/2;
+    const TWO_PI=Math.PI*2;
+
+    var timer=null;
+    var width = canvas.width;
+    var height = canvas.height;
+
+    var initScale;
+    var scale=window.innerWidth/1500;
+    var xOffset=0;
+    var yOffset=0;
+
+    var bgColor = "rgb(0,64,84)";
+    var fgColor="rgb(255,255,255)";
+    var minusColor="rgb(255,0,0)";
+    var plusColor="rgb(0,0,255)";
+
+    var imagesLoaded=0;
+    var totalImagesToLoad=2;
+
+    var img_electroscope=new Image();
+    img_electroscope.src="electroscope_electroscope.png"
+    img_electroscope.onload=load;
+
+    var img_hand=new Image();
+    img_hand.src="electroscope_hand.png"
+    img_hand.onload=load;
+
+    var oxChargeRod = [177, 166, 153, 138, 122, 104, 83];
+    var oyChargeRod = [13, 24, 37, 51, 67, 84, 104];
+    var xRod = 0;
+    var xElectroscope = 450;
+    var xHand = 700;
+    var yRod = 80;
+    var sumElectron = 12;
+    var nElectronCap1 = 6;
+    var nElectronFoil1 = 6;
+    var nElectronCapEvent = 6;
+    var nElectronFoilEvent = 6;
+    var maxMove = 20;
+    var typeMove = [];
+    var countMove = [];
+    var maxButton = 2;
+    var iButton = 1;
+    var sButton = ["( + )", "( - )"];
+    var xButton = [0, 100];
+    var yButton = [400, 400];
+    var wButton = 101;
+    var hButton = 50;
+    var chargedPositive=false;
+    var f = true;
+    var dragged = -1;
+    var offsetX;
+    var mx,my;
+
+    function load(){
+        imagesLoaded++;
+        if(imagesLoaded==totalImagesToLoad){
+            console.log("initialised");
+            initialize();
+        }
+
+    }
+    function initialize(){
+        const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Field Parameters"});
+        /*
+        pane.addInput(window, "_on",{label:"Run Simulation "}).on('change',render);
+        pane.addInput(window, "drawInfo",{label:"Draw Labels "}).on('change',render);
+        pane.addInput(window, "simulationSpeed",{label:"Animation Speed",min:0.2,max:2,step:0.1}).on('change',update);
+        pane.addInput(window, "bgColor",{label:"Background"}).on('change',render);
+        pane.addInput(window, "fgColor",{label:"ForeGround"}).on('change',render);
+        */
+
+        hammertime = new Hammer(canvas);
+        hammertime.get('pinch').set({ enable: true });
+        hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
+        hammertime.on('panstart', function(ev) {
+            let mouseEvent = new MouseEvent("mousedown", {
+                clientX: ev.center.x,
+                clientY: ev.center.y
+            });
+            //console.log(ev);
+            mousePressed(mouseEvent);
+            //canvas.dispatchEvent(mouseEvent);
+        });
+        hammertime.on('panend', function(ev) {
+            let mouseEvent = new MouseEvent("mouseup", {
+                clientX: ev.center.x,
+                clientY: ev.center.y
+            });
+            // console.log(ev.type);
+            // canvas.dispatchEvent(mouseEvent);
+            mouseReleased(mouseEvent);
+        });
+        hammertime.on('panmove', function(ev) {
+
+            let mouseEvent = new MouseEvent("mousemove", {
+                clientX: ev.center.x,
+                clientY: ev.center.y
+            });
+            mouseDragged(mouseEvent);
+            // console.log(ev.type);
+            // canvas.dispatchEvent(mouseEvent);
+        });
+
+
+        hammertime.on('pinchstart', function(ev) {
+            intiScale=scale;
+
+        });
+
+        //can use pinch in pinchout separately
+        hammertime.on('pinch', function(ev) {
+
+            // console.log(ev.type+" scale="+ev.scale);
+            let oldScale=scale;
+
+            let x = ev.center.x/scale;
+            let y = ev.center.y/scale;
+            scale=intiScale*ev.scale;
+
+            xOffset-= x*(scale-oldScale);
+            yOffset-= y*(scale-oldScale);
+
+            //xOffset=(xOffset+canvas.width/2-ev.center.x);//*scale;
+            //yOffset=(yOffset+canvas.height/2-ev.center.y)//*scale;
+            paint();
+        });
+
+        window.addEventListener('resize',function(ev) { return resize(ev); });
+
+        canvas.addEventListener("mousewheel",mouseWheelMoved);
+        document.querySelector(".trigger_popup_fricc").onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "block";
+        };
+        document.querySelector('.hover_bkgr_fricc').onclick =function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+        document.querySelector('.popupCloseButton').onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+        ctx.strokeWidth=2;
+
+        resize();
+        scale=window.innerWidth/1200;
+        for (var i = 0; i < maxMove; i++) {
+            typeMove[i] = -1;
+            countMove[i] = 0
+        }
+        if(timer)clearInterval(timer);
+
+        timer=setInterval(render,20);
+
+    }
+
+    function resize(){
+        //scale*=window.innerWidth/canvas.width;
+        canvas.width = window.innerWidth-10;
+        canvas.height = window.innerHeight-10;
+        render();
+    }
+
+    function addMoveEvent(t) {
+        for (var i = 0; i < maxMove; i++) {
+            if (typeMove[i] < 0) {
+                typeMove[i] = t;
+                countMove[i] = 0;
+                return
+            }
+        }
+    }
+
+  
+    function render() {
+
+        ctx.fillStyle=bgColor;
+        ctx.strokeStyle=fgColor;
+        ctx.lineWidth=2;
+        ctx.save();
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        if(imagesLoaded<totalImagesToLoad){
+            ctx.font = "30px Arial";
+            ctx.textBaseline="center";
+            ctx.fillStyle=fgColor;
+            ctx.fillText("Loading ..."+(imagesLoaded*100/totalImagesToLoad).toFixed(0)+"%",canvas.width/2,canvas.height/2);
+            return;
+        }
+        ctx.scale(scale,scale);
+        ctx.translate(xOffset,yOffset);
+
+        ctx.font = "20px Arial";
+        ctx.lineWidth=2.5;
+        ctx.strokeStyle=fgColor;
+        ctx.fillStyle="white";//(255);
+        ctx.save();
+        ctx.translate(xRod - 55, yRod - 153);
+        ctx.rotate(-0.8);
+        ctx.fillRect(0, 0, 30, 300);
+        ctx.strokeRect(0, 0, 30, 300);
+        ctx.restore();
+        ctx.drawImage(img_electroscope, xElectroscope - 117.5, yRod, 238, 353);
+        ctx.drawImage(img_hand, xHand, yRod - 10, 400, 99);
+        ctx.lineWidth=2;
+        for (var i = 0; i < oxChargeRod.length; i++) {
+            if (chargedPositive) drawPlusCharge(xRod + oxChargeRod[i] - 17, yRod - oyChargeRod[i] + 48);
+            else drawMinusCharge(xRod + oxChargeRod[i] - 17, yRod - oyChargeRod[i] + 48)
+        }
+        for (var i = 0; i < 6; i++) {
+            var x = xElectroscope - 60 + i * 120 / 5.0;
+            var y = yRod + 15 + (mod(i, 2) == 0 ? 5 : -5);
+            drawPlusCharge(x, y)
+        }
+        var f = Math.floor(200.0 / (xElectroscope - 220 - xRod));
+        var a = xElectroscope;
+        var b = yRod + 230;
+        if (chargedPositive) {
+            nElectronCap1 = Math.floor((nElectronCap1 + nElectronFoil1) / 2 + f);
+            nElectronFoil1 = Math.round(sumElectron - nElectronCap1);
+            if (xHand <= xElectroscope + 82) {
+                nElectronFoil1 = 6;
+                sumElectron = nElectronCap1 + nElectronFoil1
+            }
+        } else {
+            nElectronCap1 = Math.floor((nElectronCap1 + nElectronFoil1 + 1) / 2 - f);
+            nElectronCap1 = Math.max(0, nElectronCap1);
+            nElectronFoil1 = Math.round(sumElectron - nElectronCap1);
+            if (xHand <= xElectroscope + 82) {
+                nElectronFoil1 = 6;
+                sumElectron = nElectronCap1 + nElectronFoil1
+            }
+        }
+        if (nElectronFoilEvent < nElectronFoil1) {
+            if (xHand <= xElectroscope + 82) addMoveEvent(5);
+            else addMoveEvent(1);
+            nElectronFoilEvent++
+        } else if (nElectronFoilEvent > nElectronFoil1) {
+            if (xHand <= xElectroscope + 82) addMoveEvent(4);
+            else addMoveEvent(0);
+            nElectronFoilEvent--
+        }
+        if (nElectronCapEvent < nElectronCap1) {
+            if (xHand <= xElectroscope + 82) {
+                addMoveEvent(3);
+                nElectronCapEvent++
+            }
+        } else if (nElectronCapEvent > nElectronCap1) {
+            if (xHand <= xElectroscope + 82) {
+                addMoveEvent(2);
+                nElectronCapEvent--
+            }
+        }
+        for (var i = 0; i < maxMove; i++)
+            if (typeMove[i] >= 0) {
+                var x, y;
+                var c = 10;
+                switch (typeMove[i]) {
+                    case 0:
+                        x = xElectroscope;
+                        y = 180 - map(countMove[i], 0, c - 1, 180, 0) + 120;
+                        drawMinusCharge(x, y);
+                        countMove[i]++;
+                        if (countMove[i] >= c) typeMove[i] = -1;
+                        break;
+                    case 1:
+                        x = xElectroscope;
+                        y = map(countMove[i], c - 1, 0, 180, 0) + 120;
+                        drawMinusCharge(x, y);
+                        countMove[i]++;
+                        if (countMove[i] >= c) typeMove[i] = -1;
+                        break;
+                    case 2:
+                        x = map(countMove[i], 0, c - 1, 0, 180) + xElectroscope + 70;
+                        y = yRod + 15;
+                        drawMinusCharge(x, y);
+                        countMove[i]++;
+                        if (countMove[i] >= c) typeMove[i] = -1;
+                        break;
+                    case 3:
+                        x = 180 - map(countMove[i], c - 1, 0, 0, 180) + xElectroscope + 70;
+                        y = yRod + 15;
+                        drawMinusCharge(x, y);
+                        countMove[i]++;
+                        if (countMove[i] >= c) typeMove[i] = -1;
+                        break;
+                    case 4:
+                        if (countMove[i] < c) {
+                            x = xElectroscope;
+                            y = 180 - map(countMove[i], 0, c - 1, 180, 0) + 120
+                        } else {
+                            x = map(countMove[i], c, 2.5 * c - 1, 0, 270) + xElectroscope;
+                            y = yRod + 15
+                        }
+                        drawMinusCharge(x, y);
+                        countMove[i]++;
+                        if (countMove[i] >= 2.5 * c) typeMove[i] = -1;
+                        break;
+                    case 5:
+                        if (countMove[i] < c * 1.5) {
+                            x = 270 - map(countMove[i], 1.5 * c - 1, 0, 0, 270) + xElectroscope;
+                            y = yRod + 15
+                        } else {
+                            x = xElectroscope;
+                            y = map(countMove[i], 2.5 * c - 1, 1.5 * c, 180, 0) + 120
+                        }
+                        drawMinusCharge(x, y);
+                        countMove[i]++;
+                        if (countMove[i] >= 2.5 * c) typeMove[i] = -1;
+                        break
+                }
+            } //noStroke();
+        ctx.fillStyle="rgb(128,128,128)";
+        ctx.save();
+        ctx.translate(a - 2, b);
+        ctx.rotate(Math.min(PI / 3, Math.abs(nElectronFoil1 - 6) * PI / 18));
+        ctx.fillRect(-5, 0, 12, 100);
+        ctx.restore();
+        ctx.save();
+        ctx.translate(a + 2, b);
+        ctx.rotate(Math.max(-PI / 3, -Math.abs(nElectronFoil1 - 6) * PI / 18));
+        ctx.fillRect(-4, 0, 12, 100);
+        ctx.restore();
+        if (nElectronCap1 == 1) {
+            drawMinusCharge(xElectroscope, yRod + 15)
+        }
+        if (nElectronCap1 > 1) {
+            for (var i = 0; i < nElectronCap1; i++) {
+                var x = map(i, 0, nElectronCap1 - 1, xElectroscope - 60, xElectroscope + 60);
+                drawMinusCharge(x, yRod + 15 + (mod(i, 2) == 0 ? -9 : 9))
+            }
+        }
+        {
+            ctx.save();
+            ctx.translate(a + 2, b);
+            ctx.rotate(Math.max(-PI / 3, -Math.abs(nElectronFoil1 - 6) * PI / 18));
+            drawPlusCharge(4, 15);
+            drawPlusCharge(4, 45);
+            drawPlusCharge(4, 75);
+            for (var i = 0; i < Math.floor(nElectronFoil1 / 2.0); i++) {
+                var y = 80 - i * 60.0 / Math.max(Math.floor(nElectronFoil1 / 2.0) - 1, 1);
+                drawMinusCharge(10, y)
+            }
+            ctx.restore();
+            ctx.save();
+            ctx.translate(a - 2, b);
+            ctx.rotate(Math.min(PI / 3, Math.abs(nElectronFoil1 - 6) * PI / 18));
+            drawPlusCharge(-2, 30);
+            drawPlusCharge(-2, 60);
+            drawPlusCharge(-2, 90);
+            for (var i = 0; i < Math.ceil(nElectronFoil1 / 2.0); i++) {
+                var y = 80 - i * 60.0 / Math.max(Math.ceil(nElectronFoil1 / 2.0) - 1, 1);
+                drawMinusCharge(-8, y)
+            }
+            ctx.restore();
+        }
+        //ctx.fillStyle="red";
+        //fillOval(mx,my,16,16);
+        ctx.restore();
+    }
+
+
+
+    function getMousePos(event){
+        //let rect = canvas.getBoundingClientRect();
+        return [ -xOffset+event.clientX/scale  ,-yOffset+event.clientY/scale ];
+    }
+
+    function mousePressed( me) {
+        let m=getMousePos(me);
+        mx = m[0];
+        my = m[1];
+        dragged=-1;
+        if(my>400)return;
+        if (Math.abs(xRod + 100 - mx * 900 / width) < Math.abs(xHand + 100 - mx * 900 / width)) {
+            dragged = 0;
+            offsetX = mx * 900 / width - xRod;
+        } else {
+            dragged = 1;
+            offsetX = mx * 900 / width - xHand;
+        }
+
+        me.preventDefault();
+    }
+
+    function mouseReleased( me) {
+        dragged=-1;
+    }
+
+    function mouseWheelMoved(me) {
+        //console.log(e.wheelDelta);
+        var scroll=me.wheelDelta>0?1:-1;
+        if(scroll>0){
+            scale*=1.02;
+        }else{
+            scale*=0.98;
+        }
+    }
+
+    function mouseDragged( me) {
+        let m = getMousePos(me);
+        //console.log(m);
+        let dx, dy;
+        dx = (m[0] - mx) ;
+        dy = (m[1] - my) ;
+        mx = m[0];
+        my = m[1];
+        if (dragged >= 0) {
+            if (dragged == 0) {
+                xRod+= dx;//mx * 900 / canvas.width - offsetX;
+                xRod = constrain(xRod, -100, xElectroscope - 270);
+            } else if (dragged == 1) {
+                xHand+= dx;//mx * 900 / canvas.width - offsetX;
+                xHand = constrain(xHand, xElectroscope + 82, 800);
+            }
+
+        }else {
+            xOffset += dx;
+            yOffset += dy;
+            mx-=dx*scale;
+            my-=dy*scale;
+        }
+        me.preventDefault();
+    }
+
+
+    function distance(x1,y1,x2,y2){
+        return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    }
+
+    function fillOval(x,y,w,h,stroke){
+        ctx.beginPath();
+        ctx.arc(x,y,w/2,0,2*Math.PI,false);
+        ctx.fill();
+        if(stroke) ctx.stroke();
+    }
+    function drawLine(x1,y1,x2,y2){
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+    }
+
+    function drawPlusCharge(x,y){
+        ctx.fillStyle=plusColor;
+        fillOval(x,y,12,12);
+        ctx.strokeStyle="white";
+        ctx.beginPath();
+        ctx.moveTo(x-5,y);
+        ctx.lineTo(x+5,y);
+        ctx.moveTo(x,y+5);
+        ctx.lineTo(x,y-5);
+        ctx.stroke();
+        //ctx.fillText(plusSign,   x,y)
+    }
+
+    function drawMinusCharge(x,y){
+        ctx.fillStyle=minusColor;
+        fillOval(x,y,12,12);
+        ctx.strokeStyle="white";
+        //ctx.fillText(minuSign,   x,y)
+        ctx.beginPath();
+        ctx.moveTo(x-5,y);
+        ctx.lineTo(x+5,y);
+        ctx.stroke();
+    }
+
+    // x0,y0: the line's starting point
+    // x1,y1: the line's ending point
+    // width: the distance the arrowhead perpendicularly extends away from the line
+    // height: the distance the arrowhead extends backward from the endpoint
+    // arrowStart: true/false directing to draw arrowhead at the line's starting point
+    // arrowEnd: true/false directing to draw arrowhead at the line's ending point
+    function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd){
+        var dx=x1-x0;
+        var dy=y1-y0;
+        var angle=Math.atan2(dy,dx);
+        var length=Math.sqrt(dx*dx+dy*dy);
+        //
+        ctx.save();
+        ctx.translate(x0,y0);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(length,0);
+        if(arrowStart){
+            ctx.moveTo(aLength,-aWidth);
+            ctx.lineTo(0,0);
+            ctx.lineTo(aLength,aWidth);
+        }
+        if(arrowEnd){
+            ctx.moveTo(length-aLength,-aWidth);
+            ctx.lineTo(length,0);
+            ctx.lineTo(length-aLength,aWidth);
+        }
+        //
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function Vector2(x,y){
+        this.x=x;
+        this.y=y;
+
+        this.set =function(x,y) {
+            if (y == undefined) {
+                this.x=x.x;
+                this.y=x.y;
+            } else {
+                this.x = x;
+                this.y = y;
+            }
+            return this;
+        }
+        this.length=function(){
+            return Math.sqrt(this.x*this.x+this.y*this.y);
+        }
+        this.distance =function(x,y){
+            return distance(x,y,this.x,this.y);
+        }
+        this.normalize=function(){
+            let l=this.length();
+            this.x/=l;
+            this.y/=l;
+            return l;
+        }
+        this.unitVector=function(){
+            let l=this.length;
+            return new Vector2(this.x/l,this.y/l);
+        }
+        this.add=function(dx,dy){
+            this.x+=dx;
+            this.y+=dy;
+            return this;
+        }
+        this.multiply=function(s){
+            this.x*=s;
+            this.y*=s;
+            return this;
+        }
+        this.dot=function(x,y){
+            return x*this.x +y*this.y;
+        }
+        /**
+         * Returns angle with positive x axis in -PI to PI
+         */
+        this.horizontalAngle=function(){
+            return Math.atan2(this.y,this.x);
+        }
+
+        /**
+         * Returns the smallest angle between this vector and specified vector in -PI to PI
+         */
+        this.angleWith=function(x,y){
+            let a = Math.atan2(y, x) - Math.atan2(this.y, this.x);
+            if (a > Math.PI) return a - 2*Math.PI;
+            if (a < -Math.PI) return a + 2*Math.PI;
+            return a;
+        }
+
+        this.lerp=function(x,y,k){
+            this.x=this.x*(1-k)+x*k;
+            this.y=this.y*(1-k)+y*k;
+
+            return this;
+        }
+    }
+
+
+    function map(n,start1,stop1,start2,stop2){
+        if (start1>stop1) {
+            var temp = stop1;
+            stop1 = start1;
+            start1 = temp;
+        }
+        if (start2 > stop2){
+            var temp = stop2;
+            stop2 = start2;
+            start2 = temp;
+        }
+        if(n<start1)n=start1;
+        if(n>stop1)n=stop1;
+        return (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    }
+
+    function constrain(n, low, high) {
+        return Math.max(Math.min(n, high), low);
+    }
+
+
+    function contain(x, y, x1, y1, w1, h1){
+
+        if (x < x1) return false;
+        if (x > (x1 + w1)) return false;
+        if (y < y1) return false;
+        if (y > (y1 + h1)) return false;
+        return true;
+    }
+
+
+    function mod(x, y){
+
+        // ì¼ë‹¨, ì–‘ìˆ˜ë¡œ ë§Œë“ ë‹¤.
+        if (x < 0) x += y * (ceil(abs(x)/y) + 1);
+        var c = Math.floor(x / y);
+        return x - y * c;
+    }
+
+
+</script>
+</body>
+</html>

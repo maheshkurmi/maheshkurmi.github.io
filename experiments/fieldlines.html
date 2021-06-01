@@ -199,7 +199,7 @@
         // var step = 0.06;
         var step = 0.06;
         var start_step = 0.001;
-        var max_steps = 2000;
+        var max_steps = 200;
 
 
         var Utolerance = 0.001;
@@ -210,10 +210,12 @@
 
         var hide_charge_values = false;
 
-        var charge_Value=1;
         var bg_color = "rgb(0,64,84)";
         var fieldColor="rgb(255,255,255)";
         var potColor="rgb(0,255,0)";
+
+        var charge1_Value=2;
+        var charge2_Value=-1;
 
         //create gui
         const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Micrometer Settings"});
@@ -226,9 +228,8 @@
         });
         //gui.remember(window);
         // var deviceFolder=pane.addFolder({title:"Device Settings",expanded:true});
-        tab.pages[0].addInput(window, "charge_Value",{label:"Charge to Add",min:-5,max:5,step:1}).on('change',update);
-        tab.pages[0].addButton({title:"Add Charge"}).on('click',addCharge);
-        tab.pages[0].addButton({title:"Remove last Charge"}).on('click',clearLast);
+        tab.pages[0].addInput(window, "charge1_Value",{label:"Charge 1",min:-5,max:5,step:1}).on('change',update);
+        tab.pages[0].addInput(window, "charge2_Value",{label:"Charge 2",min:-5,max:5,step:1}).on('change',update);
         tab.pages[0].addInput(window, "estModeRK",{label:"Use RK4 Solver"}).on('change',update);
         tab.pages[0].addInput(window, "source_lines_per_unit_charge",{label:"Line Density",min:4,max:50,step:1}).on('change',update);
 
@@ -296,9 +297,24 @@
 
             // Data.
             this.charges = [
-                { q : 1,  x : -1,  y: 1 , r:0.12},
-                { q : -2, x : 1.001,   y:-1 , r:Math.sqrt(2)*0.12 },
+                { q : 2,  x : 2,  y: 0 , r:0.12},
+                { q : -1, x : 0.5,   y:0.1 , r:Math.sqrt(2)*0.12 },
+                { q : 0,  x : 0,  y: 0 , r:0.1},
+                { q : 0,  x : 0,  y: 0 , r:0.1 },
+                { q : 0,  x : 0,  y: 0 , r:0.1 },
             ];
+
+            this.circles=[
+                {x:-1,y:0,r:2},
+                {x:0,y:0,r:0.8}
+            ];
+
+            this.charge1={ q : 2,  x : 2,  y: 0 , r:0.18};
+            this.charge2={ q : -1,  x : 0.5,  y: 0 , r:0.12};
+
+            this.inducedcharge1={ q : 0,  x : 0,  y: 0 , r:0.18};
+            this.inducedcharge2={ q : 0,  x : 0,  y: 0 , r:0.12};
+            this.inducedcharge3={ q : 0,  x : 0,  y: 0 , r:0.12};
 
             this.FindFieldLines();
             this.Draw();
@@ -351,22 +367,47 @@
 
         Applet.prototype.Field = function(x,y)
         {
-            var Ex = 0;
-            var Ey = 0;
-            var U  = 0;
-            var dUdx = 0;
-            for(var i=0 ;i<this.charges.length; i++) {
-                var c = this.charges[i];
-                var dx = x-c.x;
-                var dy = y-c.y;
-                var r2 = dx*dx+dy*dy;
+
+            let Ex = 0;
+            let Ey = 0;
+            let U  = 0;
+            let dUdx = 0;
+            let dx=x-this.circles[0].x;
+            let dy=y-this.circles[0].y;
+            let r2=this.circles[0].r*this.circles[0].r;
+            let insideCircle0=dx*dx+dy*dy<r2;
+            dx=x-this.circles[1].x;
+            dy=y-this.circles[1].y;
+            r2=this.circles[1].r*this.circles[1].r;
+            let insideCircle1=dx*dx+dy*dy<r2;
+            let charges=[];
+            if(insideCircle0){
+                if(insideCircle1){
+                    charges[0]=this.charge2;
+                    charges[1]=this.inducedcharge2;
+                }
+            }else{
+                if(!insideCircle1){
+                    charges[0]=this.charge1;
+                    charges[1]=this.inducedcharge1;
+                    charges[2]=this.inducedcharge3;
+                }
+            }
+           if(Math.abs(x)>5||Math.abs(y)>5)charges=[];
+
+            for(var i=0 ;i<charges.length; i++) {
+                var c = charges[i];
+                if(c.q==0)continue;
+                dx = x-c.x;
+                dy = y-c.y;
+                r2 = dx*dx+dy*dy;
                 var r = Math.sqrt(r2);
-                var E = 2*c.q/r;        // These are really charged rods in 2d space, not point charges in 3d
+                var E = 2*c.q/r2;
                 // var E = c.q/r;
                 Ex += dx/r*E;
                 Ey += dy/r*E;
                 // U += c.q/r;
-                U += -2*c.q*Math.log(r);  // Potential near a charged rod; arbitrary scale.
+                U += 2*c.q/r;  // Potential near a charged rod; arbitrary scale.
             }
             var E2 = Ex*Ex + Ey*Ey;
             var E = Math.sqrt(E2);
@@ -381,12 +422,12 @@
         }
 
 
-
-
         Applet.prototype.FindCollision = function(x,y)
         {
+
             for(var i=0 ;i<this.charges.length; i++) {
                 var c = this.charges[i];
+                if(c.q==0||c==this.inducedcharge1||c==this.inducedcharge2||c==this.inducedcharge3)continue;
                 var dx = x-c.x;
                 var dy = y-c.y;
                 var r2 = dx*dx+dy*dy;
@@ -399,6 +440,22 @@
             return null;
         }
 
+        Applet.prototype.FindchargeAt = function(x,y)
+        {
+            for(var i=0 ;i<2; i++) {
+                var c = i==0?this.charge1:this.charge2;
+                if(c.q==0)continue;
+                var dx = x-c.x;
+                var dy = y-c.y;
+                var r2 = dx*dx+dy*dy;
+                var cr = c.r-0.0001;
+                if(r2 < (cr*cr)) {
+                    // console.log("collision",dx,dy,r2,cr*cr);
+                    return c;
+                }
+            }
+            return null;
+        }
 
         function chargesort(a,b)
         {
@@ -731,6 +788,46 @@
         Applet.prototype.FindFieldLines = function()
         {
 
+            this.charges[0].q=this.charge1.q;
+            this.charges[0].x=this.charge1.x;
+            this.charges[0].y=this.charge1.y;
+            this.charges[0].r=this.charge1.r;
+
+
+            this.charges[1].q=this.charge2.q;
+            this.charges[1].x=this.charge2.x;
+            this.charges[1].y=this.charge2.y;
+            this.charges[1].r=this.charge2.r;
+
+            let d=Math.sqrt((this.charges[0].x-this.circles[0].x)*(this.charges[0].x-this.circles[0].x)+ (this.charges[0].y-this.circles[0].y)*(this.charges[0].y-this.circles[0].y))
+            let R=this.circles[0].r;
+            let t=R*R/d;
+            //console.log("R="+R+", d="+d+", x="+t+" ,q="+(-this.charges[0].q*R/d));
+            this.charges[2].q=-this.charges[0].q*R/d;
+            this.charges[2].x= this.circles[0].x+t*(this.charges[0].x-this.circles[0].x)/d;
+            this.charges[2].y= this.circles[0].y+t*(this.charges[0].y-this.circles[0].y)/d;
+
+            t=Math.sqrt((this.charges[1].x-this.circles[1].x)*(this.charges[1].x-this.circles[1].x)+ (this.charges[1].y-this.circles[1].y)*(this.charges[1].y-this.circles[1].y));
+            R=this.circles[1].r;
+            d=R*R/t;
+            //console.log("t="+t+" ,"+"d="+d);
+            if(isNaN(t))
+                this.charges[3].q=0;
+            else
+                this.charges[3].q=-this.charges[1].q*d/R;
+
+            //this.charges[3].q=0;
+            this.charges[3].x= this.circles[1].x+d*(this.charges[1].x-this.circles[1].x)/t;
+            this.charges[3].y= this.circles[1].y+d*(this.charges[1].y-this.circles[1].y)/t;
+
+            this.charges[4].q= this.charge2.q;
+            this.charges[4].x= this.circles[0].x;
+            this.charges[4].y= this.circles[0].y;
+            this.charges[4].r= this.circles[0].r;
+            this.inducedcharge1=this.charges[2];
+            this.inducedcharge2=this.charges[3];
+            this.inducedcharge3=this.charges[4];
+
 
             this.fieldLines = [];
             this.potentialnodes = [];
@@ -745,6 +842,8 @@
             var max
             for(var i=0 ;i<this.charges.length; i++) {
                 var charge = this.charges[i];
+                if(charge==this.inducedcharge1||charge==this.inducedcharge2)continue;
+
                 total_charge += charge.q;
                 charge.r = 0.12*Math.sqrt(Math.abs(charge.q));
                 charge.n_nodes = Math.round(Math.abs(source_lines_per_unit_charge*charge.q));
@@ -801,8 +900,9 @@
                 this.ctx.fillStyle = 'blue';
                 //console.log("Doing charge",i,"with q=",charge.q,"which has ",charge.nodesUsed.length,"/",charge.n_nodes," nodes");
 
-
+                if(!charge.nodes)continue;
                 while(charge.nodesUsed.length < charge.n_nodes && charge.nodes.length<source_lines_per_unit_charge*5) {
+
                     if(charge.nodes.length>source_lines_per_unit_charge*4) {
                         // console.warn("Wow! Tried way too many nodes.",charge.nodes);
                     }
@@ -1129,22 +1229,37 @@
         }
         this.ctx.globalApha=1;
         Applet.prototype.DrawCharges = function()
-        {
+        {   let colors=["red","green","orange","yellow"]
             // Draw charges. Do this last so line tails are covered.
             for(var i=0 ;i<this.charges.length; i++) {
                 var charge = this.charges[i];
                 this.ctx.fillStyle = 'blue';
-                if(charge.q >0) this.ctx.fillStyle = 'red';
-                if(charge.highlight) this.ctx.lineWidth = 0.03;
-                else                 this.ctx.lineWidth = 0.01;
+                if (charge.q > 0) this.ctx.fillStyle = 'red';
+                this.ctx.fillStyle = colors[i];
+                if (charge.highlight) this.ctx.lineWidth = 0.03;
+                else this.ctx.lineWidth = 0.01;
                 var x = charge.x;
                 var y = charge.y;
                 var r = charge.r;
                 //console.log(charge.x,charge.y,charge.r,0,Math.PI*2,true);
                 this.ctx.beginPath();
-                this.ctx.arc(x,y,r,0,Math.PI*2,true);
+                this.ctx.arc(x, y, r, 0, Math.PI * 2, true);
                 this.ctx.fill();
                 this.ctx.stroke();
+
+
+
+                //console.log(charge.x,charge.y,charge.r,0,Math.PI*2,true);
+                if (i < 2) {
+                    x = this.circles[i].x;
+                    y = this.circles[i].y;
+                    r = this.circles[i].r;
+                    this.ctx.fillStyle = 'rgba(40,40,120,0.5)';
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, r, 0, Math.PI * 2, true);
+                    this.ctx.fill();
+                    this.ctx.stroke();
+                }
 
                 // Draw attempted node positions, for debugging
                 // for(var j=0;j<charge.nodes.length;j++) {
@@ -1168,7 +1283,7 @@
                 var s;
                 if(charge.q<0) s = "-";
                 else           s = "+";
-                s += parseInt(Math.abs(charge.q));
+                s += charge.q.toFixed(2);
                 if(!hide_charge_values) // protect against old browsers
                     this.ctx.fillText(s,0,0);
                 this.ctx.restore();
@@ -1237,12 +1352,13 @@
 
             if(ev.type === 'mousedown' || ev.type ==='touchstart') {
                 // See if we're clicking a charge.
-                var charge = this.FindCollision(x,y);
+                var charge = this.FindchargeAt(x,y);
                 if(charge) {
                     this.dragging = true;
                     this.charge_dragged = charge;
                     charge.highlight = true;
                     update = true;
+                   // console.log(charge);
                 }
             }
             if(ev.type === 'mousemove' || ev.type ==='touchmove') {
@@ -1276,69 +1392,20 @@
 
 
 
-        Applet.prototype.AddCharge = function(ev)
-        {
-            //console.log("AddCharge",ev);
-            var q = 1;//parseFloat(ev.currentTarget.getAttribute('q'));
-            var xy = this.GetEventXY(ev);
-            var x = xy.x;
-            var y = xy.y;
-
-            var charge = { q : q,  x : x,  y: y , r: 0.12*Math.sqrt(Math.abs(q))};
-            this.charges.push(charge);
-
-            this.dragging = true;
-            this.charge_dragged = charge;
-            charge.highlight = true;
-            update = true;
-
-            this.Draw();
-        }
-
-        Applet.prototype.AddChargeRandom = function(q)
-        {
-            //console.log(q);
-            this.xmin = -this.width_x/2;
-            this.xmax =  this.width_x/2;
-            this.ymin = -this.width_x/2 * this.canvas.height/this.canvas.width;
-            this.ymax =  this.width_x/2 * this.canvas.height/this.canvas.width;
-            var x = (Math.random()*1.8 - 0.9)*(this.xmax-this.xmin)/2;
-            var y = (Math.random()*1.8-0.9) *(this.ymax-this.ymin)/2;
-            this.charges.push({
-                q : q,  x : x,  y: y , r:0.12*Math.abs(q)
-            });
-
-            this.Draw();
-        }
 
 
         var applet = new Applet();
 
         function update(){
             //if(do_equipotential)estModeRK=true;
+            applet.charge1.q=charge1_Value;
+            applet.charge2.q=charge2_Value;
+            applet.FindFieldLines();
             applet.Draw();
         }
 
         update();
-        /**
-         * Runs when widget is clicked
-         */
-        function addCharge(){
-            applet.AddChargeRandom(charge_Value);
-        }
-        /**
-         * Runs when widget is clicked
-         */
-        function clearAll(){
-            applet.ClearAll();
-        }
-        /**
-         * Runs when widget is clicked
-         */
-        function clearLast(){
-            applet.charges.pop();
-            applet.Draw();
-        }
+
     </script>
 </div>
 

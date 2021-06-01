@@ -1,0 +1,699 @@
+<!doctype html>
+<html>
+<head>
+    <title>Capacitor with Dielectric</title>
+    <meta name="keywords" content="Electric field charge capacitor dielectric simulation physics">
+    <meta name="author" content="Mahesh Kurmi">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+
+        #container canvas{
+            position: relative;
+        }
+
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+            --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+            --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+            --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+            --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+            --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+            --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+            --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+            --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+            --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+            --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+            --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+            --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+            --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+            --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+            --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+            --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+            --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+            --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+            --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+        }
+    </style>
+    <script src="hammer.js"></script>
+    <script src="tweakpane3.js"></script>
+</head>
+
+<body>
+
+<div id="canvasdiv" class="container" align="center">
+    <div id="gui" style="position: absolute">
+
+    </div>
+
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
+
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Conductor Simulation</h3>
+                <p>
+                    The simulation demonstrates effect on charge distribution and corresponding field lines for two concentric charged shells on
+                    grounding or connected them.<br>
+                    Whenever a switch is pressed the shells are assumed having initial charge as specified by sliders on right panel, then the charge
+                    is distributed as per the switches configuration.
+                </p>
+
+                <h4>Controls</h4>
+                Tap/Press to toggle switches <br>
+                Drag the probe to find Electric field and potential at any point.
+            </div>
+        </div>
+    </div>
+
+</div>
+<script type='text/javascript'>
+    var canvas= document.getElementById("canvas");
+    var ctx=canvas.getContext("2d");
+    const PI=Math.PI;
+    const plusSign="\u{002B}";
+    const minusSign="\u{2212}";
+    const chargeUnit="\u{00B5}C";
+    const capacitorUnit="\u{00B5}F";
+    const fieldUnit="kN/C";
+    const potentialUnit="kV";
+    const lengthUnit="mm";
+
+    var plusColor='#ff0000';
+    var minusColor='#0000ff';
+    var conductorColor='#ffb119';
+
+    let imgCircuit;
+    let dielectricX = 400;
+    var scaleValue = 1;
+    var capW=4;
+    var capH=4;
+    var capA=10;
+
+
+    var drawCharges=true;
+    var drawFields=false;
+    var source_lines_per_unit_charge=10;
+
+
+    var bgColor = "rgb(0,64,84)";
+    var fieldColor="rgb(255,255,255)";
+    var animFPS=50;
+    imgCircuit = new Image();
+    imgCircuit.src="dielectric_in_capacitor_circuit.png";
+    imgCircuit.onload=init;
+
+
+    function init(){
+        //create gui
+        const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Field Parameters"});
+        const tab = pane.addTab({
+            pages: [
+                {title: 'Field settings'},
+                {title: 'Display settings'},
+            ],
+        });
+
+        tab.pages[0].addInput(window, "capW",{label:"Plate Area ",min:1,max:8,step:1}).on('change',updateSwitchState);
+        tab.pages[0].addInput(window, "capH",{label:"Plate Separation ",min:1,max:8,step:1}).on('change',updateSwitchState);
+        tab.pages[0].addInput(window, "scaleValue",{label:"Scale",min:1,max:2.5,step:0.1}).on('change',render);
+        tab.pages[0].addInput(window, "drawCharges",{label:"Draw Charges"}).on('change',updateSwitchState);
+        tab.pages[0].addInput(window, "drawFields",{label:"Draw Fields"}).on('change',updateSwitchState);
+
+
+        tab.pages[1].addInput(window, "animFPS",{label:"Animation Speed",min:10,max:100,step:5}).on('change',render);
+        tab.pages[1].addInput(window, "bgColor",{label:"Background"}).on('change',render);
+        tab.pages[1].addInput(window, "fieldColor",{label:"Field Color"}).on('change',render);
+        tab.pages[1].addInput(window, "plusColor",{label:"+ve Charge Color"}).on('change',render);
+        tab.pages[1].addInput(window, "minusColor",{label:"-ve Charge Color"}).on('change',render);
+        tab.pages[1].addInput(window, "conductorColor",{label:"Conductor Color"}).on('change',render);
+
+
+        ctx.fillStyle=bgColor;
+        ctx.strokeStyle=fieldColor;
+        ctx.font = '12pt sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        window.addEventListener('resize',function(ev) { return resize(ev); });
+        updateSwitchState();
+    }
+
+    function resize() {
+        let a = 0.5;
+        let w = Math.floor((canvas.width > (window.innerHeight - 120) / a) ? (window.innerHeight - 120) / a : canvas.width);
+        let h = Math.floor(w * a);
+        canvas.width=window.innerWidth;
+        canvas.height=window.innerHeight;
+        render();
+    }
+
+    function updateSwitchState(){
+
+        for(let i=0;i<3;i++){
+            //q[i]=q[i]*source_lines_per_unit_charge;
+        }
+
+        render();
+       // animateloop();
+    }
+
+
+
+    function animateloop() {
+        let b = false;
+
+
+        let dQ = 1 / source_lines_per_unit_charge;
+        for (let i = 0; i < 3; i++) {
+            if (q[i] >0) {
+                if(q[i]<dQ)dQ=q[i];
+                q[i]-=dQ;
+                dq[i] += dQ;
+                switches[i].pullElectron();
+                b=true;
+            } else if (q[i]<0) {
+                if(q[i]>-dQ)dQ=-q[i];
+                q[i]+=dQ;
+                dq[i] -= dQ;
+                b=true;
+                switches[i].pushElectron();
+            } else {
+                q[i] = 0;
+                // dq[i] = 0;
+            }
+
+        }
+
+        for(let i=0;i<wires.length;i++){
+            if(wires[i].update())b=true;
+        }
+        // console.log("switched updated");
+        render();
+        if(!b)return;
+
+        setTimeout(animateloop,1000/animFPS);
+
+    }
+
+
+    function render() {
+        //if (touches.length > 1) return;
+        //background(244);
+        //strokeWeight(2);
+        //textSize(30);
+        //textAlign(CENTER, CENTER);
+        //imageMode(CENTER);
+        //rectMode(CENTER);
+        ctx.save();
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.scale(canvas.width / 1000,canvas.width / 1000);
+        ctx.translate(440, 250);
+        ctx.scale(scaleValue,scaleValue);
+
+        let capacitorX1 = -capW * 20;
+        let capacitorX2 = capW * 20;
+        let capacitorY1 = -capH* 6;
+        let capacitorY2 = capH * 6;
+        let dielectricX1 = dielectricX - (capacitorX2 - capacitorX1) / 2;
+        let dielectricX2 = dielectricX + (capacitorX2 - capacitorX1) / 2;
+        let dielectricY1 = -capH * 3;
+        let dielectricY2 = capH* 3;
+        //noFill();
+        //stroke(0);
+        ctx.strokeStyle="black";
+        ctx.strokeRect(-185, 0, 370, 460);
+        ctx.drawImage(imgCircuit, 30, 0, 1000, 500);
+        //noStroke();
+        ctx.fillStyle="rgb(244,244,244)";
+        ctx.fillRect(0, 0, 10, capacitorY2 - capacitorY1);
+        let sx = [];
+        let sy = [];
+        let vx = [];
+        let vy = [];
+        let plus = [];
+        let activ = [];
+        let sourceMax = 0;
+        let step = 0;
+        for (let x = capacitorX1; x <= capacitorX2 + step; x += step) {
+            step = (capacitorY2 - capacitorY1) / 2.4;
+            if (dielectricX1 < x + 2) step /= 2;
+            if (x <= capacitorX2) {
+                sx[sourceMax] = x;
+                sy[sourceMax] = capacitorY1 - 5;
+                vx[sourceMax] = 0;
+                vy[sourceMax] = 1;
+                plus[sourceMax] = true;
+                activ[sourceMax] = true;
+                sourceMax++;
+                sx[sourceMax] = x;
+                sy[sourceMax] = capacitorY2 + 5;
+                vx[sourceMax] = 0;
+                vy[sourceMax] = -1;
+                plus[sourceMax] = false;
+                activ[sourceMax] = true;
+                sourceMax++
+            }
+            if (dielectricX1 <= x) if (x <= dielectricX2) {
+                sx[sourceMax] = (capacitorX2 < x) ? min(x, dielectricX1) : x;
+                sy[sourceMax] = dielectricY1 + 2;
+                vx[sourceMax] = 0;
+                vy[sourceMax] = -1;
+                plus[sourceMax] = false;
+                activ[sourceMax] = false;
+                sourceMax++;
+                sx[sourceMax] = (capacitorX2 < x) ? min(x, dielectricX1) : x;
+                sy[sourceMax] = dielectricY2 - 2;
+                vx[sourceMax] = 0;
+                vy[sourceMax] = 1;
+                plus[sourceMax] = true;
+                activ[sourceMax] = false;
+                sourceMax++
+            }
+        }
+        //noFill();
+        ctx.lineWidth=(1.5);
+        ctx.strokeStyle="rgb(128, 255, 128)";
+        if (drawFields) drawMagneticField(sx, sy, vx, vy, plus, activ, sourceMax, 1);
+        //noStroke();
+        ctx.fillStyle="black";//(0);
+        ctx.fillRect(0, capacitorY1 - 8, 2 + capacitorX2 - capacitorX1, 16);
+        ctx.fillRect(0, capacitorY2 + 8, 2 + capacitorX2 - capacitorX1, 16);
+        ctx.fillStyle="rgb(200, 160, 120)";
+        ctx.fillRect(dielectricX, 0, capacitorX2 - capacitorX1, dielectricY2 - dielectricY1);//, 2);
+        for (let i = 0; i < sourceMax; i++) {
+            if (plus[i]) drawPlusCharge(sx[i], sy[i]); else drawMinusCharge(sx[i], sy[i])
+        }
+
+        ctx.restore();
+        //drawButtonDrag()
+    }
+
+    function drawMagneticField(ox, oy, vx, vy, plus, activ, sourceMax, tollerence) {
+        let steps = 16 * (capH+ 2);
+        let x1 = [];
+        let y1 = [];
+        let pass = [];
+        for (let c = 0; c < sourceMax; c++) {
+            x1[c] = [];
+            y1[c] = [];
+            pass[c] = false
+        }
+        for (let c = 0; c < sourceMax; c++) {
+            if (!activ[c]) continue;
+            if (pass[c]) continue;
+            x1[c][0] = ox[c] + vx[c] / 10;
+            y1[c][0] = oy[c] + vy[c] / 10;
+            for (let i = 1; i < steps; i++) {
+                let vecX = 0;
+                let vecY = 0;
+                for (let j = 0; j < sourceMax; j++) if (x1[c][i - 1] != ox[j] || y1[c][i - 1] != oy[j]) {
+                    let len = Math.pow(x1[c][i - 1] - ox[j], 2) + Math.pow(y1[c][i - 1] - oy[j], 2);
+                    vecX += (plus[c] ? 1 : -1) * (plus[j] ? 1 : -1) / len * ((x1[c][i - 1] - ox[j]) / Math.sqrt(len)) * 10;
+                    vecY += (plus[c] ? 1 : -1) * (plus[j] ? 1 : -1) / len * ((y1[c][i - 1] - oy[j]) / Math.sqrt(len)) * 10
+                }
+                let vecXY = distance(0, 0, vecX, vecY);
+                if (vecXY > 0) {
+                    vecX = vecX * 0.5 / vecXY;
+                    vecY = vecY * 0.5 / vecXY
+                }
+                x1[c][i] = x1[c][i - 1] + vecX;
+                y1[c][i] = y1[c][i - 1] + vecY;
+                let getOut = false;
+                for (let j = c + 1; j < sourceMax; j++) {
+                    if (distance(x1[c][i], y1[c][i], ox[j], oy[j]) < 1) {
+                        pass[j] = true;
+                        getOut = true;
+                        break
+                    }
+                }
+                if (getOut) break
+            }
+        }
+        for (let c = 0; c < sourceMax; c++) {
+            ctx.beginPath();
+            ctx.moveTo(x1[c][0], y1[c][0])
+            for (let i = 1; i < steps; i++) {
+                ctx.lineTo(x1[c][i], y1[c][i])
+            }
+            ctx.stroke();
+        }
+    }
+
+    let dragged = false;
+    let offsetX;
+    let offsetY;
+
+    function touchStarted() {
+        if (!contain(mouseX, mouseY, 0, 0, width, height)) return;
+        if (touches.length > 1) return;
+        dragged = true;
+        offsetX = mouseX * 1000 / (width * scaleValue) - dielectricX
+    }
+
+    function touchMoved() {
+        if (touches.length > 1) return;
+        if (dragged) {
+            dielectricX = mouseX * 1000 / (width * scaleValue) - offsetX;
+            dielectricX = constrain(dielectricX, 0, 450);
+            if (abs(mouseX - pmouseX) > abs(mouseY - pmouseY)) return false
+        }
+    }
+
+    function touchEnded() {
+        dragged = false
+    }
+
+
+    function distance(x1,y1,x2,y2){
+        return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    }
+
+    function fillOval(x,y,w,h,stroke){
+        ctx.beginPath();
+        ctx.arc(x,y,w/2,0,2*PI,false);
+        ctx.fill();
+        if(stroke) ctx.stroke();
+    }
+    function drawLine(x1,y1,x2,y2){
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+    }
+
+    function drawPlusCharge(x,y){
+        ctx.fillStyle=plusColor;
+        fillOval(x,y,12,12);
+        ctx.strokeStyle="white";
+        ctx.beginPath();
+        ctx.moveTo(x-5,y);
+        ctx.lineTo(x+5,y);
+        ctx.moveTo(x,y+5);
+        ctx.lineTo(x,y-5);
+        ctx.stroke();
+        //ctx.fillText(plusSign,   x,y)
+    }
+
+    function drawMinusCharge(x,y){
+        ctx.fillStyle=minusColor;
+        fillOval(x,y,12,12);
+        ctx.strokeStyle="white";
+        //ctx.fillText(minuSign,   x,y)
+        ctx.beginPath();
+        ctx.moveTo(x-5,y);
+        ctx.lineTo(x+5,y);
+        ctx.stroke();
+    }
+
+    // x0,y0: the line's starting point
+    // x1,y1: the line's ending point
+    // width: the distance the arrowhead perpendicularly extends away from the line
+    // height: the distance the arrowhead extends backward from the endpoint
+    // arrowStart: true/false directing to draw arrowhead at the line's starting point
+    // arrowEnd: true/false directing to draw arrowhead at the line's ending point
+    function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd){
+        var dx=x1-x0;
+        var dy=y1-y0;
+        var angle=Math.atan2(dy,dx);
+        var length=Math.sqrt(dx*dx+dy*dy);
+        //
+        ctx.save();
+        ctx.translate(x0,y0);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(length,0);
+        if(arrowStart){
+            ctx.moveTo(aLength,-aWidth);
+            ctx.lineTo(0,0);
+            ctx.lineTo(aLength,aWidth);
+        }
+        if(arrowEnd){
+            ctx.moveTo(length-aLength,-aWidth);
+            ctx.lineTo(length,0);
+            ctx.lineTo(length-aLength,aWidth);
+        }
+        //
+        ctx.stroke();
+        ctx.restore();
+    }
+
+
+    function roundOff(num, n) {
+        if(n==undefined)n=3;
+        return +(Math.round(num + "e+"+n)  + "e-"+n);
+    }
+
+
+    /**
+     * pos: paramteric value wbetween 0 and 1
+     * vel: rate of change of parameter
+     */
+    function Electron(pos,vel){
+        this.pos=pos;
+        this.vel=vel;
+    }
+
+    function Wire(x0,y0,x1,y1,x2,y2,x3,y3,x4,y4,x5,y5){
+        this.pathArray=[x0,y0,x1,y1,x2,y2,x3,y3];
+        this.polypoints=[];
+        this.electrons=[];
+        this.path=null;
+
+        this.set=function(x0,y0,x1,y1,x2,y2,x3,y3){
+            // console.log("x0="+x0+" , y0="+y0+"  x1="+x1+" , y1="+y1+"  x2="+x2+" , y2="+y2);
+            this.pathArray=[x0,y0,x1,y1,x2,y2];
+            // console.log( this.pathArray);
+            this.pos=new Vector2((x1+x2)/2,(y1+y2)/2);
+            this.horizontal=(y1==y2);
+            this.setPosition(x0,y0);
+        }
+
+        this.setPosition=function(x0,y0){
+            let dx=x0-this.pathArray[0];
+            let dy=y0-this.pathArray[1];
+            for(let i=0;i<6;i+=2){
+                this.pathArray[i]+=dx;
+                this.pathArray[i+1]+=dy;
+            }
+            this.path=new Path2D();
+            this.path.moveTo(this.pathArray[0],this.pathArray[1]);
+            this.path.lineTo(this.pathArray[2],this.pathArray[3]);
+            this.path.lineTo(this.pathArray[4],this.pathArray[5]);
+            this.path.lineTo(this.pathArray[6],this.pathArray[7]);
+
+
+            //make polypoints to animate electrons
+            this.polypoints = [];
+            this.polypoints.push(new Vector2(x0,y0));
+
+            for (let i = 0; i < 3   ; i+=2) {
+                let startPtX = this.pathArray[i];
+                let startPtY = this.pathArray[i+1];
+                let endPtX = this.pathArray[i+2];
+                let endPtY = this.pathArray[i+3];
+                dx = endPtX - startPtX;
+                dy = endPtY - startPtY;
+                if(dx==0 && dy==0)continue;
+                for (let n = 1; n <= 5; n++) {
+                    let x = startPtX + dx * n / 5;
+                    let y = startPtY + dy * n / 5;
+                    this.polypoints.push(new Vector2(x,y));
+
+                }
+            }
+        }
+
+        this.setPosition(0,0);
+
+        this.contains=function(x,y){
+            return this.pos.distance(x,y)<25;
+        }
+
+        this.toggle=function(){
+            this.state=!this.state;
+            updateSwitchState();
+        }
+
+        function Electron(pos,vel){
+            this.pos=pos;
+            this.vel=vel;
+        }
+
+        this.render=function(){
+            let l=40;
+            let w=15;
+            let x,y;
+            ctx.strokeStyle=conductorColor;
+            ctx.stroke(this.path);
+
+            ctx.fillStyle=minusColor;
+            let pos=0;
+            let v1,v2;
+            for(let i=0;i<this.electrons.length;i++){
+                pos=Math.floor(this.electrons[i].pos);
+                v1=this.polypoints[pos];
+                v2=this.polypoints[pos+1];
+                let p=tmp_Vec.set(v1).lerp(v2.x,v2.y,this.electrons[i].pos-pos);
+                //fillOval(p.x,p.y,5,5);
+                // ctx.fillText(plusSign,p.x,p.y);
+                drawPlusCharge(p.x,p.y);
+            }
+        }
+
+        this.pushElectron=function(){
+            this.electrons.push(new Electron(this.polypoints.length-1,-0.6-0.2*Math.random()));
+        }
+        this.pullElectron=function(){
+            this.electrons.push(new Electron(0,0.6+0.2*Math.random()));
+        }
+
+        /**
+         * returns true if it is actually updated, so as to call render after this
+         * @returns {boolean}
+         */
+        this.update=function(){
+            if(this.electrons.length==0)return false;
+            // console.log(this.electrons.length);
+
+            for (let i = this.electrons.length-1; i >= 0; i--) {
+
+                let e=this.electrons[i];
+                //console.log(e.pos+","+e.vel);
+                e.pos+=e.vel;
+                if(e.pos<0||e.pos>=this.polypoints.length-1){
+                    this.electrons.splice(i,1);
+                }
+
+            }
+
+            return true;
+        }
+
+        this.isAnimating=function(){
+            return this.electrons.length>0;
+        }
+    }
+
+
+</script>
+</body>
+</html>

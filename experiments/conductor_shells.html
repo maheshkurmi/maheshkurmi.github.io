@@ -515,8 +515,8 @@
                 return (x>this.x && x<this.x+this.w && y>this.y && y<this.y+this.h)
             }
             this.drag=function(dx,dy){
-                probe.x += dx;
-                probe.y += dy;
+                this.x += dx;
+                this.y += dy;
                 if(this.x<x_min+10)this.x=x_min+10;
                 if(this.y<y_min+10)this.y=y_min+10;
                 if(this.x>x_max-this.w)this.x=x_max-this.w;
@@ -654,7 +654,7 @@
                 fillOval(x+3*l/4,y,3.5,3.5);
                 ctx.restore();
                 ctx.fillStyle=minusColor;
-                ctx.fillStyle="red";
+               // ctx.fillStyle="red";
                 let pos=0;
                 let v1,v2;
                 for(let i=0;i<this.electrons.length;i++){

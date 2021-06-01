@@ -1,0 +1,897 @@
+<!doctype html>
+<html>
+<head>
+    <title>Van De Graph Generator</title>
+    <meta name="keywords" content="charge capacitor simulation physics">
+    <meta name="author" content="Mahesh Kurmi">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+
+        #container canvas{
+            position: relative;
+        }
+
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+            --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+            --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+            --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+            --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+            --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+            --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+            --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+            --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+            --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+            --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+            --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+            --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+            --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+            --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+            --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+            --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+            --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+            --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+            --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+        }
+    </style>
+    <script src="hammer.js"></script>
+    <script src="tweakpane3.js"></script>
+</head>
+
+<body>
+
+<div id="canvasdiv" class="container" align="center">
+    <div id="gui" style="position: absolute">
+
+    </div>
+
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
+
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Van De Graph Simulation</h3>
+                <p>
+                    Run the simulation to activate the motor and power the lower of two rollers. The rotating roller causes a belt to circulate between it and a second roller positioned above it. The lower roller and the motor are in a metal box, as is a metal brush located close to the lower roller and connected electrically to the box. A second brush positioned with its teeth facing the top of the upper roller, and enclosed with that roller in a hollow metal sphere, is similarly linked to its encasement.
+                    <br>
+                    You can pause the simulation at any point in the tutorial to turn off the generator's motor and the corresponding action of the rollers and belt. Notice that the charge on the metal sphere of the generator will remain constant when the motor is off, but if it is turned back on will continue building up electrons until the discharge point is reached (or the motor is halted again).
+                </p>
+
+                <h4>Controls</h4>
+                Drag with mouse to pan and scroll to zoom
+            </div>
+        </div>
+    </div>
+
+</div>
+<script type='text/javascript'>
+    var _sparkNum = 5,
+        _motorNum = 31,
+        _beltNum = 24,
+        _end = 0,
+        _beltEnd = 0,
+        _motorCtrl = 0,
+        _beltCtrl = 0,
+        _sparkCtrl = -1,
+        _on = true,
+        _count = 0,
+        _index = 0,
+        _angles = [],
+        _anglesIndex = 0,
+        _chargeCount = 0,
+        _staticCount = 0,
+        _chargeElectronArry = [],
+        _staticElectronArry = [];
+
+    var ctx=document.getElementById("canvas").getContext("2d");
+    ctx.fillStyle="red";
+    ctx.strokeStyle="red";
+
+
+    var imgSpark=new Image();
+    imgSpark.src="spark.png";
+    imgSpark.onload=load;
+
+    var imgBelt=new Image();
+    imgBelt.src="belt.png";
+    imgBelt.onload=load;
+    var imgMotor=new Image();
+    imgMotor.src="motor.png";
+    imgMotor.onload=load;
+
+    var imgVanDeGraph=new Image();
+    imgVanDeGraph.src="vandegraph.png";
+    imgVanDeGraph.onload=load;
+
+    var totalImagesToLoad=4;
+    var imagesLoaded=0;
+
+
+    var spark;
+    var belt;
+    var motor;
+    var body;
+    var timer;
+
+    var v1,v2,v3,v4,c;
+    var startSpark=false;
+    var sparkTimeElapsed=0;
+
+    var initScale;
+    var scale=window.innerWidth/1500;
+    var xOffset=0;
+    var yOffset=0;
+
+    var bgColor = "rgb(0,64,84)";
+    var fgColor="rgb(255,255,255)";
+    var minusColor="rgb(255,0,0)";
+    var simulationSpeed=1;
+    var drawInfo=false;
+
+    function load(){
+        imagesLoaded++;
+        if(imagesLoaded==totalImagesToLoad){
+            console.log("initialised");
+            initialize();
+        }
+
+    }
+    function initialize(){
+        const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Field Parameters"});
+
+
+        pane.addInput(window, "_on",{label:"Run Simulation "}).on('change',render);
+        pane.addInput(window, "drawInfo",{label:"Draw Labels "}).on('change',render);
+        pane.addInput(window, "simulationSpeed",{label:"Animation Speed",min:0.2,max:2,step:0.1}).on('change',update);
+        pane.addInput(window, "bgColor",{label:"Background"}).on('change',render);
+        pane.addInput(window, "fgColor",{label:"ForeGround"}).on('change',render);
+
+        motor=new GameObject(imgMotor,440,394,0,50,31,false);
+        spark=new GameObject(imgSpark,339,140,Math.PI/2,50,8,false);
+        belt=new GameObject(imgBelt,358,204,0,50,24,true);
+        body=new GameObject(imgVanDeGraph,0,0,0,0,1,false);
+
+        v1=new Vector2(395,485);//World.worldToScreen(v1.set(-0.28,-1));
+        v2=new Vector2(395,179);//World.worldToScreen(v2.set(-0.28,1.86));
+        v3=new Vector2(410,172);//World.worldToScreen(v3.set(0.25,1.86));
+        v4=new Vector2(496,135);//World.worldToScreen(v4.set(1,2.5));
+        c=new Vector2(399,112);//World.worldToScreen(c.set(-0.18,2.48));
+
+        for (var angle = -60; angle <= 240; angle += 5) {
+            _angles.push(angle);
+        }
+        randomizeAngles();
+        hammertime = new Hammer(canvas);
+        hammertime.get('pinch').set({ enable: true });
+        hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
+        hammertime.on('panstart', function(ev) {
+            let mouseEvent = new MouseEvent("mousedown", {
+                clientX: ev.center.x,
+                clientY: ev.center.y
+            });
+            //console.log(ev);
+            mousePressed(mouseEvent);
+            //canvas.dispatchEvent(mouseEvent);
+        });
+        hammertime.on('panend', function(ev) {
+            let mouseEvent = new MouseEvent("mouseup", {
+                clientX: ev.center.x,
+                clientY: ev.center.y
+            });
+            // console.log(ev.type);
+            // canvas.dispatchEvent(mouseEvent);
+            mouseReleased(mouseEvent);
+        });
+        hammertime.on('panmove', function(ev) {
+
+            let mouseEvent = new MouseEvent("mousemove", {
+                clientX: ev.center.x,
+                clientY: ev.center.y
+            });
+            mouseDragged(mouseEvent);
+            // console.log(ev.type);
+            // canvas.dispatchEvent(mouseEvent);
+        });
+
+
+        hammertime.on('pinchstart', function(ev) {
+            intiScale=scale;
+
+        });
+
+        //can use pinch in pinchout separately
+        hammertime.on('pinch', function(ev) {
+
+           // console.log(ev.type+" scale="+ev.scale);
+            let oldScale=scale;
+
+            let x = ev.center.x/scale;
+            let y = ev.center.y/scale;
+            scale=intiScale*ev.scale;
+
+            xOffset-= x*(scale-oldScale);
+            yOffset-= y*(scale-oldScale);
+
+            //xOffset=(xOffset+canvas.width/2-ev.center.x);//*scale;
+            //yOffset=(yOffset+canvas.height/2-ev.center.y)//*scale;
+            paint();
+        });
+
+        window.addEventListener('resize',function(ev) { return resize(ev); });
+
+        canvas.addEventListener("mousewheel",mouseWheelMoved);
+        document.querySelector(".trigger_popup_fricc").onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "block";
+        };
+        document.querySelector('.hover_bkgr_fricc').onclick =function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+        document.querySelector('.popupCloseButton').onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+        ctx.strokeWidth=2;
+
+        resize();
+        scale=window.innerWidth/1200;
+        update();
+    }
+
+    function resize(){
+        //scale*=window.innerWidth/canvas.width;
+        canvas.width = window.innerWidth-10;
+        canvas.height = window.innerHeight-10;
+        render();
+    }
+
+    function update(){
+        if(timer)clearInterval(timer);
+
+        if(_on){
+            timer=setInterval(render,25/simulationSpeed);
+        }
+        motor.timePerFrame=25/simulationSpeed;
+        spark.timePerFrame=25/simulationSpeed;
+        belt.timePerFrame=25/simulationSpeed;
+        //render();
+    }
+
+    function randomizeAngles() {
+        var i = 0,
+            j = 0,
+            temp = 0;
+
+        for (var n = 0; n < _angles.length; n++) {
+            i = Math.min(_angles.length - 1, parseInt(_angles.length * Math.random(), 10));
+            j = Math.min(_angles.length - 1, parseInt(_angles.length * Math.random(), 10));
+
+            if (i != j) {
+                temp = _angles[i];
+                _angles[i] = _angles[j];
+                _angles[j] = temp;
+            }
+        }
+    }
+
+    function ChargeElectron() {
+        this.state = 0;
+        this.x = v1.x + parseInt((v3.x - v1.x) * Math.random(), 10);
+        this.y = v1.y;
+        this.dx = 0;
+        this.dy = -2.4;
+        this.ix = this.x;
+        this.iy = this.y;
+        this.fx = 0;
+        this.fy = 0;
+        this.angle = 0;
+        this.finished = false;
+    }
+
+    ChargeElectron.prototype.drawElectron = function(x, y) {
+        drawMinusCharge(x,y);
+        //console.log("draw e");
+    }
+
+    ChargeElectron.prototype.animateElectron = function() {
+        this.ix = parseInt(this.x + (Math.random() - 0.5), 10);
+        this.iy = parseInt(this.y + (Math.random() - 0.5), 10);
+
+        this.drawElectron(this.ix + 4, this.iy + 4);
+
+        if (_on || this.state >= 3) {
+            if (_sparkCtrl >= 0 && this.state >= 2) {
+                this.removeElectron(this.ix, this.iy);
+            }
+            else {
+                switch(this.state) {
+                    case 0:
+                        if (this.iy <= v1.y) {
+                            if (this.ix >= v1.x) {
+                                this.dx = -(this.ix - v3.x) / 10;
+                            }
+
+                            this.state++;
+                        }
+                        break;
+                    case 1:
+                        if (this.iy <= v2.x) {
+                            this.dx = 0;
+                            this.dy = -6;
+                            this.state++;
+                        }
+                        break;
+                    case 2:
+                        if (this.iy <= v3.y) {
+                            this.dx = 6;
+                            this.dy = 0;
+                            this.state++;
+                        }
+                        break;
+                    case 3:
+                        if (this.ix >= v3.x) {
+                            this.state++;
+                            this.dx = 6;
+                            this.dy = -3
+                        }
+                        break;
+                    case 4:
+                        if (this.ix >= v4.x) {
+                            this.angle = _angles[_anglesIndex++];
+
+                            if (_anglesIndex >= _angles.length) {
+                                _anglesIndex = 0;
+                                randomizeAngles();
+                            }
+
+                            this.angle = this.angle * Math.PI / 180;
+                            let r=c.distance(v4.x,v4.y)+10;
+                            this.fx = (r + 6 * (Math.random() - 0.5)) * Math.cos(this.angle);
+                            this.fy = (r + 6 * (Math.random() - 0.5)) * Math.sin(this.angle);
+                            //ctx.fillText(this.fx+":"+this.fy, 100, 40)
+
+                            this.x = c.x + this.fx;
+                            this.y = c.y - this.fy;
+
+                            this.removeElectron(this.ix, this.iy);
+                            if (_sparkCtrl < 0) {
+                                //ctx.fillText(_staticElectronArry.length+"", 100, 40)
+                                _staticElectronArry.push(new StaticElectron(this.x, this.y));
+                            }
+                        }
+                        break;
+                }
+
+                this.x += this.dx;
+                this.y += this.dy;
+            }
+        }
+
+    }
+
+    ChargeElectron.prototype.removeElectron = function(x, y) {
+        this.finished = true;
+
+        _chargeElectronArry.shift();
+    }
+
+    function StaticElectron(x, y) {
+        this.x = x;
+        this.y = y;
+        this.ix = 0;
+        this.iy = 0;
+        this.finished = false;
+
+    }
+
+    StaticElectron.prototype.drawElectron = function(x, y) {
+        drawMinusCharge(x,y);
+    }
+
+    StaticElectron.prototype.animateElectron = function() {
+        this.ix = parseInt(this.x + (Math.random() - 0.5), 10);
+        this.iy = parseInt(this.y + (Math.random() - 0.5), 10);
+
+        this.drawElectron(this.x + 4, this.y + 15);
+
+        if (_staticElectronArry.length >= 50) {
+            this.removeElectron();
+        }
+    }
+
+    StaticElectron.prototype.removeElectron = function() {
+        _sparkCtrl = 0;
+        _staticElectronArry.length = 0;
+
+        this.finished = true;
+    }
+
+    function render() {
+
+        ctx.fillStyle=bgColor;
+        ctx.strokeStyle=fgColor;
+        ctx.lineWidth=2;
+        ctx.save();
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        if(imagesLoaded<totalImagesToLoad){
+            ctx.font = "30px Arial";
+            ctx.textBaseline="center";
+            ctx.fillStyle=fgColor;
+            ctx.fillText("Loading ..."+(imagesLoaded*100/totalImagesToLoad).toFixed(0)+"%",canvas.width/2,canvas.height/2);
+            return;
+        }
+        ctx.font = "16px Arial";
+        body.update();
+        belt.update();
+        motor.update();
+        if(startSpark)spark.update();
+
+        ctx.scale(scale,scale);
+        ctx.translate(xOffset,yOffset);
+        body.draw(ctx);
+        motor.draw(ctx);
+        belt.draw(ctx);
+
+        /*
+        ctx.beginPath();
+        ctx.moveTo(v1.x,v1.y);
+        ctx.lineTo(v2.x,v2.y);
+        ctx.lineTo(v3.x,v3.y);
+        ctx.lineTo(v4.x,v4.y);
+        ctx.stroke();
+        */
+        //var v=camera.getOffset();
+        //var s=camera.getScale();
+        //v=v.sum(5.0,-1.0);
+        //ctx.translate(v.x*s,-v.y*s);
+        //  ctx.scale(camera.getScale()*0.017, camera.getScale()*0.017)
+        //, ty)
+        //ctx.translate(camera.getOffset().x, camera.getOffset().y);
+        //ctx.scale(camera.getScale(), camera.getScale());
+        for (_chargeCount = 0; _chargeCount < _chargeElectronArry.length; _chargeCount++) {
+            if (!_chargeElectronArry[_chargeCount].finished) {
+                _chargeElectronArry[_chargeCount].animateElectron();
+            }
+        }
+
+        for (_staticCount = 0; _staticCount < _staticElectronArry.length; _staticCount++) {
+            if (!_staticElectronArry[_staticCount].finished) {
+                _staticElectronArry[_staticCount].animateElectron();
+            }
+        }
+
+        //_index = Math.min(_motorNum - 1, parseInt((1 - _motorCtrl) * _motorNum, 10));
+        //showMotor(_index);
+
+        if (_sparkCtrl >= 0) {
+            //TweenLite.set(_sparkImg, {css: {autoAlpha: 1}});
+            //_index = Math.min(_sparkNum - 1, parseInt(_sparkNum * _sparkCtrl, 10));
+            showSpark(_index);
+        }
+        else {
+            //TweenLite.set(_sparkImg, {css: {autoAlpha: 0}});
+        }
+
+        if (_on) {
+            _count = parseInt(2.5 * Math.random(), 10);
+
+            for (var i = 0; i < _count; i++) {
+                _chargeElectronArry.push(new ChargeElectron());
+            }
+
+            if (_sparkCtrl >= 0) {
+                if (_sparkCtrl == 1) {
+                    _sparkCtrl = -1;
+                }
+                else {
+
+                    _sparkCtrl += 0.6;
+                    if (_sparkCtrl > 1) {
+                        _sparkCtrl = 1;
+                    }
+                }
+            }
+            if(startSpark){
+                spark.draw(ctx);
+                sparkTimeElapsed++;
+                if(sparkTimeElapsed>20)startSpark=false;
+            }
+            //console.log("draw");
+
+
+        }
+
+        if(drawInfo){
+            ctx.textAlign="center";
+            ctx.textBaseline="bottom";
+            ctx.fillStyle=ctx.strokeStyle=fgColor;
+            drawLineWithArrows(91,121,91,74,4,6,true,false);
+            ctx.fillText("Grounded Discharge Rod",91,73);
+            drawLineWithArrows(555,421,555,355,4,6,true,false);
+            ctx.fillText("Motor",555,353);
+            ctx.textAlign="left";
+            ctx.textBaseline="middle";
+            drawLineWithArrows(444,304,474,304,4,6,true,false);
+            ctx.fillText("Belt",478,304);
+            drawLineWithArrows(510,84,535,70,4,6,true,false);
+            ctx.fillText("Meta Sphere",538,70);
+
+            ctx.textAlign="right";
+            drawLineWithArrows(367,471,282,353,4,6,true,false);
+            drawLineWithArrows(371,240,282,344,4,6,true,false);
+            ctx.fillText("Rollers",280,350);
+            drawLineWithArrows(382,183,280,183,4,6,true,false);
+            ctx.fillText("Brush",277,183);
+
+            ctx.textAlign="center";
+            ctx.textBaseline="top";
+            drawLineWithArrows(400,525,400,555,4,6,true,false);
+            ctx.fillText("Brush",400,560);
+
+        }
+        ctx.restore();
+    }
+
+
+    function showSpark(num) {
+        if(num!=0 || _sparkCtrl==1)return;
+        //console.log("Spark Fired");
+        //Resources.playAnimation("spark.png", -2,2);
+        startSpark=true;
+        sparkTimeElapsed=0;
+    }
+
+    function getMousePos(event){
+        let rect = canvas.getBoundingClientRect();
+        return [ event.clientX - rect.left,event.clientY - rect.top];
+    }
+
+    function mousePressed( me) {
+        let m=getMousePos(me);
+        mx = m[0];
+        my = m[1];
+        me.preventDefault();
+    }
+
+    function mouseReleased( me) {
+
+    }
+
+    function mouseWheelMoved(me) {
+        //console.log(e.wheelDelta);
+        var scroll=me.wheelDelta>0?1:-1;
+        if(scroll>0){
+            scale*=1.02;
+        }else{
+            scale*=0.98;
+        }
+    }
+
+    function mouseDragged( me) {
+        let m=getMousePos(me);
+        //console.log(m);
+        let dx,dy;
+        dx = (m[0]- mx)/scale;
+        dy = (m[1]- my)/scale;
+        mx = m[0];
+        my = m[1];
+        xOffset += dx;
+        yOffset += dy;
+        me.preventDefault();
+    }
+
+
+    //GameObject constructor
+    function GameObject(spritesheet, x, y,rotation,timePerFrame, numberOfFrames,reverse) {
+        this.spritesheet = spritesheet;             //the spritesheet image
+        this.x = x;                                 //the x coordinate of the object
+        this.y = y;                                 //the y coordinate of the object
+        this.width = spritesheet.width;                         //width of spritesheet
+        this.height = spritesheet.height;                       //height of spritesheet
+        this.timePerFrame = timePerFrame;           //time in(ms) given to each frame
+        this.numberOfFrames = numberOfFrames || 1;  //number of frames(sprites) in the spritesheet, default 1
+        this.reverse=reverse;
+        //current frame index pointer
+        this.frameIndex = 0;
+        this.rotation=rotation;
+        //time the frame index was last updated
+        this.lastUpdate = Date.now();
+
+        //to update
+        this.update = function() {
+            if(Date.now() - this.lastUpdate >= this.timePerFrame) {
+                this.frameIndex++;
+                if(this.frameIndex >= this.numberOfFrames) {
+                    this.frameIndex = 0;
+                }
+                this.lastUpdate = Date.now();
+            }
+        }
+
+        //to draw on the canvas, parameter is the context of the canvas to be drawn on
+        this.draw = function(context) {
+            let frame=this.frameIndex;
+            if(reverse){
+                frame=this.numberOfFrames-frame-1;
+            }
+            ctx.save();
+            ctx.translate(this.x,this.y);
+            ctx.rotate(rotation);
+            context.drawImage(this.spritesheet,
+                frame*this.width/this.numberOfFrames,
+                0,
+                this.width/this.numberOfFrames,
+                this.height,
+                0,
+                0,
+                this.width/this.numberOfFrames,
+                this.height);
+            ctx.restore();
+        }
+    }
+
+    function distance(x1,y1,x2,y2){
+        return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    }
+
+    function fillOval(x,y,w,h,stroke){
+        ctx.beginPath();
+        ctx.arc(x,y,w/2,0,2*Math.PI,false);
+        ctx.fill();
+        if(stroke) ctx.stroke();
+    }
+    function drawLine(x1,y1,x2,y2){
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+    }
+
+    function drawPlusCharge(x,y){
+        ctx.fillStyle=plusColor;
+        fillOval(x,y,12,12);
+        ctx.strokeStyle="white";
+        ctx.beginPath();
+        ctx.moveTo(x-5,y);
+        ctx.lineTo(x+5,y);
+        ctx.moveTo(x,y+5);
+        ctx.lineTo(x,y-5);
+        ctx.stroke();
+        //ctx.fillText(plusSign,   x,y)
+    }
+
+    function drawMinusCharge(x,y){
+        ctx.fillStyle=minusColor;
+        fillOval(x,y,12,12);
+        ctx.strokeStyle="white";
+        //ctx.fillText(minuSign,   x,y)
+        ctx.beginPath();
+        ctx.moveTo(x-5,y);
+        ctx.lineTo(x+5,y);
+        ctx.stroke();
+    }
+
+    // x0,y0: the line's starting point
+    // x1,y1: the line's ending point
+    // width: the distance the arrowhead perpendicularly extends away from the line
+    // height: the distance the arrowhead extends backward from the endpoint
+    // arrowStart: true/false directing to draw arrowhead at the line's starting point
+    // arrowEnd: true/false directing to draw arrowhead at the line's ending point
+    function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd){
+        var dx=x1-x0;
+        var dy=y1-y0;
+        var angle=Math.atan2(dy,dx);
+        var length=Math.sqrt(dx*dx+dy*dy);
+        //
+        ctx.save();
+        ctx.translate(x0,y0);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(length,0);
+        if(arrowStart){
+            ctx.moveTo(aLength,-aWidth);
+            ctx.lineTo(0,0);
+            ctx.lineTo(aLength,aWidth);
+        }
+        if(arrowEnd){
+            ctx.moveTo(length-aLength,-aWidth);
+            ctx.lineTo(length,0);
+            ctx.lineTo(length-aLength,aWidth);
+        }
+        //
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function Vector2(x,y){
+        this.x=x;
+        this.y=y;
+
+        this.set =function(x,y) {
+            if (y == undefined) {
+                this.x=x.x;
+                this.y=x.y;
+            } else {
+                this.x = x;
+                this.y = y;
+            }
+            return this;
+        }
+        this.length=function(){
+            return Math.sqrt(this.x*this.x+this.y*this.y);
+        }
+        this.distance =function(x,y){
+            return distance(x,y,this.x,this.y);
+        }
+        this.normalize=function(){
+            let l=this.length();
+            this.x/=l;
+            this.y/=l;
+            return l;
+        }
+        this.unitVector=function(){
+            let l=this.length;
+            return new Vector2(this.x/l,this.y/l);
+        }
+        this.add=function(dx,dy){
+            this.x+=dx;
+            this.y+=dy;
+            return this;
+        }
+        this.multiply=function(s){
+            this.x*=s;
+            this.y*=s;
+            return this;
+        }
+        this.dot=function(x,y){
+            return x*this.x +y*this.y;
+        }
+        /**
+         * Returns angle with positive x axis in -PI to PI
+         */
+        this.horizontalAngle=function(){
+            return Math.atan2(this.y,this.x);
+        }
+
+        /**
+         * Returns the smallest angle between this vector and specified vector in -PI to PI
+         */
+        this.angleWith=function(x,y){
+            let a = Math.atan2(y, x) - Math.atan2(this.y, this.x);
+            if (a > Math.PI) return a - 2*Math.PI;
+            if (a < -Math.PI) return a + 2*Math.PI;
+            return a;
+        }
+
+        this.lerp=function(x,y,k){
+            this.x=this.x*(1-k)+x*k;
+            this.y=this.y*(1-k)+y*k;
+
+            return this;
+        }
+    }
+
+
+
+
+</script>
+</body>
+</html>
