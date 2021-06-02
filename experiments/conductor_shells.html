@@ -514,6 +514,7 @@
             this.w=130;
             this.h=70;
             this.active=false;
+            this.hasfocus=false;
             this.contains=function(x,y){
                 return (x>this.x && x<this.x+this.w && y>this.y && y<this.y+this.h)
             }
@@ -530,7 +531,7 @@
                 let x=this.x;
                 let y=this.y;
                 ctx.fillStyle="black";
-                ctx.strokeStyle=this.active?"yellow":fieldColor;
+                ctx.strokeStyle=this.hasfocus?"yellow":fieldColor;
                 ctx.textAlign="left";
                 ctx.fillRect(x,y,this.w,this.h);
                 ctx.strokeRect(x,y,this.w,this.h);
@@ -546,20 +547,20 @@
             this.pathArray=[x0,y0,x1,y1,x2,y2];
             this.pos=new Vector2((x1+x2)/2,(y1+y2)/2);
             this.state=false;
+            this.hasfocus=false;
             this.horizontal=(y1==y2);
             this.polypoints=[];
             this.electrons=[];
             this.path=null;
 
             this.set=function(x0,y0,x1,y1,x2,y2){
-               // console.log("x0="+x0+" , y0="+y0+"  x1="+x1+" , y1="+y1+"  x2="+x2+" , y2="+y2);
+                // console.log("x0="+x0+" , y0="+y0+"  x1="+x1+" , y1="+y1+"  x2="+x2+" , y2="+y2);
                 this.pathArray=[x0,y0,x1,y1,x2,y2];
-               // console.log( this.pathArray);
+                // console.log( this.pathArray);
                 this.pos=new Vector2((x1+x2)/2,(y1+y2)/2);
                 this.horizontal=(y1==y2);
                 this.setPosition(x0,y0);
-
-              //  console.log("x0="+x2+" , y0="+y2+" ,this="+ this.pos.x);
+                // console.log("x0="+x2+" , y0="+y2+" ,this="+ this.pos.x);
             }
 
             this.setPosition=function(x0,y0){
@@ -637,6 +638,7 @@
 
                 x=-l/2;
                 y=0;
+                ctx.beginPath();
                 //fillOval(x,y,3,3);
                 ctx.moveTo(x,y);
                 ctx.lineTo(x+l/4,y);
@@ -647,17 +649,19 @@
                     ctx.lineTo(x+3*l/4,y-2);
                 }
 
+
                 ctx.moveTo(x+3*l/4,y-2);
                 ctx.lineTo(x+3*l/4,y);
                 ctx.lineTo(x+l,y);
-
                 ctx.stroke();
 
+                if(this.hasfocus)ctx.strokeStyle=ctx.fillStyle=fieldColor;
                 fillOval(x+l/4,y,6,6);
-                fillOval(x+3*l/4,y,3.5,3.5);
+                fillOval(x+3*l/4,y,6,6);
+                if(this.hasfocus)ctx.fillStyle=conductorColor;
                 ctx.restore();
                 ctx.fillStyle=minusColor;
-               // ctx.fillStyle="red";
+                // ctx.fillStyle="red";
                 let pos=0;
                 let v1,v2;
                 for(let i=0;i<this.electrons.length;i++){
@@ -742,9 +746,6 @@
         init();
 
 
-
-
-
         function init(){
             //create gui
             const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Field Parameters"});
@@ -817,6 +818,7 @@
 
             window.addEventListener('resize',function(ev) { return resize(ev); });
             canvas.addEventListener("mousewheel",mouseWheelMoved);
+            canvas.onmousemove=onMouseHover;
            // window.addEventListener('keydown',onKeyEvent,false);
 
             document.querySelector(".trigger_popup_fricc").onclick=function(){
@@ -1067,6 +1069,35 @@
 
         function canvasToWorld(x,y){
             return new Vector2((x_min+x_max)/2+(x-canvas.width/2.0)/scale, (y_min+y_max)/2-(canvas.height/2.0-y)/scale);
+        }
+
+        function getMousePos(event){
+            //let rect = canvas.getBoundingClientRect();
+            return canvasToWorld(event.clientX ,event.clientY);
+        }
+
+        function onMouseHover(me){
+            let m=getMousePos(me);
+            let b=false;
+            for(let i=0;i<switches.length;i++){
+                switches[i].hasfocus=false;
+                if(switches[i].contains(m.x,m.y)){
+                    switches[i].hasfocus=true;
+                    b=true;
+                }
+            }
+            probe.hasfocus=false;
+            if(!b){
+                b=probe.contains(m.x,m.y);
+                probe.hasfocus=b;
+            }
+            if(b) {
+                document.body.style.cursor = "pointer";
+
+            }else
+                document.body.style.cursor = "default";
+            render();
+            console.log("Mouse hovered "+b);
         }
 
         function onMouseEvent(ev){

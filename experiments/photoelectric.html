@@ -257,6 +257,10 @@
     var timer;
     var sliders=[];
     var mx,my;
+    var initScale;
+    var xOffset=0;
+    var yOffset=0;
+    var scale;
     load();
 
     function Slider(x1,y1,x2,y2){
@@ -319,12 +323,19 @@
 
     }
 
-
+    function resize(){
+        if(window.innerWidth<10||window.innerHeight<10)return;
+        //scale*=window.innerWidth/canvas.width;
+        canvas.width = window.innerWidth-10;
+        canvas.height = window.innerHeight-10;
+        render();
+    }
 
     function load(){
         canvas=document.getElementById("canvas");
         canvas.width=Math.max(1200,window.innerWidth);
         canvas.height=Math.max(660,window.innerHeight);
+        scale=canvas.width/1500;
         ctx=canvas.getContext('2d');
         pgPlotCanvas = createOffscreenCanvas(520, 520);
         pgPlot = pgPlotCanvas.getContext("2d");
@@ -367,6 +378,7 @@
         hammertime = new Hammer(canvas);
         hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
        // hammertime.get('tap').set({  time: 0});
+        hammertime.get('pinch').set({ enable: true });
         hammertime.get('press').set({  time: 0});
         hammertime.on( 'press', function(ev) {
             let mouseEvent = new MouseEvent("mousedown", {
@@ -406,7 +418,29 @@
             // console.log(ev.type);
             // canvas.dispatchEvent(mouseEvent);
         });
+        hammertime.on('pinchstart', function(ev) {
+            intiScale=scale;
 
+        });
+
+        canvas.addEventListener("mousewheel",mouseWheelMoved);
+        //can use pinch in pinchout separately
+        hammertime.on('pinch', function(ev) {
+
+            // console.log(ev.type+" scale="+ev.scale);
+            let oldScale=scale;
+
+            let x = ev.center.x/scale;
+            let y = ev.center.y/scale;
+            scale=intiScale*ev.scale;
+
+            xOffset-= x*(scale-oldScale);
+            yOffset-= y*(scale-oldScale);
+
+            //xOffset=(xOffset+canvas.width/2-ev.center.x);//*scale;
+            //yOffset=(yOffset+canvas.height/2-ev.center.y)//*scale;
+            paint();
+        });
         canvas.onmousemove=MouseHovered;
         document.querySelector(".trigger_popup_fricc").onclick=function(){
             document.querySelector('.hover_bkgr_fricc').style.display = "block";
@@ -417,6 +451,7 @@
         document.querySelector('.popupCloseButton').onclick=function(){
             document.querySelector('.hover_bkgr_fricc').style.display = "none";
         };
+        window.addEventListener('resize',function(ev) { return resize(ev); });
 
     }
 
@@ -510,7 +545,8 @@
 
 
     function draw() {
-        //if (touches.length > 1) return;
+
+         //if (touches.length > 1) return;
         ctx.fillStyle=bgColor;
         ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.lineWidth=1;
@@ -545,6 +581,8 @@
             if (voltage <= saturationVoltage) current = cosineInterpolate2(0, saturationCurrent, ek / 3); else current = saturationCurrent;
         }
         ctx.save();
+        ctx.scale(scale,scale);
+        ctx.translate(xOffset,yOffset);
         //ctx.scale(canvas.width / 1000,canvas.width / 1000);
         ctx.drawImage(imgCircuit_0, 0, 0);
         ctx.globalAlpha=intensity/10;
@@ -661,12 +699,13 @@
         ctx.fillStyle=getLightColor(wavelength);
         if (frameCount % 4 < 2) fillOval(680 + xx, 189 + yy, 10, 10);
         ctx.restore();//pop()
+
         frameCount++;
     }
 
     function getMousePos(event){
         //let rect = canvas.getBoundingClientRect();
-        return [ event.clientX ,event.clientY ];
+        return [ -xOffset+event.clientX/scale ,-yOffset+event.clientY/scale ];
     }
 
     function MouseHovered(me){
@@ -693,7 +732,9 @@
     }
 
     function mouseReleased( me) {
-        document.body.style.cursor = "default";
+        for(let i=0;i<sliders.length;i++){
+            sliders[i].active=false;
+        }
     }
 
 
@@ -709,11 +750,25 @@
             if(sliders[i].active){
                 document.body.style.cursor = "pointer";
                 if(sliders[i].active)sliders[i].drag(dx,dy);
+                return;
             }
 
         }
+        xOffset += dx;
+        yOffset += dy;
+        mx-=dx;
+        my-=dy;
     }
 
+    function mouseWheelMoved(me) {
+        //console.log(e.wheelDelta);
+        var scroll=me.wheelDelta>0?1:-1;
+        if(scroll>0){
+            scale*=1.01;
+        }else{
+            scale*=0.99;
+        }
+    }
 
     function createPhotonPath(){
         let nano=500;
@@ -765,7 +820,6 @@
         drawLine(x,y-10,x,y+10);
         ctx.fillStyle=fgColor;
         ctx.fillText(Math.round(voltage*100)/100+"V",x,y+25);
-
 
         ctx.fillStyle=fgColor;
         ctx.globalAlpha=Math.abs(voltage)/5;
