@@ -206,10 +206,10 @@
         var y_max=x_max*canvas.height/canvas.width;
         var y_min=-y_max;
 
-        var scale=canvas.width/(x_max-x_min);
-        const PI=Math.PI;
+         const PI=Math.PI;
         canvas.width=Math.max(1200,window.innerWidth);
         canvas.height=Math.max(660,window.innerHeight);
+        var scale=canvas.width/(x_max-x_min);
 
         function resize(){
             canvas.width=window.innerWidth;

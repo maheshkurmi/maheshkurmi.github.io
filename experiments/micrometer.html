@@ -187,7 +187,7 @@
 <script type='text/javascript'>
 
     /*drawing offset*/
-    var scale=window.innerWidth/1500;
+    var scale;
     var xOffset=0;
     var yOffset=0;
     var dragMode=0;//0==none, 1=world, 2=vernier, 3= object
@@ -294,6 +294,7 @@
     var canvas=document.getElementById("myCanvas");
     canvas.width = Math.max(900,window.innerWidth);
     canvas.height = Math.max(600,window.innerHeight);
+    scale=canvas.width/1500;
     var ctx=canvas.getContext("2d");
     ctx.font = "30px Arial";
     //Add event listeners
