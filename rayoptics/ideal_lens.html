@@ -30,14 +30,53 @@ h1 {
   font-style: 26px;
   margin: 10px;
 }
+#gui {
+    font-size: 15px;
+    position:absolute;
+    font-family: arial;
+    transform:scale(1.2);
+    transform-origin: top right;
+    font-weight: bold;
+    position: absolute;
+    right:5px;
+    margin-left: auto;
+    zindex:2;
+    font-weight: bold;
+    font-size: 25px;
+}
+:root {
+    --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+    --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+    --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+    --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+    --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+    --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+    --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+    --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+    --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+    --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+    --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+    --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+    --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+    --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+    --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+    --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+    --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+    --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+    --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+    --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+    --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+}
 </style>
-<script  src="dat.gui.js"></script>
-<style src="dat.gui.css"></style>
+
+    <script  src="tweakpane3.js"></script>
     <script src="hammer.js"></script>
 </head>
 	
 <body>
 <div id="canvasdiv" class="container" align="center">
+    <div id="gui" style="position: absolute">
+    </div>
     <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
 
 </div>
@@ -52,7 +91,7 @@ h1 {
 
     window.addEventListener('resize',function(ev) { return resize(ev); });
     var initScale;
-   var hammertime = new Hammer(canvas);
+    var hammertime = new Hammer(canvas);
     hammertime.get('pinch').set({ enable: true });
     hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0, });
     hammertime.on('panstart', function(ev) {
@@ -102,6 +141,7 @@ h1 {
     //window.addEventListener('keyup',keyUpListener,false);
 
     function resize(){
+        if(window.innerWidth<10||window.innerHeight<10)return;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         update();
@@ -116,9 +156,7 @@ h1 {
             if(scale<0.1)scale=0.1;
         }
 
-        for (var i in gui.__controllers) {
-            gui.__controllers[i].updateDisplay();
-        }
+        pane.refresh();
         update();
     }
 
@@ -157,9 +195,7 @@ h1 {
             if(f<-300)f=-300;
             if(f>300)f=300;
 
-            for (var i in gui.__controllers) {
-                gui.__controllers[i].updateDisplay();
-            }
+            pane.refresh();
             update();
         }
     }
@@ -195,9 +231,7 @@ h1 {
 
                 prevMouseDown={x:x,y:y};
                 update();
-                for (var i in gui.__controllers) {
-                    gui.__controllers[i].updateDisplay();
-                }
+                pane.refresh();
             }
         }
         if(type === 'mouseup' ){//|| ev.type ==='touchend') {
@@ -219,22 +253,24 @@ h1 {
     var displayEye=true;
     var displayRays=true;
     var displayResult=true;
-    var scale=window.innerWidth/800;
+
+    canvas.width = Math.max(900,window.innerWidth);
+    canvas.height = Math.max(600,window.innerHeight);
+    var scale=canvas.width/800;
     var offset={x:0,y:0};
     var prevMouseDown=null;
     var dragMode=0; //0 ==drag world, 1=drag object
-    //create gui
-    var gui = new dat.GUI({name:"Field Controllers"});
 
-    // String field
-    //gui.add(window, "u").name("Object Position  ").min(-400).max(-5).step(1).onChange(update);
-    gui.add(window, "f").name("Focal length").min(-300).max(300).step(1).onChange(update);
-    gui.add(window, "displayEye").name("Draw Eye").onChange(update);
-    gui.add(window, "displayRays").name("Draw Rays").onChange(update);
-    gui.add(window, "displayResult").name("Display Result").onChange(update);
-    gui.add(window, "scale").name("Scale  ").min(0.1).max(5).step(0.01).onChange(update);
+    //create gui
+    var pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Simulation Controls",expanded: true});
+    pane.addInput(window, "f",{label:"Focal length",min:-300,max:300,step:1}).on('change',update);
+    pane.addInput(window, "displayEye",{label:"Draw Eyes"}).on('change',update);
+    pane.addInput(window, "displayRays",{label:"Display Rays"}).on('change',update);
+    pane.addInput(window, "displayResult",{label:"Display Result"}).on('change',update);
+    pane.addInput(window, "scale",{label:"Scale",min:0.1,max:5,step:0.01}).on('change',update);
 
     var bg_color="rgb(0,64,84)";
+    var fg_color="rgb(255,255,255)";
     var lensHeight=100;
     var objHeight=lensHeight*0.6;
     var dragMode=0;
@@ -285,7 +321,7 @@ h1 {
         ctx.fillRect(0,0,canvas.width,canvas.height);
         if(loadedItems<itemsToLoad){
             ctx.font = "30px Arial";
-            ctx.fillStyle=fgColor;
+            ctx.fillStyle=fg_color;
             outString(canvas.width/2,canvas.height/2,"Loading ..."+(loadedItems*100/itemsToLoad).toFixed(0)+"%",1,1);
             return;
         }
@@ -501,7 +537,31 @@ h1 {
         ctx.fill();
     }
 
-
+    function outString( x,y, s, x_align, y_align) {
+        var fm=ctx.measureText(s);
+        var h=10;//fm.height not supported in browsers
+        switch (y_align) {
+            case 0:
+                y += h;
+                break;
+            case 1:
+                y += h / 2;
+                break;
+            case 2:
+                break;
+        }
+        switch (x_align) {
+            case 0:
+                ctx.fillText(s, x+3, y);
+                break;
+            case 1:
+                ctx.fillText(s, x - fm.width/2, y);
+                break;
+            case 2:
+                ctx.fillText(s, x - fm.width / 2, y);
+                break;
+        }
+    }
 
 </script>
 </body>
