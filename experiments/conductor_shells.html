@@ -210,6 +210,7 @@
         const tmp_Vec=new Vector2();
 
         function resize(){
+            if(window.innerWidth<10||window.innerHeight<10)return;
             canvas.width=window.innerWidth;
             canvas.height=window.innerHeight;
             if(canvas.width>canvas.height){

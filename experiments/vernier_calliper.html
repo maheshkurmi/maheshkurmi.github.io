@@ -380,6 +380,7 @@
     }
 
     function resize(){
+        if(window.innerWidth<10||window.innerHeight<10)return;
         scale*=window.innerWidth/canvas.width;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;

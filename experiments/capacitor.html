@@ -191,6 +191,7 @@
     var ctx=canvas.getContext("2d");
 
     function resize(){
+        if(window.innerWidth<10||window.innerHeight<10)return;
         canvas.width=window.innerWidth;
         canvas.height=window.innerHeight;
         if(canvas.width>canvas.height){
@@ -249,6 +250,8 @@
     var y_max=x_max*canvas.height/canvas.width;
     var y_min=-y_max;
     var initScale;
+    canvas.width = Math.max(1200,window.innerWidth);
+    canvas.height = Math.max(800,window.innerHeight);
 
     var scale=canvas.width/(x_max-x_min);
     const PI=Math.PI;

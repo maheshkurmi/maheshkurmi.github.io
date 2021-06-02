@@ -274,6 +274,9 @@
         var width_x  = 10.0;
         var dragging = false;
         var canvas= document.getElementById("canvas");
+        canvas.width = Math.max(900,window.innerWidth);
+        canvas.height = Math.max(600,window.innerHeight);
+
         var width=canvas.width;
         var height=canvas.height;
         // Build the drawing context.
@@ -346,6 +349,7 @@
 
         Applet.prototype.Resize = function()
         {
+            if(window.innerWidth<10||window.innerHeight<10)return;
             this.width = this.canvas.width = window.innerWidth-10;
             this.height = this.canvas.height = window.innerHeight-10    ;
 
