@@ -192,7 +192,7 @@
         _motorCtrl = 0,
         _beltCtrl = 0,
         _sparkCtrl = -1,
-        _on = true,
+        _on = false,
         _count = 0,
         _index = 0,
         _angles = [],
@@ -233,7 +233,7 @@
     var timer;
 
     var v1,v2,v3,v4,c;
-    var startSpark=false;
+    var displaySpark=false;
     var sparkTimeElapsed=0;
 
     var initScale;
@@ -247,7 +247,12 @@
     var simulationSpeed=1;
     var drawInfo=false;
 
+    resize();
+    render();
+    timer=setInterval(render,25);
+
     function load(){
+
         imagesLoaded++;
         if(imagesLoaded==totalImagesToLoad){
             console.log("initialised");
@@ -256,14 +261,14 @@
 
     }
     function initialize(){
-        const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Field Parameters"});
-
+        const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Simulation Settings"});
+        _on=true;
 
         pane.addInput(window, "_on",{label:"Run Simulation "}).on('change',render);
         pane.addInput(window, "drawInfo",{label:"Draw Labels "}).on('change',render);
         pane.addInput(window, "simulationSpeed",{label:"Animation Speed",min:0.2,max:2,step:0.1}).on('change',update);
-        pane.addInput(window, "bgColor",{label:"Background"}).on('change',render);
-        pane.addInput(window, "fgColor",{label:"ForeGround"}).on('change',render);
+        pane.addInput(window, "bgColor",{label:"Background",picker: 'inline'}).on('change',render);
+        pane.addInput(window, "fgColor",{label:"ForeGround",picker: 'inline'}).on('change',render);
 
         motor=new GameObject(imgMotor,440,394,0,50,31,false);
         spark=new GameObject(imgSpark,339,140,Math.PI/2,50,8,false);
@@ -363,7 +368,7 @@
     }
 
     function update(){
-        if(timer)clearInterval(timer);
+        if(timer!=null)clearInterval(timer);
 
         if(_on){
             timer=setInterval(render,25/simulationSpeed);
@@ -525,29 +530,32 @@
 
     function render() {
 
-        ctx.fillStyle=bgColor;
-        ctx.strokeStyle=fgColor;
-        ctx.lineWidth=2;
+        ctx.fillStyle = bgColor;
+        ctx.strokeStyle = fgColor;
+        ctx.lineWidth = 2;
         ctx.save();
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-        if(imagesLoaded<totalImagesToLoad){
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (imagesLoaded < totalImagesToLoad) {
             ctx.font = "30px Arial";
-            ctx.textBaseline="center";
-            ctx.fillStyle=fgColor;
-            ctx.fillText("Loading ..."+(imagesLoaded*100/totalImagesToLoad).toFixed(0)+"%",canvas.width/2,canvas.height/2);
+            ctx.textBaseline = "center";
+            ctx.fillStyle = fgColor;
+            ctx.fillText("Loading ..." + (imagesLoaded * 100 / totalImagesToLoad).toFixed(0) + "%", canvas.width / 2, canvas.height / 2);
             return;
         }
         ctx.font = "16px Arial";
-        body.update();
-        belt.update();
-        motor.update();
-        if(startSpark)spark.update();
-
+        if (_on) {
+            body.update();
+            belt.update();
+            motor.update();
+            if (displaySpark) spark.update();
+        }
         ctx.scale(scale,scale);
         ctx.translate(xOffset,yOffset);
         body.draw(ctx);
         motor.draw(ctx);
         belt.draw(ctx);
+        if(displaySpark)spark.draw(ctx);
+
 
         /*
         ctx.beginPath();
@@ -565,6 +573,7 @@
         //, ty)
         //ctx.translate(camera.getOffset().x, camera.getOffset().y);
         //ctx.scale(camera.getScale(), camera.getScale());
+       // ctx.globalAlpha=0.7;
         for (_chargeCount = 0; _chargeCount < _chargeElectronArry.length; _chargeCount++) {
             if (!_chargeElectronArry[_chargeCount].finished) {
                 _chargeElectronArry[_chargeCount].animateElectron();
@@ -576,7 +585,7 @@
                 _staticElectronArry[_staticCount].animateElectron();
             }
         }
-
+       // ctx.globalAlpha=1;
         //_index = Math.min(_motorNum - 1, parseInt((1 - _motorCtrl) * _motorNum, 10));
         //showMotor(_index);
 
@@ -608,10 +617,9 @@
                     }
                 }
             }
-            if(startSpark){
-                spark.draw(ctx);
+            if(displaySpark){
                 sparkTimeElapsed++;
-                if(sparkTimeElapsed>20)startSpark=false;
+                if(sparkTimeElapsed>20)displaySpark=false;
             }
             //console.log("draw");
 
@@ -654,13 +662,13 @@
         if(num!=0 || _sparkCtrl==1)return;
         //console.log("Spark Fired");
         //Resources.playAnimation("spark.png", -2,2);
-        startSpark=true;
+        displaySpark=true;
         sparkTimeElapsed=0;
     }
 
     function getMousePos(event){
         let rect = canvas.getBoundingClientRect();
-        return [ event.clientX - rect.left,event.clientY - rect.top];
+        return [ event.clientX ,event.clientY ];
     }
 
     function mousePressed( me) {

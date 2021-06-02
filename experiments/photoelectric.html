@@ -243,7 +243,7 @@
     var saturationVoltage;
     var saturationCurrent;
 
-    var intensity = 4;
+    var intensity = 5;
     var intensitySum = 0;
     var voltage = 0;
     var selectA=0;
@@ -336,7 +336,7 @@
         imgCircuit_0.onload=init;
 
         let workFunctions = [2.12,2.27, 2.51, 4.36, 4.28, 3.46, 4.18, 3.92, 3.74, 4.84, 4.47, 4.50, 4.51, 3.74, 4.58, 4.02];
-        var metalNames = ["Cs 2.12","Na (2.27eV)", "Ba (2.51eV)", "Fe (4.36eV)", "Ag (4.28eV)", "Mg (3.46eV)", "Co (4.18eV)", "Cd (3.92eV)", "Al (3.74eV)", "Ni (4.84eV)", "Cu (4.47eV)", "W (4.50eV)", "Cr (4.51eV)", "Zn (3.74eV)", "Au (4.58eV)", "Pb (4.02eV)"];
+        var metalNames = ["Cs (2.12)","Na (2.27eV)", "Ba (2.51eV)", "Fe (4.36eV)", "Ag (4.28eV)", "Mg (3.46eV)", "Co (4.18eV)", "Cd (3.92eV)", "Al (3.74eV)", "Ni (4.84eV)", "Cu (4.47eV)", "W (4.50eV)", "Cr (4.51eV)", "Zn (3.74eV)", "Au (4.58eV)", "Pb (4.02eV)"];
         wf=workFunctions[0];
         pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"PhotoElectric Effect",expanded: true});
         let metals=new Object();
@@ -447,12 +447,12 @@
         pgPlot.clearRect(0,0,pgPlotCanvas.width,pgPlotCanvas.height);
         pgPlot.fillStyle=bgColor;
         pgPlot.fillRect(0,0,pgPlotCanvas.width,pgPlotCanvas.height);
-        pgPlot.fillStyle="rgba(255,255,255,0.2)";
+        pgPlot.fillStyle="rgba(255,255,255,0.3)";
         pgPlot.fillRect(plotX1,plotY1,plotX2-plotX1,plotY2-plotY1);
         pgPlot.lineWidth=1;
         pgPlot.font="16px Arial";
         let black="white";
-        let grey="rgb(160,222,222)"
+        let grey="rgb(130,222,202)"
         for (let i = -5; i <= 5; i++) {
             let x = map(i, -5, 5, plotX1, plotX2);
             pgPlot.strokeStyle=grey;
@@ -607,7 +607,7 @@
                     if (pulseL[i]>electronLife||pulseX[i]<cathodeX||pulseX[i]>anodeX) pulseType[i] = "none"
                 }
             }
-            intensitySum += intensity * (checkB ? 0.1 : 1)*2;
+            intensitySum += intensity * (checkB ? 0.1 : 1);
             if (intensitySum >= 10) {
                 intensitySum -= 10;
                 for (let i = 0; i < pulseMax; i++) {
@@ -646,17 +646,10 @@
          ctx.fillStyle=fgColor;//fill(0);
         //noStroke();
 
-        ctx.fillText("hf = "+hf.toFixed(2)  + " eV", 575, 20);
-        ctx.fillText("wf = "+wf.toFixed(2)  + " eV", 675, 20);
-        ctx.fillText("KE = "+(hf-wf).toFixed(2)  + " eV", 775, 20);
-        //ctx.fillText(voltage10.toFixed(2)  + " V", 275, 250);
-        //ctx.fillText(current.toFixed(2)+ " mA", 500, 200);
-        //noFill();
-        //ctx.strokeStyle="black";
-        //ctx.lineJoin="miter";//strokeJoin(MITER);
-        //let y = map(voltage10, -5, 5, 350, 450);
-        //drawLine(50, 250, 50, y);
-        //drawArrow_head(50, y, 140, 0, 10);
+        //ctx.fillText("hf = "+hf.toFixed(2)  + " eV", 575, 20);
+        //ctx.fillText("wf = "+wf.toFixed(2)  + " eV", 675, 20);
+        //ctx.fillText("KE = "+(hf-wf).toFixed(2)  + " eV", 775, 20);
+
         let xx = map(voltage , -5, 5, plotX1, plotX2);
         let yy = map(current, 0, 7, plotY1, plotY2);
         pgPlot.fillStyle=getLightColor(wavelength);
@@ -672,8 +665,8 @@
     }
 
     function getMousePos(event){
-        let rect = canvas.getBoundingClientRect();
-        return [ event.clientX - rect.left,event.clientY - rect.top];
+        //let rect = canvas.getBoundingClientRect();
+        return [ event.clientX ,event.clientY ];
     }
 
     function MouseHovered(me){

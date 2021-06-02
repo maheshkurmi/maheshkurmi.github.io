@@ -283,22 +283,23 @@
 
    // var problemFolder=pane.addFolder({title:"Problem Settings",expanded:false});
 
-    var problemFolder=tab.pages[1].addFolder({title:"Check Options to randomize"});
+    var problemFolder=tab.pages[1].addFolder({title:"Check to randomize"});
+
     problemFolder.addInput(window,"randomZeroError",{label:"Zero Error"});
     problemFolder.addInput(window,"randomMainScaleDivisions",{label:"MSD Count"});
     problemFolder.addInput(window,"randomCircularScaleDivision",{label:"CSD Count"});
-    problemFolder.addInput(window,"randomObjectWidthPixel",{label:"Object Dimensions"});
+    problemFolder.addInput(window,"randomObjectWidthPixel",{label:"Object's Size"});
     tab.pages[1].addButton({title:"createProblem"}).on('click',createProblem);
 
     var canvas=document.getElementById("myCanvas");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = Math.max(900,window.innerWidth);
+    canvas.height = Math.max(600,window.innerHeight);
     var ctx=canvas.getContext("2d");
     ctx.font = "30px Arial";
     //Add event listeners
     window.addEventListener('resize',function(ev) { return resize(ev); });
     var hammertime;
-
+    paint();
     var intiScale=scale;
      function itemloaded(){
         loadedItems++;
@@ -797,8 +798,8 @@
     }
 
     function getMousePos(event){
-        let rect = canvas.getBoundingClientRect();
-        return [ event.clientX - rect.left,event.clientY - rect.top];
+        //let rect = canvas.getBoundingClientRect();
+        return [event.clientX ,event.clientY];
     }
 
     function mousePressed( me) {

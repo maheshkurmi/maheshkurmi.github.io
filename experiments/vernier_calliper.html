@@ -178,7 +178,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <script type='text/javascript'>
@@ -279,7 +278,7 @@
     csController.on('change',update);
     var zeController=tab.pages[0].addInput(window, "zeroError",{label:"Zero Error",min:-vernierScaleDivisions+1,max:vernierScaleDivisions-1,step:1});
     zeController.on('change',update);
-    tab.pages[0].addInput(window, "drawSubDivision",{label:"Virtual SubDivisions"}).on('change',paint);
+    tab.pages[0].addInput(window, "drawSubDivision",{label:"Virtual Divisions"}).on('change',paint);
 
     tab.pages[0].addInput(window, "displayInfo",{label:"Display values"}).on('change',paint);
     tab.pages[0].addSeparator();
@@ -297,13 +296,14 @@
 
 
     var canvas=document.getElementById("myCanvas");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = Math.max(900,window.innerWidth);
+    canvas.height = Math.max(600,window.innerHeight);
+
     var ctx=canvas.getContext("2d");
     ctx.font = "30px Arial";
     //Add event listeners
     window.addEventListener('resize',function(ev) { return resize(ev); });
-
+    paint();
     function itemloaded(){
         loadedItems++;
         if(loadedItems==itemsToLoad){
@@ -487,7 +487,6 @@
 
         }*/
         pane.refresh();
-
 
         translateVernier(0);
     }
@@ -868,8 +867,8 @@
     }
 
     function getMousePos(event){
-        let rect = canvas.getBoundingClientRect();
-        return [ event.clientX - rect.left,event.clientY - rect.top];
+        //let rect = canvas.getBoundingClientRect();
+        return [ event.clientX ,event.clientY ];
     }
 
     function mousePressed( me) {
