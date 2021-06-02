@@ -198,7 +198,10 @@
     var height = canvas.height;
 
     var initScale;
-    var scale=window.innerWidth/1500;
+    canvas.width = Math.max(900,window.innerWidth);
+    canvas.height = Math.max(600,window.innerHeight);
+    scale=canvas.width/1500;
+
     var xOffset=0;
     var yOffset=0;
 
