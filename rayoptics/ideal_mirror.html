@@ -78,6 +78,8 @@
     //color of mirror
     //range of u
     //axis render
+    var loadedItems=0;
+    const itemsToLoad=3;
 
     var canvas =document.getElementById('canvas');
     var ctx=canvas.getContext("2d");
@@ -85,7 +87,6 @@
     ctx.textAlign="center";
     ctx.textBaseline="middle";
 
-    window.addEventListener('resize',function(ev) { return resize(ev); });
     var initScale;
     var hammertime = new Hammer(canvas);
     hammertime.get('pinch').set({ enable: true });
@@ -132,6 +133,7 @@
         event.preventDefault();
     }, false);
 
+    window.addEventListener('resize',function(ev) { return resize(ev); });
 
     window.addEventListener('keydown',doKeyBoard,false);
 
@@ -276,8 +278,6 @@
     imageRO.src="img_Object.png";
     var imageVO=new Image();
     imageVO.src="img_Virtual.png";
-    var loadedItems=0;
-    const itemsToLoad=3;
 
     var imageEye=new Image();
     imageEye.src="eye.png";

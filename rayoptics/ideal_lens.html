@@ -82,6 +82,8 @@ h1 {
 </div>
 	
 <script type='text/javascript'>
+    var loadedItems=0;
+    const itemsToLoad=3;
 
     var canvas =document.getElementById('canvas');
     var ctx=canvas.getContext("2d");
@@ -89,7 +91,6 @@ h1 {
     ctx.textAlign="center";
     ctx.textBaseline="middle";
 
-    window.addEventListener('resize',function(ev) { return resize(ev); });
     var initScale;
     var hammertime = new Hammer(canvas);
     hammertime.get('pinch').set({ enable: true });
@@ -130,6 +131,7 @@ h1 {
     });
 
 
+    window.addEventListener('resize',function(ev) { return resize(ev); });
 
     canvas.addEventListener('wheel',function(event){
         zoom(event.wheelDelta);
@@ -275,8 +277,6 @@ h1 {
     var objHeight=lensHeight*0.6;
     var dragMode=0;
 
-    var loadedItems=0;
-    const itemsToLoad=3;
 
     var imageEye=new Image();
     imageEye.src="eye.png";
@@ -294,6 +294,7 @@ h1 {
     function itemloaded() {
         loadedItems++;
         if (loadedItems == itemsToLoad) {
+
             update();
         }
     }
