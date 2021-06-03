@@ -200,7 +200,7 @@
     var initScale;
     canvas.width = Math.max(900,window.innerWidth);
     canvas.height = Math.max(600,window.innerHeight);
-    scale=canvas.width/1500;
+    var scale=canvas.width/1500;
 
     var xOffset=0;
     var yOffset=0;
@@ -319,7 +319,7 @@
 
             //xOffset=(xOffset+canvas.width/2-ev.center.x);//*scale;
             //yOffset=(yOffset+canvas.height/2-ev.center.y)//*scale;
-            paint();
+            render();
         });
 
         window.addEventListener('resize',function(ev) { return resize(ev); });

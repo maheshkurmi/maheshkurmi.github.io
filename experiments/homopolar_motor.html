@@ -1,7 +1,7 @@
 <!doctype html>
 <head>
-    <title>Rolling on Plane</title>
-    <meta name="keywords" content="Mechanics friction angle of repose simulation physics measurement">
+    <title>Homopolar Motor</title>
+    <meta name="keywords" content="Motor magnetic field homopolar simulation physics">
     <meta name="author" content="Mahesh Kurmi">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <style>
@@ -217,9 +217,8 @@
             <span class="helper"></span>
             <div>
                 <div class="popupCloseButton">&times;</div>
-                <h3>Rolling on Plane</h3>
-                <p> The simulation helps in understanding the effect of shapes (moment of inertia) on motion of objects along the inclined plane. <br>
-                Try changing friction and angle of plane to learn how friction behaves differently in round objects than the flat cube.
+                <h3>Homopolar Motor</h3>
+                <p> ‘Homopolar motor’ refers to a motor operated by using only one polarity of the magnet. The homopolar motor has a very simple structure. It operates with only three parts: battery, magnet, and lead. Homo-polar motors are easy to make and are often used in schools to learn the principles of an electric motor.
                 <h4>Controls</h4>
                 Drag to rotate camera, scroll to zoom.<br>
                 </p>
@@ -234,26 +233,56 @@
     import { OrbitControls } from "https://threejs.org/examples/jsm/controls/OrbitControls.js";
     //const loader = new THREE.TextureLoader();
     var renderer, scene, camera, controls;
-    var groundTex,ballTex,planeTex,cubeTex,ringTex,discTex;
-    var ground,plane, ball,disc,cube,ring;
+    var groundTex,batteryTex,magnetTex;
+    var ground,battery, magnet,wire,field,force1,force2,current1,current2;
     var bgColor=new THREE.Color("rgb(0,64,84)");
-
-
-    var imagePaths=['ball.jpg','checker.png','get.png','grass.jpg','wood.jpeg'];
-    var images=[];
-    var loadedImages=0;
     var pane;
-    var physics={
-        plankLength:10,
-        g:3,
-        planeAngle:30,
-        th:Math.PI/6,
-        mu:0.2,
-        run:true
+
+
+    var resourcePaths=['checker.png','battery.png'];
+    var resources=[];
+    var loadedResources=0;
+
+
+    for(let i=0;i<2;i++){
+        resources[i]= document.createElement('img');
+        resources[i].src = 'resources/'+resourcePaths[i];
+        resources[i].onload=load;
     }
 
-    var clock = new THREE.Clock();
-    var canvas=document.getElementById("canvas");
+    function load(obj){
+        loadedResources++;
+        if(loadedResources==resourcePaths.length){
+            init();
+            const loadingScreen = document.getElementById( 'loading-screen' );
+            loadingScreen.classList.add( 'fade-out' );
+            // optional: remove loader from DOM via event listener
+            loadingScreen.addEventListener( 'transitionend', loadingCompleted );
+        }
+    }
+
+    function loadingCompleted( event ) {
+        event.target.remove();
+    }
+
+    function loadTexture(index,repeat,n){
+        let texture=new THREE.Texture( resources[index] );
+        if(repeat){
+            texture.wrapS= THREE.RepeatWrapping;
+            texture.wrapT= THREE.RepeatWrapping;
+            texture.repeat.set( n,n );
+        }
+        texture.needsUpdate = true;
+        return texture;
+    }
+
+    var settings={
+        intensity:0.4,
+        isRunning:true,
+        showField:true,
+        showForces:true,
+        showCurrent:false
+    }
 
     function BodyPhysics(mesh){
         this.mesh=mesh;
@@ -273,47 +302,16 @@
     }
 
 
-    for(let i=0;i<imagePaths.length;i++){
-        images[i]= document.createElement('img');
-        images[i].src = 'resources/'+imagePaths[i];
-        images[i].onload=load;
-    }
-
-    function load(){
-        loadedImages++;
-        if(loadedImages==imagePaths.length){
-            init();
-            const loadingScreen = document.getElementById( 'loading-screen' );
-            loadingScreen.classList.add( 'fade-out' );
-            // optional: remove loader from DOM via event listener
-            loadingScreen.addEventListener( 'transitionend', loadingCompleted );
-        }
-    }
-
-    function loadingCompleted( event ) {
-        event.target.remove();
-    }
-
-    function loadTexture(index,repeat,n){
-        let texture=new THREE.Texture( images[index] );
-        if(repeat){
-            texture.wrapS= THREE.RepeatWrapping;
-            texture.wrapT= THREE.RepeatWrapping;
-            texture.repeat.set( n,n );
-        }
-        texture.needsUpdate = true;
-        return texture;
-    }
-
-
 
     function init() {
         pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Rolling on Plane",expanded: true});
-        pane.addInput(physics, "g",{label:"Gravity",min:0,max:10,step:0.1}).on('change',updateParams);
-        pane.addInput(physics, "planeAngle",{label:"Angle of Plane",min:0,max:60,step:1}).on('change',updateParams);
-        pane.addInput(physics, "mu",{label:"Friction Coeff",min:0,max:1,step:0.01}).on('change',updateParams);
-        pane.addInput(physics, "run",{label:"Run"}).on('change',updateParams);
-        pane.addButton({title:"Reset"}).on('click',reset);
+        pane.addInput(settings, "intensity",{label:"Field Intensity",min:-1,max:1,step:0.05}).on('change',updateField);
+        pane.addInput(settings, "showField",{label:"Show Fields"}).on('change',updateParams);
+        pane.addInput(settings, "showForces",{label:"Show Forces"}).on('change',updateParams);
+        pane.addInput(settings, "showCurrent",{label:"Show Current"}).on('change',updateParams);
+        pane.addInput(settings, "isRunning",{label:"Run"}).on('change',updateParams);
+       // pane.addButton({title:"Reset"}).on('click',reset);
+
         document.querySelector(".trigger_popup_fricc").onclick=function(){
             document.querySelector('.hover_bkgr_fricc').style.display = "block";
         };
@@ -325,12 +323,8 @@
         };
         window.addEventListener( 'resize', onWindowResize, false );
 
-        groundTex=loadTexture(3,true,3,3);
-        planeTex=loadTexture(2,true,1,2);
-        cubeTex=loadTexture(4);
-        ballTex=loadTexture(0);
-        ringTex=loadTexture(1);
-        discTex=cubeTex;
+        groundTex=loadTexture(0,true,3,3);
+        batteryTex=loadTexture(1);
 
         // renderer
         renderer = new THREE.WebGLRenderer({antialias :true});
@@ -338,18 +332,17 @@
         renderer.setPixelRatio( window.devicePixelRatio );
         renderer.shadowMap.enabled = true;
         renderer.shadowMapSoft = true;
-        renderer.shadowMapType = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.physicallyBasedShading = true;
         document.body.appendChild( renderer.domElement );
 
         // scene
         scene = new THREE.Scene();
         scene.background=bgColor;
-        var radius =25;
 
         // camera
-        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 3, 1000 );
-        camera.position.set( 0, -radius/3, radius );
+        camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 30 );
+        camera.position.set( 0, 2, 4 );
 
         // controls
         controls = new OrbitControls( camera, renderer.domElement );
@@ -358,20 +351,21 @@
         scene.add( new THREE.AmbientLight( 0x222222 ) );
 
         // light
-        var light = new THREE.DirectionalLight( 0xaaaaaa, 0.8 );
-        light.position.set(-5,0,20 ); //20,20,0
+        var light = new THREE.DirectionalLight( 0xaaaaaa, 1);
+        light.position.set(1,3,2 ); //20,20,0
         light.castShadow=true;
 
-        light.shadowCameraLeft = -20;
-        	light.shadowCameraTop = 20;
-        	light.shadowCameraRight = 20;
-        	light.shadowCameraBottom = -20;
-        	light.shadowCameraNear = 1;
-        	light.shadowCameraFar = 30;
-            light.shadow.bias=-0.005;
+        light.shadow.camera.left = -2;
+        light.shadow.camera.top = 2;
+        light.shadow.camera.right = 2;
+        light.shadow.camera.bottom = -2;
+        light.shadow.camera.near = 1;
+        light.shadow.camera.far = 5;
+        light.shadow.bias=-0.005;
+
         	//light.shadowBias = 2;
         	//light.shadowMapWidth = light.shadowMapHeight = 2040;
-        	light.shadowDarkness = 1;
+        light.shadow.darkness = 1;
         //light.shadowCameraVisible = true;
         //scene.add( new THREE.DirectionalLight(light, 2.5) );
         scene.add( light );
@@ -379,13 +373,13 @@
         // axes
         //scene.add( new THREE.AxesHelper( 20 ) );
 
-        light = new THREE.PointLight( 0xffffff,0.5 ); // soft white light
+        light = new THREE.PointLight( 0xffffff,0.45 ); // soft white light
         light.position.set(0,0,0);
         camera.add( light );
         scene.add(camera);
 
         //Ground
-        const groundGeo = new THREE.PlaneGeometry(30, 15);
+        const groundGeo = new THREE.PlaneGeometry(3, 3);
         const groundMat = new THREE.MeshPhongMaterial({
             map: groundTex,
             shininess:0,
@@ -395,74 +389,98 @@
         });
         groundMat.color.setRGB(1.5, 1.5, 1.5);
         ground = new THREE.Mesh(groundGeo, groundMat);
-        ground.position.z = -0.001;
+        ground.rotation.x=-Math.PI/2;
+        ground.position.y = -0.7;
         ground.receiveShadow=true;
         scene.add(ground);
 
-        //Inclined Plane
-        const planeGeo = new THREE.PlaneGeometry(2*physics.plankLength, 10);
-        const planeMat = new THREE.MeshPhongMaterial({
-            map: planeTex,
-            side: THREE.DoubleSide, ///BackSide, FontSide
-            color: 0xffffff
-        });
-
-        plane = new THREE.Mesh(planeGeo, planeMat);
-        plane.position.set(-physics.plankLength+physics.plankLength*Math.cos(physics.th),0, physics.plankLength*Math.sin(physics.th));
-        plane.castShadow=true;
-        plane.receiveShadow=true;
-        scene.add(plane);
-
-        //cube
-        const cubeGeom=new THREE.BoxGeometry(1,1,1);
-        const cubeMat= new THREE.MeshPhongMaterial({
-            map: cubeTex,
-            color: 0xffffff
-        });
-        cube = new THREE.Mesh( cubeGeom, cubeMat );
-        cube.physics=new BodyPhysics(cube);
-        cube.castShadow=true;
-        plane.add( cube );
-
-        // Ball
-        const ballGeo = new THREE.SphereGeometry( 1, 20,20);
-        const ballMat = new THREE.MeshPhongMaterial( {
-            map:ballTex,
+        // Batterys
+        const batteryGeom = new THREE.CylinderGeometry(0.105,0.105,0.97,20,1,false,0,Math.PI*2);
+        const batteryMat = new THREE.MeshPhongMaterial( {
+            map:batteryTex,
             color: 0xffffff,
             //opacity: 0.7,
         } );
-        ball = new THREE.Mesh( ballGeo, ballMat );
-        ball.physics=new BodyPhysics(ball);
-        ball.castShadow=true;
-        plane.add( ball );
+        battery = new THREE.Mesh( batteryGeom, batteryMat );
+        battery.physics=new BodyPhysics(battery);
+        battery.castShadow=true;
+        scene.add( battery );
 
-        // Disc
-        const discGeo = new THREE.CylinderGeometry(1,1,0.1,20,1,false,0,Math.PI*2);
-        const discMat = new THREE.MeshPhongMaterial( {
-            map:discTex,
-            color: 0xffffff,
+        //battery cap
+        const capGeom = new THREE.CylinderGeometry(0.02,0.02,0.03,10,1,false,0,Math.PI*2);
+        const capMat = new THREE.MeshPhongMaterial( {
+            shininess:64,
+            color: 0xC0C0C0,
             //opacity: 0.7,
         } );
-        disc = new THREE.Mesh( discGeo, discMat );
-        disc.physics=new BodyPhysics(disc);
-        disc.castShadow=true;
-        plane.add( disc );
+        var cap = new THREE.Mesh( capGeom, capMat );
+        cap.position.set(0, 0.48, 0);
+        battery.add( cap );
 
-        // Ring
-        const ringGeo = new THREE.TorusGeometry(0.9,0.1,10,30);
-        const ringMat = new THREE.MeshPhongMaterial( {
-            map:ringTex,
-            color: 0xffffff,
+        //Magnet
+        const magnetGeom = new THREE.CylinderGeometry(0.06,0.06,0.1,10,1,false,0,Math.PI*2);
+        const magnetMat = new THREE.MeshPhongMaterial( {
+            shininess:64,
+            color: 0xC0C0C0,
             //opacity: 0.7,
         } );
-        ring = new THREE.Mesh( ringGeo, ringMat );
-        ring.physics=new BodyPhysics(ring);
-        ring.castShadow=true;
-        plane.add( ring );
+        magnet = new THREE.Mesh( magnetGeom, magnetMat );
+        battery.physics=new BodyPhysics(battery);
+        magnet.position.set(0,-0.54, 0);
+        scene.add( magnet );
 
-        reset();
+        //wire loop
+        var points=[
+            new THREE.Vector3(-0.1,-0.594,0),
+            new THREE.Vector3(-0.1,-0.55,0),
+            new THREE.Vector3(-0.3,-0.55,0),
+            new THREE.Vector3(-0.7,-0.55,0),
+            new THREE.Vector3(-0.7,0,0),
+            new THREE.Vector3(-0.7,0.50,0),
+            new THREE.Vector3(-0.65,0.55,0),
+
+            new THREE.Vector3(-0.3,0.55,0),
+            new THREE.Vector3(-0.1,0.55,0),
+            new THREE.Vector3(0,0.5,0),
+            new THREE.Vector3(0.1,0.55,0),
+            new THREE.Vector3(0.3,0.55,0),
+            new THREE.Vector3(0.7,0.55,0),
+
+            new THREE.Vector3(0.7,0,0),
+            new THREE.Vector3(0.7,-0.50,0),
+            new THREE.Vector3(0.65,-0.55,0),
+            new THREE.Vector3(0.3,-0.55,0),
+            new THREE.Vector3(0.1,-0.55,0),
+            new THREE.Vector3(0.1,-0.594,0),
+            new THREE.Vector3(0,-0.594,0),
+
+        ];
+        //p.closePath();
+
+        var start = new THREE.Vector3(-0.2, 0, 0);
+        var middle = new THREE.Vector3(0, 0.3, 0);
+        var end = new THREE.Vector3(0.2, 0, 0);
+
+        //var curve = new THREE.QuadraticBezierCurve3(start, middle, end);
+        //let points = p.getPoints();
+        let curve = new THREE.CatmullRomCurve3(points,true,"catmullrom",0.2);
+        let geometry = new  THREE.TubeGeometry( curve, 100, 0.015, 6, true,false );
+        let material = new THREE.MeshPhongMaterial( { color: 0xB87333 } );
+
+        wire = new THREE.Mesh( geometry, material );
+        scene.add( wire );
+        wire.castShadow=true;
+        wire.physics=new BodyPhysics(wire);
+
+        //field
+        field = new THREE.Group();
+        magnet.add(field);
+        field.castShadow=true;
+        updateField();
         animate();
     }
+
+
 
     function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -474,103 +492,65 @@
     function animate() {
         requestAnimationFrame( animate );
         //controls.update();
-        if(physics.run==true) {
+        if(settings.isRunning==true) {
             updatePhysics(0.02);//clock.getDelta()/1000);
         }
         renderer.render(scene, camera);
 
     }
 
-    function reset(){
-        plane.position.set(-physics.plankLength+physics.plankLength*Math.cos(physics.th),0, physics.plankLength*Math.sin(physics.th));
-        plane.rotation.set(0, -physics.th, 0);
-        ball.physics.velocity.set(0,0,0);
-        disc.physics.velocity.set(0,0,0);
-        ring.physics.velocity.set(0,0,0);
-        cube.physics.velocity.set(0,0,0);
-        ball.physics.angularVelocity.set(0,0,0);
-        disc.physics.angularVelocity.set(0,0,0);
-        ring.physics.angularVelocity.set(0,0,0);
-        ball.position.set(physics.plankLength-1, 1.3, 1);
-        disc.position.set(physics.plankLength-1, 0, 1);
-        ring.position.set(physics.plankLength-1,-1,1);
-        cube.position.set(physics.plankLength-1, -2,0.5);
-        ball.rotation.set(0,0,0);
-        disc.rotation.set(0,0,0);
-        ring.rotation.set(Math.PI/2,0,0);
-        cube.rotation.set(0,0,0);
-        updateParams();
-    }
-
-    function resetBody(b){
-        let ph=b.physics;
-        ph.velocity.set(0,0,0);
-        ph.angularVelocity.set(0,0,0);
-        ph.acceleration.set(0,0,0);
-        ph.angularAcceleration.set(0,0,0);
-    }
 
     function updateParams(){
-        physics.th=physics.planeAngle*Math.PI/180;
-        plane.position.set(-physics.plankLength+physics.plankLength*Math.cos(physics.th),0, physics.plankLength*Math.sin(physics.th));
-        plane.rotation.set(0, -physics.th, 0);
-        if(ball.position.x<-physics.plankLength)resetBody(ball);
-        if(disc.position.x<-physics.plankLength)resetBody(disc);
-        if(ring.position.x<-physics.plankLength)resetBody(ring);
-        if(cube.position.x<-physics.plankLength+0.5)resetBody(cube);
-        if(cube.physics.velocity.x>0)resetBody(cube);
-        let tanTh=Math.tan(physics.th);
-        let gsinTh=physics.g*Math.sin(physics.th);
+       field.visible=settings.showField;
+       force1.visible=settings.showForces;
+       force2.visible=settings.showForces;
+        current1.visible=settings.showCurrent;
+        current2.visible=settings.showCurrent;
 
-        let mu_gcosTh=physics.mu*physics.g*Math.cos(physics.th);
-        let r=1;
-        let ph=ball.physics;
-        if(physics.mu>2/7*tanTh){
-            ph.acceleration.set(-5/7*gsinTh,0,0);
-            ph.angularAcceleration.set(0,ph.acceleration.x/r,0);
-        }else{
-            ph.acceleration.set(-gsinTh+mu_gcosTh,0,0);
-            ph.angularAcceleration.set(0,-2.5*mu_gcosTh/r,0);
+       wire.physics.angularVelocity.set(0,5*settings.intensity,0);
+
+    }
+
+    function updateField(){
+        let B=settings.intensity;
+        wire.physics.angularVelocity.set(0,2*B,0);
+        //create field
+        field.clear();
+        wire.clear();
+        if(B==0)return;
+        let dir=B>0?1:-1;
+        B=Math.abs(B);
+        let N=4+30*(B);
+        let pts=[new THREE.Vector3(0,0,0),new THREE.Vector3(0.0,0.1,0),new THREE.Vector3(0.05,0.2,0),new THREE.Vector3(0.3,0.45,0),new THREE.Vector3(1,0.6,0)];
+
+        let curve = new THREE.CatmullRomCurve3(pts);
+        let points = curve.getPoints( 50 );
+        let geometry = new THREE.BufferGeometry().setFromPoints( points );
+        let material = new THREE.LineBasicMaterial( { color : 0x00dd00 ,linewidth: 2} );
+        let curveObject = new THREE.Line( geometry, material );
+        const arrowHelper = new THREE.ArrowHelper( new THREE.Vector3(dir*0.9,dir*0.45,0), new THREE.Vector3(0.3,0.45,0), 0.05, 0x00dd00,0.05,0.04 );
+        curveObject.add(arrowHelper);
+        for(let i=0;i<N;i++){
+            field.add(curveObject);
+            curveObject = curveObject.clone();
+            curveObject.rotation.set(0,2*i*Math.PI/N,0);
         }
 
-        ph=disc.physics;
-        if(physics.mu>1/3*tanTh){
-            ph.acceleration.set(-2/3*gsinTh,0,0);
-            ph.angularAcceleration.set(0,ph.acceleration.x/r,0);
-        }else{
-            ph.acceleration.set(-gsinTh+mu_gcosTh,0,0);
-            ph.angularAcceleration.set(0,-2*mu_gcosTh/r,0);
-        }
+        force1=new THREE.ArrowHelper( new THREE.Vector3(0,0,-dir), new THREE.Vector3(0.7,0,0), B, 0xff0000,0.05,0.04 );
+        force2=new THREE.ArrowHelper( new THREE.Vector3(0,0,dir), new THREE.Vector3(-0.7,0,0), B, 0xff0000,0.05,0.04 );
 
-        ph=ring.physics;
-        if(physics.mu>1/2*tanTh){
-            ph.acceleration.set(-1/2*gsinTh,0,0);
-            ph.angularAcceleration.set(0,0,-ph.acceleration.x/r);
-        }else{
-            ph.acceleration.set(-gsinTh+mu_gcosTh,0,0);
-            ph.angularAcceleration.set(0,0,mu_gcosTh/r);
-        }
+        current1=new THREE.ArrowHelper( new THREE.Vector3(0,-1,0), new THREE.Vector3(0.67,0,0), 0.15, 0xffffff,0.05,0.04 );
+        current2=new THREE.ArrowHelper( new THREE.Vector3(0,-1,0), new THREE.Vector3(-0.67,0,0), 0.15, 0xffffff,0.05,0.04 );
 
-        ph=cube.physics;
-        if(physics.mu>tanTh && ph.velocity.x==0){
-            ph.acceleration.set(0,0,0);
-        }else{
-            ph.acceleration.set(-gsinTh+mu_gcosTh,0,0);
-        }
+        wire.add(force1);
+        wire.add(force2);
+        wire.add(current1);
+        wire.add(current2);
 
     }
 
     function updatePhysics(dt){
-        ball.physics.update(dt);
-        ring.physics.update(dt);
-        disc.physics.update(dt);
-        cube.physics.update(dt);
-        if(ball.position.x<-physics.plankLength)resetBody(ball);
-        if(disc.position.x<-physics.plankLength)resetBody(disc);
-        if(ring.position.x<-physics.plankLength)resetBody(ring);
-        if(cube.position.x<-physics.plankLength+0.5)resetBody(cube);
-        if(cube.physics.velocity.x>0)resetBody(cube);
-
+        wire.physics.update(dt);
     }
 
 

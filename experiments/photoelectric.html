@@ -261,6 +261,7 @@
     var xOffset=0;
     var yOffset=0;
     var scale;
+    var initialized=false;
     load();
 
     function Slider(x1,y1,x2,y2){
@@ -541,6 +542,7 @@
         */
         if(timer)clearInterval(timer)
         timer=setInterval(draw,1000/50);
+        initialized=true;
     }
 
 
@@ -554,6 +556,10 @@
         ctx.lineJoin="round";
         pgPlot.textAlign="center";
         pgPlot.textBaseline="middle";
+
+        if(!initialized){
+            ctx.fillText("Loading .....",canvas.width/2,canvas.height/2);
+        }
         //strokeJoin(ROUND);
         /*
         if (wavelength != rangeU.value()) {

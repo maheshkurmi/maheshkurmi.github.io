@@ -743,6 +743,7 @@
         var inducedCharges=[0,0,0,0];
 
         var initScale;
+        var fieldGradient;
         init();
 
 
@@ -759,8 +760,8 @@
 
             tab.pages[0].addInput(innerCircle, "q",{label:"Inner Shell Charge "+chargeUnit,min:-5,max:5,step:0.5}).on('change',updateSwitchState);
             tab.pages[0].addInput(outerCircle, "q",{label:"Outer shell Charge "+chargeUnit,min:-5,max:5,step:0.5}).on('change',updateSwitchState);
-            tab.pages[0].addInput(innerCircle, "r",{label:"Inner Radius(cm)",min:25,max:100,step:25}).on('change',updateSwitchState);
-            tab.pages[0].addInput(outerCircle, "r",{label:"Outer Radius(cm)",min:125,max:200,step:25}).on('change',updateSwitchState);
+            tab.pages[0].addInput(innerCircle, "r",{label:"Inner Radius(cm)",min:25,max:100,step:25}).on('change',updateShellSize);
+            tab.pages[0].addInput(outerCircle, "r",{label:"Outer Radius(cm)",min:125,max:200,step:25}).on('change',updateShellSize);
             //tab.pages[0].addInput(switches[0], "state",{label:"Switch1"}).on('change',updateSwitchState);
             //tab.pages[0].addInput(switches[1], "state",{label:"Switch2"}).on('change',updateSwitchState);
             //tab.pages[0].addInput(switches[2], "state",{label:"Switch3"}).on('change',updateSwitchState);
@@ -812,7 +813,6 @@
             hammertime.on('pinch', function(ev) {
                 scale=initScale*ev.scale;
                 setScale(scale);
-                update();
             });
 
 
@@ -837,12 +837,30 @@
             ctx.textAlign = 'center';
 
 
-            updateSwitchState();
+            updateShellSize();
             resize();
         }
 
         var q=[0,0,0]; //charges flown through switches
         var dq=[0,0,0];
+
+        function updateShellSize(){
+            updateSwitchState();
+            let E0=calcField(innerCircle.r,0);
+            if(E0>0) {
+                //let E = calcField(outerCircle.r-0.1, 0);
+                fieldGradient = ctx.createRadialGradient(innerCircle.x, innerCircle.y, innerCircle.r, innerCircle.x, innerCircle.y, 2*outerCircle.r);
+                fieldGradient.addColorStop(0, fieldColor);
+                fieldGradient.addColorStop(outerCircle.r/(innerCircle.r + outerCircle.r), bgColor);
+            }
+            E0=calcField(outerCircle.r,0);
+            if(E0>0){
+                fieldGradient=ctx.createRadialGradient(innerCircle.x,innerCircle.y,outerCircle.r,innerCircle.x,innerCircle.y,outerCircle.r+outerCircle.r);
+                fieldGradient.addColorStop(0,fieldColor);
+                fieldGradient.addColorStop(1,bgColor);
+            }
+        }
+
         function updateSwitchState(){
 
             switches[0].setPosition(innerCircle.x,innerCircle.y+innerCircle.r);
@@ -1019,19 +1037,12 @@
             if(drawFields){
                 let E0=calcField(innerCircle.r,0);
                 if(E0>0) {
-                    //let E = calcField(outerCircle.r-0.1, 0);
-                    let gr = ctx.createRadialGradient(innerCircle.x, innerCircle.y, innerCircle.r, innerCircle.x, innerCircle.y, 2*outerCircle.r);
-                    gr.addColorStop(0, fieldColor);
-                    gr.addColorStop(outerCircle.r/(innerCircle.r + outerCircle.r), bgColor);
-                    ctx.strokeStyle = gr;
+                    ctx.strokeStyle = fieldGradient;
                     innerCircle.renderField(innerCircle.r,outerCircle.r);
                 }
                 E0=calcField(outerCircle.r,0);
                 if(E0>0){
-                    let gr=ctx.createRadialGradient(innerCircle.x,innerCircle.y,outerCircle.r,innerCircle.x,innerCircle.y,outerCircle.r+outerCircle.r);
-                    gr.addColorStop(0,fieldColor);
-                    gr.addColorStop(1,bgColor);
-                    ctx.strokeStyle = gr;
+                    ctx.strokeStyle = fieldGradient;
                     outerCircle.renderField(outerCircle.r,outerCircle.r+outerCircle.r);
                 }
 
