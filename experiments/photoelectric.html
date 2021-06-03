@@ -328,7 +328,7 @@
         //scale*=window.innerWidth/canvas.width;
         canvas.width = window.innerWidth-10;
         canvas.height = window.innerHeight-10;
-        render();
+        draw();
     }
 
     function load(){
@@ -439,7 +439,7 @@
 
             //xOffset=(xOffset+canvas.width/2-ev.center.x);//*scale;
             //yOffset=(yOffset+canvas.height/2-ev.center.y)//*scale;
-            paint();
+            //paint();
         });
         canvas.onmousemove=MouseHovered;
         document.querySelector(".trigger_popup_fricc").onclick=function(){
