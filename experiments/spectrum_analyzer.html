@@ -1,0 +1,837 @@
+<html>
+<head>
+    <meta name="description" content="Audio Spectrum Analyser">
+    <title>Audio Spectrum Analyser</title>
+    <style type="text/css">
+        html, body {
+            textAlign:"center";
+            margin: 0;
+            font-family: arial, "Microsoft YaHei";
+            background-color: rgb(0,64,84);
+            color: #FEFEFE;
+        }
+        #fileWrapper{
+            transition:all 0.5s ease;
+        }
+        #fileWrapper:hover{
+            opacity: 1!important;
+        }
+        #visualizer_wrapper{
+            text-align: center;
+        }
+        footer{
+            position: fixed;
+            bottom: 2px;
+            color:#aaa;
+        }
+        * {
+            box-sizing: border-box;
+        }
+
+        .audio-player {
+            width: 800px;
+            padding: 15px 10px;
+            margin: auto;
+            background-color: white;
+            border: 1px solid black;
+        }
+        .audio-player .player-controls {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .audio-player #radioIcon {
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            background: url('https://image.flaticon.com/icons/svg/149/149427.svg') no-repeat center;
+            background-size: contain;
+        }
+        .audio-player #radioIcon.pause {
+            background: url('https://image.flaticon.com/icons/svg/149/149428.svg') no-repeat center;
+            background-size: contain;
+        }
+        .audio-player #playAudio {
+            -webkit-appearance: none;
+            outline: none;
+            cursor: pointer;
+            border: none;
+            width: 40px;
+            height: 40px;
+            background: url('https://image.flaticon.com/icons/svg/149/149125.svg') no-repeat center;
+            background-size: contain;
+        }
+        .audio-player #playAudio.pause {
+            background: url('https://image.flaticon.com/icons/svg/149/149127.svg') no-repeat center;
+            background-size: contain;
+        }
+        .audio-player p {
+            margin: 0 0 0 5px;
+            line-height: 1;
+            display: inline-flex;
+        }
+        .audio-player p small {
+            font-size: 10px;
+        }
+        .audio-player #seekObjContainer {
+            position: relative;
+            width: 600px;
+            margin: 0 5px;
+            height: 6px;
+        }
+        .audio-player #seekObjContainer #seekObj {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #e3e3e3;
+            border: 1px solid black;
+        }
+        .audio-player #seekObjContainer #seekObj #percentage {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background-color: coral;
+        }
+
+        #container canvas{
+            position: relative;
+            touch-action: none;
+        }
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body align="center">
+<div id="wrapper">
+    <div id="fileWrapper" class="file_wrapper">
+        <div id="info">
+            Audio Spectrum Analyser
+        </div>
+        <label for="uploadedFile">Drag&drop or select a file to play:</label>
+        <input type="file" id="uploadedFile"></input>
+    </div>
+</div>
+
+<div id="visualizer_wrapper">
+    <canvas id='canvas' width="800" height="350" border="1px"></canvas>
+    <a class="trigger_popup_fricc" style="color: rgb(0,64,84);">	&#8505;</a>
+    <div id="overlay" style="color: rgb(0,64,84);">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Audio Spectrum Analyser</h3>
+                <p> A small web application for displaying audio signal frequency spectrum in form of LED bars in the real time.
+                    It can visualise audio from microphone input, or from the uploaded audio file.<br/>
+
+                <h4>Controls</h4>
+                Enable mic by clicking mic icon, click over it again to stop.<br>
+                Press play icon to play/pause selected track and click on the seek bar to change current playing location of the track.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="audio-player">
+        <div class="player-controls">
+
+        <div id="radioIcon"></div>
+
+        <button id="playAudio"></button>
+
+        <div id="seekObjContainer">
+             <div id="seekObj" style="background: grey">
+                    <div id="percentage" style="background: orange"></div>
+            </div>
+        </div>
+
+        <p id="currentTime" style="color: black">00:00</p>
+    </div>
+
+<script type="text/javascript">
+    let ui = {
+        play: 'playAudio',
+        audio: 'audio',
+        mic:'radioIcon',
+        percentage: 'percentage',
+        seekObj: 'seekObj',
+        currentTime: 'currentTime'
+    };
+
+
+
+    var visualizer;
+    /*
+     * An audio spectrum visualizer built with HTML5 Audio API
+     * Author:Wayou
+     * License: MIT
+     * Feb 15, 2014
+     */
+    window.onload = function() {
+        visualizer=new Visualizer();
+        visualizer.ini();
+        document.querySelector(".trigger_popup_fricc").onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "block";
+        };
+        document.querySelector('.hover_bkgr_fricc').onclick =function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+        document.querySelector('.popupCloseButton').onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+    };
+
+
+
+    var Visualizer = function() {
+        this.file = null, //the current file
+            this.fileName = null, //the current file name
+            this.audioContext = null,
+            this.analyser=null,
+            this.audioBuffer=null,
+            this.source = null, //the audio source
+            this.info = document.getElementById('info').innerHTML, //this used to upgrade the UI information
+            this.infoUpdateId = null, //to sotore the setTimeout ID and clear the interval
+            this.animationId = null,
+            this.status = 0, //flag for sound is playing 1 or stopped 0
+            this.forceStop = false,
+            this._duration=0,//audio duration in seconds
+            this._playbackTime = 0, // time of the audio playback, seconds
+            this._startTimestamp = 0, // timestamp of last playback start, milliseconds
+                this.allCapsReachBottom = false,
+            this._startedAt = 0,
+            this._pausedAt = 0,
+            this._micActive=false,
+            this._micActive=false
+    };
+    Visualizer.prototype = {
+        ini: function() {
+            this._prepareAPI();
+            this._addEventListner();
+        },
+        _prepareAPI: function() {
+            //fix browser vender for AudioContext and requestAnimationFrame
+            window.AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext || window.msAudioContext;
+            window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
+            window.cancelAnimationFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame || window.msCancelAnimationFrame;
+            try {
+                AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+            } catch (e) {
+                this._updateInfo('!Your browser does not support AudioContext', false);
+                console.log(e);
+            }
+        },
+        _addEventListner: function() {
+            var that = this,
+                audioInput = document.getElementById('uploadedFile'),
+                dropContainer = document.getElementsByTagName("canvas")[0];
+            //listen the file upload
+            audioInput.onchange = function() {
+                if (that.audioContext===null) {return;};
+
+                //the if statement fixes the file selction cancle, because the onchange will trigger even the file selection been canceled
+                if (audioInput.files.length !== 0) {
+                    //only process the first file
+                    that.file = audioInput.files[0];
+                    that.fileName = that.file.name;
+                    if (that.status === 1) {
+                        //the sound is still playing but we upload another file, so set the forceStop flag to true
+                        that.forceStop = true;
+                    };
+                    document.getElementById('fileWrapper').style.opacity = 1;
+                    that._updateInfo('Uploading', true);
+                    //once the file is ready,start the visualizer
+                    that._start();
+                };
+            };
+            //listen the drag & drop
+            dropContainer.addEventListener("dragenter", function() {
+                document.getElementById('fileWrapper').style.opacity = 1;
+                that._updateInfo('Drop it on the page', true);
+            }, false);
+            dropContainer.addEventListener("dragover", function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                //set the drop mode
+                e.dataTransfer.dropEffect = 'copy';
+            }, false);
+            dropContainer.addEventListener("dragleave", function() {
+                document.getElementById('fileWrapper').style.opacity = 0.2;
+                that._updateInfo(that.info, false);
+            }, false);
+            dropContainer.addEventListener("drop", function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                if (that.audioContext===null) {return;};
+                document.getElementById('fileWrapper').style.opacity = 1;
+                that._updateInfo('Uploading', true);
+                //get the dropped file
+                that.file = e.dataTransfer.files[0];
+                if (that.status === 1) {
+                    document.getElementById('fileWrapper').style.opacity = 1;
+                    that.forceStop = true;
+                };
+                that.fileName = that.file.name;
+                //once the file is ready,start the visualizer
+                that._start();
+            }, false);
+        },
+        // Create a new AudioBufferSourceNode
+        _initSource: function(buffer) {
+            this._micActive = false;
+            var audioBufferSouceNode = this.audioContext.createBufferSource();
+            if(this.analyser!=null)this.analyser.disconnect();
+            //if(this.analyser==null){
+                this.analyser = this.audioContext.createAnalyser();
+                //connect the analyser to the destination(the speaker), or we won't hear the sound
+                this.analyser.connect(this.audioContext.destination);
+            //}
+            var  that = this;
+            //connect the source to the analyser
+            audioBufferSouceNode.connect(this.analyser);
+
+            //then assign the buffer to the buffer source node
+            audioBufferSouceNode.buffer = buffer;
+            //play the source
+            if (!audioBufferSouceNode.start) {
+                audioBufferSouceNode.start = audioBufferSouceNode.noteOn //in old browsers use noteOn method
+                audioBufferSouceNode.stop = audioBufferSouceNode.noteOff //in old browsers use noteOn method
+            };
+            //stop the previous sound if any
+            if (this.animationId !== null) {
+                cancelAnimationFrame(this.animationId);
+                this.animationId=null;
+            }
+            if (this.source !== null) {
+                this.source.stop(0);
+            }
+            this.status = 1;
+            this.source = audioBufferSouceNode;
+            this._duration=buffer.duration;
+            initProgressBar();
+            audioBufferSouceNode.onended = function() {
+                that._audioEnd(that);
+            };
+            this._drawSpectrum(this.analyser);
+        },
+        _start: function() {
+            //read and decode the file into audio array buffer
+            var that = this,
+                file = this.file,
+                fr = new FileReader();
+            fr.onload = function(e) {
+                var fileResult = e.target.result;
+                var audioContext = that.audioContext;
+                if (audioContext === null) {
+                    return;
+                };
+                that._updateInfo('Decoding the audio', true);
+                audioContext.decodeAudioData(fileResult, function(buffer) {
+                    that._updateInfo('Decode succussfully,start the visualizer', true);
+                    that.audioBuffer=buffer;
+                    that._play();
+                    //that._visualize(audioContext);
+                    that.__duration=buffer.duration;
+                }, function(e) {
+                    that._updateInfo('!Fail to decode the file', false);
+                    console.log(e);
+                });
+            };
+            fr.onerror = function(e) {
+                that._updateInfo('!Fail to read the file', false);
+                console.log(e);
+            };
+            //assign the file to the reader
+            this._updateInfo('Starting read the file', true);
+            fr.readAsArrayBuffer(file);
+
+        },
+
+        _drawSpectrum: function(analyser) {
+
+            var that = this,
+                canvas = document.getElementById('canvas'),
+                cwidth = canvas.width,
+                cheight = canvas.height,
+                meterWidth = 17, //width of the meters in the spectrum
+                gap = 2, //gap between meters
+                capHeight = 2,
+                capStyle = 'rgb(237,70,47)',
+                meterNum = 800 / (10 + 2), //count of the meters
+                capYPositionArray = []; ////store the vertical position of hte caps for the preivous frame
+                ctx = canvas.getContext('2d'),
+                gradient = ctx.createLinearGradient(0, 120, 0, 350);
+            ctx.font="15px Arial";
+            gradient.addColorStop(1, '#0b0');
+            gradient.addColorStop(0.6, '#ff0');
+            gradient.addColorStop(0, capStyle);//'orange');//#f00');
+            var array = new Uint8Array(analyser.frequencyBinCount);
+
+            var drawMeter = function() {
+                //console.log("spectrum called");
+                analyser.getByteFrequencyData(array);
+
+                if (that.status === 0 && that._micActive ==false) {
+                    //fix when some sounds end the value still not back to zero
+                    for (var i = array.length - 1; i >= 0; i--) {
+                        array[i] = 0;
+                    };
+                    let allCapsReachBottom = true;
+                    for (var i = capYPositionArray.length - 1; i >= 0; i--) {
+                        allCapsReachBottom = allCapsReachBottom && (capYPositionArray[i] === 0);
+                    };
+                    if (allCapsReachBottom) {
+                        cancelAnimationFrame(that.animationId); //since the sound is top and animation finished, stop the requestAnimation to prevent potential memory leak,THIS IS VERY IMPORTANT!
+                        return;
+                    };
+                }else{
+                    calculatePercentPlayed();
+                }
+                var step = Math.round(array.length / meterNum); //sample limited data from the total array
+                ctx.fillStyle="black";
+                ctx.fillRect(0, 0, cwidth, cheight);
+
+                meterWidth = 18; //width of the meters in the spectrum
+                gap = 2;
+                ctx.lineWidth=meterWidth;
+                capHeight=5;
+                ctx.setLineDash([capHeight, 2]);
+
+                var delta=meterWidth+gap;
+                meterNum = Math.round(cwidth / (delta)); //count of the meters
+                ctx.strokeStyle="rgb(30,20,20)";
+
+                for (var i = 0; i < meterNum; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i * delta+meterWidth/2, cheight); //0639178
+                    ctx.lineTo(i * delta+meterWidth/2, 0);
+                    ctx.stroke();
+                }
+
+                //to find loudness
+                var total = 0
+                for (var i = 0; i < meterNum; i++) {
+                    var value = array[i * step];
+                    total+=value*value; //to find rms
+                    value=Math.round(value/capHeight)*capHeight;
+                    if (capYPositionArray.length < Math.round(meterNum)) {
+                        capYPositionArray.push(value);
+                    };
+
+                    ctx.fillStyle = gradient; //set the filllStyle to gradient for a better look
+                    ctx.strokeStyle=gradient;
+
+                    ctx.beginPath();
+                    ctx.moveTo(i * delta+meterWidth/2, cheight);
+                    ctx.lineTo(i * delta+meterWidth/2, cheight - value+capHeight );
+                    ctx.stroke();
+
+                    ctx.strokeStyle=ctx.fillStyle = capStyle;
+                    //draw the cap, with transition effect
+                    if (value < capYPositionArray[i]) {
+                        capYPositionArray[i]--;
+                        ctx.fillRect(i * delta, cheight - capYPositionArray[i]-capHeight, meterWidth, capHeight);
+
+                    } else {
+
+                        ctx.fillRect(i * delta, cheight - value-capHeight, meterWidth, capHeight);
+                        capYPositionArray[i] = value;
+                    };
+
+                    //ctx.fillRect(i * 12 /*meterWidth+gap*/ , cheight - value + capHeight, meterWidth, cheight); //the meter
+                }
+
+                var rms = Math.sqrt(total / meterNum);
+                var dB = 20 * ( Math.log(rms) / Math.log(10) );
+                dB = Math.max(dB, 0); // sanity check
+                ctx.fillStyle="white";
+                ctx.fillText(dB.toFixed(1)+'dB',5,15);
+
+                that.animationId = requestAnimationFrame(drawMeter);
+            }
+
+
+            this.animationId = requestAnimationFrame(drawMeter);
+        },
+        _audioEnd: function(instance) {
+            if (this.forceStop) {
+                this.forceStop = false;
+                this.status = 1;
+                return;
+            };
+            // If playback stopped because end of buffer was reached
+            if (this.status==1) this._playbackTime = 0;
+            this.status = 0;
+            var text = 'HTML5 Audio API showcase | An Audio Viusalizer';
+            document.getElementById('fileWrapper').style.opacity = 1;
+            document.getElementById('info').innerHTML = text;
+            instance.info = text;
+            document.getElementById('uploadedFile').value = '';
+
+        },
+        _updateInfo: function(text, processing) {
+            var infoBar = document.getElementById('info'),
+                dots = '...',
+                i = 0,
+                that = this;
+            infoBar.innerHTML = text + dots.substring(0, i++);
+            if (this.infoUpdateId !== null) {
+                clearTimeout(this.infoUpdateId);
+            };
+            if (processing) {
+                //animate dots at the end of the info text
+                var animateDot = function() {
+                    if (i > 3) {
+                        i = 0
+                    };
+                    infoBar.innerHTML = text + dots.substring(0, i++);
+                    that.infoUpdateId = setTimeout(animateDot, 250);
+                }
+                this.infoUpdateId = setTimeout(animateDot, 250);
+            };
+        },
+        // Play the currently loaded buffer
+       _play:function() {
+            console.log("Play");
+            if(this._micActive)toggleMicrophone();
+            if (this.status==1) return;
+
+            var offset = this._pausedAt;
+            this.forceStop = true;
+            var when = 0; // when to schedule playback, 0 is immediately
+            this._initSource(this.audioBuffer);
+            this.source.start(0, this._playbackTime);
+            this._startTimestamp = Date.now();
+            this.status = 1;
+            this._startedAt = this.audioContext.currentTime - offset;
+            this._pausedAt = 0;
+
+           this.info = 'Playing ' + this.fileName;
+           document.getElementById('fileWrapper').style.opacity = 0.2;
+           $(ui.play).classList.add('pause');
+           $(ui.percentage).style.width = '0';
+           $(ui.currentTime).innerHTML = '00:00';
+           this._updateInfo('Playing ' + this.fileName +"("+this._duration+")", false);
+
+       },
+
+        // Pause playback, keep track of where playback stopped
+        _pause:function() {
+            var elapsed = this.audioContext.currentTime - this._startedAt;
+            this._playbackTime=this._getCurrentTime();
+            this._stop(true);
+            this._pausedAt = elapsed;
+        },
+
+        // Stops or pauses playback and sets playbackTime accordingly
+        _stop:function(pause) {
+            //console.log("Stop");
+            this._updateInfo('Stopped ' + this.fileName, false);
+            if (this.status==0) return;
+
+             this.source.stop(0);
+             this.status = 0; // Set to flag to endOfPlayback callback that this was set manually
+            // If paused, calculate time where we stopped. Otherwise go back to beginning of playback (0).
+            //this._playbackTime = pause ? (Date.now() - this._startTimestamp)/1000 + this._playbackTime : 0;
+            this._pausedAt = 0;
+            this._startedAt = 0;
+            $(ui.play).classList.remove('pause');
+        },
+        // Seek to a specific playbackTime (seconds) in the audio buffer. Do not change
+        // playback state.
+        _seek:function(playbackTime) {
+            if (playbackTime === undefined){
+                //console.log("[ERROR] Seek time is gundefined.");
+                return;
+            }
+            if (playbackTime > this._duration) {
+                //console.log("[ERROR] Seek time is greater than duration of audio buffer.");
+                return;
+            }
+
+            if (this.status==1||true) {
+                if(this.status==1)this._stop(); // Stop any existing playback if there is any
+                this._playbackTime = playbackTime;
+                this._play(); // Resume playback at new time
+                //console.log("Playing Seeked to "+playbackTime);
+            } else {
+                this._playbackTime = playbackTime;
+                //console.log("paused Seeked to "+playbackTime);
+            }
+        },
+
+        _getCurrentTime:function() {
+            if(this._pausedAt||this.status==0) {
+                return this._playbackTime;
+            }
+          //  if(this._startedAt) {
+                return this.audioContext.currentTime - this._startedAt+this._playbackTime;
+           // }
+           // return 0;
+        },
+
+        _soundAllowed: function (stream) {
+            let that=visualizer;
+            console.log(that);
+            that._micActive = true;
+            AudioContext = window.AudioContext || window.webkitAudioContext;
+            let audioContent = new AudioContext();
+            that.audioContext=audioContent;
+            var audioStream = that.audioContext.createMediaStreamSource( stream );
+            if(that.analyser!=null)that.analyser.disconnect();
+            that.analyser = that.audioContext.createAnalyser();
+            //connect the analyser to the destination(the speaker), or we won't hear the sound
+            // that.analyser.connect(that.audioContext.destination);
+            //var fftSize = 1024;
+            //that.analyser.fftSize = fftSize;
+            audioStream.connect(that.analyser);
+            //stop the previous sound if any
+            if (that.animationId !== null) {
+                cancelAnimationFrame(that.animationId);
+                that.animationId=null;
+            }
+            that._drawSpectrum(that.analyser);
+            console.log("Mic activated "+that.analyser);
+
+            /*
+            var bufferLength = that.analyser.frequencyBinCount;
+            var frequencyArray = new Uint8Array(bufferLength);
+
+            visualizer.setAttribute('viewBox', '0 0 255 255');
+
+            for (var i = 0 ; i < 255; i++) {
+                path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('stroke-dasharray', '4,1');
+                mask.appendChild(path);
+            }
+            var doDraw = function () {
+                requestAnimationFrame(doDraw);
+                if (start) {
+                    that.analyser.getByteFrequencyData(frequencyArray);
+                    var adjustedLength;
+                    for (var i = 0 ; i < 255; i++) {
+                        adjustedLength = Math.floor(frequencyArray[i]) - (Math.floor(frequencyArray[i]) % 5);
+                        paths[i].setAttribute('d', 'M '+ (i) +',255 l 0,-' + adjustedLength);
+                    }
+                }
+                else {
+                    for (var i = 0 ; i < 255; i++) {
+                        paths[i].setAttribute('d', 'M '+ (i) +',255 l 0,-' + 0);
+                    }
+                }
+            }
+            var showVolume = function () {
+                setTimeout(showVolume, 500);
+                if (start) {
+                    that. analyser.getByteFrequencyData(frequencyArray);
+                    var total = 0
+                    for(var i = 0; i < 255; i++) {
+                        var x = frequencyArray[i];
+                        total += x * x;
+                    }
+                    var rms = Math.sqrt(total / bufferLength);
+                    var db = 20 * ( Math.log(rms) / Math.log(10) );
+                    db = Math.max(db, 0); // sanity check
+                    h.innerHTML = Math.floor(db) + " dB";
+
+                    if (db >= loud_volume_threshold) {
+                        seconds += 0.5;
+                        if (seconds >= 5) {
+                            hSub.innerHTML = "Youâ€™ve been in loud environment for<span> " + Math.floor(seconds) + " </span>seconds." ;
+                        }
+                    }
+                    else {
+                        seconds = 0;
+                        hSub.innerHTML = "";
+                    }
+                }
+                else {
+                    h.innerHTML = "";
+                    hSub.innerHTML = "";
+                }
+            }
+
+            doDraw();
+            showVolume();
+            */
+        },
+
+        _soundNotAllowed: function (error) {
+            this._micActive = false;
+            $('info').innerHTML="You must allow your microphone.";
+            console.log(error);
+        },
+
+        startMicroPhone:function(){
+            if(this.status==1)this._stop();
+            navigator.mediaDevices.getUserMedia({audio:true})
+                .then(this._soundAllowed)
+                .catch(this._soundNotAllowed);
+        },
+
+        stopMicroPhone:function(){
+            if(this._micActive = false)return;
+            this._micActive = false;
+            this._stop();
+           // if(this._pausedAt)this._play();
+        }
+
+    }
+
+
+
+    function $(id) {
+        return document.getElementById(id);
+    };
+
+    $(ui.seekObj).addEventListener('click', seek);
+    $(ui.play).addEventListener('click', togglePlay)
+    $(ui.mic).addEventListener('click', toggleMicrophone)
+    $(ui.mic).classList.add('pause');
+
+    function seek(e) {
+        if(visualizer.audioBuffer==null)return;
+        const percent = e.offsetX / this.offsetWidth;
+        let currentTime = percent *visualizer._duration;
+        visualizer._seek(currentTime);
+    }
+
+    function toggleMicrophone(){
+        if (visualizer._micActive){//visualizer.audioContext.state === 'running') {
+            visualizer.stopMicroPhone();
+            $(ui.mic).classList.add('pause');
+        } else {
+            visualizer.startMicroPhone();
+            $(ui.play).classList.remove('pause');
+            $(ui.mic).classList.remove('pause');
+        }
+    }
+
+    function togglePlay() {
+        if(visualizer.audioBuffer==null)return;
+        if (visualizer.status==1){//visualizer.audioContext.state === 'running') {
+            visualizer._pause();//.audioContext.suspend();
+            $(ui.mic).classList.add('pause');
+        } else {
+            visualizer._play();//visualizer.audioContext.resume();
+            $(ui.play).classList.add('pause');
+            $(ui.mic).classList.add('pause');
+        }
+    }
+    function calculatePercentPlayed() {
+        if(visualizer.audioBuffer==null)return;
+        let time=visualizer._getCurrentTime();
+        let percentage = 100*time/visualizer._duration;//(visualiser.audioContext.currentTime / visualiser.duration).toFixed(2) * 100;
+        $(ui.percentage).style.width = `${percentage}%`;
+        const currentTime = calculateCurrentValue(time);
+        //console.log("%="+percentage+" time="+time);
+        $(ui.currentTime).innerHTML = currentTime;
+
+    }
+
+    function calculateCurrentValue(currentTime) {
+        let currentMinute = Math.floor(currentTime / 60);
+        let currentSecondsLong = currentTime -currentMinute*60;
+        let currentSeconds = currentSecondsLong.toFixed();
+        if(currentMinute<10)currentMinute="0"+currentMinute;
+        if(currentSeconds<10)currentSeconds="0"+currentSeconds;
+        return currentMinute+":"+currentSeconds;
+    }
+
+    function initProgressBar() {
+        const currentTime = calculateCurrentValue(visualizer._playbackTime);
+        $(ui.currentTime).innerHTML = currentTime;
+
+        /*
+        media.onended = () => {
+            $(ui.play).classList.remove('pause');
+            $(ui.percentage).style.width = 0;
+            $(ui.currentTime).innerHTML = '00:00';
+        };
+        */
+
+        calculatePercentPlayed();
+    }
+
+</script>
+
+</body>
+</html>
