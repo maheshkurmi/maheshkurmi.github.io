@@ -41,6 +41,18 @@
             justify-content: space-between;
             align-items: center;
         }
+        .audio-player #oscModeIcon {
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            background: url('https://image.flaticon.com/icons/png/512/758/758884.png') no-repeat center;
+            background-size: contain;
+        }
+        .audio-player #oscModeIcon.pause {
+            background: url('https://image.flaticon.com/icons/png/512/3456/3456069.png') no-repeat center;
+            background-size: contain;
+        }
+
         .audio-player #radioIcon {
             width: 40px;
             height: 40px;
@@ -212,6 +224,8 @@
     <div class="audio-player">
         <div class="player-controls">
 
+        <div id="oscModeIcon"></div>
+
         <div id="radioIcon"></div>
 
         <button id="playAudio"></button>
@@ -230,6 +244,7 @@
         play: 'playAudio',
         audio: 'audio',
         mic:'radioIcon',
+        oscMode:'oscModeIcon',
         percentage: 'percentage',
         seekObj: 'seekObj',
         currentTime: 'currentTime'
@@ -278,6 +293,7 @@
                 this.allCapsReachBottom = false,
             this._startedAt = 0,
             this._pausedAt = 0,
+            this._spectrumMode=true,
             this._micActive=false,
             this._micActive=false
     };
@@ -375,11 +391,7 @@
                 audioBufferSouceNode.start = audioBufferSouceNode.noteOn //in old browsers use noteOn method
                 audioBufferSouceNode.stop = audioBufferSouceNode.noteOff //in old browsers use noteOn method
             };
-            //stop the previous sound if any
-            if (this.animationId !== null) {
-                cancelAnimationFrame(this.animationId);
-                this.animationId=null;
-            }
+
             if (this.source !== null) {
                 this.source.stop(0);
             }
@@ -390,7 +402,7 @@
             audioBufferSouceNode.onended = function() {
                 that._audioEnd(that);
             };
-            this._drawSpectrum(this.analyser);
+            this._startVisualisation();
         },
         _start: function() {
             //read and decode the file into audio array buffer
@@ -407,6 +419,7 @@
                 audioContext.decodeAudioData(fileResult, function(buffer) {
                     that._updateInfo('Decode succussfully,start the visualizer', true);
                     that.audioBuffer=buffer;
+                    that._stop();
                     that._play();
                     //that._visualize(audioContext);
                     that.__duration=buffer.duration;
@@ -425,7 +438,7 @@
 
         },
 
-        _drawSpectrum: function(analyser) {
+        _drawSpectrum: function(analyser,mode) {
 
             var that = this,
                 canvas = document.getElementById('canvas'),
@@ -445,8 +458,57 @@
             gradient.addColorStop(0, capStyle);//'orange');//#f00');
             var array = new Uint8Array(analyser.frequencyBinCount);
 
+            var drawOscilloscope=function() {
+                ctx.fillStyle="#111111";
+
+                ctx.setLineDash([0]);
+                analyser.getByteTimeDomainData(array);
+                ctx.fillRect(0,0,cwidth,cheight);
+                let backstrokeStyle = ctx.strokeStyle;
+                ctx.strokeStyle = "#232";
+                ctx.fillRect(0,0,cwidth,cheight);
+                ctx.beginPath();
+                for(let i=0; i<cwidth; i+=25){
+                    ctx.moveTo(i,0);
+                    ctx.lineTo(i,cheight);
+                }
+                for(let j=0; j<cheight; j+=25){
+                    ctx.moveTo(0,j);
+                    ctx.lineTo(cwidth,j);
+                }
+                ctx.stroke();
+                ctx.strokeStyle = backstrokeStyle;
+                ctx.strokeStyle = "#555555";
+                ctx.beginPath();
+                ctx.moveTo(0, cheight / 2);
+                ctx.lineTo(cwidth, cheight / 2);
+                //ctx.stroke();
+                ctx.strokeStyle = "#11ff11"; ;
+                ctx.lineWidth=1.5;
+                ctx.beginPath();
+
+                //to find loudness
+                var total = 0
+                for(let i=0; i < array.length; i++){
+                    //Returned value of array is in [0, 255] mapped to [-1,1] means 128 represents zero
+                    let x = i * (cwidth * 1.0 / array.length); // need to fix x
+                    let v = array[i] / 128.0;
+                    let f =  2*(array[i]-128) ;
+                    total+=(f*f); //to find rms
+                    let y = v * cheight / 2;
+                    if(i === 0) ctx.moveTo(x,y);
+                    else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+                var rms = Math.sqrt(total / array.length);
+                var dB = 20 * ( Math.log(rms) / Math.log(10) );
+                //dB = Math.max(dB, 0); // sanity check
+                ctx.fillStyle="white";
+                ctx.fillText(dB.toFixed(1)+'dB',5,15);
+                that.animationId = requestAnimationFrame(drawOscilloscope);
+            }
             var drawMeter = function() {
-                //console.log("spectrum called");
+                //Returned value of array is in [0, 255] mapped to [0,1]
                 analyser.getByteFrequencyData(array);
 
                 if (that.status === 0 && that._micActive ==false) {
@@ -529,8 +591,17 @@
             }
 
 
-            this.animationId = requestAnimationFrame(drawMeter);
+            this._spectrumMode?drawMeter():drawOscilloscope();
         },
+
+        _startVisualisation: function(){
+            if(!this._micActive && this.status==0)return;
+            if(this.animationId){
+                cancelAnimationFrame(this.animationId);
+            }
+            this._drawSpectrum(this.analyser);
+        },
+
         _audioEnd: function(instance) {
             if (this.forceStop) {
                 this.forceStop = false;
@@ -540,7 +611,7 @@
             // If playback stopped because end of buffer was reached
             if (this.status==1) this._playbackTime = 0;
             this.status = 0;
-            var text = 'HTML5 Audio API showcase | An Audio Viusalizer';
+            var text = 'HTML5 Audio API showcase | An Audio Visualizer';
             document.getElementById('fileWrapper').style.opacity = 1;
             document.getElementById('info').innerHTML = text;
             instance.info = text;
@@ -605,10 +676,10 @@
         _stop:function(pause) {
             //console.log("Stop");
             this._updateInfo('Stopped ' + this.fileName, false);
+            if(!pause)this._playbackTime=0;
             if (this.status==0) return;
-
-             this.source.stop(0);
-             this.status = 0; // Set to flag to endOfPlayback callback that this was set manually
+            this.source.stop(0);
+            this.status = 0; // Set to flag to endOfPlayback callback that this was set manually
             // If paused, calculate time where we stopped. Otherwise go back to beginning of playback (0).
             //this._playbackTime = pause ? (Date.now() - this._startTimestamp)/1000 + this._playbackTime : 0;
             this._pausedAt = 0;
@@ -664,12 +735,7 @@
             //that.analyser.fftSize = fftSize;
             audioStream.connect(that.analyser);
             //stop the previous sound if any
-            if (that.animationId !== null) {
-                cancelAnimationFrame(that.animationId);
-                that.animationId=null;
-            }
-            that._drawSpectrum(that.analyser);
-            console.log("Mic activated "+that.analyser);
+            that._startVisualisation();
 
             /*
             var bufferLength = that.analyser.frequencyBinCount;
@@ -764,25 +830,43 @@
 
     $(ui.seekObj).addEventListener('click', seek);
     $(ui.play).addEventListener('click', togglePlay)
-    $(ui.mic).addEventListener('click', toggleMicrophone)
+    $(ui.mic).addEventListener('click', toggleMicrophone);
+    $(ui.oscMode).addEventListener('click', toggleOscMode);
+    $(ui.oscMode).classList.remove('pause');
     $(ui.mic).classList.add('pause');
 
     function seek(e) {
         if(visualizer.audioBuffer==null)return;
-        const percent = e.offsetX / this.offsetWidth;
+        let percent = e.offsetX / this.offsetWidth;
         let currentTime = percent *visualizer._duration;
         visualizer._seek(currentTime);
+        percent*=100;
+        $(ui.percentage).style.width = `${percent}%`;
+
     }
 
     function toggleMicrophone(){
         if (visualizer._micActive){//visualizer.audioContext.state === 'running') {
             visualizer.stopMicroPhone();
             $(ui.mic).classList.add('pause');
+            calculatePercentPlayed();
         } else {
             visualizer.startMicroPhone();
             $(ui.play).classList.remove('pause');
             $(ui.mic).classList.remove('pause');
         }
+    }
+
+    function toggleOscMode(){
+        if(visualizer._spectrumMode){
+            visualizer._spectrumMode=false;
+            $(ui.oscMode).classList.add('pause');
+        }else{
+            visualizer._spectrumMode=true;
+            $(ui.oscMode).classList.remove('pause');
+        }
+        visualizer._startVisualisation();
+        calculatePercentPlayed();
     }
 
     function togglePlay() {
@@ -795,6 +879,7 @@
             $(ui.play).classList.add('pause');
             $(ui.mic).classList.add('pause');
         }
+        calculatePercentPlayed();
     }
     function calculatePercentPlayed() {
         if(visualizer.audioBuffer==null)return;
