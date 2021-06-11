@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+<head>
+    <title>Micrometer Simulator</title>
+    <meta name="keywords" content="screw gauge simulation physics measurement">
+    <meta name="author" content="Mahesh Kurmi">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            margin: 10px;
+        }
+
+        #container canvas{
+            position: relative;
+            touch-action: none;
+        }
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+            --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+            --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+            --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+            --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+            --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+            --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+            --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+            --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+            --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+            --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+            --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+            --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+            --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+            --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+            --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+            --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+            --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+            --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+            --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+        }
+
+    </style>
+    <script src="https://cdn.geogebra.org/apps/deployggb.js"></script>
+
+</head>
+
+<body>
+
+
+<div class="container">
+
+    <div id="ggbApplet">
+
+    </div>
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Scalar and Gradient Field</h3>
+                <p> Change the parameters a, b, step and length by using the sliders.
+                    Why does the gradient field not change when b is changed? <br>
+
+                    Explore the gradient field of other function, e. g. for
+                    f(x,y) = x*y ,   f(x,y) = sin(x) cos(y) ,  f(x,y) = 0.5*exp(x)*y   etc.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    document.querySelector(".trigger_popup_fricc").onclick=function(){
+        document.querySelector('.hover_bkgr_fricc').style.display = "block";
+    };
+    document.querySelector('.hover_bkgr_fricc').onclick =function(){
+        document.querySelector('.hover_bkgr_fricc').style.display = "none";
+    };
+    document.querySelector('.popupCloseButton').onclick=function(){
+        document.querySelector('.hover_bkgr_fricc').style.display = "none";
+    };
+    var parameters = {
+        "id": "ggbApplet",
+        "width":1280,
+        "height":620,
+        "showMenuBar":false,
+        "showAlgebraInput":true,
+        "showToolBar":false,
+        "customToolBar":"0 39 59 | 1 501 67 , 5 19 , 72 | 2 15 45 , 18 65 , 7 37 | 4 3 8 9 , 13 44 , 58 , 47 | 16 51 64 , 70 | 10 34 53 11 , 24  20 22 , 21 23 | 55 56 57 , 12 | 36 46 , 38 49 50 , 71 | 30 29 54 32 31 33 | 17 26 62 73 , 14 66 68 | 25 52 60 61 | 40 41 42 , 27 28 35 , 6",
+        "showToolBarHelp":true,
+        "showResetIcon":false,
+        "enableLabelDrags":false,
+        "enableShiftDragZoom":true,
+        "enableRightClick":false,
+        "errorDialogsActive":false,
+        "useBrowserForJS":false,
+        "allowStyleBar":false,
+        "preventFocus":false,
+        "showZoomButtons":true,
+        "capturingThreshold":3,
+// add code here to run when the applet starts
+        "appletOnLoad":function(api){ /* api.evalCommand('Segment((1,2),(3,4))');*/ },
+        "showFullscreenButton":true,
+        "scale":1,
+        "disableAutoScale":false,
+        "allowUpscale":false,
+        "clickToLoad":false,
+        "appName":"classic",
+        "showSuggestionButtons":true,
+        "buttonRounding":0.7,
+        "buttonShadows":false,
+        "language":"en",
+// use this instead of ggbBase64 to load a material from geogebra.org
+// "material_id":"RHYH3UQ8",
+// use this instead of ggbBase64 to load a .ggb file
+     "filename":"scalar_field.ggb",
+       // "ggbBase64":"UEsDBBQAAAAIAOBqy1LSgr7E4AQAAC0lAAAXAAAAZ2VvZ2VicmFfZGVmYXVsdHMyZC54bWztmt1u4jgUgK93niLK1e5FgQABWjUddUZabaVOZ7StVntrEhO8NXY2dkro08+xnR9ToC0pKqjDTZzj+Pc7x/axnfPP+Yw6DzgVhLPA9Vod18Es5BFhceBmcnIycj9ffDqPMY/xOEXOhKczJAPXVymrfCC1Bv2BikNJErghRUKQ0HUSiqTKErhz13FyQc4Yv0EzLBIU4ttwimfomodI6lKmUiZn7fZ8Pm+V9bV4GrehSNHORdSOY9mC0HWg0UwEbvFyBuUu5Z73dL5up+O1//12beo5IUxIxELsOtChCE9QRqWAV0zxDDPpyEWCAzfhhEnXoWiMaeD+UJLz+yTF+A/XKTIBp4578em3czHlc4eP/8MhxMk0g6KLfFpoqzTw+SunPHXSwAU8QBWe48Dt+j7AoskUqRidlKIFTp0HBPmLGJRJHurcOnaCqCiK1fV84xE2X/pFekZAOwDTERKDHjzXEQnGkX4z/YMXUMpC69cqL+Q8jYSTB+4NunGdRRE+mlAn0WRuyWNRZc+OlQtaROuWn7cLqK/DG+EEswgSLTH2GjEejDRkFQBlFRwhPwN5cIRcVvkUMgzybSl/ZzbbbiO2XhcmBuiSDo8ThUX3iv2NY2izzbh3ZLxTxssW3P8FlzmdxDAU6gneDJ8lFOc7BE8JqyFea6GC3n27b6HcsPdHDrU2RK5wGHhySsJ7hgU4d12rXPXyF4lg9VL16Tz4f7akJAI6IiGRz4OfZCxUvahgfs3SB5t+r9/ZB/+6zF3jX8sWxuQGtg4Hz5xI0JI3HD3PUuBYSRWX21KuTbmZC/ermTLPJFV1XTEJGyqgBG0TK525xzi5g8zf2V2KmFC7qmXb2aypFC2e05J/1NIhaKmcm9gDSiv2tp6a+TobV+MWKH7PytpiorZBvN0tOSiD3d4amxvRoNlg14azjl5reMBG9ADd4zWGfwqxXuyPrtZrZr41HjFKJRYEsZf2F3QRW2P4RylXGhgaDTRp1dZ7Pr+n9eYDxSc2XJR4iCasEC7tFhRDE1FDNG7We0A8UNPfzC/kTJ1Dl96+kSpy/Q82ATTaSJEYMzNTCjii7+haFhBA8kclqVP93NPyAgL4+qgCiNb5oakpyZ1Lk+PSJLzsmqBngr4J/ApJs92bVmYCc4/lzT6Z0vvNthyHPDl8ELW+gwfNshlOreF+U8qVefhmwEN5mX1S86rhXVrCZr0LSiIwkhkBNZyAwzRDsBQrj3ssOM0kXHjBPRKrL7yMYc5JJKfq3EcpxOhDPyckV8ZhEk15Sh45kxUIR5n4JdW3ZG82lqemqfr61pkXsZjWw+7SSLUizOG4TvT03Gydfmy00BBNdtDqjnreyO91ht7w1B8NXknaG+2G9KrNeEqH21rNVgrrFqWloXUGWU5IK1rsjIbdAVzMdv3T06E36A93vy/7s4qo9xiHeIKmdbySdIc7L8rDTNSHukaqmIDJfShPA2U5oQSli7eZ8wtMJc7rtf5OC9Yd/GEi3QBmcydBBXHd6CsjWdfgppsTAkQZ/DoB23ldEWFfUHgfpzxjhV3bK9FOoOzd9dkMbcw5xbD/LLv1pZSt69eVtX4TIBO/V7OBX1TC+zHPl9aiF+6QRD02rrVgXYuuGRuv7+XqMnayd1No5tisv61b63XYpNvW70Ht8l+ki59QSwMEFAAAAAgA4GrLUgY3iWBcAwAA+BAAABcAAABnZW9nZWJyYV9kZWZhdWx0czNkLnhtbO2YzW4TMRCAz/AUlu9ks5tsSqpuUQQHkAAV9cLV9U4Sw8be2k4221fjHXgmxj9NN/0JShW1qqCHjP9mbH8znrV78m69qMgKtBFKFjTt9SkByVUp5KygSzt985a+O319MgM1gwvNyFTpBbMFzd3IjR7WeqPhyLWxui4or5gxglNSV8w6lYI2lJC1EcdSfWULMDXjcM7nsGCfFWfWW5lbWx8nSdM0vev5ekrPEjRpkrUpk9nM9lBSgouWpqCxcIx2t7SbgdfL+v00+f7lc5jnjZDGMsmBEtxQCVO2rKzBIlSwAGmJbWvApSsp+ADnqNgFVAX9JC3uErhbIuFLvUL9qFzQQZr36enrVydcKV0aotYFRQaqDeIqiAbBIqzQtwp9q9DXhMYmNDa+MXEGzVw1RF38wIkLavUSZ40L8hU/Brvfq0ppogua5Tkl6LI0O6LkwltjVT1nWOqlYXjFWtBkxdBGnIQtreLegm+dsspE036uL6qE0DOM46VA5zsQxgK6GXdlaoDSlwI+nBd93vrw6doTEs5tWwGxc8F/SjDovqyj5AofRVmCi8KgA2IGcoUAlDYYO30/S4sCh1+5mgu3derrLQrsvXICm70+LlWLNZkEjUkYOMmCGAQxDCLfIIFLGdZp3G9Ba6YxXNEQd/0nSQyWO2HD1sIMPmycNInVTqT0Bz5S9nUsLg9R4u+2U1+oSx+mS2IZcM+/f+2G7Y8hZ9qCEUx2Dut713Gb++hf5/4wSLQvocPvzNe3+GESfRS/8dgDzFKUiNDLTUbKD4Ux5t2QRUMSjYl1Y3LK3McszrLJhfdBjOz2hqiqdg6lVvKGY6fpBuUgonzMydkXf5oPPP8cw+nW5yCie74Y3gvlRPO5WEAJbJtlmj3MEj+Fh2SZpbgf3MAwfFqduIHZD3/5eNQfjoYHC+wnYXvWYsoVePy7XHfE6MG5hhwxDlyzrSB90Vy1MIttqukTUh2FzBuojrH2AqlKsJt9fnXlbhrN/6fRnfAul6z0d6q4t2/X9S7EEJGPfWfcuRj1jg4WTY85JX97LNz7VHCN4T3QBnGFIhrc9/VAJqMgjoJ4G8T4wZeFWNSV4MLudqVZ6ik+le+77Mauba8On8urN4af5MLbVdp5V0s6L/3k+t8Kp38AUEsDBBQAAAAIAOBqy1JFzN5dGgAAABgAAAAWAAAAZ2VvZ2VicmFfamF2YXNjcmlwdC5qc0srzUsuyczPU0hPT/LP88zLLNHQVKiu5QIAUEsDBBQAAAAIAOBqy1Ix1iIghRUAAArTAAAMAAAAZ2VvZ2VicmEueG1s7V3dcuM2lr7OPAVKF1POri3z/ydjZ8pte5Ke6e6k0rNbW7u1tUVJtMxYEhWRsuWuXOztvse+z77DPsl8ByAlEaRI/VJSW0kcSBQIEOf7cHBwcABe/XnS77FnfxQF4eC6oTaVBvMH7bATDLrXjXH8cOE0/vz9H666ftj1WyOPPYSjvhdfN0zKOb0P35qWYdE1bzi8brR7XhQF7QYb9ryYbrluvDRY0LluWLbtGI5vXai+q18Ylv1w0XownYtOp+MqtqvarY7fYGwSBd8Nwk9e34+GXtv/3H70+96HsO3FvL7HOB5+d3n58vLSTJ+sGY66l6g8upxEnctut9VE2mBo3iC6biQfvkO5mbtfdH6fpijq5b99/CDquQgGUewN2ngQavo4+P4P31y9BINO+MJegk78CEEZBtr66AfdRwjDMrUGu6RcQ0hk6Lfj4NmPcO/cV976uD9s8GzegH7/RnxivWnDGqwTPAcdf4QqGiwcBf4gTn7Cd17FZXrz1XPgv4hS6BOvwFBcG7gEUdDq+deNB68XoRXB4GEEUU6/R/Frz295qCQejfF9Vr96zv9FluAL8hsKWilaDpAd5Vx1nXNbUc5NEz/Q48zVbaqQQhyGPV6ywn5nKjMV/DHVZefMsnFFY6rJDFxxcMVmOl0zVYPpjLKoOjMMpAZdVi36zcT9psJUFZeZpjBNY5rKNB1fTZOZFjNtulFDXsvlhSn4o9x4HPzpdE3X8cev6Qb+NPqEgkxRDB7C1C3+yaTcKN9ETb8zflF3mOGiIrpg2irT8Qz4bisMJaJgPChvhKEw+k9lBhWv2UxzGMpDu6lkBaJZHpXkggRLCoo5D4oKMOjPwh9HSwLFmYME+VR6XkUhcSHRGfudf6B2IzGSryR5JBwFBQIVVx36H2QMSVvMcviHDVulp23SV2kTJDGtVRB4eYJPa1RVe4UqjSyzQWQFFAHOCtjCE0IdcuE/Qcx0DfLlCScESZcnkDXlAVnoKwjDE5GHsx8JnnKDPpw20TKhC5Zt4UoEXSxVA7XHXuu6cfPhh/t3v9zkH0AzF6C6IZmmj0CqaaqzoKroP/6Xq1LfqNHr1GhliFR37aoGdbANGRvO0nVSLyvoOiKFOuJpPThcXaYj5lXyRCx6pLyJEon9PkwFKHYaSMTYhUEL2lsMYDZpzXQAw5jjMIvSZBSjMczJjGImjXHpUIZxzKKLGDdImTI+EIlhTTPSkQ2f+dhG4152bMNQZMxGIzwaFUXKPBmOULs2PyBp0NAas0kBYXQlZc00FKkxjGMW3bdgrILFFkbBVK6Pfg/WXIIAF2EwGI7jjNjafTJs+Mc4RG6vx+2xJH8nbD+9mwo6Kcn3IlhNs2Jh08wMJWHjZOyob656XsvvwSb9TCxg7NnrUffhNTyEg5ilDNDo2tUlt9mu/HG7F3QCb/CvgD01mD6N+y1/BLrhY0iN5IXQ7azYuDNdV+Rph+Go8/k1Ak3Y5N/9Ee7WVKWpq6pma7A2DI1sr9fkF91qGjCJVddVHd01INmo7RG/Xb2pU17VcUzL4JbBa+FPhuWIiv3nz34co/UR8yY+KJpIrjuiDjb35X30LuzNLg3DYBDfesN4POLmPLT0iNp0M+j2fC5JDjJs3vZTK5x85iLU8KRU1t9fh/iWyLjVvQ174Yih92mmiQxJCj1PKc9DjzbNBfkhD/6PHEkZVOj0d9VFs5GDp8hDKc8FkMWjJU3F84lmqkkx3iSIuGJB4RlScYqQBT0eBPGH9EsctJ9mTaUbBAFQNOdstswky+ZlXl1K5Lt68kcDvyd4NACY43AcCR6LuviDjCP/Zy9+vBl0fvG76IQ/e6QDYxQtss4eueO3gz5uFNcT4XkE7L/gUcXVjt8d+WkTRa8Uok26D4uGI9/rRI++D54n8hUsn8/Gm5M+/hUG957PtXs/gJK4AH59b8LtB/QM9H/eo66i9igYEmdZC5r6yZ+xshNEVMT0AuWGSCK0Df09HEC8MYkWU8lx/BiCLLjHi+kK9eme38eciMWcnoNx3x/RPDMB6jOmThGfYeHZx0kL9KSLAycWtn6FVpmOIeKumVTx8wIKM683fPTwqZlojJ73SmpkThHx0j6GnXnBoVqwABm5sNABuazAZea1orA3jjG1BUaD2dRWPFmiiWAuYubKjVVoCRSgwn54CCYkPZERAgq+gFBTdnA+3gi0M9ya9az4EQTGHJK6F43OSU/nH34MOh2fK/+EUWAZRyUFF6TxqXqy89IbMct/5RpmhuhlAhRBNgHN4A5AIYnAYRXi4nXjTDln7TA6+7//ZpeMY/ftt2mxXHmJ0SGLefLDtKgcttm+K4TiP5MNn8MYGpZApgQoU5LCvBrIvNNEhBSkAZyUJoyO+X8grS9TofIWkLbN8FNczXW8mRzbYb/vDTpswM2i22DU7vm89WJM9hQuWE+d1hOO4/SHtigsKSInU/S/uV7U3kim6QAheg7/tp5QCwmLflDGV4zZ/uAZjxxCZbIJWg7JvyJB9i/0jVxUE4iIcOKSYl8owWV+P8g+CibsRtx4I3LcaNBzStM23Mw/+EHnBd0YIjF5thzy4sF+G4i2cDv2ukHWTfAAoZeC/H5Auh/NkXAGVoTz5AYDVw7rd+LH23LIs93o3YF1I8jRsSxFg1tFh8PQ0B2YJdSxttCPyuRwe2By2KEYskz7Oey9dsOBxLMplZiHPiBGV5luQ9yJTkL5YPRTvhYS9Ax4Xz30DIjLQ894QGJdN7pIbLhgkTjXjQCJe934lW5HUU+Uopw7SlHQPaUo6S+UoqgfKEVZP1KKwt5TitL+SimK+1sV5UUbUyzFky9UNeTNLFE1i+2JdJZTrh8xa8jbFkn+5YiymNSR36Vv0yfy8rTezhOvxmtvPAl6gTd6zRm+8gCqNm1dU0zFUWzTchzbBhhgfNnIUAEXGNsjI2WqUmGP5A3wJ98f0sznp8HfR94goqWLrOW9vMxbBynzma07p2zVJiqD1PNaV4hdbWquq+iOqpiWbVlmMi89Chg6RwPDQhRgaRw5CMJOPQYQPnmfOAg8hdQpPR45P5zkXIucuyc51yLnx5Oca5FzcJJzLXL+9STnWuT8dJLzTuScdZbcbSRl4V9Pl5F2KWOjiQU9x9UU14FzztIs/4KCDfg0E7Uv9KQkC1sbOZTuD8KhtAkRd+Bl+8tJKHmh/HASSl4oP56EkhfK+5NQ8kL560koeaH87a0KJbu48UuIIGp5rZQvMmAN+kJj/8TmVqDFGgZfPcusc9yIwIYlF9SQexPRLwg+2LrctabpwsduaaqqI0xaNXe1vnQ7Hj37t94o9iPExEhQTM5uv2X/zM5aQILiAc4kSNgFiykygONFmaJgsDgT0AMOtAJFksOykZwzB22vYnWcnr09ffYUwN7+EV59krBYc8ixNL+EPdHCuVCaNKZl/6E0KEaE0phNG/tGLJ3makvF1PDYY5oVuGKpae8xNUpTUW0D2xLg5185uGYJRTe3QLu0suP3/NFDMOif1lhTTW7cyspqtkttsLS67srqjiR8WzmcZAWL/Mcrz4VjUXmc2DsIlQeKIQBhpagw3Hgkhs8u41zy8gRRuDzfqXy4PWfKqvF2KOJIJCubNruybAo1AnprmTqAFHP6IAldX1ofCCC2rA/2ZpRWEBeRs4K42trE1Y+FuEZT1xWoXEWFz1JTXbS9RuKCO2XETaqaJy6/tAJxBRBvhLiwLQVx9bWJaxwLcbH/G9oWG7w1y3BVxXJFPEtdzEU/KWNuKps55vJLKzBXIPFGmAvwBHONtZlrHgtz7abtGprmWLqhYL8X7daqkbjQEWXETZah5onLL61AXAHEGyEuwBPENdcmrnUsxHWbpmZpIK+hWprjaPXaCrS1o4S4Vp64/NIKxBVAvBHiYpItiGutTVz7WIirIpzVdGDoajAVXFtsb6uLt9AQZby187zll1bgrcDhjfAWPBG8tdfmrXM0vNWamSjsmplLTu4S5iYx4fPM5ZdWYK5A4o0wFx53wVxnbea6R8Nco2lrmqGrjmXouokFh1qZS00rYW5yxsI8c/mlFZgrkHgjzKVFJkFdd23qooxj4S4O0zANA44FW3VxPFK91IWWKKNuejJFZnEnqWj51R2Bxdtg7126rkMLEitxFnceCWX3uvxAAl7Ni3tXufyQgWGzVaC6olvMpupaqokjdeBNtyydzgKgoF9pIz+gqQWUCtd63kF5V+laz4Cy2QpHXaAU+9pw8pEOiHAGqO7YpmG5SZB2LcBUeI7zDri7Ss9xBpjNPPj7BQabgzHN0XXYi5ar27Zu1AhMhWc072C6q/SMZoDZzEFdFzB0yJir6YrhwAhSdTqha59qrMLrl/ee3FV6/TKgbOZ8rQ2UYkeA2lRVnGdIfi0Lh8KZlonuUrbJZJvIVPi18t6Bu0q/VgaZzbyLe0MGZh4pMrOJ04RVFSf16aqGq2qNiqzCb5Of/d5V+m0yyGzmP6sNGUDgQInZmuWoOEoaE6sCRZYeOrFzUCpcEgXzurtKn0QGlc18Q7Wh4jThE6IhHuM/P3YlPYLFtnScvoLTK3GGsansRpOJc8xuRuLQsbmjhxKjjFvNxSFTwyUONRsibHsWnLqVbaFf18FmFECd6X/oFXPnml0URCPRQWdJsfKxZkF/2AvaQbyz/ahLkicxHLllj0aK2W2GPL+tSp7fTuTJkUfXs+Sh6NV58hRFBB0BexILl08/iD15d8loVfaMTuzJsceSzlSUNE/BfPQIuJPY4HyWRNzJe3X4EXqrcEecaHvizjx3HLBjnjuS4imIi/kquHNfsWskTx7ccRDsWWiInmi1a1olk0/uHiBa5f2Z9xXe/wJaFawAnGi10MjWJEMJlsU8r/LRUEdAq2T6zH0bRKu8N/a+Yv2igFYFaxgnWi2kleVkaUXX52lV4KM8AmIl6+3cP0PEynuU7yvWXwqIVbAGcyLWImJpqqSvJF4VhBIdAa/4axeIWEQwIlbeIX5fsX5UQKyCNaQTsRYSy5IMLIlY+TifffKqKO5qGrqClzitHXh1NFEssm9YRFDUFcVSFXiVf8/FXXXgVTacaLMQuH256OlNm8BBw1W8KUp1bAdvusTwbtfroqfOwBUq16ykUfMLWfcVi78FGrVgAfikURe7YCUvmqRR8x340DTq7FCC9U8lQCHHolHdJt7vZjqG5th47afi1LqBQPTUMp2aXym5E3p2eZ16JEdfod84hqW4CDqDwWFq6bJndjUa8NSmTpMAQZKgUKcFS9D3FSEbBfq0IGzjpE8X6lO8hLHUVVPQfw9No05Py8C7Q9fWqEdzXoaGCEVTQaiCgjUiFf255lDrilhrCDKvUVeLtt5wdKtNoyKIF5rUMV282dd2HfQcHtkLN7qjwF0OOwSOKL3mOBLqDUKrJpEkyXiW1aoV4VYFWrUg5OqkVRdpVcNCmAkt/s9p0qJ+ewxeJEEn2rrC2ZTjEn/CVagk3u63dyYdFGEuNKyIZF6kKI3DRQenHQ57FhwKVmV85xXTbbXxLe8k28lBgQexk2wpGVcNxwVHr1UPx7KMv97D15aSccVOpgKT51ZcW0XGb+qcMDqENrHZ1z8pDIUci80um4rCVqzNZq8icMFevGoCZ23249iNlwNCbJbAAG0jHgHeZfxhrqvWuI2Fev6q6NyKa6uol6/4MLdSHbHZeuV8GzaZtaz5XvmDfZlAJWcLNpFWczarUY5jG6ks/Xom+WnAP8eBT/Lzdt59xe6dgkl+wQ6e0yR/0ZwN27bzk/yCgf5wpmmL+ZRuAeDE4nzK27T3VYvNRdG4BQvOJ0bNGEW8ERmJUZTMyETJPj3tpcPqZovWb3FYLR/sKrfmnwS6rm5LtxlwJcd1W9FGgzV2Gpy2Gnydum2zBeS32BXLdVvlCRcnga6r29K9LlzJcd1WsNulyt9bpNtO+12OVbet9gKn9w//QW8+Y3/sxX9i8pvjztnZBf3KP0i//Wc60y97mdZ/rbiak711Kw6rCtaC+51AaAXc9VNykyLkwd8JV0HuWl+6NRVNAXZGHrsz/vNFDtdvywAtOHgCVa+4ZCRu2R+AubclLoHnPl6jljjms0haJUhKKJcimZ/C8yrXfc9deuMeUZVaf5i9NJVTAbJOCbIS6qXI5icwcxVviO/+UZYkcbB9NyOvArSxZWYx3BIVSuHO23S5+rcC+v6hl6Ry0B28Ev4Ca2oKv8yNUvzzW43pMVaMMBC37BFbucmH2q+TpS0JzDLzSka6FMz89l5e6bodOL1xn8CuYWzV32tTQRWBW2ZxyciXgpvfYjtX9YYQHwDQa9hfe+nBlaq5zBCT2VAKeH4HYO4BtgL7AYC/hlm2t15eRQCtzDST2VFKgII9S/QcK8bniFv2ie4altc+unYS+CChWWZpyVCXo1nszjLW7cPpjfv0hKxhdtXbb+925oq8Ww63zHLFHGLbcCT+///8Lxd2cbMWrXZwIHYcuWQ0DUPBKaeK62DrgaUlryDg4ZBlsY/JbHQrcWSLNfTu3JlJpWtTY6sEyTkqJb5IYtgnX+RXvIgNxNi5ktlAXH4w//a5s5hBu3OjZqrekEfbZZNsoEtskkRySGyyxUuu9GZmF5RCa3B1k2kf/tsPqxDow7boIpv0El2k5h4SXejU/CK6IJ6/Dr58qNnf+2F1LZPesiPPrEQVue375Ip0krIujhzBCzGy41RdVNmPhzipdm3ebJc9Od+vTJ8Dsoul16gZYmAympn9ubSlqkb2lHBoh47pTOUbMmnLfKowm2WpHBKfDGE4y4SqacpVBErNLvGPq5Do49YoU2Ebyy3eJ2Xkk2wTylw40hBWE2c+1u1D/7i6sklv2ZW3W2bLAdnGkr1jCycOXkYy/w9ZQbVwZU9O96TetYmzZfpUmMuyKA6IPmJHtMQeQ69L1VSu3OzS15+pfUMqbdlNuMiA3uswlT1tU03cx3S+f3ac2oYXJyt4WkyZSrG/tQ0b60tr7d0FM3FS2LmIOp9VtsaakRxxjnM2phHnVXsMpN54ppwzlfZ082h4ube0q8K7+caCKQqUfTu9IdzZJpG15L2rDcaF2wouFqAMtrWDB4h7ha05n3aNR6qEtrhth5Yic10LH5bpWmXnraw3ht2OR8/+LbbO+FHgDaTeE2NIioLBWZz2IHxvh5H4DnwBhCfw9YAvvZlQsbF6InezQUUno0doTx8hxU48zE6wxetkk/X/jdEt7G8YRRb3t8XcboVhz5+TQMglgNrGSZ1zzFgsl9k4t7l6+enhIfJj4p9OBzWQv9ouFUf70W8/tcIJewgmRPC5Qdcbcmh47tuwj+1akFnITQDQniXqWxIQSDOIUAjfV0Tfu37Y9Vsj7/t/AFBLAQIUABQAAAAIAOBqy1LSgr7E4AQAAC0lAAAXAAAAAAAAAAAAAAAAAAAAAABnZW9nZWJyYV9kZWZhdWx0czJkLnhtbFBLAQIUABQAAAAIAOBqy1IGN4lgXAMAAPgQAAAXAAAAAAAAAAAAAAAAABUFAABnZW9nZWJyYV9kZWZhdWx0czNkLnhtbFBLAQIUABQAAAAIAOBqy1JFzN5dGgAAABgAAAAWAAAAAAAAAAAAAAAAAKYIAABnZW9nZWJyYV9qYXZhc2NyaXB0LmpzUEsBAhQAFAAAAAgA4GrLUjHWIiCFFQAACtMAAAwAAAAAAAAAAAAAAAAA9AgAAGdlb2dlYnJhLnhtbFBLBQYAAAAABAAEAAgBAACjHgAAAAA=",
+    };
+    // is3D=is 3D applet using 3D view, AV=Algebra View, SV=Spreadsheet View, CV=CAS View, EV2=Graphics View 2, CP=Construction Protocol, PC=Probability Calculator DA=Data Analysis, FI=Function Inspector, macro=Macros
+    var views = {'is3D': 0,'AV': 0,'SV': 0,'CV': 0,'EV2': 0,'CP': 0,'PC': 0,'DA': 0,'FI': 0,'macro': 0};
+    var applet = new GGBApplet(parameters, '5.0', views);
+    window.onload = function() {applet.inject('ggbApplet')};
+    applet.setPreviewImage('data:image/gif;base64,R0lGODlhAQABAAAAADs=','https://www.geogebra.org/images/GeoGebra_loading.png','https://www.geogebra.org/images/applet_play.png');
+</script>
+
+</body>
+</html>
