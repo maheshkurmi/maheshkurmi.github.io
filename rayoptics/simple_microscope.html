@@ -30,7 +30,7 @@
     </style>
 </head>
 
-<body onload="draw();">
+<body onload="setup();">
 <div id="canvasdiv" class="container" align="center">
     <p>
     <h2>Simple Mircoscope</h2>
@@ -158,9 +158,13 @@
     var zoom=1;
     var candlewidth=12;
     var candleheight=60;
+    var bgColor = "rgb(0,64,84)";
+    var fgColor="white";//rgb(255,255,255)";
+    var infoColor="orange"
 
+    var itemsToLoad=6;
+    var itemsLoaded=0;
 
-    setup();
     function setup(){
         sliderA=document.getElementById("sldNear");//.getSlider("near");
         sliderB=document.getElementById("sldFar");
@@ -171,20 +175,27 @@
         chkPower=document.getElementById("chkPower");
 
         candle_img=new Image();
-        candle_img.src="lens_mirror_candle_0.png";
+        candle_img.src="img_Object.png";
+        candle_img.onload=load;
         candle_img_inv = new Image();
-        candle_img_inv.src="lens_mirror_candle_inv_0.png";
+        candle_img_inv.src="img_Object_inv.png";
+        candle_img_inv.onload=load;
         concave_img=new Image();
         concave_img.src="lens_concave.png";
+        concave_img.onload=load;
         convex_img=new Image()
         convex_img.src="lens_convex.png";
+        candle_img.onload=load;
         eye_img=new Image();
         eye_img.src="eye_anatomy.png";//seeing_the_light_eyeball.png";
+        eye_img.onload=load;
         Img_candle_img0=new Image();
-        Img_candle_img0.src= "lens_mirror_candle_image_0.png";
+        Img_candle_img0.src= "img_Virtual.png";
+        Img_candle_img0.onload=load;
         Img_candle_img1=new Image();
-        Img_candle_img1.src="lens_mirror_candle_image_1.png";
-        Img_candle_img1.onLoad=draw;
+        Img_candle_img1.src="img_Virtual_inv.png";
+        Img_candle_img1.onload=load;
+
         //sliderA.setValue(25);
         //sliderB.setValue(101);
         //sliderC.setValue(0);
@@ -200,6 +211,13 @@
         draw();
         //App.clearAllTimers();
         //App.setInterval(draw, 1000/20);
+    }
+
+    function load(){
+        itemsLoaded++;
+        if(itemsLoaded==itemsToLoad){
+            draw();
+        }
     }
 
     /**
@@ -227,6 +245,16 @@
     }
 
     function draw(){
+
+        ctx.fillStyle=bgColor;
+        ctx.strokeStyle=infoColor;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        if(itemsLoaded<itemsToLoad){
+            ctx.font = "30px Arial";
+            ctx.fillStyle=fgColor;
+            outString(canvas.width/2,canvas.height/2,"Loading ..."+(itemsLoaded*100/itemsToLoad).toFixed(0)+"%",1,1);
+            return;
+        }
         NP=sliderA.value*1;
         sliderB.min=(NP);
         FP=sliderB.value*1;
@@ -239,9 +267,6 @@
 
 
         fLens=sliderC.value*1;
-
-        ctx.fillStyle=Color(255, 255, 191);
-        ctx.fillRect(0,0,width,height);
         ctx.save();
         ctx.scale(zoom,zoom);
         ctx.translate(offsetX,offsetY);
@@ -282,10 +307,11 @@
         retinaX=1250;
         axisY=250;
         ctx.save();
-
-        ctx.strokeStyle=Color(128/255,128/255,128/255,0.5);
+        ctx.lineWidth=1.5;
+        ctx.strokeStyle=fgColor;//Color(128/255,128/255,128/255,0.5);
 
         //draw axis
+        ctx.beginPath();
         ctx.moveTo(-offsetX, axisY);
         ctx.lineTo(-offsetX+canvas.width, axisY);
         //ctx.moveTo(975-g*5, 245);
@@ -294,7 +320,7 @@
         //ctx.lineTo(eyeX-g*25, 255);
         ctx.stroke();
         ctx.restore()
-        ctx.fillStyle="black"
+        ctx.fillStyle=fgColor;
         ctx.font="20px Arial"
 
         //Draw eye begin
@@ -305,7 +331,7 @@
             ctx.drawImage(eye_img, lensX-100*scale, axisY-eye_img.height*scale/2, eye_img.width*scale, eye_img.height*scale);
             ctx.globalAlpha=1;
         }
-        ctx.strokeStyle="black";
+        ctx.strokeStyle=fgColor;
         ctx.beginPath();
         ctx.arc(1100,axisY,150,0,Math.PI*2)
         ctx.stroke();
@@ -324,6 +350,7 @@
             //ctx.drawImage(convex_img, 915, 150, 20, 200)'
             drawlens(lensX, axisY,200+fLens*2);
         }
+        ctx.fillStyle=fgColor;
         //Assume lensX and eyeX coincide since we have already drawn lens
         lensX=eyeX;
         //draw object candle and displace its info
@@ -334,8 +361,8 @@
         //display near point and farpoint
         NPx=eyeX-NP*g;
         FPx=eyeX-FP*g;
-        ctx.strokeStyle=Color(128,128,128);
-        ctx.fillStyle=Color(0,155,0);
+        ctx.strokeStyle=fgColor;//Color(128,128,128);
+        ctx.fillStyle=fgColor;
         ctx.moveTo(NPx,axisY)
         ctx.arc(NPx, axisY, 10, 0, 2*PI);
         ctx.fillText("NP="+getValueToDisplay(NP), NPx, axisY+50);
@@ -348,7 +375,7 @@
             ctx.fillText("FP=" + getValueToDisplay(FP), -offsetX+10, axisY+180);
         }
         ctx.textAlign="center";
-        ctx.fillStyle="black";
+        ctx.fillStyle=fgColor;
         ctx.stroke();
 
         //find location of image wrt lens
@@ -381,7 +408,7 @@
         fEye=100/P;
 
         ctx.textAlign="left";
-        ctx.fillText("fe="+getValueToDisplay(fEye,2), eyeX+10, axisY-70);
+        ctx.fillText("fe="+getValueToDisplay(fEye,2), eyeX+25, axisY-70);
         ctx.textAlign="center"
         ctx.fillText("v="+getValueToDisplay(2), (eyeX+retinaX)/2, axisY+70);
 
@@ -392,7 +419,7 @@
         var x2=975;
         var y2=m2*x2-m2*lensX+axisY;
 
-        ctx.strokeStyle=Color(0,150,150);
+        ctx.strokeStyle="yellow";//Color(50,180,180);
         ctx.lineWidth=2;
         ctx.beginPath();
 
@@ -404,7 +431,7 @@
         ctx.lineTo(x1, y1);
         ctx.stroke();
         //Draw virtual rays
-        ctx.strokeStyle=Color(0,0,255);
+        ctx.strokeStyle=infoColor;
         if(chkVirtual.checked && fLens>0){
             var x3=lensX;
             var y3=objectY;
@@ -437,7 +464,7 @@
             }
             ctx.stroke();
             if(virtualX>lensX){
-                ctx.strokeStyle=Color(0,0,255);
+                ctx.strokeStyle=infoColor;
                 ctx.beginPath();
                 var x3=x1;
                 var y3=y1;
@@ -508,7 +535,7 @@
 
         if(virtualX<=NPx&&virtualX>=FPx) {
             ctx.drawImage(candle_img_inv, retinaX-l*candlewidth/2, c[1]-l*candleheight, candlewidth * l, candleheight * l);
-            ctx.strokeStyle=Color(0,150,150);
+            ctx.strokeStyle="yellow";//Color(0,150,150);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(c[0],c[1]);//retinaX - 10 * l*(axisY-i[1])/20 + 10 * l, i[1]+(i[0]-i[1])*l);
@@ -528,7 +555,7 @@
 
             ctx.globalAlpha = 1;
 
-            ctx.strokeStyle=Color(0,150,150);
+            ctx.strokeStyle="yellow";//Color(50,180,180);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(retinaX, screeny1);
@@ -539,7 +566,7 @@
             let screeny1=y1+(retinaX-x1)*(c[1]-y1)/(c[0]-x1);//map(retinaX,x1,c[0],y1,c[1]);
             let screeny2=y2+(retinaX-x2)*(c[1]-y2)/(c[0]-x2);//map(retinaX,x2,c[0],y2,c[1]);
 
-            ctx.strokeStyle=Color(0,150,150);
+            ctx.strokeStyle="yellow";//Color(50,180,180);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(retinaX,screeny1);//2*x1-c[0], 2*y1-c[1]);//x5, y5);
@@ -584,14 +611,14 @@
 
         ctx.translate(-offsetX,-offsetY);
         ctx.textAlign="left";
-        ctx.strokeStyle = Color(0,150,150);
+        ctx.strokeStyle = "yellow";//Color(0,150,150);
         ctx.beginPath();
         ctx.moveTo(50, 30);
         ctx.lineTo(100, 30);
         ctx.stroke();
-        ctx.fillStyle=Color(0,150,150);
+        ctx.fillStyle=infoColor;
         ctx.fillText("Rays from candle", 120, 40);
-        ctx.strokeStyle = Color(0,0,255);
+        ctx.strokeStyle = infoColor;///Color(0,0,255);
         ctx.beginPath();
         for(var j=0;j<=50;j+=2){
             ctx.moveTo(50+j, 60);
@@ -599,7 +626,7 @@
             ctx.lineTo(50+j, 60);
         }
         ctx.stroke();
-        ctx.fillStyle=Color(0,0,255);
+        ctx.fillStyle=infoColor;
         ctx.fillText("Virtual Candle by Lens", 120, 70);
 
 
@@ -667,7 +694,7 @@
         let leftRadius=f;
         let rightRadius=f;
         let radius=80;
-        ctx.strokeStyle="darkgrey";
+        ctx.strokeStyle=fgColor;
         //Math.min(80,Math.abs(f));
         //y+=radius;
         let thickness=f<0?30:0;
@@ -700,7 +727,9 @@
             ctx.lineTo(x , y+ radius);
         }
         ctx.fillStyle="lightcyan";
+        ctx.globalAlpha=0.6;
         ctx.fill();
+        ctx.globalAlpha=1;
         ctx.stroke();
 
         ctx.beginPath();
@@ -722,17 +751,48 @@
         if(rightRadius<0){
             ctx.lineTo(x , y- radius);
         }
+        ctx.fillStyle="lightcyan";
+        ctx.globalAlpha=0.6;
         ctx.fill();
+        ctx.globalAlpha=1;
         ctx.stroke();
         ctx.textAlign="Center";
-        ctx.fillStyle="darkgreen";
-        ctx.fillText("f="+getValueToDisplay(fLens), x,y-radius-30);
+        ctx.fillStyle=infoColor;
+        ctx.fillText("f="+getValueToDisplay(fLens), x-20,y-radius-20);
     }
 
     function getValueToDisplay(v,n){
         if(n==undefined)n=1;
         return (v.toFixed(n)+"cm")+(chkPower.checked?" ["+((100/v).toFixed(n)+"D]"):"");
     }
+
+    function outString( x,y, s, x_align, y_align) {
+        var fm=ctx.measureText(s);
+        var h=10;//fm.height not supported in browsers
+        switch (y_align) {
+            case 0:
+                y += h;
+                break;
+            case 1:
+                y += h / 2;
+                break;
+            case 2:
+                break;
+        }
+        switch (x_align) {
+            case 0:
+                ctx.fillText(s, x+3, y);
+                break;
+            case 1:
+                ctx.fillText(s, x - fm.width/2, y);
+                break;
+            case 2:
+                ctx.fillText(s, x - fm.width / 2, y);
+                break;
+        }
+    }
+
+
 
 </script>
 </body>
