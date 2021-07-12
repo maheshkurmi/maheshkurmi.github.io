@@ -107,6 +107,41 @@
             background-color: coral;
         }
 
+
+        .knob {
+            border: 1px solid #444;
+            /* box-sizing: border-box; */
+            color: #444;
+            display: inline-block;
+            width: 44px;
+            height: 40px;
+            cursor: -webkit-grab;
+            opacity: 1;
+            margin-left: 10px;
+            border-radius: 100%;
+            background-color: white;
+            transition: background-color 100ms, opacity 200ms, transform 100ms;
+            position: relative;
+            /* overflow: hidden; */
+            /*box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2); */
+        }
+
+        .knob.is-active {
+            transform: scale(1.1);
+            cursor: -webkit-grabbing;
+        }
+
+        .knob .inner {
+            position: absolute;
+            top: -2%;
+            width: 8%;
+            left: 46%;
+            height: 52%;
+            display: block;
+            background-color: #444;
+            transform-origin: center 100%;
+            will-change: transform;
+        }
         #container canvas{
             position: relative;
             touch-action: none;
@@ -191,6 +226,7 @@
     </style>
 </head>
 <body align="center">
+<script src="knob.js"> </script>
 <div id="wrapper">
     <div id="fileWrapper" class="file_wrapper">
         <div id="info">
@@ -237,6 +273,8 @@
         </div>
 
         <p id="currentTime" style="color: black">00:00</p>
+
+        <div class="knob" id="knob-1"><div class="inner"></div></div>
     </div>
 
 <script type="text/javascript">
@@ -282,6 +320,7 @@
             this.analyser=null,
             this.audioBuffer=null,
             this.source = null, //the audio source
+            this.gainNode=null;
             this.info = document.getElementById('info').innerHTML, //this used to upgrade the UI information
             this.infoUpdateId = null, //to sotore the setTimeout ID and clear the interval
             this.animationId = null,
@@ -395,8 +434,16 @@
             if (this.source !== null) {
                 this.source.stop(0);
             }
-            this.status = 1;
             this.source = audioBufferSouceNode;
+            this.gainNode = this.audioContext.createGain();
+            this.gainNode.gain.value = 0.1; // 10 %
+            this.gainNode.connect(this.audioContext.destination)
+            console.log("Gain Node created "+this.gainNode);
+            // now instead of connecting to aCtx.destination, connect to the gainNode
+            this.source.connect(this.gainNode);
+
+            this.status = 1;
+
             this._duration=buffer.duration;
             initProgressBar();
             audioBufferSouceNode.onended = function() {
@@ -451,7 +498,7 @@
                 meterNum = 800 / (10 + 2), //count of the meters
                 capYPositionArray = []; ////store the vertical position of hte caps for the preivous frame
                 ctx = canvas.getContext('2d'),
-                gradient = ctx.createLinearGradient(0, 120, 0, 350);
+                gradient = ctx.createLinearGradient(0, 150, 0, 350);
             ctx.font="15px Arial";
             gradient.addColorStop(1, '#0b0');
             gradient.addColorStop(0.6, '#ff0');
@@ -834,6 +881,18 @@
     $(ui.oscMode).addEventListener('click', toggleOscMode);
     $(ui.oscMode).classList.remove('pause');
     $(ui.mic).classList.add('pause');
+    new Knob({
+        notches: 21,
+        selector: document.getElementById('knob-1')
+    }) .onChange(updateVolume);
+
+
+    function updateVolume(deg){
+        if(visualizer.audioBuffer==null)return;
+        let v=deg/100;
+        visualizer.gainNode.gain.value=v*v;
+        console.log(deg+"="+ visualizer.gainNode.gain.value);
+    }
 
     function seek(e) {
         if(visualizer.audioBuffer==null)return;
@@ -841,6 +900,8 @@
         let currentTime = percent *visualizer._duration;
         visualizer._seek(currentTime);
         percent*=100;
+        if(percent>100)percent=100;
+        if(percent<0)percent=0;
         $(ui.percentage).style.width = `${percent}%`;
 
     }

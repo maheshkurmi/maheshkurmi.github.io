@@ -1,0 +1,973 @@
+<!doctype html>
+<html>
+<head>
+    <title>Vernier Caliper Simulator</title>
+    <meta name="keywords" content="Spring Mass oscillations">
+    <meta name="author" content="Mahesh Kurmi">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            margin: 10px;
+        }
+        #container canvas{
+            position: relative;
+        }
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+            --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+            --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+            --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+            --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+            --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+            --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+            --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+            --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+            --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+            --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+            --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+            --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+            --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+            --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+            --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+            --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+            --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+            --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+            --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+        }
+
+    </style>
+    <script src="tweakpane3.js"></script>
+</head>
+
+<body>
+
+
+<div class="container">
+    <div id="gui" style="position: absolute">
+
+    </div>
+    <canvas id="myCanvas" style="border: 1px solid #c3c3c3;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Spring MassOscillations</h3>
+                <p>This HTML5 app demonstrates the variation of elongation, velocity, acceleration, force and energy during the oscillation of a
+                    <em class="Begriff">spring pendulum</em> (assumed with no friction).</p>
+
+                <p>The &quot;Reset&quot; button brings the body of pendulum to its initial position. You can start or stop and continue the simulation with
+                    the other button. If you choose the option <span class="nobr">&quot;Slow motion&quot;,</span> the movement will be ten times slower.
+                    The spring constant, the mass, the gravitational acceleration and the amplitude of the oscillation can be changed within certain limits.
+                    In order to select another physical size you have to click on the appropriate one of the five radio buttons.</p>
+
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type='text/javascript'>
+
+    var text01 = "Reset";
+    var text02 = ["Start", "Pause", "Resume"];
+    var text03 = "Slow motion";
+    var text04 = "Spring constant:";
+    var text05 = "Mass:";
+    var text06x = "Gravitational";                             // Zusätzliche Zeile!
+    var text06 = "acceleration:";
+    var text07 = "Amplitude:";
+    var text08 = "Elongation";
+    var text09 = "Velocity";
+    var text10 = "Acceleration";
+    var text11 = "Force";
+    var text12 = "Energy";
+
+    var author = "W. Fendt 1998";
+
+
+    // Symbole und Einheiten:
+
+    var decimalSeparator = ".";                                // Dezimaltrennzeichen (Punkt)
+    var newtonPerMeter = "N/m";                                // Newton pro Meter
+    var kilogram = "kg";                                       // Kilogramm
+    var meterPerSecond2 = "m/s&sup2;";                         // Meter durch Sekunde hoch 2
+    var meter = "m";                                           // Meter
+
+    // Texte in Unicode-Schreibweise:
+
+    var text13 = "Maximum";
+    var text14 = "Elongation";
+    var text15 = "Velocity";
+    var text16 = "Acceleration";
+    var text17 = "Force";
+    var text18 = "Potential energy";
+    var text19 = "Kinetic energy";
+    var text20 = "Total energy";
+    var text21 = "(in s)";
+    var text22 = "(in m)";
+    var text23 = "(in m/s)";
+    var text24 = "(in m/s\u00b2)";
+    var text25 = "(in N)";
+    var text26 = "(in J)";
+    var text27 = "Oscillation period";
+
+    // Symbole und Einheiten:
+
+    var symbolTime = "t";                                      // Symbol für Zeit
+    var symbolElongation = "s";                                // Symbol für Elongation
+    var symbolVelocity = "v";                                  // Symbol für Geschwindigkeit
+    var symbolAcceleration = "a";                              // Symbol für Beschleunigung
+    var symbolForce = "F";                                     // Symbol für Kraft
+    var symbolEnergy = "E";                                    // Symbol für Energie
+    var symbolPotential = "pot";                               // Symbol für potentiell
+    var symbolKinetic = "kin";                                 // Symbol für kinetisch
+    var second = "s";                                          // Sekunde
+    var meterUnicode = "m";                                    // Meter
+    var meterPerSecond = "m/s";                                // Meter pro Sekunde
+    var meterPerSecond2Unicode = "m/s\u00b2";                  // Meter durch Sekunde hoch 2
+    var newton = "N";                                          // Newton
+    var joule = "J";                                           // Joule
+
+
+
+    var colorBackground = "#ffff00";                           // Hintergrundfarbe
+    var colorClock1 = "#808080";                               // Farbe der Digitaluhr (außen)
+    var colorClock2 = "#000000";                               // Hintergrundfarbe der Anzeige
+    var colorClock3 = "#ff0000";                               // Farbe der Ziffern
+    var colorElongation = "#ff0000";                           // Farbe für Elongation
+    var colorVelocity = "#ff00ff";                             // Farbe für Geschwindigkeit
+    var colorAcceleration = "#0000ff";                         // Farbe für Beschleunigung
+    var colorForce = "#008020";                                // Farbe für Kraft
+    var colorBody = "#ffffff";                                 // Farbe des Pendelkörpers
+
+    // Sonstige Konstanten:
+
+    var FONT1 = "normal normal bold 12px sans-serif";          // Zeichensatz
+    var ax = 100, ay = 50;                                     // Position der Aufhängung (Pixel)
+    var py0 = 180;                                             // y-Koordinate der Gleichgewichtslage (Pixel)
+    var xD = 220, yD1 = py0, yD2 = 160;                        // Koordinaten für Diagramme (Pixel)
+    var tPix = 20;                                             // Umrechnungsfaktor (Pixel pro s)
+
+    // Attribute:
+
+    var canvas, ctx;                                           // Zeichenfläche, Grafikkontext
+    var width, height;                                         // Abmessungen der Zeichenfläche (Pixel)
+    var bu1, bu2;                                              // Schaltknöpfe (Reset, Start/Pause/Weiter)
+    var cbSlow;                                                // Optionsfeld Zeitlupe
+    var ipD, ipM, ipG, ipA;                                    // Eingabefelder
+    var rbY, rbV, rbA, rbF, rbE;                               // Radiobuttons
+    var on;                                                    // Flag für Bewegung
+    var slow;                                                  // Flag für Zeitlupe
+    var t0;                                                    // Anfangszeitpunkt
+    var t;                                                     // Aktuelle Zeit (s)
+    var tU;                                                    // Zeit für Diagramm-Ursprung (s)
+    var timer;                                                 // Timer für Animation
+    var D;                                                     // Federkonstante (N/m)
+    var m;                                                     // Masse (kg)
+    var g;                                                     // Fallbeschleunigung (m/s²)
+    var A;                                                     // Amplitude (m)
+    var omega;                                                 // Kreisfrequenz (1/s)
+    var T;                                                     // Schwingungsdauer (s)
+    var phi, sinPhi, cosPhi;                                   // Phase (Bogenmaß) und trigonometrische Werte
+    var yPix;                                                  // Umrechnungsfaktor (Pixel pro SI-Einheit)
+    var py;                                                    // y-Koordinate des Pendelkörpers (Pixel)
+    var nrSize;                                                // Nummer der dargestellten physikalischen Größe
+
+
+
+    function initUI(){
+        //create gui
+        const pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Vernier Settings"});
+
+
+        // var deviceFolder=pane.addFolder({title:"Device Settings",expanded:true});
+        pane.addInput(window, "mainScaleDivisions",{label:"MSD Count",min:20,max:100,step:10}).on('change',update);
+        var csController= tab.pages[0].addInput(window, "vernierScaleDivisions",{label:"VSD Count",min:5,max:25,step:5});
+        csController.on('change',update);
+        var zeController=tab.pages[0].addInput(window, "zeroError",{label:"Zero Error",min:-vernierScaleDivisions+1,max:vernierScaleDivisions-1,step:1});
+        zeController.on('change',update);
+        tab.pages[0].addInput(window, "drawSubDivision",{label:"Virtual Divisions"}).on('change',paint);
+
+        tab.pages[0].addInput(window, "displayInfo",{label:"Display values"}).on('change',paint);
+        tab.pages[0].addSeparator();
+        tab.pages[0].addInput(window, "bgColor",{label:"Background",picker: 'inline'}).on('change',paint);
+
+        console.log(csController);
+        // var problemFolder=pane.addFolder({title:"Problem Settings",expanded:false});
+
+        var problemFolder=tab.pages[1].addFolder({title:"Check to randomize"});
+        problemFolder.addInput(window,"randomZeroError",{label:"Zero Error"});
+        problemFolder.addInput(window,"randomMainScaleDivisions",{label:"MSD Count"});
+        problemFolder.addInput(window,"randomVernierScaleDivision",{label:"VSD Count"});
+        problemFolder.addInput(window,"randomObjectWidthPixel",{label:"Object Dimensions"});
+        pane.addButton({title:text01}).on('click',createProblem);
+
+
+    }
+    // Element der Schaltfläche (aus HTML-Datei):
+    // id ..... ID im HTML-Befehl
+    // text ... Text (optional)
+
+    function getElement (id, text) {
+        var e = document.getElementById(id);                     // Element
+        if (text) e.innerHTML = text;                            // Text festlegen, falls definiert
+        return e;                                                // Rückgabewert
+    }
+
+    // Start:
+
+    function start () {
+        canvas = getElement("cv");                               // Zeichenfläche
+        width = canvas.width; height = canvas.height;            // Abmessungen (Pixel)
+        ctx = canvas.getContext("2d");                           // Grafikkontext
+        bu1 = getElement("bu1",text01);                          // Resetknopf
+        bu2 = getElement("bu2",text02[0]);                       // Startknopf
+        bu2.state = 0;                                           // Anfangszustand (vor Start der Animation)
+        cbSlow = getElement("cbSlow");                           // Optionsfeld (Zeitlupe)
+        cbSlow.checked = false;                                  // Zeitlupe abgeschaltet
+        getElement("lbSlow",text03);                             // Erklärender Text (Zeitlupe)
+        getElement("ipDa",text04);                               // Erklärender Text (Federkonstante)
+        ipD = getElement("ipDb");                                // Eingabefeld (Federkonstante)
+        getElement("ipDc",newtonPerMeter);                       // Einheit (Federkonstante)
+        getElement("ipMa",text05);                               // Erklärender Text (Masse)
+        ipM = getElement("ipMb");                                // Eingabefeld (Masse)
+        getElement("ipMc",kilogram);                             // Einheit (Masse)
+        var ipgx = getElement("ipGx");                           // Zusätzliche Zeile (Fallbeschleunigung)
+        if (ipgx) ipgx.innerHTML = text06x;                      // Erklärender Text, 1. Zeile (Fallbeschleunigung)
+        getElement("ipGa",text06);                               // Erklärender Text, 2. Zeile (Fallbeschleunigung)
+        ipG = getElement("ipGb");                                // Eingabefeld (Fallbeschleunigung)
+        getElement("ipGc",meterPerSecond2);                      // Einheit (Fallbeschleunigung)
+        getElement("ipAa",text07);                               // Erklärender Text (Amplitude)
+        ipA = getElement("ipAb");                                // Eingabefeld (Amplitude)
+        getElement("ipAc",meter);                                // Einheit (Amplitude)
+        rbY = getElement("rbY");                                 // Radiobutton (Elongation)
+        getElement("lbY",text08);                                // Erklärender Text (Elongation)
+        rbY.checked = true;                                      // Radiobutton auswählen
+        rbV = getElement("rbV");                                 // Radiobutton (Geschwindigkeit)
+        getElement("lbV",text09);                                // Erklärender Text (Geschwindigkeit)
+        rbA = getElement("rbA");                                 // Radiobutton (Beschleunigung)
+        getElement("lbA",text10);                                // Erklärender Text (Beschleunigung)
+        rbF = getElement("rbF");                                 // Radiobutton (Kraft)
+        getElement("lbF",text11);                                // Erklärender Text (Kraft)
+        rbE = getElement("rbE");                                 // Radiobutton (Energie)
+        getElement("lbE",text12);                                // Erklärender Text (Energie)
+        getElement("author",author);                             // Autor
+
+        D = 20;                                                  // Anfangswert Federkonstante (N/m)
+        m = 5;                                                   // Anfangswert Masse (kg)
+        g = 9.81;                                                // Anfangswert Fallbeschleunigung (m/s²)
+        A = 0.05;                                                // Anfangswert Amplitude (m)
+
+        updateInput();                                           // Eingabefelder aktualisieren
+        calculation();                                           // Berechnungen (Seiteneffekt!)
+
+        on = false;                                              // Animation abgeschaltet
+        slow = false;                                            // Zeitlupe abgeschaltet
+        t = tU = 0;                                              // Aktuelle Zeit (s)
+
+        bu1.onclick = reactionReset;                             // Reaktion auf Resetknopf
+        bu2.onclick = reactionStart;                             // Reaktion auf Startknopf
+        cbSlow.onclick = reactionSlow;                           // Reaktion auf Optionsfeld Zeitlupe
+        ipD.onkeydown = reactionEnter;                           // Reaktion auf Enter-Taste (Eingabe Pendellänge)
+        ipM.onkeydown = reactionEnter;                           // Reaktion auf Enter-Taste (Eingabe Fallbeschleunigung)
+        ipG.onkeydown = reactionEnter;                           // Reaktion auf Enter-Taste (Eingabe Masse)
+        ipA.onkeydown = reactionEnter;                           // Reaktion auf Enter-Taste (Eingabe Amplitude)
+        rbY.onclick = reactionRadioButton;                       // Reaktion auf Radiobutton Elongation
+        rbV.onclick = reactionRadioButton;                       // Reaktion auf Radiobutton Geschwindigkeit
+        rbA.onclick = reactionRadioButton;                       // Reaktion auf Radiobutton Beschleunigung
+        rbF.onclick = reactionRadioButton;                       // Reaktion auf Radiobutton Kraft
+        rbE.onclick = reactionRadioButton;                       // Reaktion auf Radiobutton Energie
+        nrSize = 0;                                              // Elongation ausgewählt
+        paint();                                                 // Zeichnen
+
+    } // Ende der Methode start
+
+    // Zustandsfestlegung für Schaltknopf Start/Pause/Weiter:
+    // Seiteneffekt bu2.state
+
+    function setButton2State (st) {
+        bu2.state = st;                                          // Zustand speichern
+        bu2.innerHTML = text02[st];                              // Text aktualisieren
+    }
+
+    // Umschalten des Schaltknopfs Start/Pause/Weiter:
+    // Seiteneffekt bu2.state
+
+    function switchButton2 () {
+        var st = bu2.state;                                      // Momentaner Zustand
+        if (st == 0) st = 1;                                     // Falls Ausgangszustand, starten
+        else st = 3-st;                                          // Wechsel zwischen Animation und Unterbrechung
+        setButton2State(st);                                     // Neuen Zustand speichern, Text ändern
+    }
+
+    // Aktivierung bzw. Deaktivierung der Eingabefelder:
+    // p ... Flag für mögliche Eingabe
+
+    function enableInput (p) {
+        ipD.readOnly = !p;                                       // Eingabefeld für Federkonstante
+        ipM.readOnly = !p;                                       // Eingabefeld für Masse
+        ipG.readOnly = !p;                                       // Eingabefeld für Fallbeschleunigung
+        ipA.readOnly = !p;                                       // Eingabefeld für Amplitude
+    }
+
+    // Reaktion auf Resetknopf:
+    // Seiteneffekt bu2.state, on, timer , t, tU, slow, D, m, g, A, omega, T
+
+    function reactionReset () {
+        setButton2State(0);                                      // Zustand des Schaltknopfs Start/Pause/Weiter
+        enableInput(true);                                       // Eingabefelder aktivieren
+        stopAnimation();                                         // Animation stoppen
+        t = tU = 0;                                              // Zeitvariable zurücksetzen
+        on = false;                                              // Animation abgeschaltet
+        slow = cbSlow.checked;                                   // Flag für Zeitlupe
+        reaction();                                              // Eingegebene Werte übernehmen und rechnen
+        paint();                                                 // Neu zeichnen
+    }
+
+    // Reaktion auf den Schaltknopf Start/Pause/Weiter:
+    // Seiteneffekt t0, bu2.state, on, timer, slow, D, m, g, A, omega, T
+
+    function reactionStart () {
+        if (bu2.state != 1) t0 = new Date();                     // Falls Animation angeschaltet, neuer Anfangszeitpunkt
+        switchButton2();                                         // Zustand des Schaltknopfs ändern
+        enableInput(false);                                      // Eingabefelder deaktivieren
+        if (bu2.state == 1) startAnimation();                    // Entweder Animation starten bzw. fortsetzen ...
+        else stopAnimation();                                    // ... oder stoppen
+        slow = cbSlow.checked;                                   // Flag für Zeitlupe
+        reaction();                                              // Eingegebene Werte übernehmen und rechnen
+        paint();                                                 // Neu zeichnen
+    }
+
+    // Reaktion auf Optionsfeld Zeitlupe:
+    // Seiteneffekt slow
+
+    function reactionSlow () {
+        slow = cbSlow.checked;                                   // Flag setzen
+    }
+
+    // Hilfsroutine: Eingabe übernehmen und rechnen
+    // Seiteneffekt D, m, g, A, omega, T
+
+    function reaction () {
+        input();                                                 // Eingegebene Werte übernehmen (eventuell korrigiert)
+        calculation();                                           // Berechnungen
+    }
+
+    // Reaktion auf Tastendruck (nur auf Enter-Taste):
+    // Seiteneffekt D, m, g, A
+
+    function reactionEnter (e) {
+        if (e.key && String(e.key) == "Enter"                    // Falls Entertaste (Firefox/Internet Explorer) ...
+            || e.keyCode == 13)                                      // Falls Entertaste (Chrome) ...
+            reaction();                                            // ... Daten übernehmen und rechnen
+        paint();                                                 // Neu zeichnen
+    }
+
+    // Reaktion auf Radiobutton:
+    // Seiteneffekt nrSize
+
+    function reactionRadioButton () {
+        if (rbY.checked) nrSize = 0;                             // Entweder Elongation ...
+        else if (rbV.checked) nrSize = 1;                        // ... oder Geschwindigkeit ...
+        else if (rbA.checked) nrSize = 2;                        // ... oder Beschleunigung ...
+        else if (rbF.checked) nrSize = 3;                        // ... oder Kraft ...
+        else nrSize = 4;                                         // ... oder Energie auswählen
+        paint();                                                 // Neu zeichnen
+    }
+
+    // Animation starten oder fortsetzen:
+    // Seiteneffekt on, timer, t0
+
+    function startAnimation () {
+        on = true;                                               // Animation angeschaltet
+        timer = setInterval(paint,40);                           // Timer mit Intervall 0,040 s aktivieren
+        t0 = new Date();                                         // Neuer Anfangszeitpunkt
+    }
+
+    // Animation stoppen:
+    // Seiteneffekt on, timer
+
+    function stopAnimation () {
+        on = false;                                              // Animation abgeschaltet
+        clearInterval(timer);                                    // Timer deaktivieren
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    // Berechnungen:
+    // Seiteneffekt omega, T
+
+    function calculation () {
+        omega = Math.sqrt(D/m);                                  // Kreisfrequenz (1/s)
+        T = 2*Math.PI/omega;                                     // Schwingungsdauer (s)
+    }
+
+    // Umwandlung einer Zahl in eine Zeichenkette:
+    // n ..... Gegebene Zahl
+    // d ..... Zahl der Stellen
+    // fix ... Flag für Nachkommastellen (im Gegensatz zu gültigen Ziffern)
+
+    function ToString (n, d, fix) {
+        var s = (fix ? n.toFixed(d) : n.toPrecision(d));         // Zeichenkette mit Dezimalpunkt
+        return s.replace(".",decimalSeparator);                  // Eventuell Punkt durch Komma ersetzen
+    }
+
+    // Eingabe einer Zahl
+    // ef .... Eingabefeld
+    // d ..... Zahl der Stellen
+    // fix ... Flag für Nachkommastellen (im Gegensatz zu gültigen Ziffern)
+    // min ... Minimum des erlaubten Bereichs
+    // max ... Maximum des erlaubten Bereichs
+    // Rückgabewert: Zahl oder NaN
+
+    function inputNumber (ef, d, fix, min, max) {
+        var s = ef.value;                                        // Zeichenkette im Eingabefeld
+        s = s.replace(",",".");                                  // Eventuell Komma in Punkt umwandeln
+        var n = Number(s);                                       // Umwandlung in Zahl, falls möglich
+        if (isNaN(n)) n = 0;                                     // Sinnlose Eingaben als 0 interpretieren
+        if (n < min) n = min;                                    // Falls Zahl zu klein, korrigieren
+        if (n > max) n = max;                                    // Falls Zahl zu groß, korrigieren
+        ef.value = ToString(n,d,fix);                            // Eingabefeld eventuell korrigieren
+        return n;                                                // Rückgabewert
+    }
+
+    // Gesamte Eingabe:
+    // Seiteneffekt D, m, g, A
+
+    function input () {
+        D = inputNumber(ipD,3,false,5,50);                      // Federkonstante (N/m)
+        m = inputNumber(ipM,3,false,1,10);                      // Masse (kg)
+        g = inputNumber(ipG,3,false,1,100);                     // Masse (kg)
+        A = inputNumber(ipA,3,false,0.01,0.1);                  // Amplitude (m)
+    }
+
+    // Aktualisierung der Eingabefelder:
+
+    function updateInput () {
+        ipD.value = ToString(D,3,false);                         // Eingabefeld für Federkonstante (N/m)
+        ipM.value = ToString(m,3,false);                         // Eingabefeld für Masse (kg)
+        ipG.value = ToString(g,3,false);                         // Eingabefeld für Fallbeschleunigung (m/s²)
+        ipA.value = ToString(A,3,false);                         // Eingabefeld für Amplitude (m)
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    // Neuer Pfad mit Standardwerten:
+
+    function newPath () {
+        ctx.beginPath();                                         // Neuer Pfad
+        ctx.strokeStyle = "#000000";                             // Linienfarbe schwarz
+        ctx.lineWidth = 1;                                       // Liniendicke 1
+    }
+
+    // Linie zeichnen:
+    // x1, y1 ... Anfangspunkt
+    // x2, y2 ... Endpunkt
+    // c ........ Farbe (optional, Defaultwert schwarz)
+    // w ........ Liniendicke (optional, Defaultwert 1)
+
+    function line (x1, y1, x2, y2, c, w) {
+        newPath();                                               // Neuer Grafikpfad (Standardwerte)
+        if (c) ctx.strokeStyle = c;                              // Linienfarbe festlegen
+        if (w) ctx.lineWidth = w;                                // Liniendicke festlegen
+        ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);                    // Linie vorbereiten
+        ctx.stroke();                                            // Linie zeichnen
+    }
+
+    // Pfeil zeichnen:
+    // x1, y1 ... Anfangspunkt
+    // x2, y2 ... Endpunkt
+    // w ........ Liniendicke (optional)
+    // Zu beachten: Die Farbe wird durch ctx.strokeStyle bestimmt.
+
+    function arrow (x1, y1, x2, y2, w) {
+        if (!w) w = 1;                                           // Falls Liniendicke nicht definiert, Defaultwert
+        var dx = x2-x1, dy = y2-y1;                              // Vektorkoordinaten
+        var length = Math.sqrt(dx*dx+dy*dy);                     // Länge
+        if (length == 0) return;                                 // Abbruch, falls Länge 0
+        dx /= length; dy /= length;                              // Einheitsvektor
+        var s = 2.5*w+7.5;                                       // Länge der Pfeilspitze
+        var xSp = x2-s*dx, ySp = y2-s*dy;                        // Hilfspunkt für Pfeilspitze
+        var h = 0.5*w+3.5;                                       // Halbe Breite der Pfeilspitze
+        var xSp1 = xSp-h*dy, ySp1 = ySp+h*dx;                    // Ecke der Pfeilspitze
+        var xSp2 = xSp+h*dy, ySp2 = ySp-h*dx;                    // Ecke der Pfeilspitze
+        xSp = x2-0.6*s*dx; ySp = y2-0.6*s*dy;                    // Einspringende Ecke der Pfeilspitze
+        ctx.beginPath();                                         // Neuer Pfad
+        ctx.lineWidth = w;                                       // Liniendicke
+        ctx.moveTo(x1,y1);                                       // Anfangspunkt
+        if (length < 5) ctx.lineTo(x2,y2);                       // Falls kurzer Pfeil, weiter zum Endpunkt, ...
+        else ctx.lineTo(xSp,ySp);                                // ... sonst weiter zur einspringenden Ecke
+        ctx.stroke();                                            // Linie zeichnen
+        if (length < 5) return;                                  // Falls kurzer Pfeil, keine Spitze
+        ctx.beginPath();                                         // Neuer Pfad für Pfeilspitze
+        ctx.lineWidth = 1;                                       // Liniendicke zurücksetzen
+        ctx.fillStyle = ctx.strokeStyle;                         // Füllfarbe wie Linienfarbe
+        ctx.moveTo(xSp,ySp);                                     // Anfangspunkt (einspringende Ecke)
+        ctx.lineTo(xSp1,ySp1);                                   // Weiter zum Punkt auf einer Seite
+        ctx.lineTo(x2,y2);                                       // Weiter zur Spitze
+        ctx.lineTo(xSp2,ySp2);                                   // Weiter zum Punkt auf der anderen Seite
+        ctx.closePath();                                         // Zurück zum Anfangspunkt
+        ctx.fill();                                              // Pfeilspitze zeichnen
+    }
+
+    // Rechteck mit schwarzem Rand:
+    // (x,y) ... Koordinaten der Ecke links oben (Pixel)
+    // w ....... Breite (Pixel)
+    // h ....... Höhe (Pixel)
+    // c ....... Füllfarbe (optional)
+
+    function rectangle (x, y, w, h, c) {
+        if (c) ctx.fillStyle = c;                                // Füllfarbe
+        newPath();                                               // Neuer Pfad
+        ctx.fillRect(x,y,w,h);                                   // Rechteck ausfüllen
+        ctx.strokeRect(x,y,w,h);                                 // Rand zeichnen
+    }
+
+    // Kreisscheibe mit schwarzem Rand:
+    // (x,y) ... Mittelpunktskoordinaten (Pixel)
+    // r ....... Radius (Pixel)
+    // c ....... Füllfarbe (optional)
+
+    function circle (x, y, r, c) {
+        if (c) ctx.fillStyle = c;                                // Füllfarbe
+        newPath();                                               // Neuer Pfad
+        ctx.arc(x,y,r,0,2*Math.PI,true);                         // Kreis vorbereiten
+        ctx.fill();                                              // Kreis ausfüllen
+        ctx.stroke();                                            // Rand zeichnen
+    }
+
+    // Feder ohne Enden zeichnen (Näherung durch Polygonzug):
+
+    function spring () {
+        var per = (py-ay-25)/10.0;                               // Periode (Pixel)
+        var ampl = 10;                                           // Halbe Breite (Pixel)
+        var omega = 2*Math.PI/per;                               // Hilfsgröße
+        newPath();                                               // Neuer Grafikpfad (Standardwerte)
+        ctx.moveTo(ax,ay+10);                                    // Anfangspunkt (oben)
+        for (var y=ay+11; y<=py-15; y++) {                       // Für alle y-Koordinaten ...
+            var x = ax+ampl*Math.sin(omega*(y-ay-10));             // x-Koordinate berechnen
+            if (y > py-16) x = Math.max(x,ax);                     // x-Koordinate bei der letzten Teilstrecke korrigieren
+            ctx.lineTo(x,y);                                       // Teilstrecke vorbereiten
+        }
+        ctx.stroke();                                            // Polygonzug für Feder zeichnen
+    }
+
+    // Federpendel zeichnen:
+
+    function springpendulum () {
+        rectangle(ax-50,ay-5,100,5,"#000000");                   // Decke
+        line(ax,ay,ax,ay+10);                                    // Oberes Ende der Feder
+        spring();                                                // Feder (ohne Enden)
+        line(ax,py-15,ax,py-5);                                  // Unteres Ende der Feder
+        circle(ax,py,5,colorBody);                               // Pendelkörper
+        line(ax-40,py0,ax-20,py0);                               // Markierung für Gleichgewichtslage (links)
+        line(ax+20,py0,ax+40,py0);                               // Markierung für Gleichgewichtslage (rechts)
+    }
+
+    // Digitaluhr zeichnen:
+
+    function clock (x, y) {
+        rectangle(x-60,y-16,120,32,colorClock1);                 // Gehäuse
+        rectangle(x-50,y-10,100,20,colorClock2);                 // Hintergrund der Anzeige
+        ctx.fillStyle = "#ff0000";                               // Farbe für Ziffern
+        ctx.font = "normal normal bold 16px monospace";          // Zeichensatz
+        ctx.textAlign = "center";                                // Zentrierte Ausgabe
+        var n = Math.floor(t/1000);                              // Zahl der Zeitabschnitte zu je 1000 s
+        var s = (t-n*1000).toFixed(3)+" "+second;                // Zeitangabe (Einheit s, alle 1000 s Neuanfang)
+        s = s.replace(".",decimalSeparator);                     // Eventuell Punkt durch Komma ersetzen
+        while (s.length < 9) s = " "+s;                          // Eventuell Leerzeichen am Anfang ergänzen
+        ctx.fillText(s,x,y+5);                                   // Ausgabe der Zeit
+    }
+
+    // Text ausrichten (Zeichensatz FONT1):
+    // s ....... Zeichenkette
+    // t ....... Typ (0 für linksbündig, 1 für zentriert, 2 für rechtsbündig)
+    // (x,y) ... Position (Pixel)
+
+    function alignText (s, t, x, y) {
+        ctx.font = FONT1;                                        // Zeichensatz
+        if (t == 0) ctx.textAlign = "left";                      // Je nach Wert von t linksbündig ...
+        else if (t == 1) ctx.textAlign = "center";               // ... oder zentriert ...
+        else ctx.textAlign = "right";                            // ... oder rechtsbündig
+        ctx.fillText(s,x,y);                                     // Text ausgeben
+    }
+
+    // Waagrechte Achse (mit Beschriftung und Ticks) für Diagramm:
+    // (x,y) ... Ursprung (Pixel)
+
+    function horizontalAxis (x, y) {
+        ctx.strokeStyle = "#000000";                             // Linienfarbe schwarz
+        arrow(x-20,y,x+240,y);                                   // Pfeil zeichnen
+        alignText(symbolTime,1,x+230,y+15);                      // Beschriftung (t)
+        alignText(text21,1,x+230,y+27);                          // Beschriftung (in s)
+        var t0 = Math.ceil(tU);                                  // Zeit (s) für ersten Tick
+        var x0 = Math.round(x+tPix*(t0-tU));                     // x-Koordinate des ersten Ticks
+        for (i=0; i<=10; i++) {                                  // Für alle Ticks ...
+            var xs = x0+i*tPix;                                    // x-Koordinate berechnen
+            ctx.moveTo(xs,y-3); ctx.lineTo(xs,y+3);                // Tick vorbereiten
+            if (xs >= x+5 && xs <= x+215                           // Falls Tick nicht zu weit links oder zu weit rechts ...
+                && (t0+i <= 100 || (t0+i)%2 == 0))                     // und Zeit (s) kleiner als 100 oder geradzahlig ...
+                alignText(""+(t0+i),1,xs,y+13);                      // ... Tick beschriften
+        }
+        ctx.stroke();                                            // Ticks zeichnen
+    }
+
+    // Senkrechte Achse (mit Beschriftung und Ticks) für Diagramm:
+    // (x,y) ... Ursprung (Pixel)
+    // yLow .... Unteres Ende der Achse (Pixel)
+    // yHigh ... Oberes Ende der Achse (Pixel)
+    // maxSI ... Maximalwert (SI-Einheit)
+    // Seiteneffekt yPix
+
+    function verticalAxis (x, y, yLow, yHigh, maxSI) {
+        var pot10 = Math.pow(10,Math.floor(Math.log(maxSI)/Math.LN10));    // Nächstkleinere Zehnerpotenz zu maxSI
+        var q = maxSI/pot10;                                     // Verhältnis (zwischen 1 und 10)
+        var n;                                                   // Zahl der Ticks
+        if (q > 5) n = 10; else if (q > 2) n = 5; else n = 2;    // "Glatter" Wert für Zahl der Ticks
+        ctx.strokeStyle = "#000000";                             // Linienfarbe schwarz
+        arrow(x,yLow,x,yHigh);                                   // Pfeil zeichnen
+        var n0 = (nrSize<4 ? -n : 0);                            // Nummer des untersten Ticks
+        ctx.beginPath();                                         // Neuer Pfad
+        for (i=n0; i<=n; i++) {                                  // Für alle Ticks ...
+            var ys = y-i*100/n;                                    // y-Koordinate des Ticks
+            ctx.moveTo(x-3,ys); ctx.lineTo(x+3,ys);                // Tick vorbereiten
+            var s = Number(i*pot10).toPrecision(1);                // Zeichenkette für Beschriftung
+            if (Math.abs(i*pot10) >= 10)                           // Falls nötig ...
+                s = ""+Math.round(i*pot10);                          // ... Zehnerpotenzschreibweise verhindern
+            s = s.replace(".",decimalSeparator);                   // Eventuell Punkt in Komma verwandeln
+            if ((n < 10 || i%2 == 0) && i != 0)                    // Falls sinnvoll ...
+                alignText(s,2,x-3,ys+4);                             // ... Tick beschriften
+        }
+        ctx.stroke();                                            // Ticks zeichnen
+        yPix = 100/n/pot10;                                      // Umrechnungsfaktor aktualisieren
+    }
+
+    // Sinuskurve (Näherung durch Polygonzug):
+    // (x,y) ... Nullpunkt (Pixel)
+    // per ..... Periode (Pixel)
+    // ampl .... Amplitude (Pixel)
+    // xMin .... Minimaler x-Wert (Pixel)
+    // xMax .... Maximaler x-Wert (Pixel)
+
+    function sinus (x, y, per, ampl, xMin, xMax) {
+        var omega = 2*Math.PI/per;                               // Hilfsgröße
+        newPath();                                               // Neuer Pfad (Standardwerte)
+        var xx = xMin;                                           // x-Koordinate für linken Rand
+        ctx.moveTo(xx,y-ampl*Math.sin(omega*(xx-x)));            // Anfangspunkt
+        while (xx < xMax) {                                      // Solange rechter Rand noch nicht erreicht ...
+            xx++;                                                  // x-Koordinate erhöhen
+            ctx.lineTo(xx,y-ampl*Math.sin(omega*(xx-x)));          // Neue Teilstrecke vorbereiten
+        }
+        ctx.stroke();                                            // Polygonzug für Kurve zeichnen
+    }
+
+    // Diagramm zeichnen:
+
+    function diagram (type, x, y, yMax) {
+        horizontalAxis(x,y);                                     // Waagrechte Achse mit Beschriftung und Ticks
+        verticalAxis(x,y,y+120,y-135,yMax);                      // Senkrechte Achse mit Beschriftung und Ticks
+        sinus(x-type*T*5-tU*tPix,y,T*tPix,yMax*yPix,x,x+200);    // Sinuskurve
+    }
+
+    // Markierung in Diagramm für momentanen Wert:
+    // val ..... Zahlenwert (SI-Einheit)
+    // (x,y) ... Ursprung (Pixel)
+    // c ....... Farbe
+
+    function drawMomVal (val, x, y, c) {
+        x += (t-tU)*tPix; y -= val*yPix;                         // Mittelpunktskoordinaten (Pixel)
+        circle(x,y,2,c);                                         // Kleiner Kreis mit Rand
+    }
+
+    // Ausgabe eines Zahlenwerts:
+    // s ........ Bezeichnung der Größe
+    // v ........ Zahlenwert
+    // u ........ Einheit
+    // n ........ Zahl der gültigen Ziffern
+    // (x1,y) ... Position des Texts (Pixel)
+    // (x2,y) ... Position des Zahlenwerts (Pixel)
+
+    function writeValue (s, v, u, n, x1, x2, y) {
+        alignText(s+":",0,x1,y);                                 // Bezeichnung der Größe
+        s = v.toPrecision(n);                                    // Runden mit gewünschter Genauigkeit
+        s = s.replace(".",decimalSeparator);                     // Eventuell Komma statt Punkt
+        alignText(s+" "+u,0,x2,y);                               // Zahl mit Einheit
+    }
+
+    // Zeichnung zur Elongation:
+    // Diagramm zur Zeitabhängigkeit der Elongation, Linie für Elongation, Zahlenwerte
+
+    function drawElongation () {
+        var s = A*cosPhi;                                        // Momentaner Wert der Elongation (m)
+        diagram(1,xD,yD1,A);                                     // Diagramm zeichnen
+        alignText(symbolElongation,1,xD-25,yD1-130);             // Beschriftung (Symbol für Elongation)
+        alignText(text22,1,xD-25,yD1-118);                       // Beschriftung (Einheit m)
+        line(ax,py0,ax,py,colorElongation,3);                    // Dicke Linie zur Darstellung der Elongation
+        drawMomVal(s,xD,yD1,colorElongation);                    // Momentanen Wert im Diagramm markieren
+        ctx.fillStyle = colorElongation;                         // Farbe für Elongation (Zahlenwerte)
+        writeValue(text14,s,meterUnicode,3,xD,xD+200,height-50);         // Momentanen Wert angeben
+        writeValue("("+text13,A,meterUnicode+")",3,xD,xD+200,height-30); // Maximalen Wert angeben
+    }
+
+    // Zeichnung zur Geschwindigkeit:
+    // Diagramm zur Zeitabhängigkeit der Geschwindigkeit, Pfeil für Geschwindigkeitsvektor, Zahlenwerte
+
+    function drawVelocity () {
+        var vMax = A*omega;                                      // Maximaler Betrag der Geschwindigkeit (m/s)
+        var v = -vMax*sinPhi;                                    // Momentaner Wert der Geschwindigkeit (m/s)
+        diagram(2,xD,yD1,vMax);                                  // Diagramm zeichnen
+        alignText(symbolVelocity,1,xD-28,yD1-130);               // Beschriftung (Symbol für Geschwindigkeit)
+        alignText(text23,1,xD-28,yD1-118);                       // Beschriftung (Einheit m/s)
+        ctx.strokeStyle = colorVelocity;                         // Farbe für Geschwindigkeit
+        arrow(ax,py,ax,py-v*yPix,3);                             // Pfeil für Geschwindigkeitsvektor
+        drawMomVal(v,xD,yD1,colorVelocity);                      // Momentanen Wert im Diagramm markieren
+        var mps = meterPerSecond;                                // Abkürzung für Einheit m/s
+        writeValue(text15,v,mps,3,xD,xD+180,height-50);          // Momentanen Wert angeben
+        writeValue("("+text13,vMax,mps+")",3,xD,xD+180,height-30); // Maximalen Wert angeben
+    }
+
+    // Zeichnung zur Beschleunigung:
+    // Diagramm zur Zeitabhängigkeit der Beschleunigung, Pfeil für Beschleunigungsvektor, Zahlenwerte
+
+    function drawAcceleration () {
+        var aMax = A*omega*omega;                                // Maximaler Betrag der Beschleunigung (m/s²)
+        var a = -aMax*cosPhi;                                    // Momentaner Wert der Beschleunigung (m/s²)
+        diagram(3,xD,yD1,aMax);                                  // Diagramm zeichnen
+        alignText(symbolAcceleration,1,xD-28,yD1-130);           // Beschriftung (Symbol für Beschleunigung)
+        alignText(text24,1,xD-28,yD1-118);                       // Beschriftung (Einheit m/s²)
+        ctx.strokeStyle = colorAcceleration;                     // Farbe für Beschleunigung
+        arrow(ax,py,ax,py-a*yPix,3);                             // Pfeil für Beschleunigungsvektor
+        drawMomVal(a,xD,yD1,colorAcceleration);                  // Momentanen Wert im Diagramm markieren
+        var mps2 = meterPerSecond2Unicode;                       // Abkürzung für Einheit m/s²
+        writeValue(text16,a,mps2,3,xD,xD+180,height-50);         // Momentanen Wert angeben
+        writeValue("("+text13,aMax,mps2+")",3,xD,xD+180,height-30);  // Maximalen Wert angeben
+    }
+
+    // Zeichnung zur Kraft:
+    // Diagramm zur Zeitabhängigkeit der Kraft, Pfeil für Kraftvektor, Zahlenwerte
+
+    function drawForce () {
+        var fMax = m*A*omega*omega;                              // Maximaler Betrag der Kraft (N)
+        var f = -fMax*cosPhi;                                    // Momentaner Wert der Kraft (N)
+        diagram(3,xD,yD1,fMax);                                  // Diagramm zeichnen
+        alignText(symbolForce,1,xD-28,yD1-130);                  // Beschriftung (Symbol für Kraft)
+        alignText(text25,1,xD-28,yD1-118);                       // Beschriftung (Einheit N)
+        ctx.strokeStyle = colorForce;                            // Farbe für Kraft
+        arrow(ax,py,ax,py-f*yPix,3);                             // Pfeil für Kraftvektor
+        drawMomVal(f,xD,yD1,colorForce);                         // Momentanen Wert im Diagramm markieren
+        writeValue(text17,f,newton,3,xD,xD+180,height-50);       // Momentanen Wert angeben
+        writeValue("("+text13,fMax,newton+")",3,xD,xD+180,height-30); // Maximalen Wert angeben
+    }
+
+    // Diagramm zur Zeitabhängigkeit der potentiellen und kinetischen Energie:
+    // (x,y) ... Ursprung (Pixel)
+    // e ....... Gesamtenergie (J)
+
+    function diagramEnergy (x, y, e) {
+        horizontalAxis(x,y);                                     // Waagrechte Achse mit Beschriftung und Ticks
+        verticalAxis(x,y,y+20,y-125,e);                          // Senkrechte Achse mit Beschriftung und Ticks
+        var x1 = x+200;                                          // x-Koordinate für rechten Rand (Pixel)
+        var y1 = y-e*yPix;                                       // y-Koordinate für Gesamtenergie (Pixel)
+        ctx.beginPath();                                         // Neuer Pfad
+        ctx.moveTo(x,y1); ctx.lineTo(x1,y1);                     // Waagrechte Linie für Gesamtenergie vorbereiten
+        ctx.stroke();                                            // Linie zeichnen
+        var xx = x-tU*tPix;                                      // x-Koordinate des verschobenen Ursprungs (Pixel)
+        var per = T*10;                                          // Periode für Sinuskurven (Pixel)
+        var ampl = e*yPix/2;                                     // Amplitude für Sinuskurven (Pixel)
+        sinus(xx-T*2.5,y-ampl,per,ampl,x,x+200);                 // Sinuskurve für potentielle Energie
+        sinus(xx-T*7.5,y-ampl,per,ampl,x,x+200);                 // Sinuskurve für kinetische Energie
+    }
+
+    // Zentrierter Text mit Index:
+    // s1 ...... Normaler Text
+    // s2 ...... Index
+    // (x,y) ... Position
+
+    function centerTextIndex (s1, s2, x, y) {
+        var w1 = ctx.measureText(s1).width;                      // Breite von s1 (Pixel)
+        var w2 = ctx.measureText(s2).width;                      // Breite von s2 (Pixel)
+        var x0 = x-(w1+w2)/2;                                    // x-Koordinate der Mitte (Pixel)
+        alignText(s1,0,x0,y);                                    // Normalen Text ausgeben
+        alignText(s2,0,x0+w1+1,y+5);                             // Index ausgeben
+    }
+
+    // Zeichnung zur Energie:
+
+    function drawEnergy () {
+        var e = A*omega; e = m*e*e/2;                            // Gesamtenergie (J)
+        var part = cosPhi*cosPhi;                                // Bruchteil für potentielle Energie
+        var eP = e*part, eK = e-eP;                              // Potentielle und kinetische Energie (J)
+        diagramEnergy(xD,yD2,e);                                 // Diagramm zur Zeitabhängigkeit der beiden Energieformen
+        centerTextIndex(symbolEnergy,symbolPotential,xD-30,yD2-125); // Beschriftung links (potentielle Energie)
+        alignText(text26,1,xD-30,yD2-108);                       // Beschriftung links (Einheit J)
+        centerTextIndex(symbolEnergy,symbolKinetic,xD+30,yD2-125);   // Beschriftung rechts (kinetische Energie)
+        alignText(text26,1,xD+30,yD2-108);                       // Beschriftung rechts (Einheit J)
+        ctx.fillStyle = colorElongation;                         // Farbe für potentielle Energie (bzw. Elongation)
+        writeValue(text18,eP,joule,3,xD,xD+200,height-70);       // Momentaner Wert der potentiellen Energie
+        ctx.fillStyle = colorVelocity;                           // Farbe für kinetische Energie
+        writeValue(text19,eK,joule,3,xD,xD+200,height-50);       // Momentaner Wert der kinetischen Energie
+        ctx.fillStyle = "#000000";                               // Farbe für Gesamtenergie
+        writeValue(text20,e,joule,3,xD,xD+200,height-30);        // Wert der Gesamtenergie
+        var dy = part*100;                                       // Höhe des Rechtecks für potentielle Energie (Pixel)
+        rectangle(300,205,50,dy,colorElongation);                // Rechteck für potentielle Energie
+        if (part > 0.001 || on)                                  // Falls potentielle Energie nicht zu klein ...
+            alignText(text18,0,360,220);                           // ... Beschriftung potentielle Energie
+        rectangle(300,205+dy,50,100-dy,colorVelocity);           // Rechteck für kinetische Energie
+        if (part < 0.999 || on)                                  // Falls kinetische Energie nicht zu klein ...
+            alignText(text19,0,360,300);                           // ... Beschriftung potentielle Energie
+        drawMomVal(eP,xD,yD2,colorElongation);                   // Markierung für momentane potentielle Energie
+        drawMomVal(eK,xD,yD2,colorVelocity);                     // Markierung für momentane kinetische Energie
+    }
+
+    // Grafikausgabe:
+    // Seiteneffekt t, t0, tU, phi, sinPhi, cosPhi, py
+
+    function paint () {
+        ctx.fillStyle = colorBackground;                         // Hintergrundfarbe
+        ctx.fillRect(0,0,width,height);                          // Hintergrund ausfüllen
+        ctx.font = FONT1;                                        // Zeichensatz
+        if (on) {                                                // Falls Animation angeschaltet ...
+            var t1 = new Date();                                   // ... Aktuelle Zeit
+            var dt = (t1-t0)/1000;                                 // ... Länge des Zeitintervalls (s)
+            if (slow) dt /= 10;                                    // ... Falls Zeitlupe, Zeitintervall durch 10 dividieren
+            t += dt;                                               // ... Zeitvariable aktualisieren
+            t0 = t1;                                               // ... Neuer Anfangszeitpunkt
+            tU = (t<5 ? 0 : t-5);                                  // Zeit für Ursprung eines Diagramms
+        }
+        phi = omega*t;                                           // Phasenwinkel (Bogenmaß)
+        cosPhi = Math.cos(phi); sinPhi = Math.sin(phi);          // Trigonometrische Werte
+        py = py0-500*A*cosPhi;                                   // Position des Pendelkörpers (Pixel)
+        springpendulum();                                        // Federpendel zeichnen
+        clock(ax,340);                                           // Digitaluhr zeichnen
+        switch (nrSize) {                                        // Je nach betrachteter Größe
+            case 0: drawElongation(); break;                       // ... Zeichnung zur Elongation
+            case 1: drawVelocity(); break;                         // ... Zeichnung zur Geschwindigkeit
+            case 2: drawAcceleration(); break;                     // ... Zeichnung zur Beschleunigung
+            case 3: drawForce(); break;                            // ... Zeichnung zur Kraft
+            case 4: drawEnergy(); break;                           // ... Zeichnung zur Energie
+        }
+        var s = text27+":  "+T.toPrecision(3)+" "+second;        // Zeichenkette für Schwingungsdauer
+        s = s.replace(".",decimalSeparator);                     // Eventuell Komma statt Punkt
+        ctx.fillStyle = "#000000";                               // Farbe für Text
+        alignText(s,1,ax,height-30);                             // Zeichenkette für Schwingungsdauer ausgeben
+    }
+
+
+</script>
+</body>
+</html>
