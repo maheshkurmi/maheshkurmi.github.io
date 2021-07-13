@@ -241,23 +241,28 @@
     import { LineMaterial } from 'https://threejs.org/examples/jsm/lines/LineMaterial.js';
     import { LineGeometry } from 'https://threejs.org/examples/jsm/lines/LineGeometry.js';
     import { DragControls } from 'https://threejs.org/examples/jsm/controls/DragControls.js';
+    import gsap from "https://cdn.skypack.dev/gsap"
   // import { MeshLine, MeshLineMaterial, MeshLineRaycast } from 'three.meshline';
 
     //const loader = new THREE.TextureLoader();
     var renderer, scene, camera;
     var groundTex,earthTex,compassTex;
-    var equator,magnet,earth, compass,meridian, compassArrow,planeGM, planeMM, field
+    var equator,magnet,earth, compass,needle,arrowNS,location,magMeridian,geogMeridian,meridianfield, magCircle, geogCircle,compassArrow,planeGM, planeMM, field
     var bgColor=new THREE.Color("rgb(0,64,84)");
     var pane;
 
 
-    var resourcePaths=['checker.png','earth.jpg'];
+    var resourcePaths=['checker.png','earth.jpg','compass.png'];
     var resources=[];
     var loadedResources=0;
     var src0=new THREE.Vector3(0,0.05,0),src1=new THREE.Vector3(0,-0.05,0);
     var vField=new VectorField();
     var dragControls,orbitControls;
-    for(let i=0;i<2;i++){
+
+    var magColor="#ff0000"
+    var geogColor="#00ffaa"
+
+    for(let i=0;i<=2;i++){
         resources[i]= document.createElement('img');
         resources[i].src = 'resources/'+resourcePaths[i];
         resources[i].onload=load;
@@ -291,8 +296,11 @@
 
     var settings={
         intensity:0.2,
-        showEarth:true,
+        declination:11,
+        earthOpacity:0.7,
         showMeridian:true,
+        horizontalCompass:true,
+        isRunning:false
     }
 
     function BodyPhysics(mesh){
@@ -316,10 +324,15 @@
 
     function init() {
         pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Earth's Magnetic Field",expanded: true});
-        pane.addInput(settings, "intensity",{label:"Field Intensity",min:0,max:1,step:0.05}).on('change',updateField);
-        pane.addInput(settings, "showEarth",{label:"Show Earth"}).on('change',updateParams);
+        pane.addInput(settings, "intensity",{label:"Field Intensity",min:0,max:1,step:0.05}).on('change',updateParams);
+        pane.addInput(settings, "declination",{label:"Declination (degree)",min:-180,max:180,step:1}).on('change',updateParams);
+        pane.addInput(settings, "earthOpacity",{label:"Earth Opacity",min:0,max:1,step:0.01}).on('change',updateParams);
         pane.addInput(settings, "showMeridian",{label:"Show Meridian"}).on('change',updateParams);
-       // pane.addInput(settings, "isRunning",{label:"Run"}).on('change',updateParams);
+        pane.addInput(settings, "horizontalCompass",{label:"Horizontal Compass"}).on('change',updateParams);
+        pane.addInput(settings, "isRunning",{label:"Earth Rotation"}).on('change',updateParams);
+
+
+        // pane.addInput(settings, "isRunning",{label:"Run"}).on('change',updateParams);
        // pane.addButton({title:"Reset"}).on('click',reset);
 
         document.querySelector(".trigger_popup_fricc").onclick=function(){
@@ -335,6 +348,7 @@
 
         groundTex=loadTexture(0,true,3,3);
         earthTex=loadTexture(1);
+        compassTex=loadTexture(2);
 
         // renderer
         renderer = new THREE.WebGLRenderer({antialias :true});
@@ -352,7 +366,7 @@
 
         // camera
         camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 30 );
-        camera.position.set( 0, 2, 4 );
+        camera.position.set( 0, 0, 5 );
 
         // controls
         orbitControls = new OrbitControls( camera, renderer.domElement );
@@ -389,10 +403,6 @@
         scene.add(camera);
 
 
-
-        // Batterys
-
-
         const magnetGeom = new THREE.BoxGeometry(0.03,0.3,0.05);
         const magnetMat = new THREE.MeshPhongMaterial( {
            // map:batteryTex,
@@ -400,52 +410,67 @@
             //opacity: 0.5,
         } );
         magnet = new THREE.Mesh( magnetGeom, magnetMat );
-        magnet.physics=new BodyPhysics(magnet);
+        //magnet.physics=new BodyPhysics(magnet);
         magnet.castShadow=false;
-        scene.add( magnet );
+        magnet.rotation.set(0,0,settings.declination*Math.PI/180);
 
 
        // meridian=new THREE.Group();
 
 
-        meridian = new THREE.Group();// meridianGeom, meridianMat );
-        const arrowNS = new THREE.ArrowHelper( new THREE.Vector3(0,1,0), new THREE.Vector3(0,-1,0),2, '#ffffff',1.5*vField.arrowSize,vField.arrowSize);
+        magMeridian = new THREE.Group();// meridianGeom, meridianMat );
+        arrowNS = createArrow( new THREE.Vector3(0,-0.85,0),new THREE.Vector3(0,1,0),1.7, 0.01,magColor);//new THREE.ArrowHelper( new THREE.Vector3(0,1,0), new THREE.Vector3(0,-1,0),2, magColor,1.5*vField.arrowSize,vField.arrowSize);
         magnet.add(arrowNS);
 
-        let instance = new THREE.TextSprite({
-            alignment: 'center',
-            color: '#ffffff',
-            fontFamily: '"Times New Roman", Times, serif',
-            fontSize: 0.08,
-            fontStyle: 'italic',
-            text: "Magnetic Axis",
-        });
-        instance.position.set(0,1,0);
-        //instance.rotation.set(Math.PI/2,0,Math.PI/2);
-        magnet.add(meridian);
-        magnet.add(instance);
+        let MN_text = createText("M.N.",new THREE.Vector3(0,-0.05,0),0.06,magColor);
+        arrowNS.add(MN_text);
 
-        const compassGeom=new THREE.SphereGeometry(0.02,10,10);
+        let MS_text = createText("M.S.",new THREE.Vector3(0,1.75,0),0.06,magColor);
+        //instance.rotation.set(Math.PI/2,0,Math.PI/2);
+        arrowNS.add(MS_text);
+
+
+        let circleGeometry = new THREE.TorusGeometry( 0.498, 0.005, 10, 100 );
+        let circleMaterial = new THREE.MeshPhongMaterial( { color: magColor } );
+        magCircle = new THREE.Mesh( circleGeometry, circleMaterial );
+        magMeridian.add( magCircle );
+
+        magnet.add(magMeridian);
+        const compassGeom=new THREE.CylinderGeometry(0.1,0.1,0.01,30);
         const compassMat=new THREE.MeshPhongMaterial( {
-            // map:earthTex,
-            color: 0xff0000,
+            map:compassTex,
+            color: 0xbbbbbb,
             opacity: 1,
         } );
         compass = new THREE.Mesh( compassGeom, compassMat );
-        compass.position.set(1,0,0);
-        magnet.add(compass);
+        //compass.rotation.set(0,0,Math.PI/2);
+        compass.position.set(0,0,1);
 
 
+        needle=new THREE.CircleGeometry( 0.1, 18 );
+        const needleMat=new THREE.MeshPhongMaterial( {
+            map:compassTex,
+            color: 0xbbbbbb,
+            opacity: 1,
+            side: THREE.DoubleSide,
+        } );
+        needle = new THREE.Mesh( needle, needleMat );
+        needle.position.set(0.0,-0.011,0.0);
+        compass.rotation.set(0,0,-Math.PI/2);
+        //compass.add(needle);
 
         field = new THREE.Group();
         magnet.add(field);
+
+        meridianfield=new THREE.Group();
+        magnet.add(meridianfield);
         //field.castShadow=true;
 
         const axesHelper = new THREE.AxesHelper( 0.5 );
-        scene.add( axesHelper );
+       // scene.add( axesHelper );
 
 
-        const earthGeom = new THREE.SphereGeometry(0.5,20,20);
+        const earthGeom = new THREE.SphereGeometry(0.5,40,40);
         const earthMat = new THREE.MeshPhongMaterial( {
             map:earthTex,
             color: 0xffffff,
@@ -455,10 +480,37 @@
         } );
         earth = new THREE.Mesh( earthGeom, earthMat );
         earth.physics=new BodyPhysics(earth);
+        earth.physics.angularVelocity=new THREE.Vector3(0,0.1,0);
        // earth.renderOrder=1;
         // earth.castShadow=true;
-        scene.add( earth );
+        geogMeridian=new THREE.Group();
+        earth.add( magnet );
 
+        earth.add(geogMeridian);
+
+
+        const arrowGNS =  createArrow( new THREE.Vector3(0,-0.75,0),new THREE.Vector3(0,1,0),1.5, 0.012,geogColor);//geogColor,1.5*vField.arrowSize,vField.arrowSize);
+        earth.add(arrowGNS);
+        const arrowGEW =  createArrow( new THREE.Vector3(-0.75,0,0),new THREE.Vector3(1,0,0),1.5, 0.012,geogColor);//geogColor,1.5*vField.arrowSize,vField.arrowSize);
+        earth.add(arrowGEW);
+
+        let GN_text = createText("N",new THREE.Vector3(0,0.8,0),0.06,geogColor);
+        earth.add(GN_text);
+
+        let GS_text = createText("S",new THREE.Vector3(0,-0.8,0),0.06,geogColor);
+        earth.add(GS_text);
+
+        let GE_text = createText("E",new THREE.Vector3(0.8,0,0),0.06,geogColor);
+        earth.add(GE_text);
+
+        let GW_text = createText("W",new THREE.Vector3(-0.8,0,0),0.06,geogColor);
+        earth.add(GW_text);
+
+        circleMaterial = new THREE.MeshPhongMaterial( { color: geogColor } );
+        geogCircle = new THREE.Mesh( circleGeometry, circleMaterial );
+        geogMeridian.add( geogCircle );
+
+        scene.add( earth );
 
         //Ground
         const  equatorGeo = new THREE.PlaneGeometry(3, 3);
@@ -469,6 +521,18 @@
             specular:0x000000
             //side: THREE.DoubleSide,
         });
+
+        let locationGeom=new THREE.SphereGeometry(0.015,10,10);
+        let locationMat=new THREE.MeshPhongMaterial( {
+            // map:earthTex,
+            color: 0xffff00,
+            opacity: 1,
+        } );
+        location = new THREE.Mesh( locationGeom, locationMat );
+        location.position.set(0,0,1);
+        magnet.add(location);
+        magnet.add(compass);
+
         equatorMat.color.setRGB(1.5, 1.5, 1.5);
         equator = new THREE.Mesh(equatorGeo, equatorMat);
         equator.rotation.x=-Math.PI/2;
@@ -476,9 +540,9 @@
 
         renderer.sortObjects = true
        // renderer.depth=false;
-
-        let draggables=[compass];
+        let draggables=[location,compass];
         dragControls = new DragControls( draggables, camera, renderer.domElement );
+        //  dragControls.transformGroup=true;
         dragControls.addEventListener("hoveron", function () {
             orbitControls.enabled = false;
         });
@@ -516,74 +580,101 @@
         vField.arrowLoc=0;
         vField.useTube=true;
         vField.arrowColor="#ffff00";
-        let p=compass.position.clone();
-        meridian.clear(0);
-        compass.clear();
-
+        let p=location.position.clone();
+        p.setLength(settings.horizontalCompass?0.5: 0.6);
+        location.position.set(p.x,p.y,p.z);
+        compass.position.set(p.x,p.y,p.z);
+        //compass.clear();
+        meridianfield.clear();
         let q=p.clone().sub(src1);
         let normal=p.clone().sub(src0).cross(q);
         let th=normal.angleTo(new THREE.Vector3(0,0,1));
         //console.log(th);
         if(p.z>0)th=-th;
-        const meridianGeom=new THREE.PlaneGeometry(2.5,2.5);
-        const meridianMat=new THREE.MeshPhongMaterial( {
-            //map:earthTex,
-            color: 0xff00ff,
-            transparent:true,
-            depthWrite: true,
-            opacity: 0.4,
-            side:THREE.DoubleSide
-        } );
-        let plane = new THREE.Mesh(meridianGeom,meridianMat);
-        plane.rotation.set(0,th,0);
-        meridian.add(plane);
+        geogMeridian.rotation.set(0,th,0);
 
+       // p=magnet.worldToLocal(p);
+        q=p.clone().sub(src1);
+        normal=p.clone().sub(src0).cross(q);
+        th=normal.angleTo(new THREE.Vector3(0,0,1));
+        //console.log(th);
+        if(p.z>0)th=-th;
+        magMeridian.rotation.set(0,th,0);
+
+        /*
+        //Add field at compass location
+        p=compass.position.clone();
+        //p=magnet.worldToLocal(p);
         let f1=vField.createField(p,false);
         vField.arrowLoc=0.5;
         vField.step=0.01;
         vField.maxSteps=500;
         p=compass.position.clone();
-        //p.applyAxisAngle(new THREE.Vector3(0,1,0),-th);
-        let f2=vField.createField(p,true);
+         let f2=vField.createField(p,true);
+        meridianfield.add(f1);
+        meridianfield.add(f2);
+        */
 
-
-        meridian.add(f1);
-        meridian.add(f2);
 
         p=compass.position.clone();
+        //p=magnet.worldToLocal(p);
         let B=vField.fieldEvaluator(p);
         let dir=B.clone().normalize();
 
-        let arrowB = new THREE.ArrowHelper(dir, p,B.length(), vField.arrowColor,1.5*vField.arrowSize,vField.arrowSize);
-        meridian.add(arrowB);
         let Bv=B.clone().projectOnVector(p);
         let Bh=B.clone().sub(Bv);
-        //Add horizontal component
-        dir=Bh.clone().normalize();
-        const arrowBh = new THREE.ArrowHelper(dir, p,Bv.length(), '#ffffff',1.5*vField.arrowSize,vField.arrowSize);
-        meridian.add(arrowBh);
-        //Add vertical component
-        dir=Bv.clone().normalize();
-        const arrowBv = new THREE.ArrowHelper(dir, p,Bv.length(), '#ffffff',1.5*vField.arrowSize,vField.arrowSize);
-        meridian.add(arrowBv);
 
-        let instance = new THREE.TextSprite({
-            alignment: 'left',
-            color: '#24ff00',
-            fontFamily: '"Times New Roman", Times, serif',
-            fontSize: 0.08,
-            fontStyle: 'italic',
-            text: "Bnet",
-        });
-     //   arrowB.add(instance);
+        if(!settings.horizontalCompass){
+            //Add net Magnetic field vector
+            let arrowB = new THREE.ArrowHelper(dir, p,B.length(), vField.arrowColor,1.5*vField.arrowSize,vField.arrowSize);
+            arrowB.add(createText("B",new THREE.Vector3(0,B.length(),0),0.05))
+            meridianfield.add(arrowB);
+            //Add vertical component
+            dir=Bv.clone().normalize();
+            const arrowBv = new THREE.ArrowHelper(dir, p,Bv.length(), '#ffffff',1.5*vField.arrowSize,vField.arrowSize);
+            arrowBv.add(createText("Bv",new THREE.Vector3(0,Bv.length(),0),0.05))
+            meridianfield.add(arrowBv);
+            //Add horizontal component
+            dir=Bh.clone().normalize();
+            const arrowBh = new THREE.ArrowHelper(dir, p,Bh.length(), '#ffffff',1.5*vField.arrowSize,vField.arrowSize);
+            arrowBh.add(createText("Bh",new THREE.Vector3(0,Bh.length(),0),0.05))
+            meridianfield.add(arrowBh);
+        }
 
+        //Align compass
+        if(settings.horizontalCompass) {
+            Bh.applyQuaternion(magnet.quaternion);
+            Bh.applyQuaternion(earth.quaternion);
+            compass.up.set(Bh.x, Bh.y, Bh.z);
+            compass.lookAt(0, 0, 0);
+            //compass.quaternion.premultiply(magnet.quaternion);
+            compass.rotateOnAxis(new THREE.Vector3(0, 0, -1), Math.PI / 2);
+            compass.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+        }else{
+            Bh.applyQuaternion(magnet.quaternion);
+            Bh.applyQuaternion(earth.quaternion);
+            compass.up.set(Bh.x,Bh.y,Bh.z);
+            compass.lookAt(0,0,0);
+            //compass.rotation.set(0,th,0);
+            th=Math.atan2(Bv.length(),Bh.length());
+            if(Bv.dot(p)<0)th=-th;
+            compass.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+            compass.rotateOnAxis(new THREE.Vector3(0, 1, 0), th);
+            //compass.quaternion.premultiply(magnet.quaternion);
+        }
 
 
     }
 
     function updateParams(){
-       earth.visible=settings.showEarth;
-       meridian.visible=settings.showMeridian;
+       earth.material.opacity=settings.earthOpacity;
+       magMeridian.visible=settings.showMeridian;
+       geogMeridian.visible=settings.showMeridian;
+       arrowNS.visible=settings.showMeridian;;
+       magnet.rotation.set(0,0,settings.declination*Math.PI/180);
+       compass.clear();
+      // if(settings.showMeridian) compass.add(new THREE.AxesHelper( 0.2 ));
+
        updateField();
        updateMeridians();
     }
@@ -626,7 +717,7 @@
     }
 
     function updatePhysics(dt){
-        //wire.physics.update(dt);
+        earth.physics.update(dt);
     }
 
 
@@ -772,6 +863,42 @@
         }
     }
 
+    function createArrow(start,dir,length, thickness,color){
+        let cylinderGeom=new THREE.CylinderGeometry( thickness/2, thickness/2, length-thickness*2, 12 );
+        let headGeom =new THREE.ConeGeometry( thickness*1.5, thickness*4, 12 );
+        let material=new THREE.MeshPhongMaterial( {
+            color: color,
+        } );
+        let cylinder=new THREE.Mesh( cylinderGeom, material );
+        cylinder.position.set(0,length/2-thickness,0);
+        let head=new THREE.Mesh( headGeom, material );
+
+        head.position.set(0,length-thickness*2,0);
+        let arrow=new THREE.Group();
+        arrow.add(cylinder);
+        arrow.add(head);
+        var axis = new THREE.Vector3(0, 1, 0);
+        arrow.quaternion.setFromUnitVectors(axis, dir.clone().normalize());
+        arrow.position.set(start.x,start.y,start.z);
+        return arrow;
+    }
+
+
+    function createText(text,pos,size, color){
+        if(!color)color="#ffffff";
+        if(!size)size=0.1;
+
+        let textSprite = new THREE.TextSprite({
+            alignment: 'center',
+            color: color,
+            fontFamily: 'Arial, Times, serif',
+            fontSize: size,
+            fontStyle: "bold",
+            text: text,
+        });
+        textSprite.position.set(pos.x,pos.y,pos.z);
+        return textSprite;
+    }
 
 </script>
 </body>
