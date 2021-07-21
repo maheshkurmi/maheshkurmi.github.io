@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="sdk.js"></script>
+    <style>
+        canvas {
+            //display:block;
+            //height: 600px;
+            //width: 900px;
+            border: 1px solid blue;
+        }
+    </style>
+</head>
+<body>
+<canvas id="myCanvas1" height="300px" width="400px" >
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+<canvas id="myCanvas2" height="300px" width="400px">
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+<canvas id="myCanvas3" height="300px" width="400px">
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+<div>
+<button onclick="loadSimulation('micrometer',document.getElementById('myCanvas1'))">Load Micrometer</button>
+<button onclick="loadSimulation('photoelectric',document.getElementById('myCanvas2'))">Load photoelectric</button>
+<button onclick="loadSimulation('earth_field',document.getElementById('myCanvas3'))">Load earth field</button>
+</div>
+
+</body>
+</html>
