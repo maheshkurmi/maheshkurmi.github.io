@@ -4,10 +4,10 @@
     <title>PO Box Simulator</title>
     <style>
         body {
-            background: white;
+            background: rgb(0,64,84);
             color: #323232;
-            font-weight: 300;
-
+            font-weight: 200;
+            color:white;
             margin: 0;
             display: flex;
             align-items: center;
@@ -32,16 +32,34 @@
             width: 180px;
         }
         p.info {
+            color:white;
             display: inline-block;
             text-align: justify;
             width: 990px;
+        }
+        button{
+            //font-family: Helvetica neue, roboto;
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 12px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+             font-size: 16px;
+            transition-duration: 0.4s;
+            cursor:pointer;
+        }
+        button:hover {
+            background-color: #cddc39; /* Green */
+        //color: white;
         }
     </style>
 </head>
 
 <body onload="preload()">
 <div id="canvasdiv" class="container" align="center">
-    <canvas id="canvas" style="border: 1px solid #c3c3c3;" width="990px" height="630px">
+    <canvas id="canvas" style="border: 1px solid #ffffff;" width="990px" height="630px">
         Your browser does not support the HTML5 canvas tag.
     </canvas>
     <div>
@@ -57,7 +75,7 @@
                 <label for="chkShowCircuit"> Show Equivalent Bridge </label>
             </div>
             <div>
-                <p id="textarea" class="info"> In this simulation you have to find <span style="color: red">unknown resistance </span> using PO Box given here. <br> Click over dots in PO Box to add/remove resistance (<span style="color: green">unfilled dots are active resistances </span>, little confusing but this is how it works!).
+                <p id="textarea" class="info"> In this simulation you have to find <span style="color: orange">unknown resistance </span> using PO Box given here. <br> Click over dots in PO Box to add/remove resistance (<span style="color: cyan">unfilled dots are active resistances </span>, little confusing but this is how it works!).
 
                     <br><br>Adjust the resistance R (lower two arms) so that galvanometer shows null deflection. It may be possible that you may not get exact null point, then find two successive values at which galv shows deflections in opposite directions.
 
@@ -273,7 +291,8 @@
 
     function draw(){
         ctx.font="14px Arial";
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle="rgb(235,235,245)";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.save();
         ctx.drawImage(imgPOBox, 0, 0);//, sw, sh, x, y, w, h);
 

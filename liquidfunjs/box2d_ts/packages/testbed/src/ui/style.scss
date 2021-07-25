@@ -1,0 +1,80 @@
+html,
+body,
+#root {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", Verdana, sans-serif;
+    color: $color-text;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    position: relative;
+    > .menubar {
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+}
+main {
+    background: rgb(51, 51, 51);
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    > div,
+    > canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    > div {
+        pointer-events: none;
+        bottom: 0;
+        right: 0;
+        padding: $spacing-md;
+    }
+}
+
+#title_overlay,
+#right_overlay,
+#left_overlay {
+    text-shadow: 2px 2px 2px black;
+}
+#title_overlay {
+    text-align: center;
+    margin-right: #{$size-sidebar + $spacing-lg};
+}
+
+#right_overlay,
+#left_overlay {
+    th {
+        text-align: left;
+    }
+    td {
+        padding: 0 0 0 $spacing-lg;
+    }
+    td:empty::after {
+        content: "\00a0";
+    }
+}
+
+#right_overlay {
+    > table {
+        float: right;
+        margin-right: #{$size-sidebar + $spacing-lg};
+    }
+
+    th,
+    td {
+        text-align: right;
+    }
+}

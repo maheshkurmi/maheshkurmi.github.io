@@ -1,0 +1,455 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Common UI elements are often taken for granted in software design, as they are almost always</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+/*
+   This document has been created with Marked.app <http://markedapp.com>, Copyright 2011 Brett Terpstra
+   Please leave this notice in place, along with any additional credits below.
+   ---------------------------------------------------------------
+   Title: Swiss
+   Author: Brett Terpstra
+   Description: Clean, Swiss typography with no frills.
+*/
+body{-webkit-font-smoothing:antialiased;font:normal .8764em/1.5em Arial,Verdana,sans-serif;margin:0}html>body{font-size:13px}li{font-size:110%}li li{font-size:100%}li p{font-size:100%;margin:.5em 0}h1{color:#000;font-size:2.2857em;line-height:.6563em;margin:.6563em 0}h2{color:#111;font-size:1.7143em;line-height:.875em;margin:.875em 0}h3{color:#111;font-size:1.5em;line-height:1em;margin:1em 0}h4{color:#111;font-size:1.2857em;line-height:1.1667em;margin:1.1667em 0}h5{color:#111;font-size:1.15em;line-height:1.3em;margin:1.3em 0}h6{font-size:1em;line-height:1.5em;margin:1.5em 0}body,p,td,div{color:#111;font-family:"Helvetica Neue",Helvetica,Arial,Verdana,sans-serif;word-wrap:break-word}h1,h2,h3,h4,h5,h6{line-height:1.5em}a{-webkit-transition:color .2s ease-in-out;color:#0d6ea1;text-decoration:none}a:hover{color:#3593d9}.footnote{color:#0d6ea1;font-size:.8em;vertical-align:super}#wrapper img{max-width:100%;height:auto}dd{margin-bottom:1em}li>p:first-child{margin:0}ul ul,ul ol{margin-bottom:.4em}caption,col,colgroup,table,tbody,td,tfoot,th,thead,tr{border-spacing:0}table{border:1px solid rgba(0,0,0,0.25);border-collapse:collapse;display:table;empty-cells:hide;margin:-1px 0 23px;padding:0;table-layout:fixed}caption{display:table-caption;font-weight:700}col{display:table-column}colgroup{display:table-column-group}tbody{display:table-row-group}tfoot{display:table-footer-group}thead{display:table-header-group}td,th{display:table-cell}tr{display:table-row}table th,table td{font-size:1.1em;line-height:23px;padding:0 1em}table thead{background:rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.15);border-bottom:1px solid rgba(0,0,0,0.2)}table tbody{background:rgba(0,0,0,0.05)}table tfoot{background:rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.15);border-top:1px solid rgba(0,0,0,0.2)}figure{display:inline-block;margin-bottom:1.2em;position:relative;margin:1em 0}figcaption{font-style:italic;text-align:center;background:rgba(0,0,0,.9);color:rgba(255,255,255,1);position:absolute;left:0;bottom:-24px;width:98%;padding:1%;-webkit-transition:all .2s ease-in-out}.poetry pre{display:block;font-family:Georgia,Garamond,serif!important;font-size:110%!important;font-style:italic;line-height:1.6em;margin-left:1em}.poetry pre code{font-family:Georgia,Garamond,serif!important}blockquote p{font-size:110%;font-style:italic;line-height:1.6em}sup,sub,a.footnote{font-size:1.4ex;height:0;line-height:1;position:relative;vertical-align:super}sub{vertical-align:sub;top:-1px}p,h5{font-size:1.1429em;line-height:1.3125em;margin:1.3125em 0}dt,th{font-weight:700}table tr:nth-child(odd),table th:nth-child(odd),table td:nth-child(odd){background:rgba(255,255,255,0.06)}table tr:nth-child(even),table td:nth-child(even){background:rgba(0,0,0,0.06)}@media print{body{overflow:auto}img,pre,blockquote,table,figure,p{page-break-inside:avoid}#wrapper{background:#fff;color:#303030;font-size:85%;padding:10px;position:relative;text-indent:0}}@media screen{.inverted #wrapper,.inverted{background:rgba(37,42,42,1)}.inverted hr{border-color:rgba(51,63,64,1)!important}.inverted p,.inverted td,.inverted li,.inverted h1,.inverted h2,.inverted h3,.inverted h4,.inverted h5,.inverted h6,.inverted th,.inverted .math,.inverted caption,.inverted dd,.inverted dt{color:#eee!important}.inverted table tr:nth-child(odd),.inverted table th:nth-child(odd),.inverted table td:nth-child(odd){background:0}.inverted pre code{color:#111}.inverted a{color:rgba(172,209,213,1)}#wrapper{padding:20px}::selection{background:rgba(157,193,200,.5)}h1::selection{background-color:rgba(45,156,208,.3)}h2::selection{background-color:rgba(90,182,224,.3)}h3::selection,h4::selection,h5::selection,h6::selection,li::selection,ol::selection{background-color:rgba(133,201,232,.3)}code::selection{background-color:rgba(0,0,0,.7);color:#eee}code span::selection{background-color:rgba(0,0,0,.7)!important;color:#eee!important}a::selection{background-color:rgba(255,230,102,.2)}.inverted a::selection{background-color:rgba(255,230,102,.6)}td::selection,th::selection,caption::selection{background-color:rgba(180,237,95,.5)}}
+</style>
+
+</head>
+<body class="normal">
+  <div id="wrapper">
+      <p>Common UI elements are often taken for granted in software design, as they are almost always provided for us to easily integrate straight into out applications. The exception to this rule of course is when we get into game development and we take over things like input and rendering from the platform we are working on.</p>
+
+<p>In this article we will be taking a look at what it takes to recreate three common UI elements: a button, a slider, and a checkbox. We will be using an HTML5 canvas and handle things like mouse tracking, collision detection and event handling.</p>
+
+<h3 id="thesetup">The Setup</h3>
+
+<p>If you would like to follow along with this article, I have created an online Teamwork project on Koding with the file structure for this project along with the boilerplate HTML code. You can access the session <a href="https://koding.com/Teamwork?importUrl=http://goo.gl/jqbkBT" title="Teamwork Session">here</a></p>
+
+<p>The actual HTML required is going to be quite minimal, we are basically just going to have a single canvas element to do all the drawing on, I will also be including the <a href="http://underscorejs.org/" title="Underscore JS">underscore.js</a> library to help with some common tasks, and I split up the different JS components we will be building into their own files for the sake of keeping things neat, however you can write all the code in the one HTML file if you prefer. Here is the initial layout of our demo:</p>
+
+<pre><code>&lt;!DOCTYPE HTML&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Game Menu&lt;/title&gt;
+        &lt;script src=&quot;js/underscore.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;js/game_engine.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;js/ui_base.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;js/button.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;js/checkbox.js&quot;&gt;&lt;/script&gt;
+        &lt;script src=&quot;js/slider.js&quot;&gt;&lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;canvas id=&quot;game&quot; width=&quot;600&quot; height=&quot;400&quot; style=&quot;width:600px;height:400px;&quot;&gt;
+        &lt;/canvas&gt;
+        &lt;script type=&quot;application/javascript&quot;&gt;
+            var canvasElement = document.getElementById(&quot;game&quot;);
+
+            //code here
+        &lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>When creating a canvas element you will want to set both the width and height properties of the element itself as-well as the same CSS properties. The element properties set the internal elements width and height for drawing, which is almost like the resolution, as apposed to the CSS properties which set the actual display size of the canvas on the page.</p>
+
+<p>The first step to getting this working is creating a basic game loop. We don&#8217;t need anything fancy just the standard update and draw functions, and we would like it to run at a fairly consistent FPS. </p>
+
+<h3 id="gameengine">Game Engine</h3>
+
+<p>Our game engine won&#8217;t have any audio support or things like that, but what we do need is to be able to accurately detect the mouse&#8217;s position and it&#8217;s button state checking whether the user is currently clicking on something or not.</p>
+
+<p>Let&#8217;s start with a simple constructor function which will accept the HTML canvas element and the desired frames per second. This code should go in the <code>js/game_engine.js</code> file:</p>
+
+<pre><code>var GameEngine = function(canvas, FPS) {
+    this.FPS = 1000 / FPS;
+    this.canvas = canvas;
+    this.context2D = canvas.getContext(&quot;2d&quot;);
+    this.gameObjects = [];
+    this.setupCanvas();
+}
+</code></pre>
+
+<p>We set the interval between loops in milliseconds, and create an empty object to store the game objects for later. If you are new to using a canvas element for drawing, then the context2D line might seem a bit bizarre, basically the HTML5 2D drawing API has to be &#8220;chosen&#8221; and extracted like this, configuring the canvas to be a 2D canvas as apposed to say one using the 3D API for example.</p>
+
+<p>The last line in the constructor calls a setupCanvas method which we will now use to setup all the event handlers needed to track the mouse.</p>
+
+<p>There are basically three handlers we will want to create handlers for:</p>
+
+<ol>
+<li>The mouse move event</li>
+<li>The mouse down event</li>
+<li>The mouse up event</li>
+</ol>
+
+<p>With the mouse move event we will be able to get the mouse&#8217;s position on the canvas as well as detect if the left mouse button is currently being clicked. Now this is really all the info we need, but this alone won&#8217;t create a very tolerant UX; the user can for instance click the mouse without moving it, and in such a case our engine wouldn&#8217;t pick it up, so we will also be tapping into the other two events to pick up the extra data. Here is the complete setup event:</p>
+
+<pre><code>GameEngine.prototype.setupCanvas = function() {
+    this.context2D.textBaseline = &quot;top&quot;;
+    this.context2D.mouse = {
+        x: 0,
+        y: 0,
+        clicked: false,
+        down: false
+    };
+
+    var engine = this;
+
+    this.canvas.addEventListener(&quot;mousemove&quot;, function(e) {
+        engine.context2D.mouse.x = e.offsetX;
+        engine.context2D.mouse.y = e.offsetY;
+        engine.context2D.mouse.clicked = (e.which == 1 &amp;&amp; !engine.context2D.mouse.down);
+        engine.context2D.mouse.down = (e.which == 1);
+    });
+
+    this.canvas.addEventListener(&quot;mousedown&quot;, function(e) {
+        engine.context2D.mouse.clicked = !engine.context2D.mouse.down;
+        engine.context2D.mouse.down = true;
+    });
+
+    this.canvas.addEventListener(&quot;mouseup&quot;, function(e) {
+        engine.context2D.mouse.down = false;
+        engine.context2D.mouse.clicked = false;
+    });
+} 
+</code></pre>
+
+<p>As you can see, I added a mouse object on the 2d context so our game objects can access this information and then I registered the three event handlers we just mentioned.</p>
+
+<p>I created a variable to store both the state of the button (like if it is currently down) but also another variable to store if it has just been clicked, which will only be <code>true</code> once per mouse down.</p>
+
+<p>Next we will need the actual game loop:</p>
+
+<pre><code>GameEngine.prototype.run = function() {
+    var desiredTime = Date.now() + this.FPS;
+
+    this.update();
+    this.draw();
+
+    var interval = Math.max(0, desiredTime-Date.now());
+    setTimeout(_.bind(this.run, this), interval);
+}
+</code></pre>
+
+<p>You could have used the <code>setInterval</code> function, but depending on whether you may be using async code in your engine, or whether you may have a very intensive application, I rather it miss a few frames, then get backed up on the event queue. But this is really a personal preference and there really shouldn&#8217;t be too much of a difference between both methods for our use case.</p>
+
+<p>Since we will be manually setting the time between calls we want to track the start time, so regardless of how much time the update and draw stages took, we should get a steady FPS. The last line also uses underscore to bind the object&#8217;s context to the <code>setTimeout</code> callback.</p>
+
+<p>The last thing we need to add to our game engine is the draw and update loops, these are really simple as they essentially just loop through the game objects and call their own specific update &amp; draw handlers, passing through the 2D context, so they can get at the mouse info and draw to the screen:</p>
+
+<pre><code>GameEngine.prototype.update = function() {
+    _.each(this.gameObjects, function(obj) {
+        obj.update(this.context2D);
+    }, this);
+}
+
+GameEngine.prototype.draw = function() {
+    this.context2D.clearRect(0, 0, 600, 400);
+    _.each(this.gameObjects, function(obj) {
+        obj.draw(this.context2D);
+    }, this);
+}
+</code></pre>
+
+<p><code>_.each</code> is an underscore function which will iterate over a list, and it accepts the handlers context as a third parameter. Both these functions are almost identical except the draw function also clears the screen for the next draw cycle.</p>
+
+<h3 id="auiobject">A UI Object</h3>
+
+<p>At this stage we have our game loop, and we have all the mouse info calculated for the canvas as a whole. What we still need to do is calculate all the interactions between the mouse data and the individual game objects. Since this code will be required for all the UI elements, let&#8217;s create a &#8220;parent&#8221; class which our other elements will extend from.</p>
+
+<p>We will need to know two things: one, is the mouse hovering over an object and two is the mouse being clicked on an object. In both these situations we will set the hover and clicked property on each object individually, which it can then take advantage of in its update and draw processes (This should go in the <code>js/ui_base.js</code> file).</p>
+
+<pre><code>var UIObject = {
+    intersects: function(obj, mouse) {
+        var t = 5; //tolerance
+        var xIntersect = (mouse.x + t) &gt; obj.x &amp;&amp; (mouse.x - t) &lt; obj.x + obj.width;
+        var yIntersect = (mouse.y + t) &gt; obj.y &amp;&amp; (mouse.y - t) &lt; obj.y + obj.height;
+        return  xIntersect &amp;&amp; yIntersect;
+    },
+    updateStats: function(canvas){
+        if (this.intersects(this, canvas.mouse)) {
+            this.hovered = true;
+            if (canvas.mouse.clicked) {
+                this.clicked = true;
+            }
+        } else {
+            this.hovered = false;
+        }
+
+        if (!canvas.mouse.down) {
+            this.clicked = false;
+        }               
+    }
+};
+</code></pre>
+
+<p>To check whether the mouse intersects with the objects (i.e. hovers over them) I am using standard box collision detection, and as the mouse doesn&#8217;t have a width or height I added it as a form of tolerance. The rest is pretty standard logic. If the mouse is intersecting the object set the hover status to true, and if the user has also clicked the button set the clicked property to true.</p>
+
+<p>The hovering property becomes false when the mouse moves off the object, whereas the clicked property stops being true when the user let&#8217;s go of the button (on mouse up). Now let&#8217;s create our first element, the button.</p>
+
+<h3 id="thebutton">The Button</h3>
+
+<p>The button is probably the simplest of the ui objects to create, as it has no state. It&#8217;s simply a box that when clicked triggers an event. Let&#8217;s start with the constructor in the <code>js/button.js</code> file:</p>
+
+<pre><code>var Button = function(text, x, y, width, height) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.clicked = false;
+    this.hovered = false;
+    this.text = text;
+}
+
+Button.prototype = _.extend(Button.prototype, UIObject);
+</code></pre>
+
+<p>This constructor accepts as parameters the object&#8217;s text and dimensions, and then set&#8217;s the mouse properties we just used in the &#8220;parent&#8221; class. The last line uses underscore to extend all the methods from the UIObject we just created.</p>
+
+<p>Next - as we saw in the engine code - we need to add an update and draw function, which will get called on each iteration of the game loop:</p>
+
+<pre><code>Button.prototype.update = function(canvas) {
+    var wasNotClicked = !this.clicked;
+    this.updateStats(canvas);
+
+    if (this.clicked &amp;&amp; wasNotClicked) {
+        if (!_.isUndefined(this.handler)) {
+            this.handler();
+        }
+    }
+}
+</code></pre>
+
+<p>We store the previous button state, and then update the mouse properties with the parent function from above. Next if the button has just been pressed (i.e. it was not pressed in the last update loop), then run the objects handler if setup. Thats really all there is to it.</p>
+
+<p>Next let&#8217;s look at the draw method:</p>
+
+<pre><code>Button.prototype.draw = function(canvas) {
+    //set color
+    if (this.hovered) {
+        canvas.setFillColor(0.3, 0.7, 0.6, 1.0);
+    } else {
+        canvas.setFillColor(0.2, 0.6, 0.5, 1.0);
+    }
+
+    //draw button
+    canvas.fillRect(this.x, this.y, this.width, this.height);
+
+    //text options
+    var fontSize = 20;
+    canvas.setFillColor(1, 1, 1, 1.0);
+    canvas.font = fontSize + &quot;px sans-serif&quot;;
+
+    //text position
+    var textSize = canvas.measureText(this.text);
+    var textX = this.x + (this.width/2) - (textSize.width / 2);
+    var textY = this.y + (this.height/2) - (fontSize/2);
+
+    //draw the text
+    canvas.fillText(this.text, textX, textY);
+}
+</code></pre>
+
+<p>Not very complicated, albeit a bit long. The first section set&#8217;s the background colour depending whether or not the button is currently being hovered over. Next we draw the actual button to the screen with the <code>fillRect</code> command.</p>
+
+<p><code>fillRect</code> is a 2D context method, which draws a rectangle with the specified dimensions using the current fill colour (which we set above).</p>
+
+<p>The rest of the function calculates the width of the text and based on the size figures out the x &amp; y coordinates for which to draw the text to.</p>
+
+<p>Now the moment we have all been waiting for let&#8217;s see if it worked, to test it we will need to create an instance of our engine and add a button object to it back inside of our main HTML file:</p>
+
+<pre><code>var engine = new GameEngine(canvasElement, 30);
+
+var alertButton = new Button(&quot;Alert&quot;, 45, 50, 160, 40);
+alertButton.timesClicked = 0;
+alertButton.handler = function(){
+    this.timesClicked++;
+    alert(&quot;This button has been clicked &quot; + this.timesClicked + &quot; time(s)!&quot;);
+};
+
+engine.gameObjects.push(alertButton);
+
+engine.run();
+</code></pre>
+
+<p>If all went well you should see the button on the screen, and clicking on it a few times should get you something that looks like the following:</p>
+
+<figure>
+<img src="button_demo.png" alt="" id="image-1" /></figure>
+
+
+
+<h3 id="theslider">The Slider</h3>
+
+<p>A slider is a pretty common game UI element, used almost exclusively in game menus when adjusting settings granularly. Like with the button class we just made, we need to create a constructor and inherit the functions to handle the mouse interactions (inside the <code>js/slider.js</code> file):</p>
+
+<pre><code>var Slider = function(x, y, width, min, max) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = 40;
+    this.value = min;
+    this.min = min;
+    this.max = max;
+    this.clicked = false;
+    this.hovered = false;
+}
+
+
+Slider.prototype = _.extend(Slider.prototype, UIObject);
+</code></pre>
+
+<p>Here besides the objects dimensions we want to store the current value of the slider, and the min / max value that the slider can represent.</p>
+
+<p>In the update method we don&#8217;t really care if this is the first loop being clicked like with the button, here we need to process all the iterations where the mouse is still down, to get the sliding effect: </p>
+
+<pre><code>Slider.prototype.update = function(canvas) {
+    this.updateStats(canvas);
+
+    if (this.clicked) {
+        var pos = canvas.mouse.x;
+
+        pos = Math.max(pos, this.x);
+        pos = Math.min(pos, this.x + this.width);
+
+        var range = this.max - this.min;
+        var percent = (pos - this.x) / this.width;
+
+        this.value = Math.round(this.min + (percent * range));
+
+        if (!_.isUndefined(this.handler)) {
+            this.handler(this.value);
+        }
+    }
+}
+</code></pre>
+
+<p>If the slider has been clicked we want to get the mouse&#8217;s x position (and constrain it to the slider&#8217;s length and position). We then multiply the ratio of the slider max position to the mouse&#8217;s position to get the &#8220;percentage&#8221; of the slider and we multiply that by the entire range in order to get the current value.</p>
+
+<p>If we new all sliders were from 0&#8211;100 for instance we could easily just multiply the percent ratio by 100, but this code allows us to have a slider between any range (for example 5&#8211;15) and really customise it for the specific use case.</p>
+
+<p>Besides for that we are also just calling a handler method (if one was set) and we pass in the current value. Next let&#8217;s take a look at the draw:</p>
+
+<pre><code>Slider.prototype.draw = function(canvas) {
+    //draw the bar
+    canvas.setFillColor(0, 0, 0, 1.0);
+    canvas.fillRect(this.x, this.y + (this.height/4), this.width, this.height/2);
+
+    //set color
+    if (this.hovered) {
+        canvas.setFillColor(0.3, 0.7, 0.6, 1.0);
+    } else {
+        canvas.setFillColor(0.2, 0.6, 0.5, 1.0);
+    }
+
+    //draw the slider handle
+    var range = this.max - this.min;
+    var percent = (this.value - this.min) / range;
+    var pos = this.x + (this.width*percent);
+    canvas.fillRect(pos-5, this.y, 10, this.height);
+}
+</code></pre>
+
+<p>The first section draws the bar, which will show the full width of the slider at all times, whereas the rest of the code is for calculating the position and drawing the actual slider handle.</p>
+
+<p>It is pretty similar to the code in the update method for calculating the current value, except here we are calculating the x coordinate.</p>
+
+<p>And now to test it back in our HTML file:
+ var percentDiv = document.getElementById(&#8220;percentBox&#8221;);
+ var DOMSlider = new Slider(45, 150, 260, 0, 100);
+ DOMSlider.handler = function(value) {
+ var text = value + &#8220;%&#8221;;
+ percentDiv.innerHTML = text;
+ }
+ engine.gameObjects.push(DOMSlider);</p>
+
+<p>For this handler I also needed to add a <code>div</code> below the canvas to show the current value in:</p>
+
+<pre><code>&lt;div id=&quot;percentBox&quot;&gt;&lt;/div&gt;
+</code></pre>
+
+<figure>
+<img src="slider_demo.png" alt="" id="image-2" /></figure>
+
+
+
+<h3 id="acheckbox">A Checkbox</h3>
+
+<p>The last class I want to go through is one for a checkbox, but this code should seem pretty familiar to you, as we are basically replicating the button class except with an extra state variable which we can toggle. The difference in the constructor is we don&#8217;t have any text attached (not to mention I left the size of the checkbox static), this code should go inside our last file <code>js/checkbox.js</code>:</p>
+
+<pre><code>var CheckBox = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.width = 30;
+    this.height = 30;
+    this.checked = false;
+    this.clicked = false;
+    this.hovered = false;
+}
+
+CheckBox.prototype = _.extend(CheckBox.prototype, UIObject);
+</code></pre>
+
+<p>The <code>checked</code> property is the variable we will be toggling on every click event. The update method is also almost identical to the button class, except here I toggle the checked state and pass it as a parameter to the setup handler:</p>
+
+<pre><code>CheckBox.prototype.update = function(canvas) {
+    var wasNotClicked = !this.clicked;
+    this.updateStats(canvas);
+
+    if (this.clicked &amp;&amp; wasNotClicked) {
+        this.checked = !this.checked;
+
+        if (!_.isUndefined(this.handler)) {
+            this.handler(this.checked);
+        }
+    }
+}
+</code></pre>
+
+<p>And the draw function displays a check or x depending on it&#8217;s current state:</p>
+
+<pre><code>CheckBox.prototype.draw = function(canvas) {
+    //draw outer box
+    canvas.setStrokeColor(0, 0, 0, 1.0);
+    canvas.setLineWidth(4);
+    canvas.strokeRect(this.x, this.y, this.width, this.height);
+
+    //draw check or x
+    canvas.font = &quot;26px sans-serif&quot;;
+    if (this.checked) {
+        canvas.setFillColor(0.2, 0.6, 0.5, 1.0);
+        canvas.fillText(&quot;\u2713&quot;, this.x+5, this.y);
+    } else {
+        canvas.setFillColor(0.6, 0.2, 0.2, 1.0);
+        canvas.fillText(&quot;\u2715&quot;, this.x+5, this.y);
+    }
+}
+</code></pre>
+
+<p>Again let&#8217;s add a checkbox to the screen in our HTML file to try it all out:</p>
+
+<pre><code>var backCheckBox = new CheckBox(45, 250);
+backCheckBox.checked = true;
+backCheckBox.handler = function(checked){
+    var color = (checked) ? &quot;#FFF&quot; : &quot;#E8B70C&quot;;
+    document.body.style.backgroundColor = color;
+}
+
+engine.gameObjects.push(backCheckBox);
+</code></pre>
+
+<figure>
+<img src="checkbox_demo.png" alt="" id="image-3" /></figure>
+
+
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>I hope this article gave you a little insight into the process of creating your own UI elements in a game project. On the one hand you have to take care of some lower level tasks like mouse intersections with objects, but on the flip side you have full control over how you want your elements to behave granting you a much larger level of flexibility.</p>
+
+<p>If you would like to see the completed code I have also created a teamwork session with the finished project <a href="https://koding.com/Teamwork?importUrl=http://goo.gl/oVkWOP" title="Koding Link">here</a>, which will allow you to preview what we have done as-well as start extending your own components with this article as a starting point.</p>
+    </div>
+</body>
+</html>

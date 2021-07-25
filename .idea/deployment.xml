@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData">
+    <serverData>
+      <paths name="simphy">
+        <serverdata>
+          <mappings>
+            <mapping local="$USER_HOME$/Downloads/box2d.ts-master" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="wp19.shikharclasses.in">
+        <serverdata>
+          <mappings>
+            <mapping local="$USER_HOME$/Downloads/box2d.ts-master" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="wp20">
+        <serverdata>
+          <mappings>
+            <mapping local="$USER_HOME$/Downloads/box2d.ts-master" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

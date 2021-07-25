@@ -4,10 +4,10 @@
     <title>Meter Bridge Simulator</title>
     <style>
         body {
-            background: white;
+            background: rgb(0,64,84);
             color: #323232;
-            font-weight: 300;
-
+            font-weight: 200;
+            color:white;
             margin: 0;
             display: flex;
             align-items: center;
@@ -32,28 +32,130 @@
             width: 180px;
         }
         p.info {
+            color:white;
             display: inline-block;
             text-align: justify;
-            width: 990px;
+            width: 900px;
         }
+
+        button{
+            font-family: Helvetica neue, roboto;
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            transition-duration: 0.4s;
+            cursor:pointer;
+        }
+        button:hover {
+            background-color: #cddc39; /* Green */
+        //color: white;
+        }
+        input[type="range"]{
+        //-webkit-appearance: none;
+        //-moz-appearance: none;
+            width: 300px;
+            height: 25px;
+            padding: 5px;
+        // border-radius: 2px;
+            outline: none;
+            cursor:pointer;
+        }
+        .checkbox {
+            width: 100%;
+            margin: 5px auto;
+            position: relative;
+            display: block;
+        }
+
+        .checkbox input[type="checkbox"] {
+            width: auto;
+            opacity: 0.00000001;
+            position: absolute;
+            left: 0;
+            margin-left: -20px;
+        }
+        .checkbox label {
+            position: relative;
+        }
+        .checkbox label:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            margin: 4px;
+            width: 22px;
+            height: 22px;
+            transition: transform 0.28s ease;
+            border-radius: 3px;
+            border: 2px solid #7bbe72;
+        }
+        .checkbox label:after {
+            content: '';
+            display: block;
+            width: 10px;
+            height: 5px;
+            border-bottom: 2px solid #7bbe72;
+            border-left: 2px solid #7bbe72;
+            -webkit-transform: rotate(-45deg) scale(0);
+            transform: rotate(-45deg) scale(0);
+            transition: transform ease 0.25s;
+            will-change: transform;
+            position: absolute;
+            top: 12px;
+            left: 10px;
+        }
+        .checkbox input[type="checkbox"]:checked ~ label::before {
+            color: #7bbe72;
+        }
+
+        .checkbox input[type="checkbox"]:checked ~ label::after {
+            -webkit-transform: rotate(-45deg) scale(1);
+            transform: rotate(-45deg) scale(1);
+        }
+
+        .checkbox label {
+            min-height: 34px;
+            display: block;
+            padding-left: 40px;
+            margin-bottom: 0;
+            font-weight: normal;
+            cursor: pointer;
+            vertical-align: sub;
+        }
+        .checkbox label span {
+            position: absolute;
+            top: 50%;
+            -webkit-transform: translateY(-50%);
+            transform: translateY(-50%);
+        }
+        .checkbox input[type="checkbox"]:focus + label::before {
+            outline: 0;
+        }
+
     </style>
 </head>
 
 <body onload="load()">
 <div id="canvasdiv" class="container" align="center">
-    <canvas id="canvas" style="border: 1px solid #c3c3c3;" width="990px" height="430px">
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" width="900px" height="430px">
         Your browser does not support the HTML5 canvas tag.
     </canvas>
     <div>
         <div>
-            <div id="divRg">
+            <div class="checkbox" >
                 <input type="checkbox" id="chkShowX" onchange="chkShowX_onChange(this,this.checked)">
-                <label for="chkShowX"> Show actual X value </label>
+                <label for="chkShowX"> <span>Show actual X value </span></label>
           </div>
+
             <div>
                 <p id="textarea" class="info"> In this simulation you have to find  unknown resistance using Meter Bridge. <br><br>
 
-                    <span style="color: red">Drag by mouse horizontally </span> over R, Rhoestat, battery and jocky to change their values or positions.<br><br>
+                    <span style="color: orange">Drag by mouse horizontally </span> over R, Rhoestat, battery and jocky to change their values or positions.<br><br>
 
                     Press button Create New problem to choose random  value of X and then adjust jockey sideways so that Galvanometer shows null deflection. Then  calculate the value of  X using wheatstone bridge.
 
@@ -251,7 +353,8 @@
         }else{timer
             theta=c;
         }
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle="rgb(232,232,234)";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.save();
         ctx.drawImage(imgMeterBridge, 0, 0);//, sw, sh, x, y, w, h);
         //draw current

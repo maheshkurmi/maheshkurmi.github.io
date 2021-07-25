@@ -1,0 +1,64 @@
+.section {
+    border: none;
+    padding: 0;
+    margin: 0 0 $spacing-md 0;
+
+    > legend {
+        font-weight: bold;
+        display: block;
+        width: 100%;
+        padding: 0 $spacing-md;
+        margin: 0 -#{$spacing-md};
+        position: relative;
+        cursor: pointer;
+        font-size: $font-size-lg;
+
+        &:hover {
+            background: $color-frame-bg-hovered;
+        }
+
+        &::after {
+            content: "▼";
+            font-size: $font-size-sm;
+            position: absolute;
+            top: 0;
+            right: $spacing-md;
+            width: $spacing-lg;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        &:not(.open-legend)::after {
+            transform: rotate(-90deg);
+        }
+        &.active-legend {
+            background: $color-frame-bg;
+        }
+    }
+
+    > div {
+        padding: $spacing-md 0 0 0;
+
+        &.section-content-hidden {
+            display: none;
+        }
+
+        > a {
+            font-size: $font-size-md;
+            display: block;
+            color: $color-text;
+            text-decoration: none;
+            padding: 0 $spacing-md;
+            &.active-link {
+                background: $color-frame-bg;
+            }
+            &:hover {
+                background: $color-frame-bg-hovered;
+            }
+            &:active {
+                background: $color-frame-bg-active;
+            }
+        }
+    }
+}

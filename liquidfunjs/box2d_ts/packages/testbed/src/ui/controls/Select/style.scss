@@ -1,0 +1,51 @@
+.select {
+    display: block;
+    margin: 0;
+}
+.select--wrapper {
+    position: relative;
+    display: inline-block;
+    margin-right: $spacing-md;
+
+    &::before {
+        width: $spacing-lg;
+        display: flex;
+        content: "▼";
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        pointer-events: none;
+        color: $color-text;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+.select--input {
+    font-size: $font-size-sm;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    border-radius: 0;
+    height: $size-control;
+    background: $color-frame-bg;
+    color: $color-text;
+    outline: none;
+    padding-right: $spacing-lg;
+    width: $size-wide-control;
+    cursor: pointer;
+
+    &:hover {
+        background: $color-frame-bg-hovered;
+    }
+
+    &:active {
+        background: $color-frame-bg-active;
+    }
+
+    option {
+        color: $color-text;
+    }
+}

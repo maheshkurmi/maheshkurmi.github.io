@@ -1,0 +1,55 @@
+.sidebar {
+    font-size: $font-size-sm;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    top: $spacing-md;
+    max-height: calc(100% - #{$spacing-lg});
+    right: $spacing-md;
+    width: $size-sidebar;
+}
+
+.sidebar--tabs {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: right;
+    flex-direction: row;
+    font-size: $font-size-md;
+
+    > div {
+        padding: $spacing-sm $spacing-md;
+        background: $color-border;
+        border: 1px solid transparent;
+        border-bottom: none;
+        margin-bottom: -1px;
+        z-index: 10;
+        cursor: pointer;
+
+        &.active-tab {
+            border-color: $color-border;
+            background: $color-window-bg;
+        }
+        &:hover {
+            background: $color-frame-bg-hovered;
+        }
+    }
+}
+
+.tab-content {
+    background: $color-window-bg;
+    border: 1px solid $color-border;
+    padding: $spacing-md;
+    overflow: auto;
+
+    &.tab-content-hidden {
+        display: none;
+    }
+}
+
+.sidebar--buttons {
+    flex-grow: 1;
+    background: $color-window-bg;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}

@@ -1,0 +1,253 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+
+html {
+	background-color: black;
+}
+
+body {
+	background-color: black;
+	width: 1024px;
+	margin: 20px auto 40px auto;
+}
+
+#blackboard img {
+	width: 1024px;
+	z-index: 2;
+	position: relative;
+}
+
+.rotateBackground {
+	-moz-transform: rotateX(180deg);
+	-moz-transform-origin: 0% 50%;
+}
+
+#chalks {
+	margin-left: 80px;
+}
+
+.chalk {
+	display: inline;
+}
+
+.chalk img {
+	width: 50px;
+	z-index: 1;
+	margin: -100px auto 0px auto;
+}
+
+#hand img, #ruler img, #circle img, #sponge img, #text img {
+	z-index: 1;
+	left: auto;
+	position: absolute;
+	margin-left: -100px;
+}
+
+#hand img {
+	width: 150px;
+	top: 40px;
+}
+
+#ruler img {
+	width: 200px;
+	top: 160px;
+	margin-left: -80px;
+}
+
+#circle img {
+	width: 200px;
+	top: 280px;
+}
+
+#text img {
+	width: 120px;
+	top: 420px;
+	-moz-transform: rotate(-15deg);
+	margin-left: -80px;
+}
+
+#sponge img {
+	width: 120px;
+	top: 540px;
+	margin-left: -60px;
+}
+
+#rightSide {
+	z-index: 1;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	font-family: 'Gochi Hand', 'Comic Sans', 'Comic Sans MS', cursive;
+	font-size: 40px;
+	margin-right: -170px;
+}
+
+#rightSide ul li {
+	list-style-type: none;
+}
+
+#rightSide ul li a {
+	display: block;
+	height: 60px;
+	padding-top: 10px;
+	padding-right: 40px;
+	padding-left: 20px;
+	background: -moz-linear-gradient(left,hsla(180,100%,100%,0.8), hsla(180,100%,100%,0) 50%);
+	color: white;
+	text-decoration: none;
+	text-shadow: 1px 1px 3px black;
+}
+
+#rightSide ul li a:hover {
+	background: -moz-linear-gradient(left,hsla(120,100%,100%,1), hsla(120,100%,100%,0) 60%);
+}
+
+#rightSide .selectedMenu {
+	color: #aaffaa;
+}
+
+.screenBack, .screenBackHidden, .screenFront {
+	top: 20px;
+	left: auto;
+	position: absolute;
+	display: block;
+}
+
+.screenBackHidden {
+	display: none;
+}
+
+.screenBack {
+	z-index: 20;
+}
+
+.screenFront {
+	z-index: 100;
+}
+
+.hide {
+	-moz-animation: linear spinXCanvasHide 1s;
+	-moz-animation-fill-mode: forwards;
+	-moz-animation-iteration-count: 1;
+}
+
+.show {
+	-moz-animation: linear spinXCanvasShow 1s;
+	-moz-animation-fill-mode: forwards;
+	-moz-animation-iteration-count: 1;
+}
+
+.chalk img:hover, #hand img:hover, #ruler img:hover, #circle img:hover, #sponge img:hover, #text img:hover {
+	-moz-animation-duration: 0.3s; 
+	-moz-animation-iteration-count: 1;
+	-moz-animation-timing-function: ease-out;
+	-moz-animation-fill-mode: forwards;
+}
+
+.chalk img:hover {
+	-moz-animation-name: showBottom;
+}
+
+#hand img:hover, #ruler img:hover, #circle img:hover, #sponge img:hover, #text img:hover {
+	-moz-animation-name: showLeft;
+}
+
+#textInput {
+	font-family: 'Gochi Hand', 'Comic Sans', 'Comic Sans MS', cursive;
+	font-size: 40px;
+	color: white;
+	background: transparent;
+	border: none;
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	width: 200px;
+}
+
+.inputHidden {
+	display: none;
+	z-index: 0;
+}
+
+.inputVisible {
+	display: block;
+	z-index: 30;
+}
+
+.spinHorizontalForwards, .spinHorizontalBackwards {
+	-moz-animation-iteration-count: 1;
+	-moz-animation-fill-mode: both;
+	-moz-animation-timing-function: linear;
+	-moz-animation-duration: 1s;
+}
+
+.spinHorizontalForwards {
+	-moz-animation-name: spinX;
+}
+
+.spinHorizontalBackwards {
+	-moz-animation-name: spinXBack;
+}
+
+/* ----- KEYFRAMES ----- */
+@-moz-keyframes showBottom {
+	from {}
+	to {
+		-moz-transform: translateY(20px);
+		-moz-animation-play-state: paused;
+	}
+}
+
+@-moz-keyframes showLeft {
+	from {}
+	to {
+		-moz-transform: translateX(-20px);
+		-moz-animation-play-state: paused;
+	}
+}
+
+@-moz-keyframes spinX
+{  
+	0%   {}
+	100% {
+		-moz-transform: rotateX(180deg);
+		-moz-transform-origin: 0% 50%;
+	}
+}
+
+@-moz-keyframes spinXBack
+{  
+	0%   {
+		-moz-transform: rotateX(180deg);
+		-moz-transform-origin: 0% 50%;
+	}
+	100% {}
+}
+
+@-moz-keyframes spinXCanvasHide
+{  
+	0%  {opacity: 1;}
+	49%  {opacity: 1;}
+	50% {opacity: 0;}
+	100% {
+		opacity: 0;
+		-moz-transform: rotateX(180deg);
+		-moz-transform-origin: 0% 50%;
+	}
+}
+
+@-moz-keyframes spinXCanvasShow
+{  
+	0%   {
+		opacity: 0;
+		-moz-transform: rotateX(180deg);
+		-moz-transform-origin: 0% 50%;
+			}
+	49% {opacity: 0;}
+	50% {opacity: 1;}
+	100% {
+		opacity: 1;
+	}
+}

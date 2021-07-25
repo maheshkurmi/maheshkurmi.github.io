@@ -1,0 +1,741 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Optical activity</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; margin-left:10; margin-right:10;">
+<center>
+    <div id="canvasesdiv" style="position:relative; display:block; margin:auto; width:680px; height:330px"></div>
+    <canvas id="myCanvas" style="display: block; position: absolute; margin: 0 auto;display: block;
+        position: absolute; margin: 0 auto; top: 0; bottom: 0; left: 0; right: 0;" width="680" height="330"></canvas>
+
+</center>
+
+<script>
+
+
+
+
+    function reset() {
+        theta1sliderValue = theta1sliderValueMin + (theta1sliderValueMax-theta1sliderValueMin)*(theta1sliderX-theta1sliderXMin)/(theta1sliderXMax-theta1sliderXMin);
+        angle1 = theta1sliderValue;
+        thicknesssliderValue = thicknesssliderValueMin + (thicknesssliderValueMax-thicknesssliderValueMin)*(thicknesssliderX-thicknesssliderXMin)/(thicknesssliderXMax-thicknesssliderXMin);
+        thickness = thicknesssliderValue;
+        theta3sliderValue = theta3sliderValueMin + (theta3sliderValueMax-theta3sliderValueMin)*(theta3sliderX-theta3sliderXMin)/(theta3sliderXMax-theta3sliderXMin);
+        angle3 = theta3sliderValue;
+//        console.log(angle3);
+        runFlag = 1;
+        drawMotion();
+    }
+
+
+
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+    canvas.onmousedown = myDown;							// mouse event handler for computer browsers
+    canvas.onmouseup = myUp;								// mouse event handler for computer browsers
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+    var myCheck = document.getElementById("myCheck");
+    var index = -1;
+    var xBase = 90;
+    var yBase = 80;
+    var xSupport = canvas.width/2;
+    var ySupport = yBase;
+    var xInit = 37;
+    var radius = 3;
+    var time = 0.0;
+    var  deltat = 1/100.0;
+
+    var I0 = 800;
+    var I1 = 400;
+    var I2;
+    var I3;
+    var angle1 = 0.0;
+    var angle2 = 0.0;
+    var angle3 = 0.0;
+    var thickness = 20.0;   // in mm
+
+    var timer;
+    var runFlag = 1;
+
+    var theta1sliderX = 160;
+    var theta1sliderY = 230;
+    var theta1sliderXMin = 160;
+    var theta1sliderXMax = 340;
+    var theta1sliderValueMin = 0;
+    var theta1sliderValueMax = 180;
+    var theta1sliderValue = angle1;
+    var theta1sliderDecimals = 0;
+
+    var thicknesssliderX = 400;
+    var thicknesssliderY = 300;
+    var thicknesssliderXMin = 250;
+    var thicknesssliderXMax = 500;
+    var thicknesssliderValueMin = 5.0;
+    var thicknesssliderValueMax = 30.0;
+    var thicknesssliderValue = thickness;
+    var thicknesssliderDecimals = 1;
+
+    var theta3sliderX = 440;
+    var theta3sliderY = 230;
+    var theta3sliderXMin = 440;
+    var theta3sliderXMax = 620;
+    var theta3sliderValueMin = 0;
+    var theta3sliderValueMax = 180;
+    var theta3sliderValue = angle3;
+    var theta3sliderDecimals = 0;
+
+    var graphX = 8;
+    var graphY = 4;
+    var graphType = 1;
+    var xAxisOffset = 0.0;
+    var xMajorTicks = 5;
+    var xDecimals = 0;
+    var graphLabel = 'Intensity vs. position';
+    var xAxisLabel = 'x (cm)';
+    var yAxisLabel = 'I (W/m/m)';
+    var yMajorTicks = 200;
+    var yDecimals = 0;
+    var plotColor = 'red';
+    var xStart = xBase+80;
+    var yStart = yBase-270
+
+
+
+
+    drawMotion();
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " xPos = " + xPos + " time = " + time + " yPos = " + yPos);
+
+        // clear
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // set background color for the entire thing
+        context.fillStyle = "#aaa";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // draw angle 1 slider
+
+        drawSlider(theta1sliderX, theta1sliderY, theta1sliderXMin, theta1sliderXMax, theta1sliderValueMin, theta1sliderValueMax, theta1sliderValue, theta1sliderDecimals);
+        var sLabel = 'polarizer 1 = ';
+        sLabel = sLabel + theta1sliderValue.toFixed(theta1sliderDecimals) + ' degrees';
+        context.font = '16pt Calibri';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillStyle = 'green';
+        context.fillText(sLabel,theta1sliderXMin+0.5*(theta1sliderXMax-theta1sliderXMin), theta1sliderY-25);
+
+
+        // draw thickness slider
+
+        drawSlider(thicknesssliderX, thicknesssliderY, thicknesssliderXMin, thicknesssliderXMax, thicknesssliderValueMin, thicknesssliderValueMax, thicknesssliderValue, thicknesssliderDecimals);
+        sLabel = 'filter thickness = ';
+        sLabel = sLabel + thicknesssliderValue.toFixed(thicknesssliderDecimals) + ' mm';
+        context.font = '16pt Calibri';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillStyle = 'blue';
+        context.fillText(sLabel,thicknesssliderXMin+0.5*(thicknesssliderXMax-thicknesssliderXMin), thicknesssliderY-25);
+
+        // draw angle 3 slider
+
+        drawSlider(theta3sliderX, theta3sliderY, theta3sliderXMin, theta3sliderXMax, theta3sliderValueMin, theta3sliderValueMax, theta3sliderValue, theta3sliderDecimals);
+        sLabel = 'polarizer 2 = ';
+        sLabel = sLabel + theta3sliderValue.toFixed(theta3sliderDecimals) + ' degrees';
+        context.font = '16pt Calibri';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillStyle = 'red';
+        context.fillText(sLabel,theta3sliderXMin+0.5*(theta3sliderXMax-theta3sliderXMin), theta3sliderY-25);
+
+        index = index + 1;
+        time = index/100.0;
+        //        console.log(index + "  time = " + time + " x = " + xPos + " y = " + yPos);
+
+        // draw axes for the graph
+        //      drawAxes (xStart, yStart, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+
+
+
+// draw disk representing initial light
+        context.lineWidth = 2;
+        context.fillStyle = '#fff';
+        context.strokeStyle = "grey";
+        context.beginPath();
+        context.arc(xBase,yBase,50,0,2.0*Math.PI);
+        context.fill();
+        context.stroke();
+
+        sLabel = 'incident light';
+        context.fillStyle = 'black';
+        context.fillText(sLabel,xBase, yBase+70);
+
+// draw incident light
+        context.strokeStyle = '#fff';
+        for (var i=0; i<4; i++) {
+            context.beginPath();
+            context.moveTo(xBase+80+20*Math.sin(Math.PI/4+i*Math.PI/4),yBase-20*Math.cos(Math.PI/4+i*Math.PI/4));
+            context.lineTo(xBase+80-20*Math.sin(Math.PI/4+i*Math.PI/4),yBase+20*Math.cos(Math.PI/4+i*Math.PI/4));
+            context.stroke();
+        }
+
+// draw polarizer 1
+        context.lineWidth = 2;
+        context.fillStyle = '#ddd';         // cheating a bit to make it a bit brighter
+        context.strokeStyle = "green";
+        context.beginPath();
+        context.arc(xBase+160,yBase,50,0,2.0*Math.PI);
+        context.fill();
+        context.stroke();
+
+        sLabel = 'polarizer 1';
+        context.fillStyle = context.strokeStyle;
+        context.fillText(sLabel,xBase+160, yBase+70);
+
+// draw handle on polarizer 1
+        var theta1 = (Math.PI/180.0)*(angle1);
+        context.fillStyle = context.strokeStyle;
+        context.beginPath();
+        context.arc(xBase+160+50*Math.sin(theta1),yBase-50*Math.cos(theta1),radius,0,2.0*Math.PI);
+        context.fill();
+        context.stroke();
+        context.beginPath();
+        context.moveTo(xBase+160+50*Math.sin(theta1),yBase-50*Math.cos(theta1));
+        context.lineTo(xBase+160-50*Math.sin(theta1),yBase+50*Math.cos(theta1));
+        context.stroke();
+
+// draw light after polarizer 1
+        context.beginPath();
+        context.strokeStyle = "#ddd";
+        context.moveTo(xBase+240+20*Math.sin(theta1),yBase-20*Math.cos(theta1));
+        context.lineTo(xBase+240-20*Math.sin(theta1),yBase+20*Math.cos(theta1));
+        context.stroke();
+
+
+// calculate the rotation angles for the filter
+
+        var angleRed = 6.0*thickness;
+        var dtheta1 = (Math.PI/180.0)*(angleRed-angle1);
+        var I2Red = I1*Math.cos(dtheta1)*Math.cos(dtheta1);
+        var amp2 = 208.0*I2Red/I1;
+        amp2 = 24.0+184.0*I2Red/I1;     // cheating a bit to make it a bit brighter
+
+        var redness = Math.floor(amp2);
+        var redString = redness.toString(16);
+        if (redString.length == 1) redString = "0"+redString;
+
+        var angleGreen = 9.0*thickness;
+        dtheta1 = (Math.PI/180.0)*(angleGreen-angle1);
+        var I2Green = I1*Math.cos(dtheta1)*Math.cos(dtheta1);
+        amp2 = 208.0*I2Green/I1;
+        amp2 = 24.0+184.0*I2Green/I1;     // cheating a bit to make it a bit brighter
+
+        var greenness = Math.floor(amp2);
+        var greenString = greenness.toString(16);
+        if (greenString.length == 1) greenString = "0"+greenString;
+
+        var angleBlue = 12.0*thickness;
+        dtheta1 = (Math.PI/180.0)*(angleBlue-angle1);
+        var I2Blue = I1*Math.cos(dtheta1)*Math.cos(dtheta1);
+        amp2 = 208.0*I2Blue/I1;
+        amp2 = 24.0+184.0*I2Blue/I1;     // cheating a bit to make it a bit brighter
+
+        var blueness = Math.floor(amp2);
+        var blueString = blueness.toString(16);
+        if (blueString.length == 1) blueString = "0"+blueString;
+
+        var colorString = "#" + redString+greenString+blueString;
+
+
+// draw filter
+        context.lineWidth = 2;
+        context.fillStyle = "grey";
+        context.strokeStyle = "blue";
+        context.beginPath();
+        context.fillRect(xBase+320-30, yBase-30, 60, 60);
+        context.strokeRect(xBase+320-30, yBase-30, 60, 60);
+
+        sLabel = 'filter';
+        context.fillStyle = context.strokeStyle;
+        context.fillText(sLabel,xBase+320, yBase+70);
+
+
+// draw light after polarizer 2
+        context.beginPath();
+        context.strokeStyle = "red";
+        theta2 = (Math.PI/180.0)*(angleRed+angle1);
+        context.moveTo(xBase+400+20*Math.sin(theta2),yBase-20*Math.cos(theta2));
+        context.lineTo(xBase+400-20*Math.sin(theta2),yBase+20*Math.cos(theta2));
+        context.stroke();
+        context.beginPath();
+        context.strokeStyle = "green";
+        theta2 = (Math.PI/180.0)*(angleGreen+angle1);
+        context.moveTo(xBase+400+20*Math.sin(theta2),yBase-20*Math.cos(theta2));
+        context.lineTo(xBase+400-20*Math.sin(theta2),yBase+20*Math.cos(theta2));
+        context.stroke();
+        context.beginPath();
+        context.strokeStyle = "blue";
+        theta2 = (Math.PI/180.0)*(angleBlue+angle1);
+        context.moveTo(xBase+400+20*Math.sin(theta2),yBase-20*Math.cos(theta2));
+        context.lineTo(xBase+400-20*Math.sin(theta2),yBase+20*Math.cos(theta2));
+        context.stroke();
+
+// calculate intensity after polarizer 3, and color it appropriately
+
+        var dtheta2 = (Math.PI/180.0)*(angle3-angle1);
+        I3 = I1*Math.cos(dtheta2)*Math.cos(dtheta2);
+        //           var amp3 = amp1*I3/I1;
+        var amp3 = 24.0+184.0*I3/I1;  // cheating a bit to make it a bit brighter
+
+        var redness = Math.floor(amp3);
+        var redString = redness.toString(16);
+        if (redString.length == 1) redString = "0"+redString;
+//            var greenness = Math.floor(255*Math.sin(Math.PI*i/maxIndex));
+        var greenString = redString;
+        if (greenString.length == 1) greenString = "0"+greenString;
+        var blueString = redString;
+        if (blueString.length == 1) blueString = "0"+blueString;
+
+        var colorString = "#" + redString+greenString+blueString;
+
+
+// draw polarizer 3
+        context.lineWidth = 2;
+        context.fillStyle = colorString;
+        context.strokeStyle = "red";
+        context.beginPath();
+        context.arc(xBase+480,yBase,50,0,2.0*Math.PI);
+        context.fill();
+        context.stroke();
+
+        sLabel = 'polarizer 2';
+        context.fillStyle = context.strokeStyle;
+        context.fillText(sLabel,xBase+480, yBase+70);
+
+// draw handle on polarizer 3
+        var theta3 = (Math.PI/180.0)*(angle3);
+        context.fillStyle = context.strokeStyle;
+        context.beginPath();
+        context.arc(xBase+480+50*Math.sin(theta3),yBase-50*Math.cos(theta3),radius,0,2.0*Math.PI);
+        context.fill();
+        context.stroke();
+        context.beginPath();
+        context.moveTo(xBase+480+50*Math.sin(theta3),yBase-50*Math.cos(theta3));
+        context.lineTo(xBase+480-50*Math.sin(theta3),yBase+50*Math.cos(theta3));
+        context.stroke();
+
+// calculate the rotation angles for the filter
+
+        angleRed = 6.0*thickness;
+        dtheta1 = (Math.PI/180.0)*(angle1+angleRed-angle3);
+        var I3Red = I1*Math.cos(dtheta1)*Math.cos(dtheta1);
+        amp2 = 24.0+184.0*I3Red/I1;     // cheating a bit to make it a bit brighter
+
+        var redness = Math.floor(amp2);
+        var redString = redness.toString(16);
+        if (redString.length == 1) redString = "0"+redString;
+
+        var angleGreen = 9.0*thickness;
+        dtheta1 = (Math.PI/180.0)*(angle1+angleGreen-angle3);
+        var I3Green = I1*Math.cos(dtheta1)*Math.cos(dtheta1);
+        amp2 = 24.0+184.0*I3Green/I1;     // cheating a bit to make it a bit brighter
+
+        var greenness = Math.floor(amp2);
+        var greenString = greenness.toString(16);
+        if (greenString.length == 1) greenString = "0"+greenString;
+
+        var angleBlue = 12.0*thickness;
+        dtheta1 = (Math.PI/180.0)*(angle1+angleBlue-angle3);
+        var I3Blue = I1*Math.cos(dtheta1)*Math.cos(dtheta1);
+        amp2 = 24.0+184.0*I3Blue/I1;     // cheating a bit to make it a bit brighter
+
+        var blueness = Math.floor(amp2);
+        var blueString = blueness.toString(16);
+        if (blueString.length == 1) blueString = "0"+blueString;
+
+        var colorString = "#" + redString+greenString+blueString;
+
+
+// draw filter part of polarizer 3
+        context.lineWidth = 2;
+        context.fillStyle = colorString;
+        context.strokeStyle = "blue";
+        context.beginPath();
+        context.fillRect(xBase+480-30, yBase-30, 60, 60);
+        context.strokeRect(xBase+480-30, yBase-30, 60, 60);
+
+
+
+// draw light after polarizer 3
+        context.beginPath();
+        context.strokeStyle = colorString;
+        context.moveTo(xBase+560+20*Math.sin(theta3),yBase-20*Math.cos(theta3));
+        context.lineTo(xBase+560-20*Math.sin(theta3),yBase+20*Math.cos(theta3));
+        context.stroke();
+
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 300/30);
+        }
+    }
+
+    function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+        var theta = Math.atan2(Fy,Fx);
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px, Py);
+        context.lineTo(Px+5*Fx, Py-5*Fy);
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.fillStyle = arrowColor;
+        context.beginPath();
+        context.moveTo(Px+5*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.lineTo(Px+5*Fx,Py-5*Fy);
+        context.lineTo(Px+5*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+
+        context.stroke();
+        context.fill();
+
+    }
+
+    function drawAxes(xAxisStart,yAxisStart,xNum, yNum, xOffset, xIncrement, yIncrement, xNumDecimals, yNumDecimals, xAxisTitle, yAxisTitle, graphTitle) {
+        // set background color for the graph
+        context.fillStyle = "#eff";
+        context.fillRect(xAxisStart, yAxisStart, 40*xNum, 40*yNum);
+
+        var axisLabel = '';
+        var axisValue = 0;
+
+        // vertical grid lines
+        context.lineWidth = 2;
+        context.strokeStyle = '#888';
+
+        for (var i = 0; i <= xNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart+40*i, yAxisStart);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum+10);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = xOffset+xIncrement*(i);
+            axisLabel = axisValue.toFixed(xNumDecimals);
+            context.fillText(axisLabel, xAxisStart+40*i, yAxisStart+40*yNum+20);
+        }
+
+        // horizontal grid lines
+        for (i = 0; i <= yNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart-10, yAxisStart+40*i);
+            context.lineTo(xAxisStart+40*xNum, yAxisStart+40*i);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = yIncrement*(yNum-i);
+            axisLabel = axisValue.toFixed(yNumDecimals);
+            context.fillText(axisLabel, xAxisStart-30, yAxisStart+40*i);
+
+        }
+
+        // x-axis
+        context.strokeStyle = '#000';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(xAxisStart-1, yAxisStart+40*yNum);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum-6);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum);
+        context.lineTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum+6);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.fillText(xAxisTitle, xAxisStart+40*xNum+24, yAxisStart+40*yNum);
+
+        // y-axis
+        context.strokeStyle = '#000';
+        context.beginPath();
+        context.moveTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart-6, yAxisStart-10);
+        context.lineTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart+6, yAxisStart-10);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.strokeStyle = '#000';
+        context.textAlign = 'center';
+        //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xAxisStart );
+
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(yAxisTitle, xAxisStart-30, yAxisStart - 35);
+
+        // graph title
+        context.font = 'bold 18pt Calibri';
+        context.fillStyle = 'purple';
+        context.textAlign = 'center';
+        context.fillText(graphTitle, xAxisStart+40*xNum/2, yAxisStart-24);
+
+    }
+
+    function drawAxesMidY(xAxisStart,yAxisStart,xNum, yNum, xOffset, xIncrement, yIncrement, xNumDecimals, yNumDecimals, xAxisTitle, yAxisTitle, graphTitle) {
+        // set background color for the graph
+        context.fillStyle = "#eff";
+        context.fillRect(xAxisStart, yAxisStart, 40*xNum, 40*yNum);
+
+        var axisLabel = '';
+        var axisValue = 0;
+
+        // vertical grid lines
+        context.lineWidth = 2;
+        context.strokeStyle = '#888';
+
+        for (var i = 0; i <= xNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart+40*i, yAxisStart);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum/2+10);
+            context.stroke();
+            context.moveTo(xAxisStart+40*i, yAxisStart+40*yNum/2+30);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = xOffset + xIncrement*(i);
+            axisLabel = axisValue.toFixed(xNumDecimals);
+            if (i > 0) context.fillText(axisLabel, xAxisStart+40*i, yAxisStart+40*yNum/2+20);
+        }
+
+        // horizontal grid lines
+        for (i = 0; i <= yNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart-10, yAxisStart+40*i);
+            context.lineTo(xAxisStart+40*xNum, yAxisStart+40*i);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = yIncrement*(yNum/2-i);
+            axisLabel = axisValue.toFixed(yNumDecimals);
+            context.fillText(axisLabel, xAxisStart-30, yAxisStart+40*i);
+
+        }
+
+        // x-axis
+        context.strokeStyle = '#000';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(xAxisStart-1, yAxisStart+40*yNum/2);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum/2);
+        context.stroke();
+        context.moveTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum/2-6);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum/2);
+        context.lineTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum/2+6);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.fillText(xAxisTitle, xAxisStart+40*xNum+24, yAxisStart+40*yNum/2);
+
+        // y-axis
+        context.strokeStyle = '#000';
+        context.beginPath();
+        context.moveTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart-6, yAxisStart-10);
+        context.lineTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart+6, yAxisStart-10);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.strokeStyle = '#000';
+        context.textAlign = 'center';
+        //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xAxisStart );
+
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(yAxisTitle, xAxisStart-30, yAxisStart - 35);
+
+        // graph title
+        context.font = 'bold 18pt Calibri';
+        context.fillStyle = 'purple';
+        context.textAlign = 'center';
+        context.fillText(graphTitle, xAxisStart+40*xNum/2, yAxisStart-24);
+
+    }
+
+    function drawSlider(sliderX, sliderY, sliderXMin, sliderXMax, sliderValueMin, sliderValueMax, sliderValue, sliderDecimals) {
+
+
+        context.strokeStyle = '#ccc';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderXMax,sliderY);
+        context.stroke();
+
+        context.strokeStyle = '#44f';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderX,sliderY);
+        context.stroke();
+
+        context.beginPath();
+        context.arc(sliderX, sliderY, 10, 0, 2 * Math.PI, false);
+        context.fillStyle = '#00f';
+        context.fill();
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+
+    }
+
+    //  Mouse and Touch event functions from  Wolfgang Bauer
+
+    function whereClicked(x_,y_,what_) {    // underscore denotes local variables
+        //if (what_ == 'down') {console.log('('+x_+','+y_+')'+what_)};
+//	console.log('('+x_+','+y_+')'+what_);
+//    console.log("x offset = " + charge1X + " y offset = " + charge1Y);
+        if ((Math.abs(x_ - (theta1sliderX)) < 40) && (Math.abs(y_ - theta1sliderY) < 40))   // moving the polarizer 1 slider
+        {
+            theta1sliderX = x_ ;
+            if (theta1sliderX < theta1sliderXMin) theta1sliderX = theta1sliderXMin;
+            if (theta1sliderX > theta1sliderXMax) theta1sliderX = theta1sliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (thicknesssliderX)) < 40) && (Math.abs(y_ - thicknesssliderY) < 40))   // moving the polarizer 2 slider
+        {
+            thicknesssliderX = x_ ;
+            if (thicknesssliderX < thicknesssliderXMin) thicknesssliderX = thicknesssliderXMin;
+            if (thicknesssliderX > thicknesssliderXMax) thicknesssliderX = thicknesssliderXMax;
+            reset();
+        }
+        else if ((Math.abs(x_ - (theta3sliderX)) < 40) && (Math.abs(y_ - theta3sliderY) < 40))   // moving the polarizer 3 slider
+        {
+            theta3sliderX = x_ ;
+            if (theta3sliderX < theta3sliderXMin) theta3sliderX = theta3sliderXMin;
+            if (theta3sliderX > theta3sliderXMax) theta3sliderX = theta3sliderXMax;
+            reset();
+        }
+//        reset();
+//      }
+//      else if ((Math.abs(x_ - (charge2X)) < 15) && (Math.abs(y_ - charge2Y) < 15))  // moving the right-hand charge
+//      {
+//        charge2X = x_ ;
+//        charge2Y = y_ ;
+//        reset();
+//      }
+
+        if (what_ == 'down') {
+//		dragRect = true;
+//		x1 = x_;     // x1, y1 are global variables
+//		y1 = y_;
+        }
+        if (what_ == 'move') {
+//		dragRect = true;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+        if (what_ == 'up') {
+//		dragRect = false;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+    }
+
+    function myMove(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawAll();
+//	drawMotion();
+
+    }
+
+    function myDown(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        canvas.onmousemove = myMove;
+//	drawMotion();
+    }
+
+    function myUp(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        canvas.onmousemove = null;
+//	drawMotion();
+    }
+
+    function myTouchMove(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawMotion();
+    }
+
+    function myTouchStart(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+//	drawMotion();
+    }
+
+    function myTouchEnd(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+//	drawMotion();
+    }
+
+
+</script>
+<p>This is a simulation of what happens when polarized light passes through an optically active material - that is
+    the object labeled as the filter above. An optically active material is made up of chiral molecules - the molecules has a spiral
+    shape. Light passing through such a material has its polarization direction rotated, but different colors
+    are rotated different amounts.  </p>
+
+<p>Use the sliders to adjust the angle of the transmission axis of each polarizer.  The lines after each polarizer, and after the filter,
+    show the direction the light is polarized in.
+    The incident light has multiple lines to show that it is unpolarized, and the light after the filter shows the different
+    directions that red, green, and blue light is polarized in.</p>
+
+<p>Simulation written by Andrew Duffy, and first posted on 1-28-2018.</p>
+
+
+</body>
+</html>

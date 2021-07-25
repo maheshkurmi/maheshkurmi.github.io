@@ -1,0 +1,48 @@
+{
+  "name": "@box2d/particles",
+  "version": "0.8.0",
+  "description": "A TypeScript port of LiquidFuns particles for @box2d/core",
+  "keywords": [
+    "box2d",
+    "liquidfun",
+    "particles",
+    "water",
+    "powder",
+    "elastic",
+    "liquids",
+    "fluids",
+    "game",
+    "TypeScript"
+  ],
+  "homepage": "https://lusito.github.io/box2d.ts/",
+  "bugs": {
+    "url": "https://github.com/lusito/box2d.ts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lusito/box2d.ts.git"
+  },
+  "license": "MIT",
+  "author": "Santo Pfingsten",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc"
+  },
+  "browserslist": [
+    "> 5%"
+  ],
+  "dependencies": {
+    "@box2d/core": "^0.8.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "typescript": "^4.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

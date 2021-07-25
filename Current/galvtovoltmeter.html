@@ -3,48 +3,88 @@
 <head>
 <title>Voltmeter Simulator</title>
 <style>
-body {
-  background: white;
-  color: #323232;
-  font-weight: 300;
-  height: 100vh;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-family: Helvetica neue, roboto;
-}
+    body {
+        background: rgb(0,64,84);
+        color:white;
+        color: #323232;
+        //font-weight: 300;
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-family: Helvetica neue, roboto, arial;
+    }
 
-img {
-  width: 56px;
-  height: 48px;
-}
+    img {
+        width: 56px;
+        height: 48px;
+    }
 
-h1 {
-  font-weight: 200;
-  font-style: 26px;
-  margin: 10px;
-}
-label {
-    display: inline-block;
-    text-align: left;
-    width: 120px;
-}
-p.info {
-    display: inline-block;
-    text-align: justify;
-    width: 600px;
-}
+    h1 {
+        font-weight: 200;
+        font-style: 26px;
+        margin: 10px;
+    }
+    label {
+        display: inline-block;
+        text-align: left;
+        width: 120px;
+    }
+    p.info {
+        display: inline-block;
+        text-align: justify;
+        width: 600px;
+    }
+    div.container {
+        display: grid;
+        color:rgb(225,225,245);
+    }
+    @media (min-width: 1000px) {
+        div.container {  display: grid; grid-template-columns: repeat(2, 1fr); }
+    }
+    input{
+        font-family: Helvetica neue, roboto;
+        cursor:pointer;
+    }
+    button{
+        font-family: Helvetica neue, roboto;
+        background-color: #4CAF50; /* Green */
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        transition-duration: 0.4s;
+        cursor:pointer;
+    }
+    button:hover {
+        background-color: #cddc39; /* Green */
+    //color: white;
+    }
+    input[type="range"]{
+    //-webkit-appearance: none;
+    //-moz-appearance: none;
+        width: 300px;
+        height: 25px;
+        padding: 5px;
+       // border-radius: 2px;
+        outline: none;
+        cursor:pointer;
+    }
+
 </style>	
 </head>
 	
 <body onload="preload()">
-<div id="canvasdiv" class="container" align="center">
-    <canvas id="canvas" style="border: 1px solid #c3c3c3;" width="600px" height="540px">
+<div id="canvasdiv" class="container">
+    <canvas id="canvas" style="border: 1px solid #ffffff" width="600px" height="540px" >
     Your browser does not support the HTML5 canvas tag.
     </canvas>
-    <div>
+    <div width="400px" style="padding: 10px;">
         <div>
             <div id="divRg">
                 <input type="range" id="Rg" oninput="updateSlider()" min="0.1" step="0.1" max="10" text="Rg=value Ω" value="9.9" visible="false" weightx="1" tooltip="Resistance of galv coil">
@@ -74,7 +114,7 @@ p.info {
                 <p id="textarea" class="info">         </p>
             </div>
 
-            <div scrollable="true" weightx="1">
+            <div scrollable="true" >
                 <button id="prevBtn" enabled="false" text="&lt;&lt; Previous" onclick="prevStep_onClick()">
                     &lt;&lt; Previous
                 </button>

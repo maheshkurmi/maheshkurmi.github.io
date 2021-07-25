@@ -385,17 +385,17 @@ input[type=checkbox].w3-check:disabled+.w3-validate,input[type=radio].w3-radio:d
 
 main{margin:10px}
 
-#main_table{border-right:solid black 1px;border-top:solid black 1px;}
+#main_table{border-left:solid white 1px;border-right:solid white 1px;border-top:solid white 1px;}
 
 tr{color:#fff;}
 
-th{border-left:solid black 1px; border-bottom:solid black 1px;color:#000000;padding:10px 0px;}
+th{background:#004042; border-left:solid white 1px; border-bottom:solid white 1px;color:#ffffff;padding:10px 0px;}
 
 td{text-align:center;}
 td{border-left:solid black 1px; border-bottom:solid black 1px}
 td{width:20%; padding:8px 0px; cursor:default;}
 
-#erg_div{background-color:#e1bc7b;padding:0px 5px}
+#erg_div{background-color:#e1bc7b;padding:0px 5px;color:black}
 
 #erg{font-size:36px}
 
@@ -416,11 +416,11 @@ td{width:20%; padding:8px 0px; cursor:default;}
 @media only screen and (max-width:800px){
     .app, .description{width:99.99999%}
     #erg{font-size:30px}
-    #bandSwitchText{font-size:20px}
+    #bandSwitchText{font-size:20px;color:black}
     .border-right{border:0}
     #badge-right-div{padding:0}
     #badge-left-div{padding:0}
 }
 
-#bandSwitch{cursor:pointer;background-color:#f1f1f1;display:flex;align-items: center;justify-content: center;padding:0px 5px}
-#bandSwitch:hover{background-color:#d1d1d1;}
+#bandSwitch{cursor:pointer;background-color:#00B7E2;color:black;display:flex;align-items: center;justify-content: center;padding:0px 5px}
+#bandSwitch:hover{background-color:#11C7E2;}

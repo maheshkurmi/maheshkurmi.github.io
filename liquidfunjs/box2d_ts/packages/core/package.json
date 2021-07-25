@@ -1,0 +1,42 @@
+{
+  "name": "@box2d/core",
+  "version": "0.8.0",
+  "description": "A TypeScript port of Box2D",
+  "keywords": [
+    "box2d",
+    "physics",
+    "2d",
+    "collision",
+    "game",
+    "TypeScript"
+  ],
+  "homepage": "https://lusito.github.io/box2d.ts/",
+  "bugs": {
+    "url": "https://github.com/lusito/box2d.ts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lusito/box2d.ts.git"
+  },
+  "license": "MIT",
+  "author": "Santo Pfingsten",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc && idtsc"
+  },
+  "browserslist": [
+    "> 5%"
+  ],
+  "devDependencies": {
+    "idtsc": "^0.9.0",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

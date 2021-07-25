@@ -12,21 +12,150 @@
     <meta name="application-name" content="Resistor Code Calculator">
 
     <meta charset="UTF-8">
+    <style>
+        body {
+            background: rgb(0,64,84);
+            color: #323232;
+            //font-weight: 300;
+            color:white;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+        label {
+            display: inline-block;
+            text-align: left;
+            width: 180px;
+        }
+        #container div{
+            position: relative;
+        }
+
+        #container #overlay {
+            position: absolute;
+            color:rgb(0,64,84);
+            //width:900px;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            color:rgb(0,64,84);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 600px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 100%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            color:rgb(0,64,84);
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            color:rgb(0,64,84);
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+
+
+    </style>
 
 </head>
 <body>
-<main class="w3-container">
+<main class="w3-container" id="container">
+    <a class="trigger_popup_fricc">	&#8505;</a>
 
-    <div class="description">
+    <div id="overlay">
 
-        <p>For very small electronic components a color code instead of printed text is used to indicate the value, rating or and tolerance.</p>
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div width="600px">
+                <div class="popupCloseButton">&times;</div>
+                <h3>Resistance Color code calculator</h3>
+                <p>For very small electronic components a color code instead of printed text is used to indicate the value, rating or and tolerance.</p>
 
-    <p>   Resistors come in variations with 4, 5 or more color bands where a 4-band color code is most common. With 4 bands the first and second band represent the first and second signficant digit of the ohm value, the 3 band is the decimal multiplier. Next comes a small gap - helping you to distinguish left and right of the component - and finally the fourth band indicating tolerance of the resistor.</p>
-        <p> Note: You need not remember tolerance values.</p>
+                <p>   Resistors come in variations with 4, 5 or more color bands where a 4-band color code is most common. With 4 bands the first and second band represent the first and second signficant digit of the ohm value, the 3 band is the decimal multiplier. Next comes a small gap - helping you to distinguish left and right of the component - and finally the fourth band indicating tolerance of the resistor.</p>
+                <p> Note: You need not remember tolerance values.</p>
 
+                <h4>Controls</h4>
+                Click over color cells to set colors of band
+            </div>
+        </div>
     </div>
 
-    <div class="app">
+
+
+    <div class="app" >
         <div id="info_div">
             <div class="w3-half" id="bandSwitch">
                 <h3 id="bandSwitchText">Switch to 5 band</h3>
@@ -37,7 +166,7 @@
             </div>
         </div>
 
-        <canvas id="myCanvas2" style="border:1px solid #c3c3c3;">
+        <canvas id="myCanvas2" style="border:1px solid #ffffff;">
             Your browser does not support the canvas element.
         </canvas>
 
@@ -71,6 +200,8 @@
 
 
         function drawFourBand(ctx,canvas,b1,b2,mul,tol){
+            ctx.fillStyle="rgb(240,235,235)";
+            ctx.fillRect(0,0,canvas.width,canvas.height);
 
             ctx.fillStyle="grey";
             ctx.fillRect(0,(canvas.height/2)-(canvas.height/20),canvas.width/4,canvas.height/20);
@@ -78,6 +209,9 @@
 
             ctx.fillStyle="#e1bc7b";
             ctx.fillRect(canvas.width/4,canvas.height/4,canvas.width/2, canvas.height/2);
+
+            ctx.strokeStyle="black";
+            ctx.strokeRect(canvas.width/4-1,canvas.height/4-1,canvas.width/2+2, canvas.height/2+2);
 
             ctx.fillStyle=$("#"+b1).css("background-color");
             ctx.fillRect(canvas.width/4+canvas.width*0.04375,canvas.height/4, canvas.width*0.0375, canvas.height/2);
@@ -121,6 +255,15 @@
 <script>
     $(document).ready(function(){
 
+        document.querySelector(".trigger_popup_fricc").onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "block";
+        };
+        document.querySelector('.hover_bkgr_fricc').onclick =function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+        document.querySelector('.popupCloseButton').onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
         var b= [0,1,2,3,4,5,6,7,8,9," "," "];
         var mul= [1,10,100,1000,10000,100000,1000000,10000000," "," ",0.1,0.01];
         var tol= ["","1%","2%"," "," ","0.5%","0.25%","0.10%","0.05%"," ","5%","10%"];

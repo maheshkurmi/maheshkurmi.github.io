@@ -1,0 +1,839 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Mirrors and time</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; width:820px; margin-left:auto; margin-right:auto;">
+<center>
+    <H3> Mirrors and time</H3>
+
+    <div id="canvasesdiv" style="position:relative; width:820px; height:560px">
+        <canvas id="myCanvas" style="position:absolute; left:0px; top:0px;" width="820" height="560"></canvas>
+    </div>
+    <div id="buttons">
+        <input type="button" id="play" value="Play" onclick="play()">
+        <input type="button" id="pause" value="Pause" onclick="pause()">
+        <input type="button" id="stepforward" value="Step >>" onclick="stepForward()">
+        <input type="button" id="stepback" value="Step <<" onclick="stepBack()">
+        <input type="button" id="reset" value="Reset" onclick="reset()">
+    </div>
+
+    <div id="typeButtons">Type of mirror:
+        <input type="button" id="converging" value="Converging Mirror" onclick="mirrorType(1)">
+        <input type="button" id="diverging" value="Diverging Mirror" onclick="mirrorType(2)">
+        <input type="button" id="plane" value="Plane Mirror" onclick="mirrorType(3)">
+
+    </div>
+
+</center>
+
+<script>
+
+    // Simulation first posted on 3-6-2018 - written by Andrew Duffy
+
+
+    function showdObject(newValue)
+    {
+        //get the element
+        var display = document.getElementById("initialdObjectValue");
+        //show the amount
+        display.innerHTML=newValue;
+        dObject = Number(newValue);
+        reset();
+    }
+
+    function showhObject(newValue)
+    {
+        //get the element
+        var display = document.getElementById("initialhObjectValue");
+        //show the amount
+        display.innerHTML=newValue;
+        hObject = Number(newValue);
+        reset();
+    }
+
+
+    function showf(newValue)
+    {
+        //get the element
+        var display = document.getElementById("initialfValue");
+        //show the amount
+        display.innerHTML=newValue;
+        f = Number(newValue);
+        mirrorRadius = 2*f;
+        if (mirrorKind == 2) f=(-f);
+        reset();
+    }
+
+    function mirrorType(mirror)
+    {
+        mirrorKind = Number(mirror);
+        if (mirrorKind == 1) {
+            f=Math.abs(f);
+            graphTitle = 'Converging mirror';
+        }
+        if (mirrorKind == 2) {
+            f=(-1)*Math.abs(f);
+            graphTitle = 'Diverging mirror';
+        }
+        if (mirrorKind == 3) {
+            graphTitle = 'Plane mirror';
+        }
+
+        reset();
+    }
+
+    function play() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        runMotion();
+
+    }
+
+    function pause() {
+        window.clearTimeout(timer);
+        runFlag = 0;
+
+    }
+
+    function stepForward() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+    function stepBack() {
+        window.clearTimeout(timer);
+        index = index-2;
+        if (index < -1) index = -1;
+        time = index/20;
+        runFlag = 1;
+        drawMotion();
+
+    }
+
+    function reset() {
+        window.clearTimeout(timer);
+        index = -1;
+        time = 0.0;
+        x1 = xBase + x1Init;
+        runFlag = 1;
+        if (mirrorKind == 1) {
+            for (var i=0; i < nMirrorPoints; i++) {
+                mirrorPoints[i].y = y1-12*((i-6));   // y position
+                mirrorPoints[i].x = Math.sqrt(4*mirrorRadius*mirrorRadius-12*((i-6))*12*((i-6)));
+                mirrorPoints[i].x = mirrorPoints[i].x + x1+radius-0.29*radius-2*mirrorRadius;  // x position
+            }
+        }
+        if (mirrorKind == 2) {
+            for (var i=0; i < nMirrorPoints; i++) {
+                mirrorPoints[i].y = y1-12*((i-6));   // y position
+                mirrorPoints[i].x = Math.sqrt(4*mirrorRadius*mirrorRadius-12*((i-6))*12*((i-6)));
+                mirrorPoints[i].x = -mirrorPoints[i].x + x1+radius-0.29*radius+2*mirrorRadius;  // x position
+            }
+        }
+        if (mirrorKind == 3) {
+            for (var i=0; i < nMirrorPoints; i++) {
+                mirrorPoints[i].x = x1+radius-0.29*radius;   // x position
+                mirrorPoints[i].y = y1-12*((i-6));   // y position
+//              console.log(mirrorPoints[i].x + ' ' + mirrorPoints[i].y);
+            }
+        }
+
+        for (var i=0; i < nMirrorPoints; i++) {
+            wavefrontPoints[i].x = x1+radius-0.29*radius+2*dObject;   // x position
+            wavefrontPoints[i].y = y1-2*hObject;   // y position
+            var dist =  Math.sqrt((mirrorPoints[i].x-wavefrontPoints[i].x)*(mirrorPoints[i].x-wavefrontPoints[i].x)+(mirrorPoints[i].y-wavefrontPoints[i].y)*(mirrorPoints[i].y-wavefrontPoints[i].y));
+            wavefrontPoints[i].t = dist/speed;
+        }
+
+        for (var i=0; i < nMirrorPoints; i++) {
+            fauxWavefrontPoints[i].x = x1+radius-0.29*radius+2*dImage;   // x position
+            fauxWavefrontPoints[i].y = y1-2*hImage;   // y position
+        }
+
+        drawMotion();
+
+    }
+
+
+
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
+    canvas.onmousedown = myDown;							// mouse event handler for computer browsers
+    canvas.onmouseup = myUp;								// mouse event handler for computer browsers
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+
+    var index = -1;
+    var time = 0.0;
+    var xBase = 310;
+    var yBase = 110;
+    var xInit = 20;
+    var graphType = 1;
+    var graphTitle = 'Converging mirror';
+    var yAxisTitle = 'p (kg m/s)';
+    var xAxisTitle = 't (s)';
+    var cart1Label = 'm';
+    var cart2Label = 'm';
+    var slope = 0.4;
+    var yIncrement = 3;
+    var yNumDecimals = 1;
+    var yStart = yBase+120;
+    var plotColor = '#ff00ff';
+    var radius = 150;
+    var maxTime = 10.0;
+    var x1Init = 0;
+    var x1Old = xBase + x1Init;
+    var x1 = xBase + x1Init;
+    var v1 = 1.0;
+    var dObject = -80;
+    var hObject = 20;
+    var objectColor = '#933';
+    var f = 50;
+    var mirrorRadius = 2*f;
+    var dImage = 80;
+    var hImage = -20;
+    var imageColor = '#339';
+    var slope;
+    var mirrorKind = 1;
+    var y1 = yBase+80;
+    var time = 0.0;
+    var deltat = 1/20.0;
+    var timer;
+    var runFlag = 1;
+    var xObject = x1+radius-0.29*radius+2*dObject;
+    var yObject = y1-2*hObject;
+    var xImage = x1+radius-0.29*radius-2*dImage;
+    var yImage = y1-2*hImage;
+    var xFocal = x1+radius-0.29*radius-2*f;
+
+    var graphX = 12;
+    var graphY = 2;
+    var graphType = 1;
+    var xAxisOffset = 0.0;
+    var xMajorTicks = 1;
+    var xDecimals = 0;
+    var yAxisOffset = 0.0;
+    var yMajorTicks = 1;
+    var yDecimals = 0;
+    var plotColor = 'red';
+
+    var graphLabel = 'Delay compared to middle point';
+    var xAxisLabel = 'position';
+    var yAxisLabel = 'time delay (ns)';
+
+
+    var nMirrorPoints = 13;  // number of points on the mirror
+    var mirrorPoints = new Array(nMirrorPoints);
+    for (var i=0; i < nMirrorPoints; i++) {
+        mirrorPoints[i] = {};
+        mirrorPoints[i].x = 0.0;   // x position
+        mirrorPoints[i].y = 0.0;   // y position
+        mirrorPoints[i].t1 = 0.0;   // time 1
+        mirrorPoints[i].t2 = 0.0;   // time 2
+    }
+
+    var speed = 12.0;
+    var wavefrontPoints = new Array(nMirrorPoints);
+    for (var i=0; i < nMirrorPoints; i++) {
+        wavefrontPoints[i] = {};
+        wavefrontPoints[i].x = 0.0;   // x position
+        wavefrontPoints[i].y = 0.0;   // y position
+        wavefrontPoints[i].t = 0.0;   // turn time
+    }
+
+    var fauxWavefrontPoints = new Array(nMirrorPoints);
+    for (var i=0; i < nMirrorPoints; i++) {
+        fauxWavefrontPoints[i] = {};
+        fauxWavefrontPoints[i].x = 0.0;   // x position
+        fauxWavefrontPoints[i].y = 0.0;   // y position
+    }
+
+
+
+    reset();
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+        if (index >= 40000) runFlag = 0;
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " xPos = " + xPos);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            index = index + 1;
+            time = index/20;
+
+            // set background color for the entire thing
+            context.fillStyle = "#ffd";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+
+            // draw the actual mirror
+
+            context.strokeStyle = '#000';
+
+
+            if (mirrorKind == 1) {
+                context.beginPath();
+                context.arc(x1+radius-0.29*radius-2*mirrorRadius, y1, 2*mirrorRadius, -(0.6-mirrorRadius/500) * Math.PI, (0.6-mirrorRadius/500) * Math.PI, false);
+                context.stroke();
+            }
+            if (mirrorKind == 2) {
+                context.beginPath();
+                context.arc(x1+radius-0.29*radius+2*mirrorRadius, y1, 2*mirrorRadius, 0.65 * Math.PI, 1.35 * Math.PI, false);
+                context.stroke();
+
+            }
+
+            if (mirrorKind == 3) {
+                context.beginPath();
+                context.moveTo(x1+radius-0.29*radius, y1-106);
+                context.lineTo(x1+radius-0.29*radius, y1+106);
+                context.stroke();
+
+            }
+
+
+            // draw the principal axis
+            context.beginPath();
+            context.moveTo(0, y1);
+            context.lineTo(canvas.width, y1);
+            context.stroke();
+
+            xFocal = x1+radius-0.29*radius-2*f;
+            //        console.log("focal point = " + xFocal);
+            // draw the focal point
+            context.strokeStyle = 'purple';
+            context.lineWidth = 2;
+
+            if (mirrorKind < 3) {
+                context.beginPath();
+                context.arc(x1+radius-0.29*radius-2*f, y1, 4, 0, 2.0 * Math.PI, false);
+                context.fillStyle = 'purple';
+                context.fill();
+                context.stroke();
+                context.arc(x1+radius-0.29*radius-4*f, y1, 4, 0, 2.0 * Math.PI, false);
+                context.stroke();
+
+            }
+
+//         dImage = -dObject*f/(-dObject-f);
+//         hImage = dImage*hObject/(dObject);
+//         if (mirrorKind == 3) {
+//           dImage = dObject;
+//           hImage = hObject;
+//         }
+
+
+            // draw multiple rays
+
+            if ((dImage < 0.0) || (mirrorKind == 3)) {
+                context.strokeStyle = '#ddd';
+                for (i = 0; i < nMirrorPoints; i++) {
+                    context.beginPath();
+                    if (Math.abs(hImage) < 1.0e10) slope = (mirrorPoints[i].y-(y1-2*hImage))/(mirrorPoints[i].x-(x1+radius-0.29*radius-2*dImage));
+                    else slope = -hObject/f;
+                    context.moveTo(mirrorPoints[i].x , mirrorPoints[i].y);
+                    context.lineTo(mirrorPoints[i].x+420, mirrorPoints[i].y+slope*420);;
+                    context.stroke();
+                }
+            }
+
+
+            for (i = 0; i < nMirrorPoints; i++) {
+                context.strokeStyle = '#bbb';
+                context.lineWidth = 2;
+                context.beginPath();
+                context.moveTo(x1+radius-0.29*radius+2*dObject, y1-2*hObject);
+                context.lineTo(mirrorPoints[i].x , mirrorPoints[i].y);
+                if (Math.abs(hImage) < 1.0e10) slope = (mirrorPoints[i].y-(y1-2*hImage))/(mirrorPoints[i].x-(x1+radius-0.29*radius-2*dImage));
+                else slope = -hObject/f;
+                context.lineTo(mirrorPoints[i].x-420, mirrorPoints[i].y-slope*420);
+                context.stroke();
+                mirrorPoints[i].t1 = (1/200)*(1e9/3e8)*Math.sqrt((xObject-mirrorPoints[i].x)*(xObject-mirrorPoints[i].x)+(yObject-mirrorPoints[i].y)*(yObject-mirrorPoints[i].y));
+                //           console.log(mirrorPoints[i].t1);
+                mirrorPoints[i].t2 = (1/200)*(1e9/3e8)*Math.sqrt((xImage-mirrorPoints[i].x)*(xImage-mirrorPoints[i].x)+(yImage-mirrorPoints[i].y)*(yImage-mirrorPoints[i].y));
+                //        console.log(mirrorPoints[i].t1+mirrorPoints[i].t2);
+
+            }
+
+
+
+            // draw the parallel ray
+            context.strokeStyle = 'red';
+            context.lineWidth = 2;
+            context.beginPath();
+            context.moveTo(x1+radius-0.29*radius+2*dObject, y1-2*hObject);
+            context.lineTo(x1+radius-0.29*radius, y1-2*hObject);
+            slope = -hObject/f;
+            if (mirrorKind == 3) slope = 0;
+            context.lineTo(x1+radius-0.29*radius-420, y1-2*hObject-slope*420);
+            context.stroke();
+
+            if (dImage < 0.0) {
+                context.strokeStyle = '#fbb';
+                context.beginPath();
+                context.moveTo(x1+radius-0.29*radius, y1-2*hObject);
+                context.lineTo(x1+radius-0.29*radius+420, y1-2*hObject+slope*420);
+                context.stroke();
+            }
+
+            // draw the chief ray
+            context.strokeStyle = 'blue';
+            context.lineWidth = 2;
+            context.beginPath();
+            context.moveTo(x1+radius-0.29*radius+2*dObject, y1-2*hObject);
+            slope = -hObject/dObject;
+            context.lineTo(x1+radius-0.29*radius, y1-2*hObject+slope*(-2*dObject));
+            context.lineTo(x1+radius-0.29*radius-420, y1+slope*(420));
+            context.stroke();
+
+            if (dImage < 0.0) {
+                context.strokeStyle = '#bbf';
+                context.beginPath();
+                context.moveTo(x1+radius-0.29*radius, y1);
+                context.lineTo(x1+radius-0.29*radius+420, y1-slope*(420));
+                context.stroke();
+            }
+
+            // draw the focal ray
+            context.strokeStyle = 'green';
+            context.lineWidth = 2;
+            context.beginPath();
+            context.moveTo(x1+radius-0.29*radius+2*dObject, y1-2*hObject);
+            slope = hObject/(dObject+f);
+            context.lineTo(x1+radius-0.29*radius, y1-2*hObject+slope*(2*dObject));
+            context.lineTo(x1+radius-0.29*radius-420, y1-2*hObject+slope*(2*dObject));
+            if (mirrorKind < 3) context.stroke();
+
+            if (dImage < 0.0) {
+                context.strokeStyle = '#bfb';
+                context.beginPath();
+                context.moveTo(x1+radius-0.29*radius, y1-2*hObject+slope*(2*dObject));
+                context.lineTo(x1+radius-0.29*radius+420, y1-2*hObject+slope*(2*dObject));
+                if (mirrorKind < 3) context.stroke();
+            }
+
+            xObject = x1+radius-0.29*radius+2*dObject;
+            yObject = y1-2*hObject;
+
+            // draw the object arrow
+            if (hObject > 0)  drawArrow(0,hObject,x1+radius-0.29*radius+2*dObject,y1,objectColor);
+            if (hObject < 0)  drawArrow(0,hObject,x1+radius-0.29*radius+2*dObject,y1,objectColor);
+
+            // draw the image arrow
+            if (hImage > 0)  drawArrow(0,hImage,x1+radius-0.29*radius-2*dImage,y1,imageColor);
+            if (hImage < 0)  drawArrow(0,hImage,x1+radius-0.29*radius-2*dImage,y1,imageColor);
+
+
+            //  move and draw the wave front
+            context.fillStyle = 'red';
+            for (var i=0; i < nMirrorPoints; i++) {
+                if (time <= wavefrontPoints[i].t) {
+                    var dist = Math.sqrt((mirrorPoints[i].x-(x1+radius-0.29*radius+2*dObject))*(mirrorPoints[i].x-(x1+radius-0.29*radius+2*dObject))+(mirrorPoints[i].y-(y1-2*hObject))*(mirrorPoints[i].y-(y1-2*hObject)));
+                    wavefrontPoints[i].x = (x1+radius-0.29*radius+2*dObject) + speed*time*(mirrorPoints[i].x-(x1+radius-0.29*radius+2*dObject))/dist;
+                    wavefrontPoints[i].y = (y1-2*hObject) + speed*time*(mirrorPoints[i].y-(y1-2*hObject))/dist;
+                    context.beginPath();
+
+                    context.arc(wavefrontPoints[i].x , wavefrontPoints[i].y, 4, 0, 2.0 * Math.PI, false);
+                    context.fillStyle = 'radius';
+                    context.fill();
+                }
+
+                else {
+                    var factor = 1;
+                    if ((dImage < 0.0) || (mirrorKind == 3)) factor = -1;
+                    if (Math.abs(hImage) < 1.0e10) {
+                        var dist = Math.sqrt((mirrorPoints[i].x-(x1+radius-0.29*radius-2*dImage))*(mirrorPoints[i].x-(x1+radius-0.29*radius-2*dImage))+(mirrorPoints[i].y-(y1-2*hImage))*(mirrorPoints[i].y-(y1-2*hImage)));
+                        wavefrontPoints[i].x = (mirrorPoints[i].x) + factor*speed*(time-wavefrontPoints[i].t)*((x1+radius-0.29*radius-2*dImage)-mirrorPoints[i].x)/dist;
+                        wavefrontPoints[i].y = (mirrorPoints[i].y) - factor*speed*(time-wavefrontPoints[i].t)*(mirrorPoints[i].y-(y1-2*hImage))/dist;
+                    }
+                    else {
+                        var dist = Math.sqrt(hObject*hObject+f*f);
+                        wavefrontPoints[i].x = (mirrorPoints[i].x) - factor*speed*(time-wavefrontPoints[i].t)*(f)/dist;
+                        wavefrontPoints[i].y = (mirrorPoints[i].y) + factor*speed*(time-wavefrontPoints[i].t)*(hObject)/dist;
+
+                    }
+//           wavefrontPoints[i].x = (x1+radius-0.29*radius-2*dImage);
+//           wavefrontPoints[i].y = (y1-2*hImage);
+//           console.log(dObject +" " + dImage + " " + hObject + " " + hImage);
+                    context.beginPath();
+                    context.arc(wavefrontPoints[i].x , wavefrontPoints[i].y, 4, 0, 2.0 * Math.PI, false);
+                    context.fillStyle = 'radius';
+                    context.fill();
+                }
+
+            }
+
+            // move and draw the faux wave front (from the virtual image)
+
+            if ((dImage < 0.0) || (mirrorKind == 3)) {
+
+                context.fillStyle = 'purple';
+                for (var i=0; i < nMirrorPoints; i++) {
+                    var dist = Math.sqrt((mirrorPoints[i].x-(x1+radius-0.29*radius-2*dImage))*(mirrorPoints[i].x-(x1+radius-0.29*radius-2*dImage))+(mirrorPoints[i].y-(y1-2*hImage))*(mirrorPoints[i].y-(y1-2*hImage)));
+                    fauxWavefrontPoints[i].x = (x1+radius-0.29*radius-2*dImage) + speed*time*(mirrorPoints[i].x-(x1+radius-0.29*radius-2*dImage))/dist;
+                    fauxWavefrontPoints[i].y = (y1-2*hImage) + speed*time*(mirrorPoints[i].y-(y1-2*hImage))/dist;
+                    context.beginPath();
+
+                    context.arc(fauxWavefrontPoints[i].x , fauxWavefrontPoints[i].y, 4, 0, 2.0 * Math.PI, false);
+                    context.fill();
+                }
+            }
+
+            // graph title
+            context.font = 'bold 16pt Calibri';
+            context.fillStyle = 'purple';
+            context.textAlign = 'center';
+            context.fillText(graphTitle, (canvas.width)/2, 30);
+
+            context.font = '16pt Calibri';
+            context.fillStyle = 'black';
+
+
+            var dObjectLabel = 'Object distance = ';
+            dObjectLabel = dObjectLabel + (-dObject).toFixed(2) + ' cm';
+            context.textAlign = 'left';
+            context.fillText(dObjectLabel, 50, 330);
+
+            var hObjectLabel = 'Object height = ';
+            hObjectLabel = hObjectLabel + (hObject).toFixed(2) + ' cm';
+            context.textAlign = 'left';
+            context.fillText(hObjectLabel, 50, 360);
+
+            var fLabel = 'Focal length = ';
+            fLabel = fLabel + (f).toFixed(2) + ' cm';
+            context.textAlign = 'left';
+            context.fillText(fLabel, 20+(canvas.width)/2, 300);
+
+            var dImageLabel = 'Image distance = ';
+            dImageLabel = dImageLabel + (dImage).toFixed(2) + ' cm';
+            context.textAlign = 'left';
+            context.fillText(dImageLabel, 20+(canvas.width)/2, 330);
+
+            var hImageLabel = 'Image height = ';
+            hImageLabel = hImageLabel + (hImage).toFixed(2) + ' cm';
+            context.textAlign = 'left';
+            context.fillText(hImageLabel, 20+(canvas.width)/2, 360);
+
+            drawAxesMidY (200, 450, graphX, graphY, xAxisOffset, xMajorTicks, yMajorTicks, xDecimals, yDecimals, xAxisLabel, yAxisLabel, graphLabel);
+
+            var sFactor = 1.0;
+            if (dImage < 0.0) sFactor = -1.0;
+            var refTime = mirrorPoints[6].t1+sFactor*mirrorPoints[6].t2;
+            context.fillStyle = 'orange';
+
+            for (i = 0; i < nMirrorPoints; i++) {
+                var tDelay = mirrorPoints[i].t1+sFactor*mirrorPoints[i].t2-refTime;
+                context.beginPath();
+                context.arc(200+40*i , 450+40-(40/yMajorTicks)*tDelay, 4, 0, 2.0 * Math.PI, false);
+                context.fill();
+
+            }
+
+        }
+    }
+
+    function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+        var theta = Math.atan2(Fy,Fx);
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px, Py);
+        context.lineTo(Px+2*Fx, Py-2*Fy);
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.fillStyle = arrowColor;
+        context.beginPath();
+        context.moveTo(Px+2*Fx-4*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-2*Fy+4*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.lineTo(Px+2*Fx,Py-2*Fy);
+        context.lineTo(Px+2*Fx-4*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-2*Fy+4*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+
+        context.stroke();
+        context.fill();
+
+    }
+
+
+    function drawArrowOld(Fx,Fy,Px,Py,theta, arrowColor) {
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px, Py);
+        context.lineTo(Px+2*Fx,Py-2*Fy);
+        //          context.lineTo(120+50*Fx*Math.cos(theta)+10*F*Math.cos(theta+(3.1416/2))-2*F*Math.cos(theta+0.7*(3.1416/2)),170-50*Fx*Math.sin(theta)-10*F*Math.sin(theta+(3.1416/2))+2*F*Math.sin(theta+0.7*(3.1416/2)));
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.beginPath();
+        context.moveTo(Px+2*Fx,Py-2*Fy);
+        context.lineTo(Px+2*Fx-4*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-2*Fy+4*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(Px+2*Fx,Py-2*Fy);
+        context.lineTo(Px+2*Fx-4*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-2*Fy+4*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+        context.stroke();
+
+    }
+
+    function drawAxesMidY(xAxisStart,yAxisStart,xNum, yNum, xOffset, xIncrement, yIncrement, xNumDecimals, yNumDecimals, xAxisTitle, yAxisTitle, graphTitle) {
+        // set background color for the graph
+        context.fillStyle = "#eff";
+        context.fillRect(xAxisStart, yAxisStart, 40*xNum, 40*yNum);
+
+        var axisLabel = '';
+        var axisValue = 0;
+
+        // vertical grid lines
+        context.lineWidth = 2;
+        context.strokeStyle = '#888';
+
+        for (var i = 0; i <= xNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart+40*i, yAxisStart);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum/2+10);
+            context.stroke();
+            context.moveTo(xAxisStart+40*i, yAxisStart+40*yNum/2+30);
+            context.lineTo(xAxisStart+40*i, yAxisStart+40*yNum);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = xOffset + xIncrement*(i);
+            axisLabel = axisValue.toFixed(xNumDecimals);
+            if (i > 0) context.fillText(axisLabel, xAxisStart+40*i, yAxisStart+40*yNum/2+20);
+        }
+
+        // horizontal grid lines
+        for (i = 0; i <= yNum; i++) {
+            context.beginPath();
+            context.moveTo(xAxisStart-10, yAxisStart+40*i);
+            context.lineTo(xAxisStart+40*xNum, yAxisStart+40*i);
+            context.stroke();
+            context.font = '14pt Calibri';
+            context.fillStyle = 'black';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            axisValue = yIncrement*(yNum/2-i);
+            axisLabel = axisValue.toFixed(yNumDecimals);
+            context.fillText(axisLabel, xAxisStart-30, yAxisStart+40*i);
+
+        }
+
+        // x-axis
+        context.strokeStyle = '#000';
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(xAxisStart-1, yAxisStart+40*yNum/2);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum/2);
+        context.stroke();
+        context.moveTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum/2-6);
+        context.lineTo(xAxisStart+40*xNum+20, yAxisStart+40*yNum/2);
+        context.lineTo(xAxisStart+40*xNum+10, yAxisStart+40*yNum/2+6);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.fillText(xAxisTitle, xAxisStart+40*xNum+24, yAxisStart+40*yNum/2);
+
+        // y-axis
+        context.strokeStyle = '#000';
+        context.beginPath();
+        context.moveTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart, yAxisStart+40*yNum);
+        context.stroke();
+        context.moveTo(xAxisStart-6, yAxisStart-10);
+        context.lineTo(xAxisStart, yAxisStart-20);
+        context.lineTo(xAxisStart+6, yAxisStart-10);
+        context.lineJoin = 'miter';
+        context.stroke();
+        context.strokeStyle = '#000';
+        context.textAlign = 'center';
+        //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xAxisStart );
+
+        context.font = '16pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(yAxisTitle, xAxisStart-30, yAxisStart - 35);
+
+        // graph title
+        context.font = 'bold 18pt Calibri';
+        context.fillStyle = 'purple';
+        context.textAlign = 'center';
+        context.fillText(graphTitle, xAxisStart+40*xNum/2, yAxisStart-24);
+
+    }
+
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 200/30);
+        }
+    }
+
+    //  Mouse and Touch event functions from  Wolfgang Bauer
+
+    function whereClicked(x_,y_,what_) {    // underscore denotes local variables
+        //if (what_ == 'down') {console.log('('+x_+','+y_+')'+what_)};
+//	console.log('('+x_+','+y_+')'+what_);
+//    console.log("x offset = " + charge1X + " y offset = " + charge1Y);
+        if ((Math.abs(x_ - (xImage)) < 15) && (Math.abs(y_ - yImage) < 15))   // moving the image
+        {
+            xImage = x_ ;
+            yImage = y_ ;
+            dImage = Math.round(0.5*(x1+radius-0.29*radius-xImage));
+//        if (dObject < -200) dObject = -200;
+//        if (dObject > -5) dObject = -5;
+            hImage = Math.round(0.5*(y1-yImage));
+//        if (hObject > 50) hObject = 50;
+//        if (hObject < -50) hObject = -50;
+//        xImage = x1+radius-0.29*radius-2*dImage;
+//        yImage = y1-2*hImage;
+            reset();
+        }
+
+        else if ((Math.abs(x_ - (xObject)) < 15) && (Math.abs(y_ - yObject) < 15))   // moving the object
+        {
+            xObject = x_ ;
+            yObject = y_ ;
+            dObject = Math.round(0.5*(xObject-x1-radius+0.29*radius));
+            if (dObject < -200) dObject = -200;
+            if (dObject > -5) dObject = -5;
+            hObject = Math.round(0.5*(y1-yObject));
+            if (hObject > 50) hObject = 50;
+            if (hObject < -50) hObject = -50;
+            xObject = x1+radius-0.29*radius+2*dObject;
+            yObject = y1-2*hObject;
+            reset();
+        }
+
+        else if ((Math.abs(x_ - (xFocal)) < 15) && (Math.abs(y_ - y1) < 15))  // moving the focal point
+        {
+            xFocal = x_ ;
+//        console.log("old f = " + f);
+            if (mirrorKind == 1) f = Math.round(0.5*(x1+radius-0.29*radius-xFocal));
+            if (mirrorKind == 2) f = -Math.round(0.5*(x1+radius-0.29*radius-xFocal));
+            if (f < 30) f = 30.0;
+            if (f > 100) f = 100.0;
+            mirrorRadius = 2*f;
+            if (mirrorKind == 2) f=(-f);
+//        console.log("new f = " + f + "  " + xFocal);
+            xFocal = x1+radius-0.29*radius-2*f;
+
+            reset();
+        }
+
+        if (what_ == 'down') {
+//		dragRect = true;
+//		x1 = x_;     // x1, y1 are global variables
+//		y1 = y_;
+        }
+        if (what_ == 'move') {
+//		dragRect = true;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+        if (what_ == 'up') {
+//		dragRect = false;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+    }
+
+    function myMove(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawAll();
+        drawMotion();
+
+    }
+
+    function myDown(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        canvas.onmousemove = myMove;
+        drawMotion();
+    }
+
+    function myUp(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        canvas.onmousemove = null;
+        drawMotion();
+    }
+
+    function myTouchMove(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+        drawMotion();
+    }
+
+    function myTouchStart(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        drawMotion();
+    }
+
+    function myTouchEnd(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        drawMotion();
+    }
+</script>
+
+<p>You can drag the tip of the object (red arrow)
+    to change the object height and object distance, and you can drag the focal point (filled circle)
+    to adjust the focal length. Also, you can drag the tip of the image (blue arrow) to re-position the image
+    anywhere you want, to explore why an image is formed in one special location - what is special about
+    that point?</p>
+
+<p>This simulation may only appeal to me, but it is written with Richard Feynman's "explore all paths" exhortation in
+    mind. Why is an image NOT formed at a particular point? Well, light from different parts of the mirror
+    would arrive out of phase, and cancel. Only at the image point does light arrive in phase,
+    constructively interfering to form the image. Ideally, the graph should always show the points
+    lined up along the axis when the image is at the actual image point - the graph shows the difference
+    in travel time for paths that go from the object to the image via different points on the mirror.
+    The point at 6 is the point where the principal axis meets the mirror - time delays are measured with
+    respect to that point.</p>
+
+<p>In some cases there will not be perfect alignment, because of spherical aberration - a spherical
+    mirror is not actually the ideal shape, so some of the outer points take a little longer or shorter
+    than expected. Making the mirror less curved minimizes this issue. </p>
+
+<p>Simulation first posted on 3-6-2018. Written by Andrew Duffy</p>
+
+</body>
+</html>

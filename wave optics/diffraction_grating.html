@@ -1,0 +1,405 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Diffraction grating</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; margin-left:10; margin-right:10;">
+<center>
+    <div id="canvasesdiv" style="position:relative; display:block; margin:auto; width:480px; height:470px"></div>
+    <canvas id="myCanvas" style="display: block; position: absolute; margin: 0 auto;display: block;
+        position: absolute; margin: 0 auto; top: 0; bottom: 0; left: 0; right: 0;" width="480" height="470"></canvas>
+    <div>Incident light is:
+        <input type="checkbox" id="redCheck" onchange="setColor();"> Red
+        <input type="checkbox" id="greenCheck" onchange="setColor();"> Green
+        <input type="checkbox" id="blueCheck" onchange="setColor();"> Blue
+
+    </div>
+
+</center>
+
+<script>
+
+
+    function setColor() {
+        redness = 0;
+        greenness = 0;
+        blueness = 0;
+        if (redCheck.checked) {
+            redness = 255;
+        }
+        if (greenCheck.checked) {
+            greenness = 255;
+        }
+        if (blueCheck.checked) {
+            blueness = 255;
+        }
+        redString = redness.toString(16);
+        if (redString.length == 1) redString = "0"+redString;
+        greenString = greenness.toString(16);
+        if (greenString.length == 1) greenString = "0"+greenString;
+        blueString = blueness.toString(16);
+        if (blueString.length == 1) blueString = "0"+blueString;
+        colorString = "#" + redString+greenString+blueString;
+        drawMotion();
+
+    }
+
+
+
+    function drawVectors() {
+        drawArrow(-4.0*v*Math.sin(omega*time),4.0*v*Math.cos(omega*time),xSupport+length*rodLength*Math.cos(omega*time),ySupport-length*rodLength*Math.sin(omega*time),"blue");   // velocity
+        drawArrow(-1.2*v*(v/length)*Math.cos(omega*time),-1.2*v*(v/length)*Math.sin(omega*time),xSupport+length*rodLength*Math.cos(omega*time),ySupport-length*rodLength*Math.sin(omega*time),"green");   // radial component of mg
+    }
+
+
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+    canvas.onmousedown = myDown;							// mouse event handler for computer browsers
+    canvas.onmouseup = myUp;								// mouse event handler for computer browsers
+    canvas.addEventListener("touchstart", myTouchStart, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchmove", myTouchMove, false);	// touch handler for iPhones, iPads, and Androids
+    canvas.addEventListener("touchend", myTouchEnd, false);		// touch handler for iPhones, iPads, and Androids
+    var redCheck = document.getElementById("redCheck");
+    var greenCheck = document.getElementById("greenCheck");
+    var blueCheck = document.getElementById("blueCheck");
+    var redness = 0;
+    var greenness = 0;
+    var blueness = 0;
+    var redString = "0";
+    var greenString = "0";
+    var blueString = "0";
+    var colorString = "#000000";
+    var index = -1;
+    var xBase = 300;
+    var yBase = 200;
+    var xGrating = 200;
+    var yGrating = canvas.height/2 - 30;
+
+    var radius = 3;
+    var time = 0.0;
+
+    var d = 2000;
+
+
+    var timer;
+    var runFlag = 1;
+
+
+    var dsliderX = 140;
+    var dsliderY = 440;
+    var dsliderXMin = 40;
+    var dsliderXMax = 240;
+    var dsliderValueMin = 1000;
+    var dsliderValueMax = 3000;
+    var dsliderValue = d;
+    var dsliderDecimals = 0;
+
+    drawMotion();
+
+    function drawMotion() {
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+        if ((time >= 100.0)) runFlag = 0;
+
+        //    console.log("In the drawMotion function, with runFlag = " + runFlag + " xPos = " + xPos);
+
+        if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+            // clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // set background color for the entire thing
+            context.fillStyle = "black";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // get the current d value
+            dsliderValue = dsliderValueMin + (dsliderValueMax-dsliderValueMin)*(dsliderX-dsliderXMin)/(dsliderXMax-dsliderXMin);
+            d = dsliderValue;
+
+            // draw grating spacing slider
+
+            drawSlider(dsliderX, dsliderY, dsliderXMin, dsliderXMax, dsliderValueMin, dsliderValueMax, dsliderValue, dsliderDecimals);
+            var sLabel = 'Grating spacing = ';
+            sLabel = sLabel + dsliderValue.toFixed(dsliderDecimals) + ' nm';
+            context.font = '16pt Calibri';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = 'white';
+            context.fillText(sLabel,dsliderXMin+0.5*(dsliderXMax-dsliderXMin), dsliderY-25);
+
+
+
+            index = index + 1;
+
+            // draw the grating
+            context.beginPath();
+            context.strokeStyle = 'grey';
+            context.moveTo(xGrating, yGrating-50);
+            context.lineTo(xGrating, yGrating+50);
+            context.lineWidth = 6;
+            context.strokeStyle = 'grey';
+            context.stroke();
+
+            // draw the beam
+
+//           console.log(colorString);
+            context.strokeStyle = colorString;
+            context.lineWidth = 2;
+            context.beginPath();
+            context.moveTo(0, yGrating);
+            context.lineTo(xGrating+200, yGrating);
+            context.stroke();
+
+            // draw the red lines
+
+            if (redCheck.checked) {
+                context.strokeStyle = "#ff0000";
+                var redLambda = 650;   // red wavelength in nm
+                var nLines = Math.trunc(d/redLambda);
+                for (var i = 1; i <= nLines; i++) {
+                    var sinTheta = i*redLambda/d;
+                    var cosTheta = Math.sqrt(1-sinTheta*sinTheta);
+                    context.beginPath();
+                    context.moveTo(xGrating+200*cosTheta, yGrating-200*sinTheta);
+                    context.lineTo(xGrating, yGrating);
+                    context.lineTo(xGrating+200*cosTheta, yGrating+200*sinTheta);
+                    context.stroke();
+                }
+            }
+
+            // draw the green lines
+
+            if (greenCheck.checked) {
+                context.strokeStyle = "#00ff00";
+                var greenLambda = 550;   // green wavelength in nm
+                var nLines = Math.trunc(d/greenLambda);
+                for (var i = 1; i <= nLines; i++) {
+                    var sinTheta = i*greenLambda/d;
+                    var cosTheta = Math.sqrt(1-sinTheta*sinTheta);
+                    context.beginPath();
+                    context.moveTo(xGrating+200*cosTheta, yGrating-200*sinTheta);
+                    context.lineTo(xGrating, yGrating);
+                    context.lineTo(xGrating+200*cosTheta, yGrating+200*sinTheta);
+                    context.stroke();
+                }
+            }
+
+            // draw the blue lines
+
+            if (blueCheck.checked) {
+                context.strokeStyle = "#0000ff";
+                var blueLambda = 450;   // blue wavelength in nm
+                var nLines = Math.trunc(d/blueLambda);
+                for (var i = 1; i <= nLines; i++) {
+                    var sinTheta = i*blueLambda/d;
+                    var cosTheta = Math.sqrt(1-sinTheta*sinTheta);
+                    context.beginPath();
+                    context.moveTo(xGrating+200*cosTheta, yGrating-200*sinTheta);
+                    context.lineTo(xGrating, yGrating);
+                    context.lineTo(xGrating+200*cosTheta, yGrating+200*sinTheta);
+                    context.stroke();
+                }
+            }
+
+            // draw the grating
+
+            context.strokeStyle = "grey";
+            context.lineWidth = 30;
+            context.beginPath();
+            context.moveTo(canvas.width/2+50, dsliderY);
+            context.lineTo(canvas.width/2+200, dsliderY);
+            context.stroke();
+
+            var nGrates = 75*100/d;
+            context.lineWidth = 4;
+            context.strokeStyle = colorString;
+            for (var i = 0; i <= nGrates; i++){
+                context.beginPath();
+                context.moveTo(canvas.width/2+50+75+i*d/100, dsliderY-10);
+                context.lineTo(canvas.width/2+50+75+i*d/100, dsliderY+10);
+                context.stroke();
+                context.beginPath();
+                context.moveTo(canvas.width/2+50+75-i*d/100, dsliderY-10);
+                context.lineTo(canvas.width/2+50+75-i*d/100, dsliderY+10);
+                context.stroke();
+            }
+
+
+        }
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+            timer = window.setTimeout(runMotion, 300/30);
+        }
+    }
+
+    function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+        var theta = Math.atan2(Fy,Fx);
+        context.strokeStyle = arrowColor;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(Px, Py);
+        context.lineTo(Px+5*Fx, Py-5*Fy);
+        context.stroke();
+
+        context.lineWidth = 2;
+
+        var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+        if (Fmag > 5) Fmag = 5;
+
+        context.fillStyle = arrowColor;
+        context.beginPath();
+        context.moveTo(Px+5*Fx-3*Fmag*Math.cos(theta+0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta+0.25*(3.1416/2)));
+        context.lineTo(Px+5*Fx,Py-5*Fy);
+        context.lineTo(Px+5*Fx-3*Fmag*Math.cos(theta-0.25*(3.1416/2)),Py-5*Fy+3*Fmag*Math.sin(theta-0.25*(3.1416/2)));
+
+        context.stroke();
+        context.fill();
+
+    }
+
+
+    function drawSlider(sliderX, sliderY, sliderXMin, sliderXMax, sliderValueMin, sliderValueMax, sliderValue, sliderDecimals) {
+
+
+        context.strokeStyle = '#ccc';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderXMax,sliderY);
+        context.stroke();
+
+        context.strokeStyle = '#88f';
+        context.lineWidth = 8;
+        context.beginPath();
+        context.moveTo(sliderXMin,sliderY);
+        context.lineTo(sliderX,sliderY);
+        context.stroke();
+
+        context.beginPath();
+        context.arc(sliderX, sliderY, 10, 0, 2 * Math.PI, false);
+        context.fillStyle = '#44f';
+        context.fill();
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+
+    }
+
+    //  Mouse and Touch event functions from  Wolfgang Bauer
+
+    function whereClicked(x_,y_,what_) {    // underscore denotes local variables
+        //if (what_ == 'down') {console.log('('+x_+','+y_+')'+what_)};
+//	console.log('('+x_+','+y_+')'+what_);
+//    console.log("x offset = " + charge1X + " y offset = " + charge1Y);
+        if ((Math.abs(x_ - (dsliderX)) < 40) && (Math.abs(y_ - dsliderY) < 40))   // moving the g slider
+        {
+            dsliderX = x_ ;
+            if (dsliderX < dsliderXMin) dsliderX = dsliderXMin;
+            if (dsliderX > dsliderXMax) dsliderX = dsliderXMax;
+            drawMotion();
+        }
+//        reset();
+//      }
+//      else if ((Math.abs(x_ - (charge2X)) < 15) && (Math.abs(y_ - charge2Y) < 15))  // moving the right-hand charge
+//      {
+//        charge2X = x_ ;
+//        charge2Y = y_ ;
+//        reset();
+//      }
+
+        if (what_ == 'down') {
+//		dragRect = true;
+//		x1 = x_;     // x1, y1 are global variables
+//		y1 = y_;
+        }
+        if (what_ == 'move') {
+//		dragRect = true;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+        if (what_ == 'up') {
+//		dragRect = false;
+//		dx = x_-x1;
+//		dy = y_-y1;
+        }
+    }
+
+    function myMove(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawAll();
+//	drawMotion();
+
+    }
+
+    function myDown(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+        canvas.onmousemove = myMove;
+//	drawMotion();
+    }
+
+    function myUp(event){
+        var xClick = event.pageX - canvasesdiv.offsetLeft;
+        var yClick = event.pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+        canvas.onmousemove = null;
+//	drawMotion();
+    }
+
+    function myTouchMove(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'move');
+//	drawMotion();
+    }
+
+    function myTouchStart(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'down');
+//	drawMotion();
+    }
+
+    function myTouchEnd(event){
+        event.preventDefault();
+        var xClick = event.targetTouches[0].pageX - canvasesdiv.offsetLeft;
+        var yClick = event.targetTouches[0].pageY - canvasesdiv.offsetTop;
+        whereClicked(xClick,yClick,'up');
+//	drawMotion();
+    }
+
+
+</script>
+<center>     <H3>Diffraction grating</H3> </center>
+
+<p>This is a simulation of a what light does when it encounters a diffraction grating.
+    Use at least one of the checkboxes to turn on a beam of light. When the light encounters
+    the diffraction grating (a comb-like structure with a large number of equally spaced openings),
+    the light is diffracted, because of constructive interference, at particular angles. Compared to a double-slit, the lines
+    produced by the diffraction grating are very sharp (narrow) and bright.</p>
+
+<p>A close-up of the center of the grating can be seen at the bottom right. You can use the slider to control
+    the grating spacing, which is the distance between neighboring openings in the grating.</p>
+
+<p>In the simulation, red light has a wavelength of 650 nm, green light has a wavelength of 550 nm, and blue light
+    has a wavelength of 450 nm.</p>
+
+
+<p>Simulation written by Andrew Duffy, and first posted on 8-17-2017.</p>
+
+
+
+</body>
+</html>

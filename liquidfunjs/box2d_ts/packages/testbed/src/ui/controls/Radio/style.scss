@@ -1,0 +1,48 @@
+.radio {
+    display: block;
+    margin: $spacing-md 0;
+    cursor: pointer;
+}
+
+.radio--input {
+    margin-right: $spacing-md;
+    display: none;
+    width: 0;
+    height: 0;
+
+    + span {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        position: relative;
+
+        &::before {
+            width: $size-control;
+            height: $size-control;
+            margin-right: $spacing-md;
+            content: "";
+            background: $color-frame-bg;
+            border-radius: 50%;
+        }
+    }
+
+    &:checked + span::after {
+        content: "";
+        position: absolute;
+        background: $color-check-mark;
+        color: $color-check-mark;
+        left: #{$size-control * 0.2};
+        width: #{$size-control * 0.6};
+        height: #{$size-control * 0.6};
+        margin-right: $spacing-md;
+        border-radius: 50%;
+    }
+}
+
+.radio:hover span::before {
+    background: $color-frame-bg-hovered;
+}
+
+.radio--input:active span::before {
+    background: $color-frame-bg-active;
+}

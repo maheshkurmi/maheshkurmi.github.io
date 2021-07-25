@@ -1,0 +1,45 @@
+{
+  "name": "@box2d/lights",
+  "version": "0.8.0",
+  "description": "A TypeScript port of Box2DLights",
+  "keywords": [
+    "box2d",
+    "libgdx",
+    "lights",
+    "lighting",
+    "shadows",
+    "game",
+    "TypeScript"
+  ],
+  "homepage": "https://lusito.github.io/box2d.ts/",
+  "bugs": {
+    "url": "https://github.com/lusito/box2d.ts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lusito/box2d.ts.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Santo Pfingsten",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc"
+  },
+  "browserslist": [
+    "> 5%"
+  ],
+  "dependencies": {
+    "typed-glsl": "0.9.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "typescript": "^4.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,200 @@
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <title>Diffraction</title>
+    <style>
+        input[type="range"] {
+            width: 140px;
+            padding: 0px;       /* remove extra space in IE */
+            -webkit-user-select: none;
+            -moz-user-select: -moz-none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        input[type="range"]::-ms-tooltip {
+            display: none;          /* hide automatic readout in IE */
+        }
+        input[type="range"]::-ms-track {
+            color: transparent;     /* hide tick marks in IE */
+        }
+    </style>
+</head>
+
+<body style="margin-left:30; margin-right:30; background-color:#c0c0c0;
+                font-family:sans-serif;">
+<div style="width:600px; margin-left:auto; margin-right:auto;">
+    <canvas id="theCanvas" width="600" height="400">
+        Please update your browser!
+    </canvas>
+</div>
+
+<div style="text-align:center;">
+    Slit width:
+    <input type="range" id="sepSlider" min="0.1" max="0.5" step="0.01" value="0.3" oninput="t = 0; drawImage();">
+    &nbsp;&nbsp;&nbsp;
+    <input type="button" id="pauseButton" value="Pause" onclick="startStop();">
+    <input type="button" id="resetButton" value="Reset" onclick="t=0;">
+    <BR>   Color scheme - <input type="button" id="color1" value="Red + Blue" onclick="t = -1; colorScheme = 1;">
+    <input type="button" id="color2" value="Grayscale" onclick="t = -1; colorScheme = 2;">
+
+</div>
+
+<h1 style="text-align:center; font-size:24px; margin-bottom:8px;">Diffraction from a Single Slit</h1>
+
+<p>This simulation demonstrates the diffraction of waves by a single slit. The width of the
+    opening is controlled by the slider. Initially, the waves are shown in black and white (grayscale),
+    with both the peaks and troughs being white. Black indicates zero amplitude. Alternatively,
+    you can switch to a red and blue color scheme, in which the wave crests are shown in red and the troughs in blue,
+    with black still indicating zero amplitude.
+    Note that the wave amplitude does not decrease with the distance from the source,
+    as it would for physical waves.
+</p>
+
+<p>This version of the simulation first posted by Andrew Duffy, 8-25-2017.
+
+
+    <script>
+
+        var theCanvas = document.getElementById("theCanvas");
+        var theContext = theCanvas.getContext("2d");
+        var theWidth = theCanvas.width;     // storing these in ordinary variables seems to improve performance
+        var theHeight = theCanvas.height;
+        var sepSlider = document.getElementById("sepSlider");
+        var pauseButton = document.getElementById("pauseButton");
+
+        //    var image = theContext.createImageData(theCanvas.width, theCanvas.height);
+        var image = theContext.createImageData(theWidth, theHeight);
+
+        /* image.data is now a big one-dimensional array of pixel data, with each pixel represented
+           by four successive unsigned byte integers (0 to 255), to represent r, g, b, and a values.
+           The ordering of the pixels begins at the top-left and proceeds horizontally across the
+           top row, then vertically down to successive rows.  This ordering is reflected in the
+           computation of "index" in the drawImage function below. */
+
+        for (var i=0; i<image.data.length; i+=4) {
+            image.data[i+3] = 255;      // set all alpha values to "opaque"
+        }
+
+        var k = 2 * Math.PI / (theWidth/16);      // angular wavenumber
+        var omega = Math.PI / 5;                   // angular frequency
+        var t = -1;                                      // time in arbitrary units
+        var running = true;
+        var xPoint = 270;
+        var yPoint = 100;
+        var colorScheme = 2;
+
+        var xGraph = 480;
+        var yGraph = 60;
+        var graphX = 6;
+        var graphY = 8;
+        var xAxisOffset = 0.0;
+        var xMajorTicks = 1;
+        var xDecimals = 0;
+        var graphLabel = 'z vs. time';
+        var xAxisLabel = 't (s)';
+        var yAxisLabel = 'z (mm)';
+        var yMajorTicks = 0.5;
+        var yDecimals = 1;
+
+        var arraySize = 10001;
+        var ray = new Array(arraySize);
+        for (var i = 0; i < arraySize; i++) {
+            ray[i] = {};
+            ray[i].wave = 0.0;
+        }
+
+
+        timeStep();
+
+        function timeStep() {
+            t += 1;
+            drawImage();
+            if (running) window.setTimeout(timeStep, 1000/1000);
+        }
+
+        function drawImage() {
+            var tPhase = omega * t;
+            var sourceWidth = Number(sepSlider.value) * theWidth / 2;
+            var xMid = theWidth / 2;
+            var ySource = 0.75*theHeight;
+            var sourcePhase = 0.0;
+            var nSources = 16;
+
+            for (var y=0; y<theHeight; y++) {               // loop over rows, top to bottom
+                for (var x=0; x<theWidth; x++) {            // loop over pixels in row, left to right
+                    waveTotal = 0.0;
+                    for (var i=0; i<nSources; i++) {          // loop over the sources
+                        var xSource = xMid -sourceWidth/2 + sourceWidth*i/(nSources-1);
+                        var dx = x - xSource;
+                        var dy = y - ySource;
+                        var length1 = Math.sqrt(dx*dx + dy*dy);       // distance from source
+                        var wave = Math.sin(k*length1 - tPhase);     // local amplitude of the wave from this source
+                        if (dy > 0) {
+                            length1 = dy;
+                            wave = Math.sin(-k*length1 - tPhase);
+                        }
+                        var waveTotal = waveTotal + wave/nSources;    // value to plot (will be between -1 and 1)
+                    }
+                    var index = (x + y*theWidth) * 4;       // index into image data array
+                    if (colorScheme == 2) {
+                        if (waveTotal > 0) {
+                            image.data[index] = Math.round(waveTotal * 255);      // red
+                            image.data[index+1] =  image.data[index]; // green the same
+                            image.data[index+2] = image.data[index];    // blue the same
+                        } else {
+                            image.data[index] = Math.round(-waveTotal * 255);   // red
+                            image.data[index+1] =  image.data[index]; // green the same
+                            image.data[index+2] = image.data[index];    // blue the same
+                        }
+                    }
+                    else {
+                        if (waveTotal > 0) {
+                            image.data[index] = Math.round(waveTotal * 255);      // red
+                            image.data[index+1] =  0; // no green
+                            image.data[index+2] = 0;    // no blue
+                        } else {
+                            image.data[index] = 0;   // no red
+                            image.data[index+1] = 0;    // no green
+                            image.data[index+2] = Math.round(-waveTotal * 255);        // blue
+                        }
+                    }
+
+                }
+            }
+            theContext.putImageData(image, 0, 0);   // blast the image to the screen
+
+//        console.log(sourceWidth);
+
+            // draw the barrier
+            theContext.strokeStyle = 'green';
+            theContext.lineWidth = 4;
+            theContext.beginPath();
+            theContext.moveTo(0,ySource);
+            theContext.lineTo(xMid-sourceWidth/2,ySource);
+            theContext.stroke();
+            theContext.beginPath();
+            theContext.moveTo(theWidth,ySource);
+            theContext.lineTo(xMid+sourceWidth/2,ySource);
+            theContext.stroke();
+
+        }
+
+        function startStop() {
+            running = !running;
+            if (running) {
+                pauseButton.value = "Pause";
+                timeStep();
+            } else {
+                pauseButton.value = "Resume";
+            }
+        }
+
+
+
+    </script>
+
+</body>
+
+</html>

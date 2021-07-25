@@ -1,15 +1,24 @@
-
-<!doctype html>
-<html class="no-js" lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>optics</title>
-    <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="CindyJS.css" />
+    <meta charset="UTF-8">
+    <title>Optics.cdy</title>
+    <style type="text/css">
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
 
-    <script type="text/javascript" src="app.js"></script>
+        #CSConsole {
+            background-color: #FAFAFA;
+            border-top: 1px solid #333333;
+            bottom: 0px;
+            height: 200px;
+            overflow-y: scroll;
+            position: fixed;
+            width: 100%;
+        }
+    </style>
     <script type="text/javascript" src="Cindy.js"></script>
     <script id="csdraw" type="text/x-cindyscript">
 
@@ -268,6 +277,7 @@ forall(objects,o,drawObject(o));
 
 ;
 </script>
+
     <script type="text/javascript">
         createCindy({
             scripts: "cs*",
@@ -333,10 +343,6 @@ forall(objects,o,drawObject(o));
     </script>
 </head>
 <body>
-
-
-
-
-<script src="app.js"></script>
+<canvas id="CSCanvas"></canvas>
 </body>
 </html>

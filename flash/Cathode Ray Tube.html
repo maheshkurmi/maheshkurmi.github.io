@@ -1,27 +1,214 @@
 
-<!-- saved from url=(0155)http://highered.mheducation.com/olcweb/cgi/pluginpop.cgi?it=swf::100%::100%::/sites/dl/free/0072512644/117354/01_Cathode_Ray_Tube.swf::Cathode%20Ray%20Tube -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Cathode Ray Tube</title>
-<meta http-equiv="expires" content="0">
-<meta http-equiv="Pragma" content="no-cache">
+<!doctype html>
+<html>
+<head>
+	<title>Cathode ray Simulation</title>
+	<meta name="keywords" content="Bohr quantum flash simulation physics">
+	<meta name="author" content="Mahesh Kurmi">
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+	<style>
+		body {
+			background: white;
+			color: #323232;
+			font-weight: 300;
+			height: 100vh;
+			margin: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			font-family: Helvetica neue, roboto;
+		}
+
+		img {
+			width: 56px;
+			height: 48px;
+		}
+
+		h1 {
+			font-weight: 200;
+			font-style: 26px;
+			margin: 10px;
+		}
+
+		#container canvas{
+			position: relative;
+		}
+		#container #overlay {
+			position: absolute;
+		}
+
+		.hover_bkgr_fricc{
+			background:rgba(0,0,0,.4);
+			cursor:pointer;
+			display:none;
+			height:100%;
+			position:fixed;
+			text-align:center;
+			top:0;
+			width:100%;
+			z-index:10000;
+		}
+		.hover_bkgr_fricc .helper{
+			display:inline-block;
+			height:100%;
+			vertical-align:middle;
+		}
+		.hover_bkgr_fricc > div {
+			background-color: #fff;
+			box-shadow: 10px 10px 60px #555;
+			display: inline-block;
+			height: auto;
+			max-width: 551px;
+			min-height: 100px;
+			vertical-align: middle;
+			width: 60%;
+			position: relative;
+			border-radius: 8px;
+			padding: 15px 5%;
+		}
+		.popupCloseButton {
+			background-color: #fff;
+			border: 3px solid #999;
+			border-radius: 50px;
+			cursor: pointer;
+			display: inline-block;
+			font-family: arial;
+			font-weight: bold;
+			position: absolute;
+			top: -20px;
+			right: -20px;
+			font-size: 25px;
+			line-height: 30px;
+			width: 30px;
+			height: 30px;
+			text-align: center;
+		}
+		.popupCloseButton:hover {
+			background-color: #ccc;
+		}
+		.trigger_popup_fricc {
+			background-color: #fff;
+			border: 3px solid #999;
+			border-radius: 50px;
+			cursor: pointer;
+			font-size: 20px;
+			position:absolute;
+			font-family: arial;
+			font-weight: bold;
+			position: absolute;
+			top:5px;
+			left:5px;
+			zindex:2;
+			margin: 10px;
+			display: inline-block;
+			font-weight: bold;
+			right: -20px;
+			font-size: 25px;
+			line-height: 30px;
+			width: 30px;
+			height: 30px;
+			text-align: center;
+		}
+		#gui {
+			font-size: 15px;
+			position:absolute;
+			font-family: arial;
+			transform:scale(1.2);
+			transform-origin: top right;
+			font-weight: bold;
+			position: absolute;
+			right:5px;
+			margin-left: auto;
+			zindex:2;
+			font-weight: bold;
+			font-size: 25px;
+		}
+		:root {
+			--tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+			--tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+			--tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+			--tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+			--tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+			--tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+			--tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+			--tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+			--tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+			--tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+			--tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+			--tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+			--tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+			--tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+			--tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+			--tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+			--tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+			--tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+			--tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+			--tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+			--tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+		}
+	</style>
 
 </head>
-<body bgcolor="#FFFFFF" text="#000000" marginheight="0" marginwidth="0" topmargin="0" leftmargin="0">
-<center>
-<table border="0" width="100%" height="100%" cellpadding="0" cellspacing="0">
-<tbody><tr><td align="center" valign="middle">
 
-	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://http//download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0" width="100%" height="100%">
-		<param name="PLAY" value="true">
-		<param name="LOOP" value="true">
-		<param name="QUALITY" value="high">
-		<param name="MOVIE" value="/sites/dl/free/0072512644/117354/01_Cathode_Ray_Tube.swf">
-		<embed src="/sites/dl/free/0072512644/117354/01_Cathode_Ray_Tube.swf" width="100%" height="100%" play="true" loop="true" quality="high" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash"> 
-		
-	</object>
+<body>
+
+<div id="container" class="container" align="center">
+	<div id="canvas"    >
+
+	</div>
+	<a class="trigger_popup_fricc">	&#8505;</a>
+	<div id="overlay">
+
+		<div class="hover_bkgr_fricc">
+			<span class="helper"></span>
+			<div>
+				<div class="popupCloseButton">&times;</div>
+				<h3>Bohr Model Simulation</h3>
+				<p>
+					Discovery of the operation of the oscilloscope using the simulation of an analog model (cathode-ray tube ≠ a digital one).					<br>
+					<br>
+					Whenever electron excites or de-excites, the absorption and emission spectra are updated accordingly.
+				</p>
+
+			</div>
+		</div>
+	</div>
 
 
-</td></tr>
-</tbody></table>
+</div>
 
+<script>
+	window.RufflePlayer = window.RufflePlayer || {};
+	window.addEventListener("load", (event) => {
+		const ruffle = window.RufflePlayer.newest();
+		const player = ruffle.createPlayer();
+		const container = document.getElementById("canvas");
+		container.appendChild(player);
+		player.config = {
+			autoplay: "on",
+			width:window.innerWidth,
+			height:window.innerHeight,
+			letterbox: "fullscreen",
+			"contextMenu": false,
+			// and so on...
+		};
+		player.style.width = window.innerWidth+"px";  player.style.height=window.innerHeight+"px";
+		player.load("Bohr_Nav.swf");
+	});
 
-</center></body></html>
+	//$('.addcharge').bind('touchstart' ,function(ev) { return self.AddCharge(ev); });
+	document.querySelector(".trigger_popup_fricc").onclick=function(){
+		document.querySelector('.hover_bkgr_fricc').style.display = "block";
+	};
+	document.querySelector('.hover_bkgr_fricc').onclick =function(){
+		document.querySelector('.hover_bkgr_fricc').style.display = "none";
+	};
+	document.querySelector('.popupCloseButton').onclick=function(){
+		document.querySelector('.hover_bkgr_fricc').style.display = "none";
+	};
+</script>
+<script src="runtime.js"></script>
+</body>
+</html>
