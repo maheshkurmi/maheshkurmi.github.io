@@ -1704,7 +1704,7 @@ export class b2ParticleSystem {
         this.m_def.destroyByAge = enable;
     }
 
-    /**
+    /**b2_fixtureContactFilterParticle
      * Get whether the oldest particle will be destroyed in
      * CreateParticle() when the maximum number of particles are
      * present in the system.

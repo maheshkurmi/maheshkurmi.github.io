@@ -1,0 +1,49 @@
+* { margin:0; padding:0; } /* to remove the top and left whitespace */
+
+#glcanvas {
+	height:100%;
+	width:100%;
+}
+
+.canvas {
+	border: 2px solid black;
+	background-color: black;
+	margin-right:255px;
+	height:100vh;
+	// just 100vh makes the canvas slightly larger than the visible area on ipad, so we need this too
+	max-height: -webkit-fill-available; 
+	overflow: hidden;
+}
+.sidebar {
+	width:250px;
+	position:fixed;
+	top: 0;
+	right: 0;
+}
+body {
+	overflow: hidden;
+}
+.slider {
+	width:100%;
+	margin-bottom:8px;
+}
+video {
+	display: none;
+}
+
+button {
+	padding:5px;
+	margin:5px;
+}
+
+.checkbox {
+	margin-bottom:8px;
+	margin-top:8px;
+}
+
+table { font-size:20px;text-align:center;display:block; }
+
+.tr-up-down { cursor:default; line-height: 0; }
+
+.td-heading { padding-bottom: 10px; }
+

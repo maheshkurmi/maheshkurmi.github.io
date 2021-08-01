@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Gas</title>
+    <link rel="stylesheet" href="gas.css" type="text/css">
+</head>
+
+<body>
+<div class="canvas">
+    <canvas id="glcanvas"></canvas>
+</div>
+<div class="sidebar">
+    <select id="exampleChooser" onchange="reinit(true)">
+        <option>1 Gas, Random Speeds</option>
+        <option>1 Gas, Equal Speeds</option>
+        <option>1 Gas, Extreme Speeds</option>
+        <option>1 Gas, One Moving Molecule</option>
+        <option>1 Gas, Small</option>
+        <option>2 Gases, Random Speeds</option>
+        <option>2 Gases, Equal Speeds</option>
+        <option>3 Gases, Random Speeds</option>
+        <option>3 Gases, Equal Speeds</option>
+        <option>Brownian Motion</option>
+        <option>Free Expansion</option>
+    </select>
+    <div class="checkbox">Stopped: <input type="checkbox" id="stoppedCheck"></div>
+    <div class="checkbox">Heater: <input type="checkbox" id="heaterCheck"></div>
+    <div class="checkbox">Energy Distribution: <input type="checkbox" id="energyCheck"></div>
+    <div class="checkbox">Show Brownian Motion Path: <input type="checkbox" id="showBrownPathCheck"></div>
+    <div class="checkbox">Hide Molecules: <input type="checkbox" id="hideMolsCheck"></div>
+    <!--<div class="checkbox">Divider: <input type="checkbox" id="dividerCheck"></div>-->
+    <button onclick="reinit(false)" id="reset">Reset</button>
+    <button onclick="expand()" id="expand">Expand</button><br>
+    <!--<button onclick="reverseTime()" id="reverseTime">Reverse Time</button><br>-->
+    Simulation Speed:
+    <input type="range" min="0" max="100" value="50" class="slider" id="speedBar">
+    <br>
+    Molecule Count:
+    <input type="range" min="1" max="1000" value="2" class="slider" id="molCountBar">
+    <br>
+    Color Scale:
+    <input type="range" min="1" max="300" value="230" class="slider" id="colorBar">
+    <br>
+    Heater Temperature:
+    <input type="range" min="0" max="100" value="35" class="slider" id="heaterTempBar">
+    <br>
+    Gravity:
+    <input type="range" min="0" max="100" value="20" class="slider" id="gravityBar">
+    <br>
+    <!--
+          Initial Temperature 1:
+          <input type="range" min="0" max="100" value="35" class="slider" id="temp1Bar">
+          <br>
+          Initial Temperature 2:
+          <input type="range" min="0" max="100" value="35" class="slider" id="temp2Bar">
+          <br>
+    -->
+    <p>&nbsp;</p>
+    <div id="values">
+        t = ...<br>
+    </div>
+    <br>&nbsp;<br>
+    <a href="/mathphysics.html">Back to index</a>
+</div>
+</div>
+</body>
+
+<script src="gas.js"></script>
+</html>
