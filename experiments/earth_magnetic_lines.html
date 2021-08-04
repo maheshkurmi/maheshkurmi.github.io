@@ -334,7 +334,7 @@
         pane.addInput(settings, "showMeridian",{label:"Show Meridian"}).on('change',updateParams);
         pane.addInput(settings, "verticalCompass",{label:"Vertical compass"}).on('change',updateParams);
         pane.addInput(settings, "horizontalCompass",{label:"Horizontal Compass"}).on('change',updateParams);
-        pane.addInput(settings, "showCompassField",{label:"Compass field Line"}).on('change',updateParams);
+        pane.addInput(settings, "showCompassField",{label:"Compass field Lines"}).on('change',updateParams);
         pane.addInput(settings, "isRunning",{label:"Earth Rotation"}).on('change',updateParams);
 
 
@@ -563,15 +563,22 @@
         let draggables=[location];
         dragControls = new DragControls( draggables, camera, renderer.domElement );
         //  dragControls.transformGroup=true;
-        dragControls.addEventListener("hoveron", function () {
+        dragControls.addEventListener("hoveron", function (e) {
             orbitControls.enabled = false;
         });
-        dragControls.addEventListener("hoveroff", function () {
+        dragControls.addEventListener("dragstart", function (e) {
+            orbitControls.enabled = false;
+        });
+        dragControls.addEventListener("hoveroff", function (e) {
             orbitControls.enabled = true;
         });
-        dragControls.addEventListener("drag", function () {
+        dragControls.addEventListener("dragend", function (e) {
+            orbitControls.enabled = true;
+        });
+        dragControls.addEventListener("drag", function (e) {
             updateMeridians();
         });
+
         updateParams();
         animate();
 
