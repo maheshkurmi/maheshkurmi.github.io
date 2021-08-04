@@ -541,7 +541,7 @@
             //side: THREE.DoubleSide,
         });
 
-        let locationGeom=new THREE.SphereGeometry(0.015,10,10);
+        let locationGeom=new THREE.SphereGeometry(0.15,10,10);
         let locationMat=new THREE.MeshPhongMaterial( {
             // map:earthTex,
             color: 0xffff00,
@@ -556,10 +556,10 @@
         equatorMat.color.setRGB(1.5, 1.5, 1.5);
         equator = new THREE.Mesh(equatorGeo, equatorMat);
         equator.rotation.x=-Math.PI/2;
-
+        location.visible=false;
 
         renderer.sortObjects = true
-       // renderer.depth=false;
+        // renderer.depth=false;
         let draggables=[location];
         dragControls = new DragControls( draggables, camera, renderer.domElement );
         //  dragControls.transformGroup=true;
