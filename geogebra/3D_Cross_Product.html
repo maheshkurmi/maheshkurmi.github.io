@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+<head>
+    <title>EM Wave</title>
+    <meta name="keywords" content="em waves simulation">
+    <meta name="author" content="Mahesh Kurmi">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            margin: 10px;
+        }
+
+        #container canvas{
+            position: relative;
+            touch-action: none;
+        }
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+            --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+            --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+            --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+            --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+            --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+            --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+            --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+            --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+            --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+            --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+            --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+            --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+            --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+            --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+            --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+            --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+            --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+            --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+            --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+        }
+
+    </style>
+    <script src="https://cdn.geogebra.org/apps/deployggb.js"></script>
+
+</head>
+
+<body>
+
+
+<div class="container">
+
+    <div id="ggbApplet">
+
+    </div>
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Cross Product and Area Visualization</h3>
+                <p> Vectors a and b are shown in 2 and 3 dimensions, respectively. You can drag points B and C to change these vectors.
+                    <br>
+                    Note: in the 3D view, click on the point twice in order to change its z-coordinate.
+                    <br>
+                    As you change these vectors, observe how the cross product (the vector in red), changes. Notice that the magnitude of the cross product is always the same as the area of the parallelogram spanned by a and b.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    document.querySelector(".trigger_popup_fricc").onclick=function(){
+        document.querySelector('.hover_bkgr_fricc').style.display = "block";
+    };
+    document.querySelector('.hover_bkgr_fricc').onclick =function(){
+        document.querySelector('.hover_bkgr_fricc').style.display = "none";
+    };
+    document.querySelector('.popupCloseButton').onclick=function(){
+        document.querySelector('.hover_bkgr_fricc').style.display = "none";
+    };
+    var parameters = {
+        "id": "ggbApplet",
+        "width":window.innerWidth,
+        "height":window.innerHeight,
+        "showMenuBar":false,
+        "showAlgebraInput":false,
+        "showToolBar":false,
+        "customToolBar":"0 73 62 | 1 501 67 , 5 19 , 72 75 76 | 2 15 45 , 18 65 , 7 37 | 4 3 8 9 , 13 44 , 58 , 47 | 16 51 64 , 70 | 10 34 53 11 , 24  20 22 , 21 23 | 55 56 57 , 12 | 36 46 , 38 49  50 , 71  14  68 | 30 29 54 32 31 33 | 25 17 26 60 52 61 | 40 41 42 , 27 28 35 , 6",
+        "showToolBarHelp":false,
+        "showResetIcon":false,
+        "enableLabelDrags":false,
+        "enableShiftDragZoom":true,
+        "enableRightClick":false,
+        "errorDialogsActive":false,
+        "useBrowserForJS":false,
+        "allowStyleBar":false,
+        "preventFocus":false,
+        "showZoomButtons":true,
+        "capturingThreshold":3,
+// add code here to run when the applet starts
+        "appletOnLoad":function(api){ /* api.evalCommand('Segment((1,2),(3,4))');*/ },
+        "showFullscreenButton":true,
+        "scale":1,
+        "disableAutoScale":false,
+        "allowUpscale":false,
+        "clickToLoad":false,
+        "appName":"classic",
+        "buttonRounding":0.7,
+        "buttonShadows":false,
+        "language":"en",
+        "filename":"3D - Cross Product.ggb",
+// use this instead of ggbBase64 to load a material from geogebra.org
+// "material_id":"RHYH3UQ8",
+// use this instead of ggbBase64 to load a .ggb file
+// "filename":"myfile.ggb",
+        //"ggbBase64":"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",
+    };
+    // is3D=is 3D applet using 3D view, AV=Algebra View, SV=Spreadsheet View, CV=CAS View, EV2=Graphics View 2, CP=Construction Protocol, PC=Probability Calculator DA=Data Analysis, FI=Function Inspector, macro=Macros
+    var views = {'is3D': 1,'AV': 0,'SV': 0,'CV': 0,'EV2': 0,'CP': 0,'PC': 0,'DA': 0,'FI': 0,'macro': 0};
+    var applet = new GGBApplet(parameters, '5.0', views);
+    window.onload = function() {applet.inject('ggbApplet')};
+    applet.setPreviewImage('data:image/gif;base64,R0lGODlhAQABAAAAADs=','https://www.geogebra.org/images/GeoGebra_loading.png','https://www.geogebra.org/images/applet_play.png');
+
+   </script>
+
+</body>
+</html>
