@@ -1,0 +1,975 @@
+<html lang="en">
+
+<head>
+<title>Electromagnetic oscillating circuit</title>
+<meta charset="utf-8">
+
+<style> 
+button {
+  height: 30px;       
+  border-radius: 0px;
+  border-style: outset;
+  border-width: 2px;
+  margin-left: 10px;
+  font: bold 15px sans-serif;
+  } 
+
+/* Gesamte App */
+   
+div#total {
+  position: relative;
+  margin: 20px auto 20px;
+  }
+  
+/* Zeichenfläche */
+
+div#canvas {
+  position: absolute;
+  background-color: #ffff00;
+  border: 1px solid #000000;
+  }
+  
+/* Schaltfläche */
+  
+div#panel, div#panel1, div#panel2 {
+  position: absolute;
+  background-color: #cccccc;
+  border: 1px solid #000000;
+  font: bold 15px sans-serif;
+  }
+  
+/* Zeile einer Schaltfläche */
+  
+div#panel div , div#panel1 div, div#panel2 div {
+  position: absolute;
+  }
+  
+/* Optionsfeld */
+
+input[type="checkbox"] {
+  margin-left: 10px;
+  border-radius: 0px; 
+  }
+  
+/* Radiobutton */
+
+input[type="radio"] {
+  margin-left: 10px;  
+  }
+  
+/* Schieberegler */
+
+input[type="range"] {
+  position: absolute;
+  left: 10px;
+  }
+  
+/* Eingabefeld */
+
+input[type="text"] {
+  position: absolute;
+  padding-left: 2px;
+  height: 22px;
+  border-radius: 0px;
+  border-color: #000000;
+  border-width: 1px;
+  font: bold 15px sans-serif;
+  } 
+  
+/* Text für Optionsfeld oder Radiobutton */
+  
+label {
+  margin-left: 5px;
+  vertical-align: 2px;  
+  }
+  
+/* Auswahlfeld */
+
+select {
+  position: absolute;
+  top: -3px;
+  left: 10px;
+  height: 20px;
+  border-radius: 0px;
+  font: bold 15px sans-serif;
+  } 
+  
+/* Inline-Element (span) innerhalb einer Schaltfläche */
+  
+div#panel span, div#panel1 span, div#panel2 span {
+  position: absolute;
+  white-space: nowrap;
+  font: bold 15px sans-serif;
+  }
+  
+/* Textbereich */
+
+textarea {
+  position: absolute;
+  padding: 3px;
+  left: 10px;
+  border-radius: 0px;
+  font: bold 15px sans-serif;
+  line-height: 1.25;
+  }
+div#total { width: 1100px; height: 600px;  align-items:center ; text-align: center;} 
+div#canvas { width: 800px; height: 600px; }
+div#panel { left: 800px; width: 300px; height: 600px; float: right;} 
+.pos1 { left: 10px; }
+.pos3 { left: 235px; } 
+button { width: 260px; font: bold 18px sans-serif;}  
+input[type="text"] { left: 140px; width: 80px; }  
+</style>
+<meta name="description" content="HTML5 app: Electromagnetic oscillating circuit">
+<meta name="author" content="Walter Fendt">
+<meta name="keywords" content="app, physics, electrodynamics, oscillating circuit">
+</head>
+
+<body>
+
+
+<div id="total">
+  <div id="canvas"><canvas id="cv" width=800 height=600>This browser doesn't support HTML5 canvas!</canvas></div>
+  <div id="panel">
+    <div style="top: 10px;"><button id="bu1" style="background-color: #00ffff;"></button></div>
+    <div style="top: 50px;"><button id="bu2" style="background-color: #ffff00;"></button></div>
+    <div style="top: 100px;"><input type="radio" name="bg1" value="" id="rb1"><label for="rb1" id="rb1lb"></label></div>
+    <div style="top: 130px;"><input type="radio" name="bg1" value="" id="rb2"><label for="rb2" id="rb2lb"></label></div>
+    <div style="top: 170px;"><span class="pos1" id="ip1a"></span><input type="text" id="ip1b"><span class="pos3" id="ip1c"></span></div>
+    <div style="top: 210px;"><span class="pos1" id="ip2a"></span><input type="text" id="ip2b"><span class="pos3" id="ip2c"></span></div>
+    <div style="top: 250px;"><span class="pos1" id="ip3a"></span><input type="text" id="ip3b"><span class="pos3" id="ip3c"></span></div>
+    <div style="top: 290px;"><span class="pos1" id="ip4a"></span><input type="text" id="ip4b"><span class="pos3" id="ip4c"></span></div>
+    <div style="top: 325px;"><input type="radio" name="bg2" value="" id="rb3"><label for="rb3" id="rb3lb"></label></div>
+    <div style="top: 355px;"><input type="radio" name="bg2" value="" id="rb4"><label for="rb4" id="rb4lb"></label></div>
+    <div style="top: 390px;"><span class="pos1" id="author" hidden></span></div>
+  </div>
+</div>
+<script>
+  var text01 = "Reset";
+var text02 = ["Start", "Pause", "Resume"];
+var text03 = "Slow motion (10 x)";
+var text04 = "Slow motion (100 x)";
+var text05 = "Capacity:";
+var text06 = "Inductivity:";
+var text07 = "Resistance:";
+var text08 = "Maximal voltage:";
+var text09 = "Voltage, Amperage";
+var text10 = "Energy";
+
+
+
+var decimalSeparator = ".";
+var microfarad = "&mu;F";
+var henry = "H";
+var ohm = "&Omega;";
+var volt = "V";
+
+
+var text11 = "Oscillation period:";
+var text12 = "Electric field energy:";
+var text13 = "Magnetic field energy:";
+var text14 = "Internal energy:";
+var text15 = "Undamped oscillation";
+var text16 = "Damped oscillation";
+var text17 = "Critical damping";
+var text18 = "Overcritical damping";
+
+
+var symbolTime = "t";
+var symbolPeriod = "T";
+var symbolVoltage = "V";
+var symbolAmperage = "I";
+var second = "s";
+var voltUnicode = "V";
+var ampere = "A";
+var joule = "J";
+
+var colorBackground = "#ffffff";
+var colorClock1 = "#808080";
+var colorClock2 = "#000000";
+var colorClock3 = "#ff0000";
+var colorPlus = "#ff0000";
+var colorMinus = "#0000ff";
+var colorCoilBG = "#808080";
+var colorCoilFG = "#000000";
+var colorE = "#ff0000";
+var colorB = "#0000ff";
+var colorVoltage = "#0000ff";
+var colorAmperage = "#ff0000";
+
+
+var PIH = Math.PI / 2; 
+var PI2 = 2 * Math.PI; 
+var tSwitch = 0.2; 
+var pixSec = 200; 
+var minCapMy = 100; 
+var maxCapMy = 1000; 
+var minInd = 1; 
+var maxInd = 10; 
+var maxRes = 1000; 
+var author = "W. Fendt 1999";
+var FONT1 = "normal normal bold 12px sans-serif"; 
+var FONT2 = "normal normal bold 16px monospace"; 
+
+
+
+var bu1, bu2; 
+var rb1, rblb, rb2, rb2lb; 
+var ip1a, ip1b, ip1c; 
+var ip2a, ip2b, ip2c; 
+var ip3a, ip3b, ip3c; 
+var ip4a, ip4b, ip4c; 
+var rb3, rb3lb, rb4, rb4lb; 
+var canvas; 
+var width, height; 
+var ctx; 
+
+var timer; 
+var t0; 
+var t; 
+var tD; 
+var slow; 
+
+var voltage, voltage0; 
+var amperage, amperage0; 
+var cap; 
+var ind; 
+var res; 
+var alpha; 
+var omega;
+var omega2;
+var T;
+var phi;
+var cos, sin, u0exp, c1, c2;
+var beta1, beta2, d1, d2, d3, d4;
+
+
+function getElement(id, text) {
+    var e = document.getElementById(id);
+    if (text) e.innerHTML = text;
+    return e;
+}
+
+
+function start() {
+    bu1 = getElement("bu1", text01);
+    bu2 = getElement("bu2", text02[0]);
+    bu2.state = 0;
+    rb1 = getElement("rb1");
+    rb1.checked = true;
+    rb1lb = getElement("rb1lb", text03);
+    rb2 = getElement("rb2");
+    rb2lb = getElement("rb2lb", text04);
+    ip1a = getElement("ip1a", text05);
+    ip1b = getElement("ip1b");
+    ip1c = getElement("ip1c", microfarad);
+    ip2a = getElement("ip2a", text06);
+    ip2b = getElement("ip2b");
+    ip2c = getElement("ip2c", henry);
+    ip3a = getElement("ip3a", text07);
+    ip3b = getElement("ip3b");
+    ip3c = getElement("ip3c", ohm);
+    ip4a = getElement("ip4a", text08);
+    ip4b = getElement("ip4b");
+    ip4c = getElement("ip4c", volt);
+    rb3 = getElement("rb3", "");
+    rb3.checked = true;
+    rb3lb = getElement("rb3lb", text09);
+    rb4 = getElement("rb4", "");
+    rb4lb = getElement("rb4lb", text10);
+    getElement("author", author);
+    canvas = document.getElementById("cv");
+    canvas.width = 900;//window.innerWidth;
+    canvas.height = 600;//window.innerHeight;
+
+    width = canvas.width;
+    height = canvas.height;
+    ctx = canvas.getContext("2d");
+    cap = 500 / 1e6; 
+    ind = 5; 
+    res = 0; 
+    voltage0 = 10; 
+    updateInput(); 
+    t = 0; 
+    on = false; 
+    slow = 10; 
+    calculation1(); 
+    paint(); 
+    bu1.onclick = reactionReset; 
+    bu2.onclick = reactionStart; 
+    rb1.onclick = reactionRadio; 
+    rb2.onclick = reactionRadio; 
+    ip1b.onkeydown = reactionEnter; 
+    ip2b.onkeydown = reactionEnter; 
+    ip3b.onkeydown = reactionEnter; 
+    ip4b.onkeydown = reactionEnter; 
+    rb3.onclick = reactionRadio; 
+    rb4.onclick = reactionRadio; 
+    //const pane = new Tweakpane.Pane();
+}
+
+
+
+
+
+function setButton2State(st) {
+    bu2.state = st; 
+    bu2.innerHTML = text02[st]; 
+}
+
+
+
+
+function switchButton2() {
+    var st = bu2.state; 
+    if (st == 0) st = 1; 
+    else st = 3 - st; 
+    setButton2State(st); 
+    if (st == 1) startAnimation(); 
+    else stopAnimation(); 
+}
+
+
+
+
+function enableInput(p) {
+    ip1b.readOnly = !p; 
+    ip2b.readOnly = !p; 
+    ip3b.readOnly = !p; 
+    ip4b.readOnly = !p; 
+}
+
+
+
+
+
+function reactionReset() {
+    setButton2State(0); 
+    enableInput(true); 
+    stopAnimation(); 
+    t = 0; 
+    reaction(true); 
+    paint(); 
+}
+
+
+
+
+
+function reactionStart() {
+    if (bu2.state != 1) t0 = new Date(); 
+    switchButton2(); 
+    enableInput(false); 
+    reaction(true); 
+}
+
+
+
+function reactionRadio() {
+    slow = (rb1.checked ? 10 : 100); 
+    if (!on) paint(); 
+}
+
+
+
+
+
+
+function reaction(ip) {
+    if (ip) input(); 
+    else updateInput(); 
+    calculation1(); 
+}
+
+
+
+
+
+function reactionEnter(e) {
+    if (e.key && String(e.key) == "Enter" 
+        ||
+        e.keyCode == 13)
+        reaction(true);
+}
+
+
+function startAnimation() {
+    on = true;
+    timer = setInterval(paint, 40);
+    t0 = new Date();
+}
+
+
+function stopAnimation() {
+    on = false;
+    clearInterval(timer);
+}
+
+
+
+function ToString(n, d, fix) {
+    var s = (fix ? n.toFixed(d) : n.toPrecision(d));
+    return s.replace(".", decimalSeparator);
+}
+
+
+function inputNumber(ef, d, fix, min, max) {
+    var s = ef.value;
+    s = s.replace(",", ".");
+    var n = Number(s);
+    if (isNaN(n)) n = 0;
+    if (n < min) n = min;
+    if (n > max) n = max;
+    ef.value = ToString(n, d, fix);
+    return n;
+}
+
+
+function input() {
+    cap = inputNumber(ip1b, 0, true, minCapMy, maxCapMy) / 1e6; 
+    ind = inputNumber(ip2b, 2, true, minInd, maxInd); 
+    res = inputNumber(ip3b, 1, true, 0, maxRes); 
+    voltage0 = inputNumber(ip4b, 1, true, 5, 20); 
+}
+
+
+
+function updateInput() {
+    ip1b.value = ToString(cap * 1e6, 0, true); 
+    ip2b.value = ToString(ind, 2, true); 
+    ip3b.value = ToString(res, 1, true); 
+    ip4b.value = ToString(voltage0, 1, true); 
+}
+
+
+
+
+function calculation1() {
+    alpha = res / (2 * ind);
+    var res10 = Math.round(res * 10);
+    var a = 4e8 * ind - res10 * res10 * cap * 1e6;
+    var b = 400 * ind * ind * cap * 1e6;
+    omega2 = a / b; 
+    omega = Math.sqrt(Math.abs(omega2)); 
+    if (omega2 > 0) {
+        c1 = alpha / omega; 
+        c2 = alpha * alpha / omega + omega;
+    } else if (omega2 < 0) {
+        beta1 = alpha - omega;
+        beta2 = alpha + omega;
+        d1 = beta2 * voltage0 / (beta2 - beta1); 
+        d2 = beta1 * voltage0 / (beta1 - beta2);
+        d3 = cap * beta1 * d1;
+        d4 = cap * beta2 * d2;
+    }
+    if (omega2 != 0) T = PI2 / omega; 
+    else T = 4 / alpha;
+    calculation2(T / 4); 
+    amperage0 = calcAmperage(T / 4);
+    var c = T / 8; 
+    for (var i = 0; i < 10; i++) { 
+        calculation2(c); 
+        amperage0 = Math.max(amperage0, calcAmperage(c)); 
+        c /= 2;
+    }
+    if (!on) paint();
+}
+
+
+function calculation2(t) {
+    if (omega2 <= 0) return;
+    u0exp = voltage0 * Math.exp(-alpha * t);
+    sin = Math.sin(omega * t);
+    cos = Math.cos(omega * t);
+}
+
+
+function calcVoltage(t) {
+    if (omega2 > 0)
+        return u0exp * (cos + c1 * sin);
+    else if (omega2 < 0)
+        return d1 * Math.exp(-beta1 * t) + d2 * Math.exp(-beta2 * t);
+    else
+        return voltage0 * (1 + alpha * t) * Math.exp(-alpha * t);
+}
+
+
+function calcAmperage(t) {
+    if (omega2 > 0)
+        return cap * u0exp * c2 * sin;
+    else if (omega2 < 0)
+        return d3 * Math.exp(-beta1 * t) + d4 * Math.exp(-beta2 * t);
+    else
+        return cap * alpha * alpha * voltage0 * t * Math.exp(-alpha * t);
+}
+
+
+
+function newPath() {
+    ctx.beginPath();
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 1;
+}
+
+
+function line(x1, y1, x2, y2, c, w) {
+    ctx.beginPath();
+    if (c) ctx.strokeStyle = c;
+    ctx.lineWidth = (w ? w : 1);
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
+
+
+function rectangle(x, y, w, h, c, d) {
+    newPath();
+    if (c) ctx.fillStyle = c;
+    ctx.fillRect(x, y, w, h);
+    if (!d) return;
+    ctx.lineWidth = d;
+    ctx.strokeRect(x, y, w, h);
+}
+
+
+function circle(x, y, r, c, w) {
+    newPath();
+    if (c) ctx.fillStyle = c;
+    ctx.arc(x, y, r, 0, PI2, true);
+    ctx.fill();
+    if (!w) return;
+    ctx.lineWidth = w;
+    ctx.stroke();
+}
+
+
+function arrow(x1, y1, x2, y2, w) {
+    if (!w) w = 1;
+    var dx = x2 - x1,
+        dy = y2 - y1;
+    var length = Math.sqrt(dx * dx + dy * dy);
+    if (length == 0) return;
+    dx /= length;
+    dy /= length;
+    var s = 2.5 * w + 7.5;
+    var xSp = x2 - s * dx,
+        ySp = y2 - s * dy;
+    var h = 0.5 * w + 3.5;
+    var xSp1 = xSp - h * dy,
+        ySp1 = ySp + h * dx;
+    var xSp2 = xSp + h * dy,
+        ySp2 = ySp - h * dx;
+    xSp = x2 - 0.6 * s * dx;
+    ySp = y2 - 0.6 * s * dy;
+    ctx.beginPath();
+    ctx.lineWidth = w;
+    ctx.moveTo(x1, y1);
+    if (length < 5) ctx.lineTo(x2, y2);
+    else ctx.lineTo(xSp, ySp);
+    ctx.stroke();
+    if (length < 5) return;
+    ctx.beginPath();
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.moveTo(xSp, ySp);
+    ctx.lineTo(xSp1, ySp1);
+    ctx.lineTo(x2, y2);
+    ctx.lineTo(xSp2, ySp2);
+    ctx.closePath();
+    ctx.fill();
+}
+
+
+function switch0(x, y) {
+    circle(x, y, 3, colorBackground, 2);
+    circle(x - 20, y - 40, 3, colorBackground, 2);
+    circle(x + 20, y - 40, 3, colorBackground, 2);
+    var w = 0.35;
+    if (t < tSwitch)
+        w = (t - tSwitch / 2) * 0.7 / tSwitch;
+    var cos = Math.cos(w),
+        sin = Math.sin(w);
+    line(x + 4 * sin, y - 4 * cos, x + 50 * sin, y - 50 * cos, "#000000", 3);
+}
+
+
+function arrowField(x, y, down) {
+    var h = (down ? -4 : 4);
+    ctx.moveTo(x - 2, y + h);
+    ctx.lineTo(x, y - h);
+    ctx.lineTo(x + 2, y + h);
+}
+
+
+function fieldLineE(x, y, d) {
+    if (voltage == 0) return;
+    var positive = (voltage > 0);
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    if (d <= 30) {
+        var xL = x - d,
+            xR = x + d;
+        ctx.moveTo(xL, y - 10);
+        ctx.lineTo(xL, y + 10);
+        ctx.moveTo(xR, y - 10);
+        ctx.lineTo(xR, y + 10);
+        arrowField(xL, y, positive);
+        arrowField(xR, y, positive);
+    } else if (d < 35) {
+        var h = d - 30,
+            a = h * h,
+            b = 10 + d / 10; 
+        ctx.moveTo(x - 30, y + b); 
+        ctx.quadraticCurveTo(x - 30 - a, y + b, x - 30 - a, y); 
+        ctx.quadraticCurveTo(x - 30 - a, y - b, x - 30, y - b); 
+        ctx.moveTo(x + 30, y + b); 
+        ctx.quadraticCurveTo(x + 30 + a, y + b, x + 30 + a, y); 
+        ctx.quadraticCurveTo(x + 30 + a, y - b, x + 30, y - b); 
+        arrowField(x - 30 - a, y, positive); 
+        arrowField(x + 30 + a, y, positive); 
+    }
+    ctx.stroke(); 
+}
+
+
+
+
+function condensator(x, y) {
+    var h = (voltage > 0 ? -25 : +25); 
+    var q = Math.abs(voltage / voltage0);
+    ctx.strokeStyle = colorE;
+    if (q > 0.05) {
+        for (var i = 0; i <= 10; i++) {
+            var d = i * 6 / Math.sqrt(q); 
+            fieldLineE(x, y, d); 
+        }
+    }
+    rectangle(x - 30, y - 15, 61, 5, "#000000"); 
+    rectangle(x - 30, y + 10, 61, 5, "#000000"); 
+    rectangle(x - 25, y + h - 1, 11, 3, colorPlus); 
+    rectangle(x - 21, y + h - 5, 3, 11, colorPlus); 
+    rectangle(x - 25, y - h - 1, 11, 3, colorMinus); 
+}
+
+
+
+
+
+function fieldLineB(x, y, d) {
+    if (amperage == 0) return; 
+    var positive = (amperage > 0); 
+    ctx.beginPath(); 
+    ctx.lineWidth = 1; 
+    if (d == 0) { 
+        ctx.moveTo(x, y - 120);
+        ctx.lineTo(x, y + 120); 
+        arrowField(x, y - 110, !positive); 
+        arrowField(x, y + 110, !positive); 
+    } else if (d <= 15) { 
+        var xL = x - d,
+            xR = x + d; 
+        var y1 = y - 60,
+            y2 = y + 60; 
+        ctx.moveTo(xL, y1);
+        ctx.lineTo(xL, y2); 
+        ctx.moveTo(xR, y1);
+        ctx.lineTo(xR, y2); 
+        arrowField(xL, y, !positive); 
+        arrowField(xR, y, !positive); 
+        var r = 100 / d;
+        var a = 2000 / (d * d); 
+        var b = 60 + r; 
+        var closed = (a <= 50); 
+        ctx.moveTo(xL, y1); 
+        ctx.quadraticCurveTo(xL, y1 - r, xL - r, y1 - r); 
+        if (closed) { 
+            ctx.quadraticCurveTo(xL - r - a, y1 - r, xL - r - a, y); 
+            ctx.quadraticCurveTo(xL - r - a, y2 + r, xL - r, y2 + r); 
+        } else ctx.moveTo(xL - r, y2 + r); 
+        ctx.quadraticCurveTo(xL, y2 + r, xL, y2); 
+        if (closed) arrowField(xL - r - a, y, positive); 
+        ctx.moveTo(xR, y1); 
+        ctx.quadraticCurveTo(xR, y1 - r, xR + r, y1 - r); 
+        if (closed) { 
+            ctx.quadraticCurveTo(xR + r + a, y1 - r, xR + r + a, y); 
+            ctx.quadraticCurveTo(xR + r + a, y2 + r, xR + r, y2 + r); 
+        } else ctx.moveTo(xR + r, y2 + r); 
+        ctx.quadraticCurveTo(xR, y2 + r, xR, y2); 
+        if (closed) arrowField(xR + r + a, y, positive); 
+    }
+    ctx.stroke(); 
+}
+
+
+
+
+function coil(x, y) {
+    ctx.beginPath(); 
+    ctx.strokeStyle = colorCoilBG; 
+    ctx.lineWidth = 3; 
+    var h = Math.PI / 12;
+    ctx.moveTo(x + 20, y - 54);
+    for (var i = 7; i <= 120; i++) {
+        if (i % 24 == 19) {
+            i += 11;
+            ctx.moveTo(x + 20 * Math.sin(i * h), y - 60 + i);
+        } else ctx.lineTo(x + 20 * Math.sin(i * h), y - 60 + i);
+    }
+    ctx.stroke();
+    var q = Math.abs(amperage / amperage0); 
+    ctx.strokeStyle = colorB; 
+    if (q > 0.05) { 
+        h = 4 / Math.sqrt(q);
+        for (var i = 0; i <= 10; i++)
+            fieldLineB(x, y, i * h);
+    }
+    h = Math.PI / 12; 
+    newPath(); 
+    ctx.strokeStyle = colorCoilFG; 
+    ctx.lineWidth = 3; 
+    ctx.moveTo(x, y - 60); 
+    for (var i = 1; i <= 120; i++) { 
+        if (i % 24 == 7) { 
+            i += 11; 
+            ctx.moveTo(x + 20 * Math.sin(i * h), y - 60 + i); 
+        } else ctx.lineTo(x + 20 * Math.sin(i * h), y - 60 + i); 
+    }
+    ctx.stroke(); 
+}
+
+
+
+function wires() {
+    newPath(); 
+    ctx.lineWidth = 2; 
+    ctx.moveTo(60, 120); 
+    ctx.lineTo(60, 40); 
+    ctx.lineTo(176, 40); 
+    ctx.moveTo(200, 84); 
+    ctx.lineTo(200, 115); 
+    ctx.moveTo(200, 145); 
+    ctx.lineTo(200, 220); 
+    ctx.moveTo(224, 40); 
+    ctx.lineTo(340, 40); 
+    ctx.lineTo(340, 70); 
+    ctx.moveTo(340, 190); 
+    ctx.lineTo(340, 220); 
+    ctx.lineTo(60, 220); 
+    ctx.lineTo(60, 138); 
+    ctx.stroke(); 
+    circle(200, 220, 3, "#000000"); 
+}
+
+
+
+
+function clock(x, y) {
+    rectangle(x - 60, y - 15, 120, 30, colorClock1, 1); 
+    rectangle(x - 50, y - 10, 100, 20, colorClock2, 1); 
+    ctx.fillStyle = colorClock3; 
+    var tt = Math.max(t - tSwitch, 0); 
+    var n = Math.floor(tt / 100);
+    tt -= 100 * n;
+    var s = (tt < 10 ? "0" : "") + ToString(tt, 3, true) + " " + second;
+    alignText(s, 1, x, y + 5, FONT2);
+}
+
+
+function alignText(s, t, x, y, f) {
+    ctx.font = (f ? f : FONT1);
+    if (t == 0) ctx.textAlign = "left";
+    else if (t == 1) ctx.textAlign = "center";
+    else ctx.textAlign = "right";
+    ctx.fillText(s, x, y);
+}
+
+
+function axes(x, y) {
+    newPath();
+    arrow(x - 20, y, x + 250, y);
+    arrow(x, y + 80, x, y - 80);
+    ctx.fillStyle = "#000000";
+    alignText(symbolTime, 1, x + 245, y + 15);
+    ctx.fillStyle = colorVoltage;
+    alignText(symbolVoltage, 2, x - 8, y - 70);
+    ctx.fillStyle = colorAmperage;
+    alignText(symbolAmperage, 0, x + 8, y - 70);
+}
+
+
+function values(x, y) {
+    if (t < tSwitch) tD = t;
+    else if (t < tSwitch + 120 / pixSec) tD = tSwitch; 
+    else tD = t - 120 / pixSec;
+    var x0 = x + pixSec * (t - tD);
+    var y0 = y - 3 * voltage;
+    circle(x0, y0, 2.5, colorVoltage);
+    y0 = y - 40 * amperage / amperage0; 
+    circle(x0, y0, 2.5, colorAmperage); 
+    ctx.fillStyle = colorVoltage; 
+    var s = symbolVoltage + " = "; 
+    s += ToString(voltage, 2, true) + " " + voltUnicode; 
+    alignText(s, 0, x + 40, y - 50); 
+    ctx.fillStyle = colorAmperage; 
+    s = symbolAmperage + " = "; 
+    s += ToString(amperage, 3, true) + " " + ampere; 
+    alignText(s, 0, x + 150, y - 50); 
+}
+
+
+
+
+
+function diagramU(x, y) {
+    var t0 = Math.max(tD - tSwitch, 0); 
+    calculation2(t0); 
+    var u = calcVoltage(t0); 
+    newPath(); 
+    ctx.strokeStyle = colorVoltage; 
+    ctx.moveTo(x, y - 3 * u); 
+    var xx = x; 
+    while (xx < x + 240) { 
+        xx++; 
+        var tt = t0 + (xx - x) / pixSec;
+        calculation2(tt);
+        u = calcVoltage(tt);
+        ctx.lineTo(xx, y - 3 * u);
+    }
+    ctx.stroke();
+}
+
+
+function diagramI(x, y) {
+    var t0 = Math.max(tD - tSwitch, 0);
+    calculation2(t0);
+    var i = calcAmperage(t0);
+    newPath();
+    ctx.strokeStyle = colorAmperage;
+    ctx.moveTo(x, y - 40 * i / amperage0); 
+    var xx = x; 
+    while (xx < x + 240) { 
+        xx++; 
+        var tt = t0 + (xx - x) / pixSec;
+        calculation2(tt);
+        i = calcAmperage(tt);
+        ctx.lineTo(xx, y - 40 * i / amperage0); 
+    }
+    ctx.stroke(); 
+}
+
+
+
+
+
+function diagramUI(x, y) {
+    axes(x, y); 
+    values(x, y); 
+    diagramU(x, y); 
+    diagramI(x, y); 
+}
+
+
+
+
+function diagramE(x, y) {
+    var e = cap / 2 * voltage0 * voltage0;
+    var eE = cap / 2 * voltage * voltage; 
+    var hE = 150 * eE / e;
+    var eM = ind / 2 * amperage * amperage; 
+    var eEM = eE + eM; 
+    var hEM = 150 * eEM / e;
+    rectangle(x, y, 50, hE, colorE, 1);
+    rectangle(x, y + hE, 50, hEM - hE, colorB, 1);
+    rectangle(x, y + hEM, 50, 150 - hEM, "#000000", 1);
+    ctx.fillStyle = colorE;
+    alignText(text12, 0, x + 70, y + 20);
+    var s = ToString(eE, 3, false) + " " + joule;
+    alignText(s, 0, x + 70, y + 35);
+    ctx.fillStyle = colorB;
+    alignText(text13, 0, x + 70, y + 70);
+    s = ToString(eM, 3, false) + " " + joule;
+    alignText(s, 0, x + 70, y + 85);
+    ctx.fillStyle = "#000000";
+    alignText(text14, 0, x + 70, y + 120);
+    var eI = e - eEM;
+    if (eI < 1e-10) eI = 0;
+    s = ToString(eI, 3, false) + " " + joule;
+    alignText(s, 0, x + 70, y + 135);
+}
+
+
+function writePeriod() {
+    ctx.fillStyle = "#000000";
+    alignText(text11, 1, 90, 350);
+    var s = symbolPeriod + " = " + ToString(T, 3, true) + " " + second;
+    alignText(s, 1, 90, 370);
+}
+
+
+function writeType() {
+    ctx.fillStyle = "#000000";
+    var s;
+    if (res == 0) s = text15;
+    else if (omega2 > 0) s = text16;
+    else if (omega2 == 0) s = text17;
+    else s = text18;
+    alignText(s, 1, 320, 390);
+}
+
+
+function arrowsCurrent() {
+    if (Math.abs(amperage / amperage0) <= 0.05) return; 
+    newPath(); 
+    ctx.strokeStyle = colorAmperage; 
+    var y0 = (res == 0 ? 30 : 20); 
+    if (amperage > 0) { 
+        arrow(290, 230, 260, 230, 3); 
+        arrow(260, y0, 290, y0, 3); 
+    } else { 
+        arrow(260, 230, 290, 230, 3); 
+        arrow(290, y0, 260, y0, 3); 
+    }
+}
+
+
+
+
+function paint() {
+    if (on) { 
+        var t1 = new Date(); 
+        var dt = (t1 - t0) / (1000 * slow);
+        if (t < tSwitch && slow == 100) dt *= 10;
+        t += dt;
+        t0 = t1;
+    }
+    ctx.save();
+    ctx.scale(1.5,1.5);
+    rectangle(0, 0, width, height, colorBackground);
+    var tt = t - tSwitch;
+    if (t > tSwitch) calculation2(tt);
+    voltage = (t < tSwitch ? voltage0 : calcVoltage(tt));
+    amperage = (t < tSwitch ? 0 : calcAmperage(tt));
+    condensator(200, 130);
+    coil(340, 130);
+    rectangle(40, 120, 41, 2, "#000000");
+    rectangle(50, 132, 21, 6, "#000000");
+    switch0(200, 80);
+    wires();
+    if (res > 0)
+        rectangle(250, 33, 50, 15, colorBackground, 2.5);
+    rectangle(25, 119, 11, 3, colorPlus);
+    rectangle(29, 115, 3, 11, colorPlus);
+    rectangle(25, 134, 11, 3, colorMinus);
+    arrowsCurrent();
+    clock(90, 280);
+    if (omega2 > 0) writePeriod();
+    var ui = rb3.checked;
+    if (ui) diagramUI(180, 320);
+    else diagramE(200, 250);
+    if (ui) writeType();
+    ctx.restore();
+
+}
+
+
+document.addEventListener("DOMContentLoaded", start, false);
+</script>
