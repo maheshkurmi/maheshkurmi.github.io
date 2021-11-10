@@ -304,7 +304,7 @@
 
 
     function init() {
-        pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Rolling on Plane",expanded: true});
+        pane = new Tweakpane.Pane({container:document.getElementById("gui"),title:"Homopolar Motor",expanded: true});
         pane.addInput(settings, "intensity",{label:"Field Intensity",min:-1,max:1,step:0.05}).on('change',updateField);
         pane.addInput(settings, "showField",{label:"Show Fields"}).on('change',updateParams);
         pane.addInput(settings, "showForces",{label:"Show Forces"}).on('change',updateParams);
@@ -363,8 +363,8 @@
         light.shadow.camera.far = 5;
         light.shadow.bias=-0.005;
 
-        	//light.shadowBias = 2;
-        	//light.shadowMapWidth = light.shadowMapHeight = 2040;
+        //light.shadowBias = 2;
+        // light.shadowMapWidth = light.shadowMapHeight = 2040;
         light.shadow.darkness = 1;
         //light.shadowCameraVisible = true;
         //scene.add( new THREE.DirectionalLight(light, 2.5) );

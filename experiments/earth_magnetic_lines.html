@@ -651,7 +651,7 @@
 
         p=(settings.verticalCompass?compassV:compassH).position.clone();
         //p=magnet.worldToLocal(p);
-        let B=vField.fieldEvaluator(p);
+        let B=fieldEvaluator(p);
         let dir=B.clone().normalize();
 
         let Bv=B.clone().projectOnVector(p);
@@ -678,7 +678,7 @@
         if(settings.horizontalCompass) {
             p=compassH.position.clone();
             //p=magnet.worldToLocal(p);
-            B=vField.fieldEvaluator(p);
+            B=fieldEvaluator(p);
             dir=B.clone().normalize();
 
             Bv=B.clone().projectOnVector(p);
@@ -695,7 +695,7 @@
         if(settings.verticalCompass){
             p=compassH.position.clone();
             //p=magnet.worldToLocal(p);
-            B=vField.fieldEvaluator(p);
+            B=fieldEvaluator(p);
             dir=B.clone().normalize();
 
             Bv=B.clone().projectOnVector(p);
@@ -722,7 +722,7 @@
        arrowNS.visible=settings.showMeridian;
        compassH.visible=settings.horizontalCompass;
        compassV.visible=settings.verticalCompass;
-        magnet.rotation.set(0,0,settings.declination*Math.PI/180);
+       magnet.rotation.set(0,0,settings.declination*Math.PI/180);
 
        updateField();
        updateMeridians();
@@ -772,14 +772,32 @@
         earth.physics.update(dt);
     }
 
+   /**
+    * returns field vector at point p
+    */
+   var fieldEvaluator=function(p){
+       let factor=0.7;
+       let AP=p.clone().sub(src0);
+       let BP=p.clone().sub(src1);
 
+       let d1=AP.length();
+       let d2=BP.length();
+
+       AP=AP.multiplyScalar (factor/(d1*d1*d1));
+       BP=BP.multiplyScalar (factor/(d2*d2*d2));
+
+       BP=BP.sub(AP);
+       // console.log(p);
+       //console.log(AP);
+       return BP;
+   }
 
     /**
      * @param field
      * @param options {minBounds, maxBounds,arrowLoc (0 to 1), arrowSize, stopPoints (array),fieldColor, arrowColor}
      * @constructor
      */
-    function VectorField(fieldEvaluator,options){
+    function VectorField(options){
         this.minBounds=new THREE.Vector3(-2,-3,-2);
         this.maxBounds=new THREE.Vector3(2,3,2);
         this.arrowLoc=0.35;
@@ -792,25 +810,7 @@
         this.max=1E12;
         this.step=0.5;
         this.useTube=false;
-        /**
-         * returns field vector at point p
-         */
-        this.fieldEvaluator=function(p){
-            let factor=0.7;
-            let AP=p.clone().sub(src0);
-            let BP=p.clone().sub(src1);
 
-            let d1=AP.length();
-            let d2=BP.length();
-
-            AP=AP.multiplyScalar (factor/(d1*d1*d1));
-            BP=BP.multiplyScalar (factor/(d2*d2*d2));
-
-            BP=BP.sub(AP);
-           // console.log(p);
-            //console.log(AP);
-            return BP;
-        }
         if(options){
             if(options.minBounds)this.minBounds=options.minBounds;
             if(options.maxBounds)this.maxBounds=options.maxBounds;
@@ -831,12 +831,12 @@
         }
 
         this.getFieldAt=function(p){
-            return this.fieldEvaluator(p);
+            return fieldEvaluator(p);
         }
 
         this.createField=function(pt, moveAgainstField,opacity) {
             let vertices = [];
-            let dir = this.fieldEvaluator(pt).normalize();
+            let dir = fieldEvaluator(pt).normalize();
             let prevDir = new THREE.Vector3();
             prevDir.set(dir.x, dir.y, dir.z);
             if (!dir) return;
@@ -869,7 +869,7 @@
                     }
 
                     vertices[vertices.length] = new THREE.Vector3(p.x, p.y, p.z);
-                    dir = this.fieldEvaluator(p);
+                    dir = fieldEvaluator(p);
                     n++;
                 }
             //console.log(vertices);
@@ -900,7 +900,7 @@
 
             let ap1=curve.getPoint(this.arrowLoc);
             //let ap2=curve.getPoint(this.arrowLoc+this.arrowSize);
-            dir=this.fieldEvaluator(ap1).normalize();
+            dir=fieldEvaluator(ap1).normalize();
             const arrowHelper = new THREE.ArrowHelper(dir, ap1, this.arrowSize, this.arrowColor,1.5*this.arrowSize,this.arrowSize);
             curveObject.add(arrowHelper);
 

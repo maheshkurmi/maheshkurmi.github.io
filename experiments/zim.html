@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>ZIM - Code Creativity</title>
+
+    <!-- zimjs.com - JavaScript Canvas Framework -->
+    <script src="https://zimjs.org/cdn/nft/00/zim.js"></script>
+
+    <script>
+
+        // See Docs under Frame for FIT, FILL, FULL, and TAG scaling modes
+        const frame = new Frame(FIT, 1024, 768, light, dark);
+        frame.on("ready", () => {
+            const stage = frame.stage;
+            let stageW = frame.width;
+            let stageH = frame.height;
+
+            // put your code here
+            new Circle(100, blue)
+                .center()
+                .drag();
+
+            stage.update(); // needed to view changes
+        });
+
+    </script>
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
+</head>
+<body></body>
+</html>

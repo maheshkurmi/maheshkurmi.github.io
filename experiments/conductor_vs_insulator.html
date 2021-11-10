@@ -1,0 +1,828 @@
+<!doctype html>
+<html>
+<head>
+    <title>Electroscopec</title>
+    <meta name="keywords" content="Induction simulation physics">
+    <meta name="author" content="Mahesh Kurmi">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
+    <style>
+        #myContainer {
+            position: relative;
+            text-align: center;
+        }
+        #myP5Canvas {
+            font-size: 20px;
+            padding: 0;
+            -ms-touch-action: pinch-zoom important;
+        }
+        @media screen and (max-width: 990px) {
+            #myContainer {
+                margin-left: -5%;
+                margin-right: -5%;
+            }
+        }
+
+
+        .flexContainer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 20px;
+            margin: 5px 0 10px 0;
+            /* background-color: ivory; */
+        }
+        .flexItem {
+            font-size: 20px;
+            text-align: center;
+            margin: 5px 15px;
+            /* background-color: orange; */
+        }
+
+        /***************************************************************************************************/
+
+        button {
+            height: 40px;
+            font-size: 20px;
+            background-color: #e7e7e7;
+            color: black;
+            border: 1px solid #cccccc;
+            border-radius: 2px;
+            padding-left: 10px;
+            padding-right: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline;
+            -webkit-transition-duration: 0.4s; /* Safari */
+            transition-duration: 0.4s;
+        }
+
+        button:hover {
+            background-color: gray;
+            color: white;
+        }
+
+        input[type="checkbox"] {
+            font-size: 20px;
+            width: 26px;
+            height: 26px;
+            vertical-align: middle;
+            margin: 0 6px 0 0;
+        }
+
+        label {
+            position: relative;
+            top: 1px;
+        }
+
+        input[type="radio"] {
+            font-size: 20px;
+            width: 26px;
+            height: 26px;
+            vertical-align: middle;
+        }
+
+        select {
+            font-size: 20px;
+        }
+
+        /***************************************************************************************************/
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: none;
+            width: 300px;
+            height: 30px;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+            margin: 0;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #ccc;
+            height: 10px; /*trackHeight*/
+            border-radius: 5px; /*trackHeight*/
+            transition: 0.3s;
+        }
+
+        input[type="range"]::-moz-range-track {
+            background: #ccc;
+            height: 10px; /*trackHeight*/
+            border-radius: 5px; /*trackHeight*/
+            /*background isn't animatable, so can't use transition*/
+        }
+
+        input[type="range"]::-ms-track {
+            background: #ccc;
+            height: 10px; /*trackHeight*/
+            border-radius: 5px; /*trackHeight*/
+            /* border: none; */
+            /* color: transparent; */
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: #ff0000;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            margin-top: -10px;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: #ff0000;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 4px solid #fff;
+        }
+
+        input[type="range"]::-ms-thumb {
+            width: 24px;
+            height: 24px;
+            background: #ff0000;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            margin: 0 4px 0; /*0 thumbBorderWidth 0*/
+            box-shadow: 0 0 0 4px #fff;
+        }
+
+        .greenrange input[type="range"]::-webkit-slider-thumb { background: #008000; }
+        .greenrange input[type="range"]::-moz-range-thumb { background: #008000; }
+        .greenrange input[type="range"]::-ms-range-thumb { background: #008000; }
+        .bluerange input[type="range"]::-webkit-slider-thumb { background: #0000ff; }
+        .bluerange input[type="range"]::-moz-range-thumb { background: #0000ff; }
+        .bluerange input[type="range"]::-ms-range-thumb { background: #0000ff; }
+        .orangerange input[type="range"]::-webkit-slider-thumb { background: #FF8000; }
+        .orangerange input[type="range"]::-moz-range-thumb { background: #FF8000; }
+        .orangerange input[type="range"]::-ms-range-thumb { background: #FF8000; }
+        .grayrange input[type="range"]::-webkit-slider-thumb { background: #888; }
+        .grayrange input[type="range"]::-moz-range-thumb { background: #888; }
+        .grayrange input[type="range"]::-ms-range-thumb { background: #888; }
+
+        .colorrange input[type="range"]::-webkit-slider-runnable-track { background: url('https://javalab.org/lee/visible_light.png'); }
+        .colorrange input[type="range"]::-moz-range-track { background: url('https://javalab.org/lee/visible_light.png'); }
+        .colorrange input[type="range"]::-ms-track { background: url('https://javalab.org/lee/visible_light.png'); }
+        .colorrange input[type="range"]::-webkit-slider-thumb {
+            border: 3px solid #888;
+            background: none;
+            box-shadow: none;
+        }
+        .colorrange input[type="range"]::-moz-range-thumb {
+            border: 3px solid #888;
+            background: none;
+        }
+        body {
+            background: white;
+            color: #323232;
+            font-weight: 300;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Helvetica neue, roboto;
+        }
+
+        img {
+            width: 56px;
+            height: 48px;
+        }
+
+        h1 {
+            font-weight: 200;
+            font-style: 26px;
+            margin: 10px;
+        }
+
+        #container canvas{
+            position: relative;
+        }
+
+        #container #overlay {
+            position: absolute;
+        }
+
+        .hover_bkgr_fricc{
+            background:rgba(0,0,0,.4);
+            cursor:pointer;
+            display:none;
+            height:100%;
+            position:fixed;
+            text-align:center;
+            top:0;
+            width:100%;
+            z-index:10000;
+        }
+        .hover_bkgr_fricc .helper{
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+        }
+        .hover_bkgr_fricc > div {
+            background-color: #fff;
+            box-shadow: 10px 10px 60px #555;
+            display: inline-block;
+            height: auto;
+            max-width: 551px;
+            min-height: 100px;
+            vertical-align: middle;
+            width: 60%;
+            position: relative;
+            border-radius: 8px;
+            padding: 15px 5%;
+        }
+        .popupCloseButton {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        .popupCloseButton:hover {
+            background-color: #ccc;
+        }
+        .trigger_popup_fricc {
+            background-color: #fff;
+            border: 3px solid #999;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            position:absolute;
+            font-family: arial;
+            font-weight: bold;
+            position: absolute;
+            top:5px;
+            left:5px;
+            zindex:2;
+            margin: 10px;
+            display: inline-block;
+            font-weight: bold;
+            right: -20px;
+            font-size: 25px;
+            line-height: 30px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+        #gui {
+            font-size: 15px;
+            position:absolute;
+            font-family: arial;
+            transform:scale(1.2);
+            transform-origin: top right;
+            font-weight: bold;
+            position: absolute;
+            right:5px;
+            margin-left: auto;
+            zindex:2;
+            font-weight: bold;
+            font-size: 25px;
+        }
+        :root {
+            --tp-base-background-color: hsla(200, 6%, 15%, 0.8);
+            --tp-base-shadow-color: hsla(0, 0%, 0%, 0.26);
+            --tp-button-background-color: hsla(230, 7%, 70%, 1.00);
+            --tp-button-background-color-active: hsla(229, 7%, 55%, 1.00);
+            --tp-button-background-color-focus: hsla(231, 7%, 60%, 1.00);
+            --tp-button-background-color-hover: hsla(230, 7%, 65%, 1.00);
+            --tp-button-foreground-color: hsla(230, 7%, 20%, 1.00);
+            --tp-container-background-color: hsla(230, 7%, 75%, 0.10);
+            --tp-container-background-color-active: hsla(230, 7%, 75%, 0.25);
+            --tp-container-background-color-focus: hsla(230, 7%, 75%, 0.20);
+            --tp-container-background-color-hover: hsla(230, 7%, 75%, 0.15);
+            --tp-container-foreground-color: hsla(230, 7%, 75%, 1.00);
+            --tp-groove-foreground-color: hsla(230, 7%, 0%, 0.20);
+            --tp-input-background-color: hsla(230, 0%, 0%, 0.55);
+            --tp-input-background-color-active: hsla(230, 7%, 0%, 0.35);
+            --tp-input-background-color-focus: hsla(230, 7%, 0%, 0.30);
+            --tp-input-background-color-hover: hsla(230, 7%, 0%, 0.25);
+            --tp-input-foreground-color: hsla(230, 9%, 81%, 1.00);
+            --tp-label-foreground-color: hsla(230, 6%, 83%, 0.70);
+            --tp-monitor-background-color: hsla(230, 7%, 0%, 0.20);
+            --tp-monitor-foreground-color: hsla(230, 7%, 75%, 0.70);
+        }
+    </style>
+    <script src="hammer.js"></script>
+    <script src="tweakpane3.js"></script>
+</head>
+
+<body>
+
+<div id="canvasdiv" class="container" align="center">
+
+    <canvas id="canvas" style="border: 1px solid #c3c3c3;" >Your browser does not support the HTML5 canvas tag.</canvas>
+    <div class="flexContainer">
+        <div class="flexItem"><span id="radioA"><div><input type="radio" value="1" name="defaultradio0" id="defaultradio0-0" checked><label for="defaultradio0-0">Charged with (+) </label><input type="radio" value="2" name="defaultradio0" id="defaultradio0-1"><label for="defaultradio0-1">Charged with (-) </label></div></span></div>
+        <p></p>
+    </div>
+    <a class="trigger_popup_fricc">	&#8505;</a>
+    <div id="overlay">
+
+        <div class="hover_bkgr_fricc">
+            <span class="helper"></span>
+            <div>
+                <div class="popupCloseButton">&times;</div>
+                <h3>Electrostatic Induction</h3>
+                <p>
+                    What happens when the charged body is close to the conductor and insulator?
+                    <p>
+                    <b>Conductor:</b>
+                    Electrostatic induction is a redistribution of electrical charge in an object, caused by the influence of nearby charges. In the presence of a charged body, an insulated conductor develops a positive charge on one end and a negative charge on the other end.
+                    </p>
+                <p>
+                <b>Insulator:</b>
+                    When a charged rod is brought near a neutral substance, an insulator in this case, the distribution of charge in atoms and molecules is shifted slightly. Opposite charge is attracted nearer the external charged rod, while like charge is repelled.             </p>
+                </p>
+                <h4>Controls</h4>
+                Drag the charged rod and hand to play with simulation
+            </div>
+        </div>
+    </div>
+
+</div>
+<script type='text/javascript'>
+    const PI=Math.PI;
+    const HALF_PI=Math.PI/2;
+    const TWO_PI=Math.PI*2;
+    var canvas;
+    var ctx;
+
+    var timer=null;
+
+    function sin(th){
+        return Math.sin(th);
+    }
+
+    function cos(th){
+        return Math.cos(th);
+    }
+
+    function line(x,y,x1,y1){
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x1, y1)
+        ctx.stroke();
+    }
+
+    function dist(x1,y1,x2,y2) {
+        return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    }
+
+
+    function ellipse(x,y,w,h){
+        ellarc(x, y, w, h,0,Math.PI*2,0,false);
+    }
+    function ellarc(x, y, w, h, start, stop, mode, detail) {
+        ctx.beginPath();
+        ctx.ellipse(x-w/2, y-h/2, w/2, h/2,0,0,Math.PI*2);
+        ctx.stroke();
+    }
+
+    function arc(x, y, w, h, start, stop, mode, detail) {
+        ctx.beginPath();
+        ctx.ellarc(x, y, w/2, start, stop);
+        ctx.stroke();
+    }
+    function mod(x, y){
+
+        // ì¼ë‹¨, ì–‘ìˆ˜ë¡œ ë§Œë“ ë‹¤.
+        if (x < 0) x += y * (Math.ceil(Math.abs(x)/y) + 1);
+        var c = Math.floor(x / y);
+        return x - y * c;
+    }
+
+
+    function map(n,start1,stop1,start2,stop2){
+        if(n<start1)n=start1;
+        if(n>stop1)n=stop1;
+        return (n - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+    }
+
+    function constrain(n, low, high) {
+        return Math.max(Math.min(n, high), low);
+    }
+
+    function contain(x, y, x1, y1, w1, h1){
+
+        if (x < x1) return false;
+        if (x > (x1 + w1)) return false;
+        if (y < y1) return false;
+        if (y > (y1 + h1)) return false;
+        return true;
+    }
+
+
+    function drawArrow2D(x, y, cx, cy){
+
+        var lArrow = Math.sqrt(cx*cx+cy*cy);
+        //, cy); // ì „ì²´ ê¸¸ì´
+        var wArrow = width*0.005;
+        // ë°˜ìª½ ë„“ì´
+        var head = Math.min(lArrow, 3*wArrow);
+
+        // ìš´ë™ì—ë„ˆì§€ í™”ì‚´í‘œ ê·¸ë¦¬ê¸°
+        var oxArrow = [ 0, lArrow - head, lArrow - head, lArrow, lArrow - head, lArrow - head, 0 ];
+        var oyArrow = [ wArrow, wArrow, 2*wArrow, 0, -2*wArrow, -wArrow, -wArrow ];
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.atan2(cy, cx));
+        ctx.beginPath();
+        //beginShape();
+        for (var i = 0; i < oxArrow.length; i++){
+
+            ctx.lineTo(Math.max(oxArrow[i], 0), oyArrow[i]);
+        }
+        ctx.closePath();
+        //endShape(CLOSE);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawArrow2D_thick(x, y, cx, cy, thick){
+
+        // í™”ì‚´í‘œì˜ ê¸¸ì´
+        var lArrow = Math.round(Math.sqrt(cx * cx + cy * cy));
+
+        // ìš´ë™ì—ë„ˆì§€ í™”ì‚´í‘œ ê·¸ë¦¬ê¸°
+        var oxArrow = [ 0, lArrow - 2*thick, lArrow - 2*thick, lArrow, lArrow - 2*thick, lArrow - 2*thick, 0 ];
+        var oyArrow = [ thick, thick, 2*thick, 0, -2*thick, -thick, -thick ];
+
+        //push();
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.atan2(cy, cx));
+        //beginShape();
+        ctx.beginPath();
+        for (var i = 0; i < oxArrow.length; i++){
+
+            ctx.lineTo(Math.max(oxArrow[i], 0), oyArrow[i]);
+        }
+        ctx.closePath();
+        ctx.fill();
+        //endShape(CLOSE);
+        ctx.restore();
+    }
+
+    var radioA;
+    var checkbox;
+    var checkbox1;
+    var img_hand_0;
+    var img_hand_1;
+    var xRod = 150;
+    var yRod = 200;
+    var oxRodCharge = [];
+    var oyRodCharge = [];
+    var maxMetal = 16;
+    var xMetalAtom = [];
+    var yMetalAtom = [];
+    var iMetalElectron = [];
+    var jMetalElectron = [];
+    var aMetalElectron = [];
+    var tMetalElectron = [];
+    var maxTrace = 20;
+    var xMetalElectron = [];
+    var yMetalElectron = [];
+    var maxInsulatorAtom = 14;
+    var xInsulatorAtom = [];
+    var yInsulatorAtom = [];
+    var tInsulatorElectron = [];
+    var aInsulatorElectron = [];
+    var bInsulatorElectron = [];
+    var xInsulatorElectron = [];
+    var yInsulatorElectron = [];
+    var a;
+    var f;
+    var dsin = [ 0, 0.017452406, 0.034899497, 0.052335956, 0.069756474, 0.087155743, 0.104528463, 0.121869343, 0.139173101, 0.156434465, 0.173648178, 0.190808995, 0.207911691, 0.224951054, 0.241921896, 0.258819045, 0.275637356, 0.292371705, 0.309016994, 0.325568154, 0.342020143, 0.35836795, 0.374606593, 0.390731128, 0.406736643, 0.422618262, 0.438371147, 0.4539905, 0.469471563, 0.48480962, 0.5, 0.515038075, 0.529919264, 0.544639035, 0.559192903, 0.573576436, 0.587785252, 0.601815023, 0.615661475, 0.629320391, 0.64278761, 0.656059029, 0.669130606, 0.68199836, 0.69465837, 0.707106781, 0.7193398, 0.731353702, 0.743144825, 0.75470958, 0.766044443, 0.777145961, 0.788010754, 0.79863551, 0.809016994, 0.819152044, 0.829037573, 0.838670568, 0.848048096, 0.857167301, 0.866025404, 0.874619707, 0.882947593, 0.891006524, 0.898794046, 0.906307787, 0.913545458, 0.920504853, 0.927183855, 0.933580426, 0.939692621, 0.945518576, 0.951056516, 0.956304756, 0.961261696, 0.965925826, 0.970295726, 0.974370065, 0.978147601, 0.981627183, 0.984807753, 0.987688341, 0.990268069, 0.992546152, 0.994521895, 0.996194698, 0.99756405, 0.998629535, 0.999390827, 0.999847695, 1, 0.999847695, 0.999390827, 0.998629535, 0.99756405, 0.996194698, 0.994521895, 0.992546152, 0.990268069, 0.987688341, 0.984807753, 0.981627183, 0.978147601, 0.974370065, 0.970295726, 0.965925826, 0.961261696, 0.956304756, 0.951056516, 0.945518576, 0.939692621, 0.933580426, 0.927183855, 0.920504853, 0.913545458, 0.906307787, 0.898794046, 0.891006524, 0.882947593, 0.874619707, 0.866025404, 0.857167301, 0.848048096, 0.838670568, 0.829037573, 0.819152044, 0.809016994, 0.79863551, 0.788010754, 0.777145961, 0.766044443, 0.75470958, 0.743144825, 0.731353702, 0.7193398, 0.707106781, 0.69465837, 0.68199836, 0.669130606, 0.656059029, 0.64278761, 0.629320391, 0.615661475, 0.601815023, 0.587785252, 0.573576436, 0.559192903, 0.544639035, 0.529919264, 0.515038075, 0.5, 0.48480962, 0.469471563, 0.4539905, 0.438371147, 0.422618262, 0.406736643, 0.390731128, 0.374606593, 0.35836795, 0.342020143, 0.325568154, 0.309016994, 0.292371705, 0.275637356, 0.258819045, 0.241921896, 0.224951054, 0.207911691, 0.190808995, 0.173648178, 0.156434465, 0.139173101, 0.121869343, 0.104528463, 0.087155743, 0.069756474, 0.052335956, 0.034899497, 0.017452406, 0, -0.017452406, -0.034899497, -0.052335956, -0.069756474, -0.087155743, -0.104528463, -0.121869343, -0.139173101, -0.156434465, -0.173648178, -0.190808995, -0.207911691, -0.224951054, -0.241921896, -0.258819045, -0.275637356, -0.292371705, -0.309016994, -0.325568154, -0.342020143, -0.35836795, -0.374606593, -0.390731128, -0.406736643, -0.422618262, -0.438371147, -0.4539905, -0.469471563, -0.48480962, -0.5, -0.515038075, -0.529919264, -0.544639035, -0.559192903, -0.573576436, -0.587785252, -0.601815023, -0.615661475, -0.629320391, -0.64278761, -0.656059029, -0.669130606, -0.68199836, -0.69465837, -0.707106781, -0.7193398, -0.731353702, -0.743144825, -0.75470958, -0.766044443, -0.777145961, -0.788010754, -0.79863551, -0.809016994, -0.819152044, -0.829037573, -0.838670568, -0.848048096, -0.857167301, -0.866025404, -0.874619707, -0.882947593, -0.891006524, -0.898794046, -0.906307787, -0.913545458, -0.920504853, -0.927183855, -0.933580426, -0.939692621, -0.945518576, -0.951056516, -0.956304756, -0.961261696, -0.965925826, -0.970295726, -0.974370065, -0.978147601, -0.981627183, -0.984807753, -0.987688341, -0.990268069, -0.992546152, -0.994521895, -0.996194698, -0.99756405, -0.998629535, -0.999390827, -0.999847695, -1, -0.999847695, -0.999390827, -0.998629535, -0.99756405, -0.996194698, -0.994521895, -0.992546152, -0.990268069, -0.987688341, -0.984807753, -0.981627183, -0.978147601, -0.974370065, -0.970295726, -0.965925826, -0.961261696, -0.956304756, -0.951056516, -0.945518576, -0.939692621, -0.933580426, -0.927183855, -0.920504853, -0.913545458, -0.906307787, -0.898794046, -0.891006524, -0.882947593, -0.874619707, -0.866025404, -0.857167301, -0.848048096, -0.838670568, -0.829037573, -0.819152044, -0.809016994, -0.79863551, -0.788010754, -0.777145961, -0.766044443, -0.75470958, -0.743144825, -0.731353702, -0.7193398, -0.707106781, -0.69465837, -0.68199836, -0.669130606, -0.656059029, -0.64278761, -0.629320391, -0.615661475, -0.601815023, -0.587785252, -0.573576436, -0.559192903, -0.544639035, -0.529919264, -0.515038075, -0.5, -0.48480962, -0.469471563, -0.4539905, -0.438371147, -0.422618262, -0.406736643, -0.390731128, -0.374606593, -0.35836795, -0.342020143, -0.325568154, -0.309016994, -0.292371705, -0.275637356, -0.258819045, -0.241921896, -0.224951054, -0.207911691, -0.190808995, -0.173648178, -0.156434465, -0.139173101, -0.121869343, -0.104528463, -0.087155743, -0.069756474, -0.052335956, -0.034899497, -0.017452406, 0 ];
+    var dcos = [ 1, 0.999847695, 0.999390827, 0.998629535, 0.99756405, 0.996194698, 0.994521895, 0.992546152, 0.990268069, 0.987688341, 0.984807753, 0.981627183, 0.978147601, 0.974370065, 0.970295726, 0.965925826, 0.961261696, 0.956304756, 0.951056516, 0.945518576, 0.939692621, 0.933580426, 0.927183855, 0.920504853, 0.913545458, 0.906307787, 0.898794046, 0.891006524, 0.882947593, 0.874619707, 0.866025404, 0.857167301, 0.848048096, 0.838670568, 0.829037573, 0.819152044, 0.809016994, 0.79863551, 0.788010754, 0.777145961, 0.766044443, 0.75470958, 0.743144825, 0.731353702, 0.7193398, 0.707106781, 0.69465837, 0.68199836, 0.669130606, 0.656059029, 0.64278761, 0.629320391, 0.615661475, 0.601815023, 0.587785252, 0.573576436, 0.559192903, 0.544639035, 0.529919264, 0.515038075, 0.5, 0.48480962, 0.469471563, 0.4539905, 0.438371147, 0.422618262, 0.406736643, 0.390731128, 0.374606593, 0.35836795, 0.342020143, 0.325568154, 0.309016994, 0.292371705, 0.275637356, 0.258819045, 0.241921896, 0.224951054, 0.207911691, 0.190808995, 0.173648178, 0.156434465, 0.139173101, 0.121869343, 0.104528463, 0.087155743, 0.069756474, 0.052335956, 0.034899497, 0.017452406, 0, -0.017452406, -0.034899497, -0.052335956, -0.069756474, -0.087155743, -0.104528463, -0.121869343, -0.139173101, -0.156434465, -0.173648178, -0.190808995, -0.207911691, -0.224951054, -0.241921896, -0.258819045, -0.275637356, -0.292371705, -0.309016994, -0.325568154, -0.342020143, -0.35836795, -0.374606593, -0.390731128, -0.406736643, -0.422618262, -0.438371147, -0.4539905, -0.469471563, -0.48480962, -0.5, -0.515038075, -0.529919264, -0.544639035, -0.559192903, -0.573576436, -0.587785252, -0.601815023, -0.615661475, -0.629320391, -0.64278761, -0.656059029, -0.669130606, -0.68199836, -0.69465837, -0.707106781, -0.7193398, -0.731353702, -0.743144825, -0.75470958, -0.766044443, -0.777145961, -0.788010754, -0.79863551, -0.809016994, -0.819152044, -0.829037573, -0.838670568, -0.848048096, -0.857167301, -0.866025404, -0.874619707, -0.882947593, -0.891006524, -0.898794046, -0.906307787, -0.913545458, -0.920504853, -0.927183855, -0.933580426, -0.939692621, -0.945518576, -0.951056516, -0.956304756, -0.961261696, -0.965925826, -0.970295726, -0.974370065, -0.978147601, -0.981627183, -0.984807753, -0.987688341, -0.990268069, -0.992546152, -0.994521895, -0.996194698, -0.99756405, -0.998629535, -0.999390827, -0.999847695, -1, -0.999847695, -0.999390827, -0.998629535, -0.99756405, -0.996194698, -0.994521895, -0.992546152, -0.990268069, -0.987688341, -0.984807753, -0.981627183, -0.978147601, -0.974370065, -0.970295726, -0.965925826, -0.961261696, -0.956304756, -0.951056516, -0.945518576, -0.939692621, -0.933580426, -0.927183855, -0.920504853, -0.913545458, -0.906307787, -0.898794046, -0.891006524, -0.882947593, -0.874619707, -0.866025404, -0.857167301, -0.848048096, -0.838670568, -0.829037573, -0.819152044, -0.809016994, -0.79863551, -0.788010754, -0.777145961, -0.766044443, -0.75470958, -0.743144825, -0.731353702, -0.7193398, -0.707106781, -0.69465837, -0.68199836, -0.669130606, -0.656059029, -0.64278761, -0.629320391, -0.615661475, -0.601815023, -0.587785252, -0.573576436, -0.559192903, -0.544639035, -0.529919264, -0.515038075, -0.5, -0.48480962, -0.469471563, -0.4539905, -0.438371147, -0.422618262, -0.406736643, -0.390731128, -0.374606593, -0.35836795, -0.342020143, -0.325568154, -0.309016994, -0.292371705, -0.275637356, -0.258819045, -0.241921896, -0.224951054, -0.207911691, -0.190808995, -0.173648178, -0.156434465, -0.139173101, -0.121869343, -0.104528463, -0.087155743, -0.069756474, -0.052335956, -0.034899497, -0.017452406, 0, 0.017452406, 0.034899497, 0.052335956, 0.069756474, 0.087155743, 0.104528463, 0.121869343, 0.139173101, 0.156434465, 0.173648178, 0.190808995, 0.207911691, 0.224951054, 0.241921896, 0.258819045, 0.275637356, 0.292371705, 0.309016994, 0.325568154, 0.342020143, 0.35836795, 0.374606593, 0.390731128, 0.406736643, 0.422618262, 0.438371147, 0.4539905, 0.469471563, 0.48480962, 0.5, 0.515038075, 0.529919264, 0.544639035, 0.559192903, 0.573576436, 0.587785252, 0.601815023, 0.615661475, 0.629320391, 0.64278761, 0.656059029, 0.669130606, 0.68199836, 0.69465837, 0.707106781, 0.7193398, 0.731353702, 0.743144825, 0.75470958, 0.766044443, 0.777145961, 0.788010754, 0.79863551, 0.809016994, 0.819152044, 0.829037573, 0.838670568, 0.848048096, 0.857167301, 0.866025404, 0.874619707, 0.882947593, 0.891006524, 0.898794046, 0.906307787, 0.913545458, 0.920504853, 0.927183855, 0.933580426, 0.939692621, 0.945518576, 0.951056516, 0.956304756, 0.961261696, 0.965925826, 0.970295726, 0.974370065, 0.978147601, 0.981627183, 0.984807753, 0.987688341, 0.990268069, 0.992546152, 0.994521895, 0.996194698, 0.99756405, 0.998629535, 0.999390827, 0.999847695, 1 ];
+
+    preload();
+    function preload() {
+
+        img_hand_0 = new Image();
+        img_hand_0.src="conductor_and_insulator_hand_0.png";
+        img_hand_1 = new Image();
+        img_hand_1.src="conductor_and_insulator_hand_1.png";
+        setup();
+    }
+    var x;
+    var y;
+    function setup() {
+        document.querySelector(".trigger_popup_fricc").onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "block";
+        };
+        document.querySelector('.hover_bkgr_fricc').onclick =function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+        document.querySelector('.popupCloseButton').onclick=function(){
+            document.querySelector('.hover_bkgr_fricc').style.display = "none";
+        };
+        canvas = document.getElementById("canvas");
+        ctx=canvas.getContext("2d");
+        //frameRate(60);
+        //pixelDensity(2 * displayDensity());
+        //var o = select("#myContainer");
+        canvas.width = window.innerWidth-10;
+        canvas.height = 580;//window.innerHeight-10;
+
+        var a = 400/900;
+        //radioA = createRadio("radioA");
+        canvas.addEventListener("mousemove", touchMoved);
+        canvas.addEventListener("mousedown", touchStarted);
+        canvas.addEventListener("mouseup", touchEnded);
+        width= canvas.width;
+        height= canvas.height;
+        checkbox= document.getElementById("defaultradio0-0");
+        checkbox1= document.getElementById("defaultradio0-1");
+
+        //radioA.parent("radioA");
+        //radioA.value("2");
+        //checkbox.getFont("margin-right 10px");
+        //checkbox1.getFont("margin-right 10px");
+        oxRodCharge[0] = [];
+        oyRodCharge[0] = [];
+        oxRodCharge[1] = [];
+        oyRodCharge[1] = [];
+        for (var i = 0; i < 10; i++) {
+            oxRodCharge[0][i] = Math.floor(i/10)*50-50;
+            oyRodCharge[0][i] = map(i%10, 0, 9, -130, 130);
+            oxRodCharge[1][i] = Math.random()*44- 22;
+            oyRodCharge[1][i] = Math.random()*44- 22
+        }
+        for (var i = 0; i < maxMetal; i++) {
+            xMetalAtom[i] = 500 + (i%8) * 50;
+            yMetalAtom[i] = 90 + Math.floor(i / 8) * 50;
+            iMetalElectron[i] = i%8;
+            jMetalElectron[i] = Math.floor(i / 8);
+            aMetalElectron[i] = Math.floor((Math.random()*360+1) / 15) * 15;
+            tMetalElectron[i] = (Math.random() > 0.5) ? 15 : -15
+        }
+
+        for (var i = 0; i < maxMetal; i++) {
+            x = xMetalAtom[i] + 25 * dcos[aMetalElectron[i]];
+            y = yMetalAtom[i] + 25 * dsin[aMetalElectron[i]];
+            xMetalElectron[i] = [];
+            yMetalElectron[i] = [];
+            for (var j = 0; j < maxTrace; j++) {
+                xMetalElectron[i][j] = x;
+                yMetalElectron[i][j] = y
+            }
+        }
+        for (var i = 0; i < maxInsulatorAtom; i++) {
+            xInsulatorAtom[i] = 500 + (i%7) * 58;
+            yInsulatorAtom[i] = 230 + Math.floor(i / 7) * 50;
+            tInsulatorElectron[i] = Math.floor((Math.random()*360+1) / 10) * 10
+        }
+        //App.clearAllTimers();
+        setInterval(draw, 1000/40);
+        ctx.font="20px Arial";
+    }
+
+    function drawProton(x, y) {
+        ctx.fillStyle="rgb(255, 0, 0)";
+        ctx.beginPath();
+        ctx.ellipse(x, y, 10, 10,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle="rgb(255,255,255)";
+        ctx.fillRect(x - 5, y - 1, 10, 2);
+        ctx.fillRect(x - 1, y - 5, 2, 10);
+    }
+
+    function drawElectron(x, y) {
+        // noStroke();
+        ctx.fillStyle="rgb(0, 0, 255)";
+        ctx.beginPath();
+        ctx.ellipse(x, y, 6, 6,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle="rgb(255,255,255)";
+        ctx.fillRect(x - 4, y - 1, 8, 2);
+    }
+
+    function getForce() {
+        var f = map(xRod, 100, 420, 0, 1);
+        return 4 * f * f * f
+    }
+
+    function draw() {
+        ctx.fillStyle="rgb(0,64,84)"
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.save();
+        ctx.translate(canvas.width/2-450,30);
+        ctx.save();
+        //ctx.scale(canvas.width / 900,canvas.width / 900);
+        var f = getForce();
+        ctx.translate(xRod, yRod);
+        // ctx.drawImage(img_hand_0, 0, 100, 400, 400);
+        ctx.fillStyle="white";
+        ctx.strokeStyle="white";
+        ctx.fillRect(-70, -150, 40, 300);
+        ctx.strokeRect(-70, -150, 40, 300);
+        for (var i = 0; i < oxRodCharge[0].length; i++) {
+            drawProton(oxRodCharge[0][i], oyRodCharge[0][i])
+        }
+        if (checkbox1.checked)
+            for (var i = 0; i < oxRodCharge[1].length; i++) {
+                drawElectron(oxRodCharge[0][i] - oxRodCharge[1][i], oyRodCharge[0][i] - oyRodCharge[1][i]);
+                drawElectron(oxRodCharge[0][i] + oxRodCharge[1][i], oyRodCharge[0][i] + oyRodCharge[1][i])
+            }
+        //  ctx.drawImage(img_hand_1, 0, 100, 400, 400);
+        ctx.fillStyle="white";
+        //noStroke();
+
+        ctx.textAlign="left";
+        ctx.fillText("Charged Body", -25, -6);
+        ctx.restore();
+        {
+            for (var i = 0; i < maxMetal; i++) {
+                aMetalElectron[i] += tMetalElectron[i];
+                aMetalElectron[i] = mod(aMetalElectron[i], 360);
+                relocationMetalElectron(i)
+            }
+            for (var i = 0; i < maxMetal; i++) {
+                var x = xMetalAtom[iMetalElectron[i] + 8 * jMetalElectron[i]] + 25 * dcos[aMetalElectron[i]];
+                var y = yMetalAtom[iMetalElectron[i] + 8 * jMetalElectron[i]] + 25 * dsin[aMetalElectron[i]];
+                for (var j = maxTrace - 1; j > 0; j--) {
+                    xMetalElectron[i][j] = xMetalElectron[i][j - 1];
+                    yMetalElectron[i][j] = yMetalElectron[i][j - 1]
+                }
+                xMetalElectron[i][0] = x;
+                yMetalElectron[i][0] = y
+            }
+            for (var i = 0; i < maxInsulatorAtom; i++) {
+                aInsulatorElectron[i] = 23 + f;
+                bInsulatorElectron[i] = 23 - f
+            }
+            for (var i = 0; i < maxInsulatorAtom; i++) {
+                tInsulatorElectron[i] += 5;
+                tInsulatorElectron[i] = mod(tInsulatorElectron[i], 360);
+                xInsulatorElectron[i] = aInsulatorElectron[i] * dcos[tInsulatorElectron[i]];
+                yInsulatorElectron[i] = bInsulatorElectron[i] * dsin[tInsulatorElectron[i]]
+            }
+        }
+        //noStroke();
+        ctx.fillStyle= Color(200,200,200);
+        ctx.fillRect(xMetalAtom[0] - 35, yMetalAtom[0] - 35, 20 + 8 * 50, 20 + 2 * 50);
+        //noStroke();
+        ctx.fillStyle= Color(255, 191, 191);
+        ctx.fillRect(xInsulatorAtom[0] - 35, yInsulatorAtom[0] - 35, 20 + 7 * 57, 20 + 2 * 50);
+        for (var i = 0; i < maxMetal; i++) {
+            drawProton(xMetalAtom[i], yMetalAtom[i])
+        }
+        for (var i = 0; i < maxInsulatorAtom; i++) {
+            drawProton(xInsulatorAtom[i], yInsulatorAtom[i])
+        }
+        ctx.lineWidth=2.5;//strokeWeight(3);
+        var a;
+        for (var i = 0; i < maxMetal; i++) {
+            for (var j = maxTrace - 1; j > 0; j--) {
+                a = map(j, 0, maxTrace - 1, 0, 200);
+                ctx.globalAlpha=(1-a/255);
+                line(xMetalElectron[i][j - 1], yMetalElectron[i][j - 1], xMetalElectron[i][j], yMetalElectron[i][j])
+            }
+        }
+        ctx.globalAlpha=1;
+        for (var i = 0; i < maxMetal; i++) {
+            drawElectron(xMetalElectron[i][0], yMetalElectron[i][0])
+        }
+        f *= 2;
+        if (checkbox.checked) f *= -1;
+        for (var i = 0; i < maxInsulatorAtom; i++) {
+            //noFill();
+            ctx.strokeStyle= Color(128, 128, 222);
+            ctx.beginPath();
+            ctx.ellipse(xInsulatorAtom[i] + f, yInsulatorAtom[i],  aInsulatorElectron[i],  bInsulatorElectron[i],0,0,Math.PI*2);
+            ctx.stroke();
+           // ellipse(xInsulatorAtom[i] + f, yInsulatorAtom[i], 2 * aInsulatorElectron[i], 2 * bInsulatorElectron[i]);
+            drawElectron(xInsulatorAtom[i] + f + xInsulatorElectron[i], yInsulatorAtom[i] + yInsulatorElectron[i])
+        }
+        ctx.fillStyle="white";//fill(0);
+        //textAlign(CENTER, CENTER);
+        ctx.textAlign="center";
+        ctx.fillText("Conductor(Metal)", 680, yMetalAtom[3] - 45);
+        ctx.fillText("Insulator", 680, yInsulatorAtom[10] + 58);
+        //strokeWeight(1);
+        ctx.restore();
+        ctx.restore();
+    }
+
+    function relocationMetalElectron(i) {
+        var f = getForce();
+        if (aMetalElectron[i] == 0)
+            if ((iMetalElectron[i] + 1) < 8) {
+                var a = false;
+                if (checkbox1.checked)
+                    if (f > 1)
+                        if (Math.random()*f > 0.4) a = true;
+                if (Math.random() < 0.5) a = true;
+                if (a) {
+                    iMetalElectron[i]++;
+                    aMetalElectron[i] = 180;
+                    tMetalElectron[i] *= -1
+                }
+                return
+            } if (aMetalElectron[i] == 90)
+            if ((jMetalElectron[i] + 1) < 2)
+                if (Math.random() < 0.5) {
+                    jMetalElectron[i]++;
+                    aMetalElectron[i] = 270;
+                    tMetalElectron[i] *= -1;
+                    return
+                } if (aMetalElectron[i] == 180)
+            if (0 <= (iMetalElectron[i] - 1)) {
+                var a = false;
+                if (checkbox.checked)
+                    if (f > 1)
+                        if (Math.random()*f > 0.4) a = true;
+                if (Math.random() < 0.5) a = true;
+                if (a) {
+                    iMetalElectron[i]--;
+                    aMetalElectron[i] = 0;
+                    tMetalElectron[i] *= -1
+                }
+                return
+            } if (aMetalElectron[i] == 270)
+            if (0 <= (jMetalElectron[i] - 1))
+                if (Math.random() < 0.5) {
+                    jMetalElectron[i]--;
+                    aMetalElectron[i] = 90;
+                    tMetalElectron[i] *= -1;
+                    return
+                }
+    }
+
+
+
+
+
+    var dragged = false;
+    var offsetX = 0;
+    var mouseX;
+    var   mouseY;
+    var   pmouseX;
+    var  pmouseY;
+    function touchStarted(e) {
+        mouseX=e.x;
+        mouseY=e.y;
+        pmouseX=e.x;
+        pmouseY=e.y;
+        if (!contain(mouseX, mouseY, 0, 0, width, height)) return;
+        dragged = true;
+        offsetX = mouseX * 900 / width - xRod
+    }
+
+    function touchMoved(e) {
+        // if (touches.length > 1) return;
+        mouseX=e.x;
+        mouseY=e.y;
+        if (dragged) {
+           // Console.log(xRod);
+            xRod = mouseX * 900 / width - offsetX;
+            xRod = constrain(xRod, 100, 420);
+            if (Math.abs(mouseX - pmouseX) > Math.abs(mouseY - pmouseY)) return false
+        }
+    }
+
+    function touchEnded(e) {
+        dragged = false
+    }
+
+    function Color(r,g,b){
+        return "rgb("+r+","+g+","+b+")";
+    }
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
