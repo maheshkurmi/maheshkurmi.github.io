@@ -447,13 +447,16 @@
         //canvas.width=900;
         //canvas.height=600;
         canvas.width = window.innerWidth-10;
-        canvas.height = 580;//window.innerHeight-10;
+        canvas.height = 600;//window.innerHeight-10;
 
         window.addEventListener('resize',function(ev) { return resize(ev); });
 
         myCanvas.addEventListener("mousemove", touchMoved);
         myCanvas.addEventListener("mousedown", touchStarted);
         myCanvas.addEventListener("mouseup", touchEnded);
+        canvas.addEventListener('touchstart', myTouchStart, false); // touch handler for iPhones, iPads, and Androids
+        canvas.addEventListener('touchmove', myTouchMove, false); // touch handler for iPhones, iPads, and Androids
+        canvas.addEventListener('touchend', myTouchEnd, false); // touch handler for iPhones, iPads, and Androids
 
         ctx=myCanvas.getContext("2d");
         var width =myCanvas.width;
@@ -676,7 +679,42 @@
     }
 
 
+    function myTouchMove(event) {
+        let touch = event.touches[0];
+        let mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
 
+    function myTouchStart(event) {
+        event.preventDefault();
+        let touch = event.touches[0]
+        let mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function myTouchEnd(event) {
+        event.preventDefault();
+        let mouseEvent = new MouseEvent('mouseup', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function getTouchPos(event) {
+        event.preventDefault();
+        let rect = canvas.getBoundingClientRect();
+        return {
+            x: event.touches[0].clientX - rect.left,
+            y: event.touches[0].clientY - rect.top,
+        };
+    }
 
 
 
