@@ -16,6 +16,7 @@ var gridHeight;
 var mols, grid, bigmol;
 var stoppedCheck;
 var heaterCheck;
+var molCollisionCheck;
 var dividerCheck;
 var energyCheck;
 var heaterTempBar;
@@ -54,6 +55,7 @@ var brownPath = [];
 var refresh = function () {}
 var time = 0
 var currentTime = 0
+
 
 var gasView = {
   width: 0,
@@ -170,6 +172,8 @@ function main() {
   gravity = 0;
   stoppedCheck = document.getElementById("stoppedCheck");
   heaterCheck = document.getElementById("heaterCheck");
+  molCollisionCheck =document.getElementById("molsCollideCheck");
+  //console.log(molCollisionCheck);
   //dividerCheck = document.getElementById("dividerCheck");
   energyCheck = document.getElementById("energyCheck");
   hideMolsCheck = document.getElementById("hideMolsCheck");
@@ -627,6 +631,7 @@ function checkCollision(m) {
     if (q != null)
 	return q;
   }
+  if(!molCollisionCheck.checked)return;
   var gx = Math.floor(m.x/gridEltWidth);
   var gy = Math.floor(m.y/gridEltHeight);
   var i, j;

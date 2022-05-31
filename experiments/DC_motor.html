@@ -228,10 +228,13 @@
 
 </div>
 <script src="tweakpane3.js"></script>
+
 <script type="module">
-    import * as THREE from "https://threejs.org/build/three.module.js";
-    import { OrbitControls } from "https://threejs.org/examples/jsm/controls/OrbitControls.js";
-    //const loader = new THREE.TextureLoader();
+   import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.121.1/build/three.module.js';
+
+import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/examples/jsm/loaders/DRACOLoader.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/examples/jsm/controls/OrbitControls.js';
+   //const loader = new THREE.TextureLoader();
     var renderer, scene, camera, controls;
     var groundTex,batteryTex,magnetTex;
     var ground,battery, magnet,wire,field,force1,force2,current1,current2;
