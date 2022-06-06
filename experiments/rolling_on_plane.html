@@ -228,10 +228,16 @@
     </div>
 
 </div>
+
 <script src="tweakpane3.js"></script>
+<script src="https://unpkg.com/three"></script>
+<script src="https://unpkg.com/@seregpie/three.text-texture"></script>
+<script src="https://unpkg.com/@seregpie/three.text-sprite"></script>
+
 <script type="module">
-    import * as THREE from "https://threejs.org/build/three.module.js";
-    import { OrbitControls } from "https://threejs.org/examples/jsm/controls/OrbitControls.js";
+   // import * as THREE from "https://threejs.org/build/three.module.js";
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/examples/jsm/controls/OrbitControls.js';
+
     //const loader = new THREE.TextureLoader();
     var renderer, scene, camera, controls;
     var groundTex,ballTex,planeTex,cubeTex,ringTex,discTex;
