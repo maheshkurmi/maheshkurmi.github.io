@@ -549,6 +549,10 @@
         //var o = select("#myContainer");
         canvas.width = window.innerWidth-10;
         canvas.height = 580;//window.innerHeight-10;
+        canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=580* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = 580 + 'px';
 
         var a = 400/900;
         //radioA = createRadio("radioA");
@@ -632,7 +636,9 @@
         ctx.fillStyle="rgb(0,64,84)"
         ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.save();
-        ctx.translate(canvas.width/2-450,30);
+      
+        ctx.translate(canvas.width/2-450*devicePixelRatio,30*devicePixelRatio);
+        ctx.scale(devicePixelRatio,devicePixelRatio);
         ctx.save();
         //ctx.scale(canvas.width / 900,canvas.width / 900);
         var f = getForce();
@@ -786,10 +792,10 @@
     var   pmouseX;
     var  pmouseY;
     function touchStarted(e) {
-        mouseX=e.x;
-        mouseY=e.y;
-        pmouseX=e.x;
-        pmouseY=e.y;
+        mouseX=e.x*devicePixelRatio;
+        mouseY=e.y*devicePixelRatio;
+        pmouseX=e.x*devicePixelRatio;
+        pmouseY=e.y*devicePixelRatio;
         if (!contain(mouseX, mouseY, 0, 0, width, height)) return;
         dragged = true;
         offsetX = mouseX * 900 / width - xRod
@@ -797,8 +803,8 @@
 
     function touchMoved(e) {
         // if (touches.length > 1) return;
-        mouseX=e.x;
-        mouseY=e.y;
+        mouseX=e.x*devicePixelRatio;
+        mouseY=e.y*devicePixelRatio;
         if (dragged) {
            // Console.log(xRod);
             xRod = mouseX * 900 / width - offsetX;

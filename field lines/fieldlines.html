@@ -331,9 +331,13 @@
             Applet.prototype.Resize = function()
             {
                 if(window.innerWidth<10||window.innerHeight<10)return;
-                this.width = this.canvas.width = window.innerWidth-10;
-                this.height = this.canvas.height = window.innerHeight-10    ;
-
+               // this.width = this.canvas.width = window.innerWidth-10;
+               // this.height = this.canvas.height = window.innerHeight-10    ;
+                canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+       // scale*=(window.innerWidth/canvas.width);
                 this.Draw();
             }
 
@@ -1220,6 +1224,8 @@
                     x = ev.touches[0].pageX;
                     y = ev.touches[0].pageY;
                 }
+                x*=devicePixelRatio;
+                y*=devicePixelRatio;
                 x = x - offset.x;
                 y = y - offset.y;
                 x -= this.canvas_translate.x;

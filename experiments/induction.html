@@ -424,8 +424,12 @@
 
     function resize(){
         //scale*=window.innerWidth/canvas.width;
-        canvas.width = window.innerWidth-10;
-        canvas.height =580;///window.innerHeight-10;
+       // canvas.width = window.innerWidth-10;
+       // canvas.height =580;///window.innerHeight-10;
+        canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=600* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = 600 + 'px';
         render();
     }
     function setup() {
@@ -446,8 +450,10 @@
         myCanvas = document.getElementById("canvas");
         //canvas.width=900;
         //canvas.height=600;
-        canvas.width = window.innerWidth-10;
-        canvas.height = 600;//window.innerHeight-10;
+        canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=600* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = 600 + 'px';
 
         window.addEventListener('resize',function(ev) { return resize(ev); });
 
@@ -531,8 +537,8 @@
         ctx.fillRect(0,0,myCanvas.width,myCanvas.height);
 
         ctx.save();
-        ctx.translate(myCanvas.width/2-450,30);
-
+        ctx.translate(myCanvas.width/2-450*devicePixelRatio,30*devicePixelRatio);
+        ctx.scale(devicePixelRatio,devicePixelRatio);
         ctx.lineWidth=1;
         ctx.font = "20px Arial";
         ctx.textAlign="center";
@@ -659,6 +665,9 @@
 
     function touchStarted(e) {
         mouseX=e.x,mouseY=e.y;
+        mouseX*=devicePixelRatio;
+        mouseY*=devicePixelRatio;
+        
         dragged = true;
         offsetX = mouseX * 900 / myCanvas.width - xRod
     }
@@ -668,6 +677,9 @@
         //if (touches.length > 1) return;
         if (dragged) {
             mouseX=e.x,mouseY=e.y;
+            mouseX*=devicePixelRatio;
+            mouseY*=devicePixelRatio;
+        
             xRod = mouseX * 900 / myCanvas.width - offsetX;
             xRod = constrain(xRod, 100, 420);
             // if (abs(mouseX - pmouseX) > abs(mouseY - pmouseY)) return false

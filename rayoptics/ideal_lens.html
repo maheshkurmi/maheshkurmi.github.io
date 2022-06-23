@@ -9,15 +9,15 @@ body {
     font-weight: 300;
     width:  100%;
     height: 100%;
-//height: 100vh;
+    //height: 100vh;
     margin: 0;
     overflow: hidden; /*  Disable scrollbars */
     display: block;  /* No floating content on sides */
-//display: flex;
-//align-items: center;
-//justify-content: center;
-//text-align: center;
-//font-family: Helvetica neue, roboto;
+    //display: flex;
+    //align-items: center;
+    //justify-content: center;
+    //text-align: center;
+    //font-family: Helvetica neue, roboto;
 }
 
 img {
@@ -146,8 +146,13 @@ h1 {
 
     function resize(){
         if(window.innerWidth<10||window.innerHeight<10)return;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        //canvas.width = window.innerWidth;
+       // canvas.height = window.innerHeight;
+       canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+        scale=canvas.width/800;
         update();
     }
 
@@ -205,7 +210,8 @@ h1 {
     }
 
     function doMouse(x,y,type){
-
+        x*=devicePixelRatio;
+        y*=devicePixelRatio;
         if(type === 'mousedown' ){//|| ev.type ==='touchstart') {
             // See if we're clicking a charge.
             prevMouseDown={x:x,y:y};
@@ -345,14 +351,19 @@ h1 {
             drawRays();
         }
         ctx.resetTransform();
-        if(displayResult)drawSolution();
+        if(displayResult){
+            ctx.scale(devicePixelRatio,devicePixelRatio);
+            drawSolution();
+        }
+            
     }
 
-    function drawSolution(){
+    function drawSolution(){     
+   
         ctx.textAlign="left";
         this.ctx.font = '14pt sans-serif';
 
-        let x=40,y=canvas.height-100;
+        let x=40,y=canvas.height/devicePixelRatio-120;
 
         ctx.fillText("u = "+u.toFixed(0)+" cm ," +" f = "+f.toFixed(0)+" cm", x, y);
         y+=30;

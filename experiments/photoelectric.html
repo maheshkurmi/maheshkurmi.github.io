@@ -327,18 +327,27 @@
     function resize(){
         if(window.innerWidth<10||window.innerHeight<10)return;
         //scale*=window.innerWidth/canvas.width;
-        canvas.width = window.innerWidth-10;
-        canvas.height = window.innerHeight-10;
+        canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+       // canvas.width = window.innerWidth-10;
+       // canvas.height = window.innerHeight-10;
         draw();
     }
 
     function load(){
         canvas=document.getElementById("canvas");
-        canvas.width=Math.max(1200,window.innerWidth);
-        canvas.height=Math.max(660,window.innerHeight);
+        //canvas.width=Math.max(1200,window.innerWidth);
+       // canvas.height=Math.max(660,window.innerHeight);
+        canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+
         scale=canvas.width/1500;
         ctx=canvas.getContext('2d');
-        pgPlotCanvas = createOffscreenCanvas(520, 520);
+        pgPlotCanvas = createOffscreenCanvas(520*devicePixelRatio, 520*devicePixelRatio);
         pgPlot = pgPlotCanvas.getContext("2d");
         photonPath=createPhotonPath();
         electronPath=createElectronPath();
@@ -480,6 +489,7 @@
             pulseA[i] = 0 //accelration
         }
         //bgColor;
+        pgPlot.scale(devicePixelRatio,devicePixelRatio);
         pgPlot.clearRect(0,0,pgPlotCanvas.width,pgPlotCanvas.height);
         pgPlot.fillStyle=bgColor;
         pgPlot.fillRect(0,0,pgPlotCanvas.width,pgPlotCanvas.height);
@@ -700,7 +710,8 @@
         pgPlot.beginPath();
         pgPlot.arc(xx,yy,5/2,0,2*Math.PI,false);
         pgPlot.fill();
-        ctx.drawImage(pgPlotCanvas, 680, 189);
+        ctx.scale(1/devicePixelRatio,1/devicePixelRatio);
+        ctx.drawImage(pgPlotCanvas, 680*devicePixelRatio, 189*devicePixelRatio);
         //noStroke();
         ctx.fillStyle=getLightColor(wavelength);
         if (frameCount % 4 < 2) fillOval(680 + xx, 189 + yy, 10, 10);
@@ -711,7 +722,7 @@
 
     function getMousePos(event){
         //let rect = canvas.getBoundingClientRect();
-        return [ -xOffset+event.clientX/scale ,-yOffset+event.clientY/scale ];
+        return [ -xOffset*devicePixelRatio+event.clientX*devicePixelRatio/scale ,-yOffset*devicePixelRatio+event.clientY*devicePixelRatio/scale ];
     }
 
     function MouseHovered(me){

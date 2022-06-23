@@ -279,7 +279,7 @@
     zeController.on('change',update);
     tab.pages[0].addInput(window, "displayInfo",{label:"Display values"}).on('change',update);
     tab.pages[0].addInput(window, "bgColor",{label:"Background",picker: 'inline'}).on('change',paint);
-
+  
    // var problemFolder=pane.addFolder({title:"Problem Settings",expanded:false});
 
     var problemFolder=tab.pages[1].addFolder({title:"Check to randomize"});
@@ -288,12 +288,17 @@
     problemFolder.addInput(window,"randomMainScaleDivisions",{label:"MSD Count"});
     problemFolder.addInput(window,"randomCircularScaleDivision",{label:"CSD Count"});
     problemFolder.addInput(window,"randomObjectWidthPixel",{label:"Object's Size"});
+    
     tab.pages[1].addButton({title:"createProblem"}).on('click',createProblem);
 
     var canvas=document.getElementById("myCanvas");
-    canvas.width = Math.max(900,window.innerWidth);
-    canvas.height = Math.max(600,window.innerHeight);
-    scale=canvas.width/1500;
+    canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+        scale=(canvas.width/1500);
+    
+    //scale=canvas.width/1500;
     var ctx=canvas.getContext("2d");
     ctx.font = "30px Arial";
     //Add event listeners
@@ -301,6 +306,8 @@
     var hammertime;
     paint();
     var intiScale=scale;
+    tab.pages[0].addInput(window, "scale",{label:"Scale",min:0.5,max:3,step:0.1}).on('change',update);
+ 
      function itemloaded(){
         loadedItems++;
         if(loadedItems==itemsToLoad){
@@ -382,14 +389,22 @@
             };
         }
         paint();
+        
     }
+
+   
 
     function resize(){
         if(window.innerWidth<10||window.innerHeight<10)return;
-        scale*=window.innerWidth/canvas.width;
-        canvas.width = window.innerWidth-10;
-        canvas.height = window.innerHeight-10;
-        update();
+        canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+        scale*=(window.innerWidth/canvas.width);
+        //canvas.width = window.innerWidth-10;
+       // canvas.height = window.innerHeight-10;
+       pane.refresh();
+       // update();
     }
 
     init();
@@ -405,15 +420,17 @@
         if(randomObjectWidthPixel)objectWidthPixel=mainScaleLengthPixels*(1+5*Math.random())/10;
         objectTobeMeasured.state=1;
         objectTobeMeasured.w=objectWidthPixel;
+        objectTobeMeasured.x = 20;//canvas.width-objectTobeMeasured.w-20;
+            objectTobeMeasured.y = 20;
         //objectTobeMeasured.x=xOffset+canvas.width-objectTobeMeasured.w-10;
         //objectTobeMeasured.y=yOffset+canvas.height-objectTobeMeasured.h-10;
         if(Math.abs(objectTobeMeasured.x-spindleOriginX)<200 && Math.abs(objectTobeMeasured.y-scaleOriginY+objectTobeMeasured.h/2)<objectTobeMeasured.h/2+50){
             objectTobeMeasured.x=spindleOriginX;
             objectTobeMeasured.y=scaleOriginY-objectTobeMeasured.h/2;
             objectTobeMeasured.state=2;
-        }else if(objectTobeMeasured.x>window.innerWidth-objectTobeMeasured.w||objectTobeMeasured.y>window.innerHeight-objectTobeMeasured.w||objectTobeMeasured.x<objectTobeMeasured.w/2||objectTobeMeasured.y<-objectTobeMeasured.h/2){
-            objectTobeMeasured.x = canvas.width-objectTobeMeasured.w-20;
-            objectTobeMeasured.y = canvas.width-objectTobeMeasured.h-20
+        }else if(objectTobeMeasured.x>canvas.width-objectTobeMeasured.w||objectTobeMeasured.y>canvas.height-objectTobeMeasured.w||objectTobeMeasured.x<objectTobeMeasured.w/2||objectTobeMeasured.y<-objectTobeMeasured.h/2){
+            objectTobeMeasured.x = 20;//canvas.width-objectTobeMeasured.w-20;
+            objectTobeMeasured.y = 20;//canvas.width-objectTobeMeasured.h-20
         }
         pane.refresh();
 
@@ -469,7 +486,7 @@
 
     function paint(){
          //	ctx.clear();
-
+        ctx.lineWidth=1.5;
         ctx.fillStyle=bgColor;
         ctx.strokeStyle=fgColor;
         ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -479,7 +496,7 @@
            outString(canvas.width/2,canvas.height/2,"Loading ..."+(loadedItems*100/itemsToLoad).toFixed(0)+"%",1,1);
            return;
         }
-        ctx.scale(scale,scale);
+        ctx.scale(scale*devicePixelRatio,scale*devicePixelRatio);
         ctx.translate(xOffset,yOffset);
         ctx.save();
 
@@ -496,7 +513,7 @@
         ctx.fillStyle=scaleColor;//"rgb(210,210,210)";
         ctx.strokeStyle=scaleColor;
         let x=-msd_pixels*zeroError/circularScaleDivisions,y=0,ticklength=0;
-        ctx.font = '8pt sans-serif';
+        ctx.font = '12pt sans-serif';
         //ctx.strokeStyle="orange";
         let drawLowerTicks=mainScaleDivisions>20;
         for (let i=0;i<=mainScaleDivisions;i++){
@@ -565,7 +582,7 @@
         //ctx.translate(scaleOriginX+shift,scaleOriginY); //translate origin to circular scale zero
         x=scaleOriginX+shift;
         y=scaleOriginY;
-        ctx.font = '9pt sans-serif';
+        ctx.font = '10pt sans-serif';
 
         R=scaleOriginY-thimbleY1;
         let dy1=0,dy2=0;
@@ -585,7 +602,7 @@
             if(divPos%5==0){
                 ticklength=vernierMajorTickLengthPixels;
                 dy2=dy1*(R+8)/R;
-                if(i<N-2)outString(x+thimbleX2+5, scaleOriginY-dy2,divPos,0,1 );
+                if(i<N-2)outString(x+thimbleX2+4, scaleOriginY-dy2,divPos,0,1 );
             }
             drawLine(x,y,x+ticklength,scaleOriginY-dy2);
             if(i==0)continue;
@@ -596,7 +613,7 @@
             if(divPos%5==0){
                 ticklength=vernierMajorTickLengthPixels;
                 dy2=dy1*(R+8)/R;
-                if(i<N-2)outString(x+thimbleX2+5, scaleOriginY+dy2,divPos,0,1 );
+                if(i<N-2)outString(x+thimbleX2+4, scaleOriginY+dy2,divPos,0,1 );
             }
             drawLine(x,y,x+ticklength,scaleOriginY+dy2);
         }

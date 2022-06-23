@@ -295,9 +295,16 @@
 
 
     var canvas=document.getElementById("myCanvas");
-    canvas.width = Math.max(900,window.innerWidth);
-    canvas.height = Math.max(600,window.innerHeight);
-    scale=canvas.width/1500;
+    //canvas.width = Math.max(900,window.innerWidth);
+    //canvas.height = Math.max(600,window.innerHeight);
+    //scale=canvas.width/1500;
+    canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+    scale=(canvas.width/1500);
+    tab.pages[0].addInput(window, "scale",{label:"Scale",min:0.5,max:3,step:0.1}).on('change',update);
+ 
     var ctx=canvas.getContext("2d");
     ctx.font = "30px Arial";
     //Add event listeners
@@ -381,9 +388,15 @@
 
     function resize(){
         if(window.innerWidth<10||window.innerHeight<10)return;
-        scale*=window.innerWidth/canvas.width;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+       // scale*=window.innerWidth/canvas.width;
+        //canvas.width = window.innerWidth;
+        //canvas.height = window.innerHeight;
+        canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+        scale*=(window.innerWidth/canvas.width);
+        pane.refresh();
         update();
     }
 
@@ -564,7 +577,7 @@
         }
         ctx.font = '10pt sans-serif';
 
-        ctx.scale(scale,scale);
+        ctx.scale(scale*devicePixelRatio,scale*devicePixelRatio);
         ctx.translate(xOffset,yOffset);
         ctx.save();
 

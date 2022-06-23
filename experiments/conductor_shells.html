@@ -208,11 +208,23 @@
         var scale=canvas.width/(x_max-x_min);
         const PI=Math.PI;
         const tmp_Vec=new Vector2();
-
+ //Hight DPI sizing
+ function setSize(width, height) {
+            // increase the actual size of our canvas
+            canvas.width = width * devicePixelRatio;
+            canvas.height = height * devicePixelRatio;
+            // ensure all drawing operations are scaled
+           // ctx.scale(devicePixelRatio, devicePixelRatio);
+            // scale everything down using CSS
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+        }
         function resize(){
             if(window.innerWidth<10||window.innerHeight<10)return;
-            canvas.width=window.innerWidth;
-            canvas.height=window.innerHeight;
+            canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
             if(canvas.width>canvas.height){
                 x_max=600;
                 x_min=-600;
@@ -1075,11 +1087,18 @@
 
 
         function worldToCanvas(x,y){
-            return new Vector2(x*scale+canvas.width/2,-y*scale+canvas.height/2);
+            let v =new Vector2(x*scale*devicePixelRatio+canvas.width/2,-y*scale+canvas.height/2);
+            v.multiply(1/devicePixelRatio);
+            return v;
         }
 
         function canvasToWorld(x,y){
-            return new Vector2((x_min+x_max)/2+(x-canvas.width/2.0)/scale, (y_min+y_max)/2-(canvas.height/2.0-y)/scale);
+            //console.log({x:x,y:y});
+            x*=devicePixelRatio;
+            y*=devicePixelRatio;
+            let v= new Vector2((x_min+x_max)/2+(x-canvas.width/2.0)/scale, (y_min+y_max)/2-(canvas.height/2.0-y)/scale);
+           // console.log(v);
+            return v;
         }
 
         function getMousePos(event){
@@ -1108,7 +1127,7 @@
             }else
                 document.body.style.cursor = "default";
             render();
-            console.log("Mouse hovered "+b);
+           // console.log("Mouse hovered "+b);
         }
 
         function onMouseEvent(ev){

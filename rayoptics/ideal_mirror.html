@@ -140,8 +140,13 @@
 
     function resize(){
         if(window.innerWidth<10||window.innerHeight<10)return;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+       // canvas.width = window.innerWidth;
+       // canvas.height = window.innerHeight;
+        canvas.width=window.innerWidth* devicePixelRatio;
+            canvas.height=window.innerHeight* devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+        scale=canvas.width/800;
         update();
     }
 
@@ -198,7 +203,8 @@
         }
     }
     function doMouse(x,y,type){
-
+        x*=devicePixelRatio;
+        y*=devicePixelRatio;
         if(type === 'mousedown' ){//|| ev.type ==='touchstart') {
             // See if we're clicking a charge.
             prevMouseDown={x:x,y:y};
@@ -342,13 +348,16 @@
             drawRays();
         }
         ctx.resetTransform();
-        if(displayResult)drawSolution();
+        if(displayResult){
+            ctx.scale(devicePixelRatio,devicePixelRatio);
+            drawSolution();
+        }
     }
 
     function drawSolution(){
         this.ctx.font = '12pt sans-serif';
         ctx.textAlign="left";
-        let x=40,y=canvas.height-130;
+        let x=40,y=canvas.height/devicePixelRatio-120;
 
         if(f!=0){
             ctx.fillText("u = "+u.toFixed(0)+"cm ," +" f = "+f.toFixed(0)+"cm", x, y);

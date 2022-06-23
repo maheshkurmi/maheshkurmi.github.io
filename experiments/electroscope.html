@@ -793,7 +793,6 @@
 
     function mod(x, y){
 
-        // ì¼ë‹¨, ì–‘ìˆ˜ë¡œ ë§Œë“ ë‹¤.
         if (x < 0) x += y * (ceil(abs(x)/y) + 1);
         var c = Math.floor(x / y);
         return x - y * c;

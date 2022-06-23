@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    
+</head>
+
+<body>
+    <canvas id="canvas" width="360px" height="360px"></canvas>
+    <p></p>
+    <a id="download" download="myImage.jpg" href="" onclick="download_img(this);">Download to myImage.jpg</a>
+    <script>
+        var canvas = document.querySelector("#canvas");
+        //console.log(canvas);
+        var ctx = canvas.getContext("2d");
+        //console.log(ctx);
+      
+       
+
+        //Hight DPI sizing
+        function setSize(width, height) {
+            // increase the actual size of our canvas
+            canvas.width = width * devicePixelRatio;
+            canvas.height = height * devicePixelRatio;
+            // ensure all drawing operations are scaled
+            ctx.scale(devicePixelRatio, devicePixelRatio);
+            // scale everything down using CSS
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+        }
+
+        function drawLinearRuler() {
+            let width=80,height=240;
+            setSize(width,height);
+            ctx.clearRect(0,0,width,height);
+            var ox = width / 2;
+            var oy = height / 2;
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = "black";
+            ctx.font = "18px arial";
+            ctx.textAlign = "right";
+            ctx.textBaseline = "middle";
+            ctx.lineWidth=1.4;
+            let y0 = 20;
+            let x0 = width - 1;
+            let dy = 9;
+            let dx = 15;
+            for (let i = 0; i <= 20; i++) {
+                if (i % 10 == 0) {
+                    dx = 30;
+                    ctx.fillText(Math.abs(i - 10), x0 - dx - 5, y0);
+                } else {
+                    dx = 15;
+                    if (i % 5 == 0) dx=24;
+                }
+               
+                ctx.beginPath();
+                ctx.moveTo(x0 - dx, y0);
+                ctx.lineTo(x0, y0);
+                ctx.stroke();
+                y0 += dy;
+            }
+        }
+
+        function drawCirculerRuler() {
+            let width=360,height=360;
+            setSize(width,height);
+            ctx.clearRect(0,0,width,height);
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "white";
+            var ox = width / 2;
+            var oy = height / 2;
+            ctx.font = "14px arial";
+            ctx.textAlign = "right";
+            ctx.textBaseline = "middle";
+            ctx.strokeStyle = "red";
+            ctx.lineWidth=1.2;
+
+            ctx.fillRect(0, 0,width, height);
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = "black";
+            let y0 = width / 2;
+            let x0 = height / 2;
+            let dl = 12;
+            let R1 = width / 2 - dl;
+            let R2 = width / 2;
+            let th = 0;
+            ctx.translate(x0, y0);
+            for (let i = 0; i < 100; i++) {
+                th = Math.PI+Math.PI * 2 / 100;
+                ctx.rotate(th);
+                if (i % 10 == 0) {
+                    dl = 24;
+                    ctx.fillText(i, R1 - 18, 0);
+                } else {
+                    dl = 12;
+                }
+                R1 = R2 - dl;
+
+                ctx.beginPath();
+                ctx.moveTo(R1, 0);
+                ctx.lineTo(R2, 0);
+                ctx.stroke();
+            }
+        }
+
+        function drawRadialRuler() {
+            let width=480,height=240;
+            setSize(width,height);
+            ctx.clearRect(0,0,width,height);
+            height=300;
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "white";
+            var ox = width / 2;
+            var oy = height / 2;
+            ctx.font = "bold 18px Arial";
+         
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.strokeStyle = "red";
+            ctx.lineJoin="round";
+            ctx.lineCap="round"
+            ctx.lineWidth=1.2;
+
+            ctx.fillRect(0, 0,width, height);
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = "black";
+            let x0 = width / 2;
+            let y0 = height;
+            let dl = 15;
+            
+            let R2 = height-40-dl;
+            let R1 = height -30 ;
+            let th = 0;
+            ctx.save();
+            ctx.translate(x0, y0);
+           
+            ctx.rotate(-135*Math.PI/180);
+            for (let i = 0; i <= 60; i++) {
+                th = 90*(Math.PI  / 180)/60;
+                
+                if (i % 10 == 0) {
+                    dl = 24;
+                    ctx.save();
+                    ctx.translate(R1 + 20, 0);
+                    ctx.rotate(Math.PI/2);
+                    ctx.fillText(i-30, 0, 0);
+                    ctx.restore();
+                    ctx.lineWidth=1.8;
+                } else {
+                    ctx.lineWidth=1.2;
+                    dl = 15;
+                }
+                R1 = R2 + dl;
+
+                ctx.beginPath();
+                ctx.moveTo(R1, 0);
+                ctx.lineTo(R2, 0);
+                ctx.stroke();
+                ctx.rotate(th);
+            }
+            ctx.restore();
+            ctx.lineWidth=8;
+            ctx.beginPath();
+            ctx.arc(x0,y0,R2-8,-135*Math.PI/180,-45*Math.PI/180,false);
+            ctx.stroke();
+        }
+     
+        drawRadialRuler();
+       // drawLinearRuler();
+       // drawCirculerRuler();
+        download_img = function (el) {
+            var image = canvas.toDataURL("image/png");
+            el.href = image;
+        };
+
+    </script>
+</body>
+
+</html>
