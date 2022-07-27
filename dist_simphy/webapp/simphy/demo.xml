@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<dialog columns="1" gap="4" text="Demo XML" width="720" height="480">
+	<menubar weightx="1">
+		<menu text="File" mnemonic="0">
+		 <menuitem text="New" icon="icons/new.gif" mnemonic="0" />
+		 <menuitem text="Open..." icon="icons/open.gif" />
+		 <menuitem text="Save" icon="icons/save.gif" />
+		 <menuitem text="Save As..." icon="icons/saveas.gif" />
+		 <separator />
+		 <menuitem text="Page Setup" icon="icons/pagesetup.gif" />
+		 <menuitem text="Print" icon="icons/print.gif" />
+		 <separator />
+		 <menuitem text="Exit" action="exit()"/>
+				<menu text="File" mnemonic="0">
+		 <menuitem text="New" icon="icons/new.gif" mnemonic="0" />
+		 <menuitem text="Open..." icon="icons/open.gif" />
+		 <menuitem text="Save" icon="icons/save.gif" />
+		 <menuitem text="Save As..." icon="icons/saveas.gif" />
+		 <separator />
+		 <menuitem text="Page Setup" icon="icons/pagesetup.gif" />
+		 <menuitem text="Print" icon="icons/print.gif" />
+		 <separator />
+		 <menuitem text="Exit"/>
+		</menu>
+
+		</menu>
+		<menu text="Edit">
+		 <menuitem text="Undo" icon="icons/undo.gif" />
+		 <separator />
+		 <menuitem text="Cut" icon="icons/cut.gif" />
+		 <menuitem text="Copy" icon="icons/copy.gif" />
+		 <menuitem text="Paste" icon="icons/paste.gif" />
+		 <menuitem text="Delete" icon="icons/delete.gif" />
+		 <separator />
+		 <menuitem text="Select All" />
+		</menu>
+		<menu text="Search">
+		 <menuitem text="Find..." icon="icons/search.gif" />
+		 <menuitem text="Find Next" icon="icons/searchnext.gif" />
+		</menu>
+		<menu text="Help">
+		 <menuitem text="Help Topics" icon="icons/help.gif" />
+		 <separator />
+		 <menuitem text="About" icon="icons/about.gif" />
+		</menu>
+	</menubar>
+	<tabbedpane selected="1" weightx="1" weighty="1">
+		<tab text="Texts">
+			<panel columns="2" top="4" left="4" bottom="4" right="4" gap="4" weightx="1">
+				<label text="Find in the text:" mnemonic="10" />
+				<button name="b_finddialog" text="Search" type="default" tooltip="Search..." icon="icons/search.gif" mnemonic="1" action="showDialog()" />
+
+				<checkbox name="cb_editable" text="Editable" mnemonic="4"
+						selected="true" action="changeEditable(this.selected, textarea)" />
+				<checkbox name="cb_enabled" text="Enabled" selected="true"
+						action="changeEnabled(this.selected, textarea)" />
+				<textarea name="textarea" init="loadText(this, '/help.txt')" colspan="2" weighty="1" weightx="1"/>
+			</panel>
+		</tab>
+
+		<tab text="Lists">
+			<panel columns="1" top="4" left="4" bottom="4" right="4" gap="4" weightx="1">
+				<panel gap="4">
+					<label text="Update:" />
+					<button icon="icons/add.gif" tooltip="Add new item" type="default" action="insertList(list)" />
+					<button name="delete" icon="icons/delete.gif"
+							tooltip="Delete selected items" action="deleteList(this, list)" />
+					<combobox name="selection" selected="2" editable="false"
+							valign="center" action="setSelection(list, this.text, delete)">
+						<choice text="single" />
+						<choice text="interval" />
+						<choice text="multiple" />
+					</combobox>
+				</panel>
+				<splitpane orientation="vertical" divider="100" weightx="1" weighty="1">
+					<splitpane divider="120">
+						<list name="list" selection="multiple" action="changeSelection(this, delete)"
+								colspan="4" weightx="1" weighty="1">
+							<item text="List item A" />
+							<item text="List item B" icon="icons/library.gif" selected="true" />
+							<item text="List item C" enabled="false" />
+							<item text="List item D" icon="icons/library.gif" />
+							<item text="List item E" />
+							<item text="List item F" />
+							<item text="List item G" />
+						</list>
+						<tree selection="multiple">
+							<node text="Tree node A" icon="icons/open.gif">
+								<node text="Tree node" icon="icons/open.gif" selected="true">
+									<node text="Tree node" icon="icons/new.gif" />
+								</node>
+							</node>
+							<node text="Tree node B" enabled="false" icon="icons/new.gif" />
+							<node text="Tree node C" icon="icons/open.gif" expanded="false">
+								<node text="Tree node C1" icon="icons/new.gif" />
+							</node>
+						</tree>
+					</splitpane>
+					<table selection="multiple" tooltip="Table tooltip" weightx="1">
+						<header>
+							<column text="Column" icon="icons/library.gif" width="120" />
+							<column text="Column" alignment="center" />
+							<column text="Column" alignment="center" />
+						</header>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" />
+						</row>
+						<row selected="true">
+							<cell text="Cell" icon="icons/library.gif" />
+							<cell text="Cell" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+						<row>
+							<cell text="Cell" />
+							<cell text="Cell" icon="icons/library.gif" enabled="false" />
+							<cell text="Cell" />
+						</row>
+					</table>
+				</splitpane>
+			</panel>
+		</tab>
+
+		<tab text="Values">
+			<panel columns="3" top="4" left="4" gap="4"
+					init="storeWidgets(sl_red, sl_green, sl_blue, tf_hue, tf_saturation, tf_brightness, pb_hue, pb_saturation, pb_brightness, rgb_label)" weightx="1" weighty="1">
+				<label text="Red, green, and blue values" colspan="3" weightx="1"/>
+				<label text="Red:" alignment="right" />
+				<slider name="sl_red" maximum="255" valign="center"
+						action="sliderChanged(this.value, sb_red)" />
+				<spinbox name="sb_red" text="0" minimum="0" maximum="255"
+					columns="3" action="spinboxChanged(this.text, sl_red)" />
+				<label text="Green:" alignment="right" />
+				<slider name="sl_green" maximum="255" valign="center"
+						action="sliderChanged(this.value, sb_green)" />
+				<spinbox name="sb_green" text="0" minimum="0" maximum="255"
+					columns="3" action="spinboxChanged(this.text, sl_green)" />
+				<label text="Blue:" alignment="right" />
+				<slider name="sl_blue" maximum="255" valign="center"
+						action="sliderChanged(this.value, sb_blue)" />
+				<spinbox name="sb_blue" text="0" minimum="0" maximum="255"
+					columns="3" action="spinboxChanged(this.text, sl_blue)" />
+
+				<separator colspan="3" />
+				<label text="Hue, sat., and bri. values" colspan="3" />
+				<label text="Hue:" alignment="right" />
+				<textfield name="tf_hue" text="0.0" editable="false" />
+				<progressbar name="pb_hue" valign="center" />
+				<label text="Sat.:" alignment="right" />
+				<textfield name="tf_saturation" text="0.0" editable="false" />
+				<progressbar name="pb_saturation" valign="center" />
+				<label text="Bri.:" alignment="right" />
+				<textfield name="tf_brightness" text="0.0" editable="false" />
+				<progressbar name="pb_brightness" valign="center" />
+
+				<separator colspan="3" />
+				<label text="P R E V I E W" alignment="center" colspan="3"
+					name="rgb_label" weighty="1"
+					background="#000000" foreground="#ffffff" font="bold" />
+			</panel>
+		</tab>
+	</tabbedpane>
+</dialog>
