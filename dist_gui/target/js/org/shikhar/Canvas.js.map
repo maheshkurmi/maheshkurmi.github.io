@@ -1,0 +1,9 @@
+{
+"version":3,
+"file":"Canvas.js",
+"lineCount":24,
+"sourceRoot":"../../../../src/main/java/",
+"mappings":"AAIA,kE;AAAA,O;AAAA,gB;AAAA,e;AAAA,wB;AAAA,6D;AAAA,c;AAAA,a;AAAA,6C;AAAA,c;AAGA,+B;AAEA,0D;AACA,Y;AAEA,c;AAAA,a;AAAA,8B;AAAA,c;AAAA,+B;AAGA,2B;AACA,Y;AAEA,oB;AAGA,Y;AAAA,Q;AAjBA;",
+"sources":["org/shikhar/Canvas.java"],
+"names":[]
+}

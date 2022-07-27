@@ -1,0 +1,9 @@
+{
+"version":3,
+"file":"QuickStart.js",
+"lineCount":42,
+"sourceRoot":"../../../src/main/java/",
+"mappings":"AAqBA,kE;AAAA,c;AAAA,uB;AAAA,M;AAAA,2D;AAAA,Y;AAAA,M;AAAA,qB;AAEA,0B;AAEA,iD;AACA,0B;AACA,0B;AAEA,mC;AACA,oC;AAEA,2C;AAEA,+B;AAEA,iE;AACA,kE;AAAA,6C;AAAA,gB;AACA,mE;AAAA,gB;AACA,Y;AAEA,qG;AACA,4C;AACA,oG;AAEA,kG;AAEA,qG;AAEA,gD;AAEA,0C;AAEA,0C;AAEA,8C;AAEA,+C;AAEA,kE;AAAA,6C;AAAA,gB;AACA,+G;AAAA,gB;AACA,Y;AACA,Q;AAAA,I;AAzCA;",
+"sources":["quickstart/QuickStart.java"],
+"names":[]
+}
