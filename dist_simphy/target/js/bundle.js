@@ -5935,7 +5935,7 @@ var org;
                         if (this.camera === undefined) {
                             this.camera = null;
                         }
-                        this.paused = true;
+                        this.paused = false;
                         if (this.__step === undefined) {
                             this.__step = false;
                         }
