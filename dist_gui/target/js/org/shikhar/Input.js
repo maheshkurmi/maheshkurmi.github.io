@@ -126,15 +126,15 @@ var org;
                 this.gui.render();
             }
             pointerPressed(x, y, button) {
-                this.gui.handleMouse(x, y, org.shikhar.AWTMouseEvent.MOUSE_PRESSED_$LI$(), button, 0, 0);
+                this.gui.handleMouse(x, y, org.shikhar.AWTMouseEvent.MOUSE_PRESSED_$LI$(), AWTMouseEvent.BUTTON1, 0, 0);
                 this.gui.render();
             }
             pointerDragged(x, y, btn) {
-                this.gui.handleMouse(x, y, org.shikhar.AWTMouseEvent.MOUSE_DRAGGED_$LI$(), btn, 0, 0);
+                this.gui.handleMouse(x, y, org.shikhar.AWTMouseEvent.MOUSE_DRAGGED_$LI$(), AWTMouseEvent.BUTTON1, 0, 0);
                 this.gui.render();
             }
             pointerReleased(x, y, button) {
-                this.gui.handleMouse(x, y, org.shikhar.AWTMouseEvent.MOUSE_RELEASED_$LI$(), button, 0, 0);
+                this.gui.handleMouse(x, y, org.shikhar.AWTMouseEvent.MOUSE_RELEASED_$LI$(), AWTMouseEvent.BUTTON1, 0, 0);
                 this.gui.render();
             }
         }
