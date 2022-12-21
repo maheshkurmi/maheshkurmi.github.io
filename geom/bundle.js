@@ -1332,6 +1332,46 @@ var net;
 })(net || (net = {}));
 var framework;
 (function (framework) {
+    class Preferences {
+        constructor() {
+            this.showAxis = true;
+            this.showGrid = true;
+            this.MAX_RAY_INTERACTIONS = 10;
+            this.ImageColor = new framework.Color(180, 100, 100, 220);
+            this.virtualRaysColor = new framework.Color(190, 190, 40, 240);
+            this.selectedColor = new framework.Color(100, 100, 200, 200);
+            this.gridSize = 0.1;
+            this.backgroundColor = new framework.Color(24, 24, 24);
+            this.gridColor = new framework.Color(130, 130, 120, 150);
+            this.axisColor = new framework.Color(250, 120, 40, 255);
+            this.textColor = new framework.Color(255, 255, 255);
+            this.tooltipColor = new framework.Color(255, 255, 255, 180);
+            if (this.DPI_FACTOR === undefined) {
+                this.DPI_FACTOR = 0;
+            }
+        }
+        snapToGrid(p) {
+            if (!this.showGrid)
+                return p;
+            const x = Math.round(p.x / this.gridSize) * this.gridSize;
+            const y = Math.round(p.y / this.gridSize) * this.gridSize;
+            return new math.Vector2(x, y);
+        }
+        static getEpsilon() {
+            return Preferences.EPSILON;
+        }
+        static getMaxSignifucantFigures() {
+            return 2;
+        }
+        static getRandomColor() {
+            return new framework.Color(math.MathUtils.random$int$int(160, 255), math.MathUtils.random$int$int(160, 255), math.MathUtils.random$int$int(160, 255), 160);
+        }
+    }
+    Preferences.EPSILON = 1.0E-12;
+    framework.Preferences = Preferences;
+    Preferences["__class"] = "framework.Preferences";
+})(framework || (framework = {}));
+(function (framework) {
     var input;
     (function (input) {
         class AbstractInputHandler {
@@ -1403,6 +1443,21 @@ var framework;
         AbstractInputHandler["__class"] = "framework.input.AbstractInputHandler";
         AbstractInputHandler["__interfaces"] = ["framework.input.InputHandler"];
     })(input = framework.input || (framework.input = {}));
+})(framework || (framework = {}));
+(function (framework) {
+    class ClassUtils {
+        static isAssignableFrom(A, B) {
+            return (A == B) || (B.prototype instanceof A);
+        }
+        static isInstanceof(o, clazz) {
+            return o != null && o instanceof clazz;
+        }
+        static createInstance(clazz, params) {
+            return new clazz(params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
+        }
+    }
+    framework.ClassUtils = ClassUtils;
+    ClassUtils["__class"] = "framework.ClassUtils";
 })(framework || (framework = {}));
 (function (framework) {
     class EditInfo {
@@ -1516,894 +1571,6 @@ var framework;
     })(EditInfo = framework.EditInfo || (framework.EditInfo = {}));
 })(framework || (framework = {}));
 (function (framework) {
-    class ShapesManager {
-        constructor(app) {
-            this.shapes = (new java.util.ArrayList());
-            this.paint_shapes = (new java.util.ArrayList());
-            this.updateNeeded = false;
-            this.X_AXIS = new geom.Line2D(new math.Vector2(1, 0));
-            this.Y_AXIS = new geom.Line2D(new math.Vector2(0, 1));
-            this.tempShape = null;
-            this.previewShape = null;
-            if (this.app === undefined) {
-                this.app = null;
-            }
-            this.selectedShape = null;
-            this.prevDragPt = null;
-            this.paintStrokeWidth = 1.5;
-            this.app = app;
-        }
-        clearAll() {
-            this.shapes.clear();
-            geom.Shape2D.ACCURACY = 1.0E-6;
-            geom.Shape2D.SNAP_DISTANCE = geom.Shape2D.ACCURACY_PIXEL / 100;
-            framework.Preferences.MAX_RAY_INTERACTIONS = 10;
-            this.X_AXIS.name = "X-axis";
-            this.Y_AXIS.name = "Y-axis";
-            this.X_AXIS.setVisible(false);
-            this.Y_AXIS.setVisible(false);
-            this.X_AXIS.showEqn = true;
-            this.Y_AXIS.showEqn = true;
-            this.X_AXIS.set$double$double$double$double(0, 0, 1, 0);
-            this.Y_AXIS.set$double$double$double$double(0, 0, 0, 1);
-            this.X_AXIS.drawColor = framework.Preferences.textColor_$LI$();
-            this.Y_AXIS.drawColor = framework.Preferences.textColor_$LI$();
-            const s1 = new geom.Circle2D();
-            const p0 = new geom.FreePoint2D(-6, 0);
-            const p1 = new geom.FreePoint2D(-4, 0);
-            const p2 = new geom.FreePoint2D(-3.5, 1);
-            const p3 = new geom.FreePoint2D(-1, 1.4);
-            const p4 = new geom.FreePoint2D(-1, -1.4);
-            const p5 = new geom.FreePoint2D(2, -1);
-            const p6 = new geom.FreePoint2D(2, 1);
-            const p7 = new geom.FreePoint2D(5, 2);
-            const p8 = new geom.FreePoint2D(5, -2);
-            const p9 = new geom.FreePoint2D(4, 1);
-            const p10 = new geom.FreePoint2D(4, -1);
-            const p11 = new geom.FreePoint2D(-1, -3);
-            const p12 = new geom.FreePoint2D(0, -1);
-            const p13 = new geom.FreePoint2D(1, -3);
-            const p14 = new geom.FreePoint2D(-5, -2);
-            const p15 = new geom.FreePoint2D(-4, -2);
-            const src1 = new geom.optics.OpticalSource2D(p0, p1, p2);
-            const lens1 = new geom.optics.OpticalIdealLens2D(p3, p4, "3", false + "", false + "", true + "");
-            const lens2 = new geom.optics.OpticalIdealLens2D(p5, p6, "-3", true + "", true + "", false + "");
-            const plane = new geom.optics.OpticalPlane2D(p8, p7, "1.9", 0.6 + "", 0.2 + "", true + "");
-            const src3 = new geom.optics.OpticalBeam2D(p9, p10);
-            const path = new geom.optics.OpticalPathShape2D([p11, p12, p13], ["000"]);
-            const src2 = new geom.optics.OpticalWhiteLight2D(p14, p15);
-            this.addShape(p1);
-            this.addShape(p2);
-            this.addShape(p3);
-            this.addShape(p4);
-            this.addShape(p5);
-            this.addShape(p6);
-            this.addShape(p7);
-            this.addShape(p8);
-            this.addShape(p9);
-            this.addShape(p10);
-            this.addShape(p1);
-            this.addShape(p12);
-            this.addShape(p13);
-            this.addShape(p14);
-            this.addShape(p15);
-            this.addShape(src1);
-            this.addShape(src2);
-            this.addShape(src3);
-            this.addShape(lens1);
-            this.addShape(lens2);
-            this.addShape(plane);
-            this.addShape(path);
-            console.log("Default shapes added " + this.shapes.size());
-            this.updateNeeded = true;
-            this.selectedShape = null;
-            this.paint_shapes.clear();
-            this.previewShape = null;
-            this.tempShape = null;
-        }
-        removeAllPaintShapes() {
-            this.paint_shapes.clear();
-            this.previewShape = null;
-            this.tempShape = null;
-        }
-        removePaintShapeAtPoint(worldPt) {
-            let s = null;
-            for (let index = this.paint_shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    if (br.isSnapped(worldPt)) {
-                        s = br;
-                        break;
-                    }
-                }
-            }
-            return this.paint_shapes.remove(s);
-        }
-        addPaintShape(shape) {
-            this.paint_shapes.add(shape);
-            this.previewShape = null;
-            this.tempShape = null;
-        }
-        removePaintShape() {
-            this.paint_shapes.remove(this.shapes);
-        }
-        /**
-         * return true if Gui has atleast one visible widget
-         *
-         * @return
-         * @return {boolean}
-         */
-        isActive() {
-            return this.shapes.size() > 0;
-        }
-        /**
-         * @return {java.util.ArrayList} the List of animations associated with simulation
-         */
-        getAllShapes() {
-            return this.shapes;
-        }
-        /**
-         * Returns first shape identified with specified name, returns null if no shape is found
-         * @return {geom.Shape2D}
-         * @param {string} name
-         */
-        getShape(name) {
-            if (name == null)
-                return null;
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let s = index.next();
-                if (name === s.getName())
-                    return s;
-            }
-            return null;
-        }
-        /**
-         * Returns true if ShapeManager contains the specified shape
-         * @param {geom.Shape2D} shape
-         * @return
-         * @return {boolean}
-         */
-        containsShape(shape) {
-            return this.shapes.contains(shape);
-        }
-        /**
-         * @return {void} adds Animation
-         * @param {geom.Shape2D} b
-         */
-        addShape(b) {
-            if (b == null)
-                return;
-            this.shapes.add(b);
-            if ((b != null && b instanceof geom.Point2D)) {
-                b.fillColor = framework.Preferences.getRandomColor();
-                b.drawColor = framework.Preferences.textColor_$LI$();
-                b.showName = true;
-            }
-            else {
-                b.drawColor = framework.Preferences.getRandomColor();
-            }
-            b.setName(this.createShapeName(b));
-            b.onAddShapeToSimulation();
-        }
-        /**
-         * All list of shapes, may overwrite existing if of same name
-         * @param {*} shapes
-         */
-        addAllShapes(shapes) {
-            shapes.addAll(shapes);
-            this.update();
-            for (let index = shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    br.onAddShapeToSimulation();
-                }
-            }
-        }
-        getDependentShapes(b, dependentShapes) {
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    if (br.parents != null) {
-                        for (let index = 0; index < br.parents.length; index++) {
-                            let p = br.parents[index];
-                            {
-                                if (p === b) {
-                                    dependentShapes.add(br);
-                                    this.getDependentShapes(br, dependentShapes);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if (b != null && b instanceof geom.ParentShapeArray2D) {
-                const p = b;
-                let i = 0;
-                while ((true)) {
-                    {
-                        const s = p.getChild(i);
-                        if (s == null)
-                            break;
-                        i++;
-                        this.getDependentShapes(s, dependentShapes);
-                    }
-                }
-                ;
-            }
-        }
-        /**
-         * Remove animation
-         * @param {geom.Shape2D} b
-         */
-        removeShape(b) {
-            if (b == null)
-                return;
-            const removedshapes = (new java.util.ArrayList());
-            removedshapes.add(b);
-            this.getDependentShapes(b, removedshapes);
-            for (let index = removedshapes.iterator(); index.hasNext();) {
-                let s = index.next();
-                {
-                    if (this.shapes.remove(s)) {
-                        s.dispose();
-                    }
-                    if (this.selectedShape === s)
-                        this.selectedShape = null;
-                }
-            }
-            removedshapes.clear();
-            if (this.selectedShape === b)
-                this.selectedShape = null;
-        }
-        forceUpdateAll() {
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    br.update();
-                }
-            }
-            this.updateNeeded = false;
-            this.X_AXIS.update();
-            this.Y_AXIS.update();
-        }
-        update() {
-            geom.Shape2D.SNAP_DISTANCE = geom.Shape2D.ACCURACY_PIXEL / 100;
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    if (br != null && (br.constructor != null && br.constructor["__interfaces"] != null && br.constructor["__interfaces"].indexOf("geom.optics.OpticalObserver") >= 0))
-                        br.beginObserve();
-                }
-            }
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    br.update();
-                }
-            }
-            this.updateNeeded = false;
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    if (br != null && (br.constructor != null && br.constructor["__interfaces"] != null && br.constructor["__interfaces"].indexOf("geom.optics.OpticalSource") >= 0))
-                        br.shootRays();
-                }
-            }
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    if ((br != null && (br.constructor != null && br.constructor["__interfaces"] != null && br.constructor["__interfaces"].indexOf("geom.optics.OpticalObserver") >= 0)) && br.__isDefined)
-                        br.endObserve();
-                }
-            }
-        }
-        getSelectedShape() {
-            return this.selectedShape;
-        }
-        setSelectedShape(shape) {
-            if (this.selectedShape !== shape) {
-                this.prevDragPt = null;
-                ShapesManager.mousepressed = false;
-            }
-            if (this.selectedShape != null)
-                this.selectedShape.selected = false;
-            this.selectedShape = shape;
-            if (shape != null)
-                shape.selected = true;
-        }
-        /**
-         *
-         * @param {number} event 1=press, 2==release, 3==clicked, 4=moved
-         * @param x
-         * @param y
-         * @param {math.Vector2} worldPt
-         * @return
-         * @return {boolean}
-         */
-        poll(event, worldPt) {
-            let consumed = false;
-            if (event === 3) {
-                if (this.selectedShape != null)
-                    this.selectedShape.selected = false;
-                this.selectedShape = this.getShapeAtPoint(worldPt, false, false);
-                if (this.selectedShape != null)
-                    this.selectedShape.selected = true;
-                this.prevDragPt = null;
-                ShapesManager.mousepressed = false;
-                return this.selectedShape != null;
-            }
-            else if (event === 1) {
-                if (this.prevDragPt == null && ShapesManager.mousepressed === false) {
-                    this.app.setToolTip(null, worldPt);
-                    if (this.selectedShape != null)
-                        this.selectedShape.selected = false;
-                    this.selectedShape = this.getShapeAtPoint(worldPt, false, false);
-                    if (this.selectedShape != null) {
-                        this.selectedShape.selected = true;
-                        ShapesManager.mousepressed = true;
-                        this.prevDragPt = worldPt;
-                        ShapesManager.prevMousePressedPoint = worldPt.copy();
-                        return true;
-                    }
-                    else {
-                        ShapesManager.mousepressed = false;
-                        this.prevDragPt = null;
-                    }
-                    return false;
-                }
-                if (this.selectedShape != null && this.selectedShape.isFreeToMove()) {
-                    this.app.setCursor("pointer");
-                    if (this.prevDragPt != null) {
-                        const delta = worldPt.difference$math_Vector2(this.prevDragPt);
-                        this.prevDragPt = worldPt;
-                        this.selectedShape.dragged(delta, true);
-                        this.updateNeeded = true;
-                    }
-                }
-                consumed = this.selectedShape != null;
-            }
-            else if (event === 2) {
-                ShapesManager.mousepressed = false;
-                this.prevDragPt = null;
-                ShapesManager.prevMousePressedPoint = null;
-                this.app.setToolTip(null, worldPt);
-            }
-            else if (event === 4 && ShapesManager.mousepressed === false && this.prevDragPt == null) {
-                const s = this.getShapeAtPoint(worldPt, true, true);
-                if (s == null) {
-                    this.app.setToolTip(null, worldPt);
-                    this.app.setCursor("default");
-                    return false;
-                }
-                const allowMove = s.isFreeToMove();
-                if (allowMove) {
-                    this.app.setCursor("pointer");
-                    let shapeName;
-                    if (s.parents == null) {
-                        shapeName = this.getShapeString(s);
-                    }
-                    else {
-                        shapeName = s.getShapeInfo();
-                    }
-                    this.app.setToolTip("move this " + shapeName, worldPt);
-                }
-                else {
-                    this.app.setCursor("default");
-                    const shapeInfo = s.getShapeInfo();
-                    this.app.setToolTip(shapeInfo, worldPt);
-                }
-                return false;
-            }
-            return consumed;
-        }
-        renderShape(g, s) {
-            g.setColors(s.fillColor, s.drawColor);
-            g.setLineWidth(s.strokeWidth);
-            s.render(g);
-        }
-        render(gl) {
-            if (this.shapes.size() > 0) {
-                for (let index = this.shapes.iterator(); index.hasNext();) {
-                    let br = index.next();
-                    {
-                        if (!(br != null && br instanceof geom.Point2D) && br.isVisible()) {
-                            this.renderShape(gl, br);
-                        }
-                    }
-                }
-                for (let index = this.shapes.iterator(); index.hasNext();) {
-                    let br = index.next();
-                    {
-                        if ((br != null && br instanceof geom.Point2D) && br.isVisible()) {
-                            this.renderShape(gl, br);
-                        }
-                    }
-                }
-            }
-            if (this.selectedShape != null && this.selectedShape.isVisible()) {
-                const strokewidth = this.selectedShape.strokeWidth;
-                const color = this.selectedShape.drawColor;
-                const fillColor = this.selectedShape.fillColor;
-                this.selectedShape.setDrawColor(framework.Preferences.selectedColor_$LI$());
-                if (this.selectedShape != null && this.selectedShape instanceof geom.Point2D) {
-                    this.selectedShape.strokeWidth = strokewidth * 1.3;
-                    this.selectedShape.fillColor = framework.Preferences.selectedColor_$LI$();
-                }
-                else {
-                    this.selectedShape.strokeWidth = strokewidth * 1.5;
-                    this.selectedShape.fillColor = null;
-                }
-                this.renderShape(gl, this.selectedShape);
-                this.selectedShape.setDrawColor(color);
-                this.selectedShape.strokeWidth = strokewidth;
-                this.selectedShape.fillColor = fillColor;
-                this.renderShape(gl, this.selectedShape);
-            }
-            if (this.tempShape != null)
-                this.renderShape(gl, this.tempShape);
-        }
-        renderPaintShapes(g) {
-            for (let index = this.paint_shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    br.render(g);
-                }
-            }
-            if (this.previewShape != null)
-                this.previewShape.render(g);
-        }
-        /**
-         * Used for intersection of curves only
-         * Returns a new free point, or creates a points from existing shapes. If
-         * two curves intersect close to the point, return a new
-         * PointIntersection2Curves2D object. If distance to closest curve is 'small
-         * enough', create a PointOnCurve object, initialized with position given as
-         * parameter. Otherwise, return a new Free point.
-         *
-         * @param {math.Vector2} point
-         * a clicked point
-         * @return {geom.Shape2D} a new dynamic point, either free or constrained
-         */
-        createNewDynamicPoint(point) {
-            const pointSets = this.getCloseShapes(point, geom.Point2D);
-            if (pointSets.size() > 0) {
-                let dist;
-                let minDist = javaemul.internal.DoubleHelper.MAX_VALUE;
-                let i = 0;
-                let index = 0;
-                for (let index1 = pointSets.iterator(); index1.hasNext();) {
-                    let setPoint = index1.next();
-                    {
-                        dist = setPoint.distance(point);
-                        if (dist < minDist) {
-                            index = i;
-                            minDist = dist;
-                        }
-                        i++;
-                    }
-                }
-                return pointSets.get(index);
-            }
-            const curves = this.getCloseShapes(point, geom.Curve2D);
-            if (curves.size() > 1) {
-                const curve1 = curves.get(0);
-                const curve2 = curves.get(1);
-                const pt = new geom.PointIntersection2Curves2D(curve1, curve2, point);
-                if (pt != null)
-                    return pt;
-            }
-            const curveShape = this.getSnappedShape(point, geom.Curve2D);
-            if (curveShape != null) {
-                if (curveShape != null && curveShape instanceof geom.FunctionExplicit2D) {
-                    const pt = new geom.CriticalPointFunction2D(curveShape, point.x);
-                    if (pt.__isDefined)
-                        return pt;
-                }
-                return new geom.PointOnCurve2D(curveShape, curveShape.t(point));
-            }
-            return new geom.FreePoint2D(point);
-        }
-        /**
-         * Returns shape closest to the point, used for construction and mouse info
-         * Used in construction at AddShapeAction#findParentShape
-         * @param {math.Vector2} pt
-         * @param {java.lang.Class} shapeClass
-         * a class which inherits Shape2D
-         * @return {geom.Shape2D} snapped Object if any else null
-         */
-        getSnappedShape(pt, shapeClass) {
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let br = index.next();
-                {
-                    if (!br.__isDefined || !br.visible || !br.touchable)
-                        continue;
-                    if (br != null && br instanceof geom.ParentShapeArray2D) {
-                        br = br.getSnappedShape(pt, shapeClass);
-                        if (br != null)
-                            return br;
-                        continue;
-                    }
-                    if (shapeClass.isInstance(br) && br.isSnapped(pt)) {
-                        return br;
-                    }
-                }
-            }
-            if (framework.Preferences.showAxis && shapeClass.isInstance(this.X_AXIS) && this.X_AXIS.isSnapped(pt))
-                return this.X_AXIS;
-            if (framework.Preferences.showAxis && shapeClass.isInstance(this.Y_AXIS) && this.Y_AXIS.isSnapped(pt))
-                return this.Y_AXIS;
-            return null;
-        }
-        /**
-         * Returns a collection of elements whose distance to the given point is
-         * less than the specified distance, and whose class extends the specified
-         * class.
-         * Used in {@link ShapesManager#createNewDynamicPoint(Vector2)}
-         * @param {math.Vector2} point
-         * a location
-         * @param {java.lang.Class} geometry
-         * a class which inherits Shape2D
-         * @param minDist
-         * the minimum distance between a shape and the point
-         * @return {java.util.ArrayList} a set of Shape2D whose shapes are instances of geometry
-         */
-        getCloseShapes(point, geometry) {
-            const returnedShapes = (new java.util.ArrayList());
-            let dist;
-            for (let i = this.shapes.size() - 1; i >= 0; i--) {
-                {
-                    const shape = this.shapes.get(i);
-                    if (!shape.__isDefined || !shape.touchable || !shape.visible)
-                        continue;
-                    if (shape != null && shape instanceof geom.ParentShapeArray2D) {
-                        shape.getCloseShapes(point, geometry, returnedShapes);
-                        continue;
-                    }
-                    if (!geometry.isInstance(shape))
-                        continue;
-                    dist = shape.distance(point);
-                    if (shape.isSnapped(point))
-                        returnedShapes.add(shape);
-                }
-                ;
-            }
-            if (framework.Preferences.showAxis && geometry.isInstance(this.X_AXIS) && Math.abs(point.y) < geom.Shape2D.SNAP_DISTANCE)
-                returnedShapes.add(this.X_AXIS);
-            if (framework.Preferences.showAxis && geometry.isInstance(this.Y_AXIS) && Math.abs(point.x) < geom.Shape2D.SNAP_DISTANCE)
-                returnedShapes.add(this.Y_AXIS);
-            return returnedShapes;
-        }
-        /**
-         * Returns shape at mouse position
-         * Used in viewing shape info and deleting shape at mouse location
-         * @param {math.Vector2} worldPt
-         * @param {boolean} includeAxes
-         * @param {boolean} includeChildren if true children of parents are also searched
-         * @return
-         * @return {geom.Shape2D}
-         */
-        getShapeAtPoint(worldPt, includeAxes, includeChildren) {
-            if (this.selectedShape != null && (this.selectedShape != null && this.selectedShape instanceof geom.Point2D) && this.selectedShape.isSnapped(worldPt))
-                return this.selectedShape;
-            for (let i = this.shapes.size() - 1; i >= 0; i--) {
-                {
-                    const br = this.shapes.get(i);
-                    if (!br.__isDefined || !br.visible || !br.touchable)
-                        continue;
-                    if ((br != null && br instanceof geom.Point2D)) {
-                        if (br.isSnapped(worldPt)) {
-                            return br;
-                        }
-                    }
-                }
-                ;
-            }
-            if (includeAxes && framework.Preferences.showAxis) {
-                if (this.X_AXIS.isSnapped(worldPt))
-                    return this.X_AXIS;
-                if (this.Y_AXIS.isSnapped(worldPt))
-                    return this.Y_AXIS;
-            }
-            for (let i = this.shapes.size() - 1; i >= 0; i--) {
-                {
-                    let br = this.shapes.get(i);
-                    if (!br.__isDefined || !br.visible || !br.touchable)
-                        continue;
-                    if (!(br != null && br instanceof geom.Point2D)) {
-                        if (br.isSnapped(worldPt)) {
-                            if (includeChildren && (br != null && br instanceof geom.ParentShapeArray2D)) {
-                                const parent = br;
-                                const s = parent.getSnappedShape(worldPt, geom.Shape2D);
-                                if (s != null)
-                                    br = s;
-                            }
-                            return br;
-                        }
-                    }
-                }
-                ;
-            }
-            return null;
-        }
-        /**
-         * check if name is already occupied or not
-         *
-         * @param {string} name
-         * @return
-         * @return {boolean}
-         */
-        isValidShapeName(name) {
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let s = index.next();
-                if (name === s.name)
-                    return false;
-            }
-            return true;
-        }
-        /**
-         * check if name is already occupied or not
-         *
-         * @param {string} name
-         * @return
-         * @return {boolean}
-         */
-        isValidFunctionName(name) {
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let s = index.next();
-                if (s.name === name)
-                    return false;
-            }
-            return true;
-        }
-        /**
-         * Returns a default name for a shape, according to shape class, and to
-         * already stored shapes.
-         * @param {geom.Shape2D} geometry
-         * @return {string}
-         */
-        createShapeName(geometry) {
-            let baseName = "S";
-            if (geometry != null && geometry instanceof geom.Point2D) {
-                baseName = "A";
-                let j = 0;
-                while ((true)) {
-                    {
-                        for (let i = 0; i < 26; i++) {
-                            {
-                                baseName = String.fromCharCode(('A'.charCodeAt(0) + i)) + ((j === 0) ? "" : j + "");
-                                if (this.isValidShapeName(baseName))
-                                    return baseName;
-                            }
-                            ;
-                        }
-                        j++;
-                    }
-                }
-                ;
-            }
-            if (geometry != null && geometry instanceof geom.AngleMeasure2D) {
-                baseName = math.Unicode.alpha + "";
-                let j = 0;
-                while ((true)) {
-                    {
-                        for (let i = 0; i < 26; i++) {
-                            {
-                                baseName = String.fromCharCode(((c => c.charCodeAt == null ? c : c.charCodeAt(0))(math.Unicode.alpha) + i)) + ((j === 0) ? "" : j + "");
-                                if (this.isValidShapeName(baseName))
-                                    return baseName;
-                            }
-                            ;
-                        }
-                        j++;
-                    }
-                }
-                ;
-            }
-            if (geometry != null && geometry instanceof geom.LengthMeasure2D) {
-                return "L";
-            }
-            if (geometry != null && geometry instanceof geom.FunctionExplicit2D) {
-                baseName = "f";
-                let j = 0;
-                while ((true)) {
-                    {
-                        for (let i = 0; i < 3; i++) {
-                            {
-                                baseName = String.fromCharCode(('f'.charCodeAt(0) + i)) + ((j === 0) ? "" : j + "");
-                                if (this.isValidFunctionName(baseName))
-                                    return baseName;
-                            }
-                            ;
-                        }
-                        j++;
-                    }
-                }
-                ;
-            }
-            if (geometry != null && geometry instanceof geom.Circle2D) {
-                baseName = "Cir";
-            }
-            else if (geometry != null && geometry instanceof geom.Vector2D) {
-                baseName = "Vec";
-            }
-            else if (geometry != null && geometry instanceof geom.Ray2D) {
-                baseName = "Ray";
-            }
-            else if (geometry != null && geometry instanceof geom.Segment2D) {
-                baseName = "Seg";
-            }
-            else if (geometry != null && geometry instanceof geom.Line2D) {
-                baseName = "Line";
-            }
-            else if (geometry != null && geometry instanceof geom.AngleMeasure2D) {
-                baseName = "Angle";
-            }
-            else if (geometry != null && geometry instanceof geom.LengthMeasure2D) {
-                baseName = "Length";
-                baseName = "Label";
-            }
-            else if (geometry != null && geometry instanceof geom.ParametricCurve2D) {
-                baseName = "Curve";
-                baseName = "quad-curve";
-            }
-            else if (geometry != null && geometry instanceof geom.Bezier4Points2D) {
-                baseName = "cubic-curve";
-            }
-            else if (geometry != null && geometry instanceof geom.DynamicCurve2D) {
-                baseName = "locus";
-            }
-            else if (geometry != null && geometry instanceof geom.Parabola2D) {
-                baseName = "Para";
-            }
-            else if (geometry != null && geometry instanceof geom.Ellipse2D) {
-                baseName = "Ell";
-            }
-            else if (geometry != null && geometry instanceof geom.Hyperbola2D) {
-                baseName = "Hyp";
-            }
-            else if (geometry != null && geometry instanceof geom.ConicTwoLines2D) {
-                baseName = "Lines-pair";
-            }
-            else if (geometry != null && geometry instanceof geom.Conic2D) {
-                baseName = "Conic";
-            }
-            else if (geometry != null && geometry instanceof geom.PathNpoints2D) {
-                baseName = "Path";
-            }
-            let num = 1;
-            let name = null;
-            while ((true)) {
-                {
-                    if (this.isValidShapeName(name))
-                        break;
-                    name = baseName + num++;
-                }
-            }
-            ;
-            return name;
-        }
-        /**
-         * Computes the mouse label when creating the given figure. This label
-         * depends on the class of the geometry of the created shape.
-         *
-         * @param figure
-         * the figure which will be created
-         * @return {string} the mouse label to display
-         * @param {geom.Shape2D} dynamic
-         */
-        getMouseLabel(dynamic) {
-            if (dynamic != null && dynamic instanceof geom.PointOnCurve2D) {
-                const parent = dynamic.getParents()[0];
-                return "new point in this " + parent.getName();
-            }
-            if (dynamic != null && dynamic instanceof geom.PointIntersection2Curves2D) {
-                return "new intersection";
-            }
-            if (dynamic != null && dynamic instanceof geom.CriticalPointFunction2D) {
-                return "new critical point";
-            }
-            return "";
-        }
-        /**
-         * Returns a string associated with an EuclideShape. The string is composed
-         * of a shape identifier ("line", "ellipse", "point set"...) and eventually
-         * the name of the shape between parents.
-         * @param {geom.Shape2D} dynamic
-         * @return {string}
-         */
-        getShapeString(dynamic) {
-            let baseName = "shape";
-            if (dynamic.isDefined()) {
-                const shape = dynamic;
-                if (shape != null)
-                    baseName = ShapesManager.getShapeName(shape.constructor);
-            }
-            const name = dynamic.getName();
-            if (name != null)
-                if (!(name.length === 0)) {
-                    baseName = baseName + " (" + name + ")";
-                }
-            return baseName;
-        }
-        /**
-         * Returns the name of the shape, from its class and possibly depending on
-         * the Locale. For example, Point2D class will return string "point", Line2D
-         * will return "line".... If the shape is not recognized, return the string
-         * "shape".
-         * @param {java.lang.Class} shapeClass
-         * @return {string}
-         */
-        static getShapeName(shapeClass) {
-            return /* getSimpleName */ (c => typeof c === 'string' ? c.substring(c.lastIndexOf('.') + 1) : c["__class"] ? c["__class"].substring(c["__class"].lastIndexOf('.') + 1) : c["name"].substring(c["name"].lastIndexOf('.') + 1))(shapeClass);
-        }
-        deleteSelected() {
-            if (this.selectedShape != null) {
-                this.removeShape(this.selectedShape);
-            }
-        }
-        deleteShapeAt(v) {
-            this.removeShape(this.getShapeAtPoint(v, false, false));
-        }
-        deleteShapesInside(tmpAABB) {
-            const removedshapes = (new java.util.ArrayList());
-            for (let index = this.shapes.iterator(); index.hasNext();) {
-                let p = index.next();
-                {
-                    if (p != null && p instanceof geom.Point2D) {
-                        const v = p.pt;
-                        if (tmpAABB.contains$math_Vector2(v))
-                            removedshapes.add(p);
-                    }
-                }
-            }
-            for (let index = removedshapes.iterator(); index.hasNext();) {
-                let s = index.next();
-                {
-                    this.removeShape(s);
-                }
-            }
-        }
-        isRenderable() {
-            return this.previewShape != null || this.tempShape != null || this.shapes.size() > 0 || this.paint_shapes.size() > 0;
-        }
-        /**
-         * Returns settings separated by ";" , USed in serialization and deserialization
-         * @return
-         * @return {string}
-         */
-        getSettings() {
-            const sb = new java.lang.StringBuilder();
-            sb.append(geom.Shape2D.ACCURACY + ";");
-            sb.append(geom.Shape2D.ACCURACY_PIXEL + ";");
-            sb.append(framework.Preferences.MAX_RAY_INTERACTIONS + ";");
-            sb.append(framework.Preferences.ImageColor_$LI$().toString() + ";");
-            sb.append(framework.Preferences.virtualRaysColor_$LI$().toString() + ";");
-            return sb.toString();
-        }
-        /**
-         * Updates settings during deserialization
-         * @param {string} settings
-         */
-        setSettings(settings) {
-            if (settings == null || /* isEmpty */ (settings.length === 0))
-                return;
-            const arr = settings.split(";");
-            try {
-                geom.Shape2D.ACCURACY = javaemul.internal.DoubleHelper.parseDouble(arr[0]);
-                geom.Shape2D.ACCURACY_PIXEL = javaemul.internal.DoubleHelper.parseDouble(arr[1]);
-                framework.Preferences.MAX_RAY_INTERACTIONS = javaemul.internal.IntegerHelper.parseInt(arr[2]);
-            }
-            catch (e) {
-                console.error(e.message, e);
-            }
-        }
-    }
-    ShapesManager.prevMousePressedPoint = null;
-    ShapesManager.mousepressed = false;
-    framework.ShapesManager = ShapesManager;
-    ShapesManager["__class"] = "framework.ShapesManager";
-})(framework || (framework = {}));
-(function (framework) {
     /**
      * Attaches renderer with default canvas (id ="canvas")
      * @param {HTMLCanvasElement} canvas
@@ -2414,51 +1581,39 @@ var framework;
             if (this.context === undefined) {
                 this.context = null;
             }
-            this.DPI_FACTOR = 1;
-            if (this.width === undefined) {
-                this.width = 0;
+            if (this.DPI_FACTOR === undefined) {
+                this.DPI_FACTOR = 0;
             }
-            if (this.height === undefined) {
-                this.height = 0;
-            }
+            this.METER_TO_PIXEL = 100;
+            this.scaleFactor = 100;
             this.DPI_FACTOR = window.devicePixelRatio;
-            const body = document.querySelector("body");
-            canvas.width = this.DPI_FACTOR * body.clientWidth;
-            canvas.height = this.DPI_FACTOR * body.clientHeight;
-            canvas.style.top = "0px";
-            canvas.style.left = "0px";
-            canvas.style.width = body.clientWidth + "px";
-            canvas.style.height = body.clientHeight + "px";
             this.context = canvas.getContext("2d");
-            this.width = body.clientWidth;
-            this.height = body.clientHeight;
-            window.onresize = ((body) => {
-                return (e) => {
-                    canvas.width = this.DPI_FACTOR * body.clientWidth;
-                    canvas.height = this.DPI_FACTOR * body.clientHeight;
-                    canvas.style.width = body.clientWidth + "px";
-                    canvas.style.height = body.clientHeight + "px";
-                    this.width = body.clientWidth;
-                    this.height = body.clientHeight;
-                    return null;
-                };
-            })(body);
-            console.log("dpi=" + this.DPI_FACTOR + " w=" + canvas.clientWidth + " h=" + canvas.clientHeight);
             this.context.lineJoin = "round";
-            this.context.lineWidth = 2.5;
+            this.context.lineCap = "round";
+            this.context.lineWidth = 1.5;
         }
+        /**
+         * Applies camera transformations to the drawing context, must be followed by {@link #end(Camera)}
+         * <pre>
+         * renderer.begin();
+         * ... draw Stuff
+         * renderer.end();
+         * </pre>
+         * @param {framework.Camera} camera
+         */
         begin(camera) {
-            camera.updateViewport(this.width, this.height);
             this.context.save();
             this.context.scale(this.DPI_FACTOR, this.DPI_FACTOR);
-            this.context.clearRect(0, 0, this.width, this.height);
-            this.context.translate(this.width / 2, this.height / 2);
+            this.context.fillRect(0, 0, camera.screenWidth, camera.screenHeight);
+            this.context.translate(camera.screenWidth / 2, camera.screenHeight / 2);
             this.context.translate(camera.offsetX, -camera.offsetY);
-            this.context.fillText("Origin", 0, 0);
-            this.context.scale(camera.scale, -camera.scale);
-            this.context.lineWidth = 1 / camera.scale;
+            const scale = camera.getScale();
+            this.context.scale(scale, -scale);
+            this.context.lineWidth = 1 / scale;
+            this.METER_TO_PIXEL = camera.METER_TO_PIXEL;
+            this.scaleFactor = scale;
         }
-        end() {
+        end(camera) {
             this.context.restore();
         }
         setColors(fillColor, strokeColor) {
@@ -2468,7 +1623,7 @@ var framework;
                 this.context.strokeStyle = strokeColor.toString();
         }
         setLineWidth(lw) {
-            this.context.lineWidth = lw * this.DPI_FACTOR / 100;
+            this.context.lineWidth = lw * this.DPI_FACTOR / this.scaleFactor;
         }
         setFont(font) {
             this.context.font = font;
@@ -2484,7 +1639,7 @@ var framework;
         drawText$java_lang_String$double$double(txt, x, y) {
             this.context.save();
             this.context.translate(x, y);
-            this.context.scale(0.016, -0.016);
+            this.context.scale(1.8 / this.METER_TO_PIXEL, -1.8 / this.METER_TO_PIXEL);
             this.context.fillText(txt, 0, 0);
             this.context.restore();
         }
@@ -2497,11 +1652,11 @@ var framework;
         drawText$java_lang_String$math_Vector2$math_Vector2(txt, v1, v2) {
             const v = v1.to$math_Vector2(v2);
             const th = v.isZero() ? 0 : Math.atan(v.y / v.x);
-            v.set$double$double((v1.x + v2.x) * 0.5, (v1.y + v2.y) * 0.5);
+            v.set$double$double((v1.x + v2.x) * 0.5, (v1.y + v2.y) * 0.5 + 5 / this.METER_TO_PIXEL);
             this.context.save();
             this.context.translate(v.x, v.y);
             this.context.rotate(th);
-            this.context.scale(0.02, -0.02);
+            this.context.scale(2 / this.METER_TO_PIXEL, -2 / this.METER_TO_PIXEL);
             this.context.fillText(txt, 0, 0);
             this.context.restore();
         }
@@ -2517,7 +1672,7 @@ var framework;
         }
         drawArc(x, y, r, startAngle, angleExtent, acw) {
             this.context.beginPath();
-            this.context.arc(x, y, r, startAngle, angleExtent, acw);
+            this.context.arc(x, y, r, startAngle, startAngle + angleExtent, acw);
             this.context.stroke();
         }
         /**
@@ -2538,6 +1693,14 @@ var framework;
         drawCircle(cx, cy, r, fill, stroke) {
             this.context.beginPath();
             this.context.arc(cx, cy, r, 0, Math.PI * 2, false);
+            if (fill)
+                this.context.fill();
+            if (stroke)
+                this.context.stroke();
+        }
+        drawOval(cx, cy, rx, ry, theta, fill, stroke) {
+            this.context.beginPath();
+            this.context.ellipse(cx, cy, rx, ry, theta, 0, Math.PI * 2);
             if (fill)
                 this.context.fill();
             if (stroke)
@@ -2664,8 +1827,8 @@ var framework;
             const endX = Math.ceil(maxX / tickGap) * tickGap;
             const endY = Math.ceil(maxY / tickGap) * tickGap;
             const tm = this.context.measureText("0.0");
-            const th = tm.width / 200;
-            const tw = tm.width / 100;
+            const th = tm.width / this.METER_TO_PIXEL;
+            const tw = tm.width / this.METER_TO_PIXEL;
             const majorTickSize = tickSize;
             this.context.save();
             this.setColors(axesColor, axesColor);
@@ -2728,19 +1891,58 @@ var framework;
          * @param {number} cy the y coordinate of the center
          * @param {number} r radius
          * @param {number} theta
-         * @param {number} offsetAnge
+         * @param offsetAnge
+         * @param {number} offsetAngle
          * @param {boolean} fill
          * @param {boolean} stroke
          */
-        drawSlice(cx, cy, r, theta, offsetAnge, fill, stroke) {
+        drawSlice(cx, cy, r, theta, offsetAngle, fill, stroke) {
             this.context.beginPath();
             this.context.moveTo(cx, cy);
-            this.context.arc(cx, cy, r, offsetAnge, offsetAnge + theta);
+            this.context.arc(cx, cy, r, offsetAngle, offsetAngle + theta);
             this.context.closePath();
             if (fill)
                 this.context.fill();
             if (stroke)
                 this.context.stroke();
+        }
+        /**
+         * Draws a vector with arrow head from the given start in the direction of (dx, dy) with length l.
+         * @param gl the OpenGL context
+         * @param {number} sx the x coordinate of the start point
+         * @param {number} sy the y coordinate of the start point
+         * @param {number} dx the x value of the direction
+         * @param {number} dy the y value of the direction
+         * @param {number} l the length
+         * @param {boolean} drawEdges if true line are drawn at each side of arrow
+         */
+        drawDoubleVector(sx, sy, dx, dy, l, drawEdges) {
+            this.drawLine(sx, sy, sx + dx * l, sy + dy * l);
+            let arrowhead = 0.07;
+            if (l < arrowhead)
+                arrowhead = l;
+            this.context.beginPath();
+            if (drawEdges) {
+                this.context.moveTo(sx - dy * arrowhead, sy + dx * arrowhead);
+                this.context.lineTo(sx + dy * arrowhead, sy - dx * arrowhead);
+            }
+            this.context.moveTo(sx + dx * l, sy + dy * l);
+            this.context.lineTo(sx + dx * (l - arrowhead) + 0.4 * arrowhead * dy, sy + dy * (l - arrowhead) - 0.5 * arrowhead * dx);
+            this.context.moveTo(sx + dx * l, sy + dy * l);
+            this.context.lineTo(sx + dx * (l - arrowhead) - 0.4 * arrowhead * dy, sy + dy * (l - arrowhead) + 0.5 * arrowhead * dx);
+            sx = sx + dx * l;
+            sy = sy + dy * l;
+            dx = -dx;
+            dy = -dy;
+            if (drawEdges) {
+                this.context.moveTo(sx - dy * arrowhead, sy + dx * arrowhead);
+                this.context.lineTo(sx + dy * arrowhead, sy - dx * arrowhead);
+            }
+            this.context.moveTo(sx + dx * l, sy + dy * l);
+            this.context.lineTo(sx + dx * (l - arrowhead) + 0.4 * arrowhead * dy, sy + dy * (l - arrowhead) - 0.5 * arrowhead * dx);
+            this.context.moveTo(sx + dx * l, sy + dy * l);
+            this.context.lineTo(sx + dx * (l - arrowhead) - 0.4 * arrowhead * dy, sy + dy * (l - arrowhead) + 0.5 * arrowhead * dx);
+            this.context.stroke();
         }
     }
     framework.Renderer = Renderer;
@@ -2754,7 +1956,10 @@ var framework;
      */
     class App {
         constructor(canvasId) {
-            this.paused = true;
+            this.paused = false;
+            if (this.addShapeAction === undefined) {
+                this.addShapeAction = null;
+            }
             if (this.picking === undefined) {
                 this.picking = null;
             }
@@ -2779,73 +1984,92 @@ var framework;
             if (this.shapesManager === undefined) {
                 this.shapesManager = null;
             }
-            if (this.last === undefined) {
-                this.last = 0;
+            if (this.preferences === undefined) {
+                this.preferences = null;
             }
+            this.statusInfo = null;
+            this.last = -1;
+            this.fillWindow = false;
             this.TMP = [0, 0, 0, 0];
-            if (this.toolTipText === undefined) {
-                this.toolTipText = null;
-            }
-            this.tooltipPosition = new math.Vector2();
-            App.instance = this;
+            this.preferences = new framework.Preferences();
             this.canvas = document.getElementById(canvasId);
             this.renderer = new framework.Renderer(this.canvas);
             this.camera = new framework.Camera();
-            this.camera.scale = 100;
-            this.camera.updateViewport(this.renderer.width, this.renderer.height);
-            this.shapesManager = new framework.ShapesManager(this);
-            this.picking = new framework.input.MousePickingInputHandler(this.canvas, this.camera, this.shapesManager);
+            this.shapesManager = new geom.ShapesManager(this);
+            this.setCanvasSize(this.canvas.width, this.canvas.height);
+            window.onresize = (e) => {
+                const body = document.querySelector("body");
+                if (this.fillWindow) {
+                    this.setCanvasSize(body.clientWidth, body.clientHeight);
+                }
+                else {
+                    this.setCanvasSize(this.canvas.clientWidth, this.canvas.clientHeight);
+                }
+                return null;
+            };
+            this.addShapeAction = new geom.AddShapeAction(this);
+            this.addShapeAction.install();
+            this.picking = new framework.input.MousePickingInputHandler(this);
             this.picking.install();
-            this.panning = new framework.input.MousePanningInputHandler(this.canvas, this.camera);
+            this.panning = new framework.input.MousePanningInputHandler(this);
             this.panning.install();
-            this.picking.getDependentBehaviors().add(this.panning);
+            this.picking.getDependentBehaviors().add(this.addShapeAction);
+            this.panning.getDependentBehaviors().add(this.addShapeAction);
             this.panning.getDependentBehaviors().add(this.picking);
-            this.cameraKey = new framework.input.KeyBoardCameraHandler(this.canvas, this.camera);
+            this.cameraKey = new framework.input.KeyBoardCameraHandler(this);
             this.cameraKey.install();
-            this.controlsKey = new framework.input.KeyBoardControlsHandler(this.canvas, this, this.camera);
+            this.controlsKey = new framework.input.KeyBoardControlsHandler(this);
             this.controlsKey.install();
-            console.log("App Initialisation ");
-            this.shapesManager.clearAll();
             window.requestAnimationFrame((time) => {
                 this.update(time);
             });
-            console.log("App Started " + this.shapesManager.shapes.size());
         }
-        /*private*/ update(t) {
-            const dt = (t - this.last) * 0.001;
-            this.last = t;
-            this.shapesManager.update();
+        /*private*/ setCanvasSize(width, height) {
+            const DPI_FACTOR = window.devicePixelRatio;
+            this.preferences.DPI_FACTOR = DPI_FACTOR;
+            this.canvas.width = DPI_FACTOR * width;
+            this.canvas.height = DPI_FACTOR * height;
+            this.canvas.style.width = width + "px";
+            this.canvas.style.height = height + "px";
+            this.camera.updateViewport(width, height);
+        }
+        /*private*/ update(time) {
+            if (this.last < 0 || this.paused)
+                this.last = time;
+            const dt = this.last - time;
+            this.last = time;
+            this.shapesManager.update(dt);
             const bounds = this.getCanvasBounds();
+            const min = this.camera.toWorldCoordinates(0, this.camera.screenHeight);
+            const max = this.camera.toWorldCoordinates(this.camera.screenWidth, 0);
+            this.shapesManager.setWorldBounds(min.x, min.y, max.x, max.y);
+            this.renderer.setColors(this.preferences.backgroundColor, this.preferences.axisColor);
             this.renderer.begin(this.camera);
-            this.renderer.setColors(framework.Preferences.backgroundColor_$LI$(), framework.Preferences.axisColor_$LI$());
-            this.renderer.context.fillRect(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
-            this.renderer.drawGrid(bounds[0], bounds[1], bounds[2], bounds[3], 5 * framework.Preferences.gridSize, framework.Preferences.gridColor_$LI$());
-            this.renderer.drawAxes(bounds[0], bounds[1], bounds[2], bounds[3], framework.Preferences.gridSize, framework.Preferences.gridSize * 10, true, framework.Preferences.axisColor_$LI$());
-            this.renderer.setColors(framework.Preferences.textColor_$LI$(), framework.Preferences.textColor_$LI$());
+            if (this.preferences.showAxis)
+                this.renderer.drawGrid(bounds[0], bounds[1], bounds[2], bounds[3], 5 * this.preferences.gridSize, this.preferences.gridColor);
+            if (this.preferences.showGrid)
+                this.renderer.drawAxes(bounds[0], bounds[1], bounds[2], bounds[3], this.preferences.gridSize, this.preferences.gridSize * 10, true, this.preferences.axisColor);
+            this.renderer.setColors(this.preferences.textColor, this.preferences.textColor);
             this.shapesManager.render(this.renderer);
-            if (this.toolTipText != null) {
-                this.renderer.setColors(framework.Preferences.tooltipColor_$LI$(), framework.Preferences.textColor_$LI$());
-                this.renderer.drawText$java_lang_String$double$double(this.toolTipText, this.tooltipPosition.x, this.tooltipPosition.y);
+            if (this.statusInfo != null) {
+                this.renderer.drawText$java_lang_String$double$double(this.statusInfo, bounds[0] + 0.3, bounds[3] - 0.3);
             }
-            this.renderer.end();
-            window.requestAnimationFrame((time) => {
-                this.update(time);
+            this.renderer.end(this.camera);
+            window.requestAnimationFrame((t) => {
+                this.update(t);
             });
         }
         pause() {
             this.paused = true;
+            this.last = -1;
         }
         resume() {
             this.paused = false;
-            this.last = java.lang.System.currentTimeMillis();
+            this.last = -1;
             this.update(this.last);
         }
         isPaused() {
             return this.paused;
-        }
-        setToolTip(text, pos) {
-            this.toolTipText = text;
-            this.tooltipPosition.set$math_Vector2(pos);
         }
         /**
          * returns [minX,minY,maxX,maxY]
@@ -2855,10 +2079,10 @@ var framework;
         getCanvasBounds() {
             this.TMP = [0, 0, 0, 0];
             let p = new math.Vector2();
-            p = this.camera.toWorldCoordinates(p.set$double$double(0, this.renderer.height));
+            p = this.camera.toWorldCoordinates(0, this.canvas.height);
             this.TMP[0] = p.x;
             this.TMP[1] = p.y;
-            p = this.camera.toWorldCoordinates(p.set$double$double(this.renderer.width, 0));
+            p = this.camera.toWorldCoordinates(this.canvas.width, 0);
             this.TMP[2] = p.x;
             this.TMP[3] = p.y;
             return this.TMP;
@@ -2872,13 +2096,32 @@ var framework;
         setCursor(cursor) {
             this.canvas.style.cursor = (cursor);
         }
+        endConstruction() {
+            this.addShapeAction.end();
+        }
+        beginConstruction(clazz) {
+            this.addShapeAction.end();
+            this.addShapeAction.actionPerformed(clazz);
+        }
+        setStatusLine(statusInfo) {
+            this.statusInfo = statusInfo;
+        }
+        setFillWindow(fillWindow) {
+            this.fillWindow = fillWindow;
+            if (fillWindow) {
+                const body = document.querySelector("body");
+                this.setCanvasSize(body.clientWidth, body.clientHeight);
+            }
+            else {
+                this.setCanvasSize(this.canvas.clientWidth, this.canvas.clientHeight);
+            }
+        }
         static main(args) {
             window.onload = (e) => {
-                return new App("canvas");
+                return null;
             };
         }
     }
-    App.instance = null;
     framework.App = App;
     App["__class"] = "framework.App";
 })(framework || (framework = {}));
@@ -2890,19 +2133,25 @@ var framework;
      */
     class Camera {
         constructor() {
-            this.scale = 100;
+            this.METER_TO_PIXEL = 100;
+            this.zoom = 100;
             this.offsetX = 0;
             this.offsetY = 0;
-            if (this.width === undefined) {
-                this.width = 0;
+            if (this.screenWidth === undefined) {
+                this.screenWidth = 0;
             }
-            if (this.height === undefined) {
-                this.height = 0;
+            if (this.screenHeight === undefined) {
+                this.screenHeight = 0;
             }
         }
+        /**
+         *
+         * @param {number} w
+         * @param {number} h
+         */
         updateViewport(w, h) {
-            this.width = w;
-            this.height = h;
+            this.screenWidth = w;
+            this.screenHeight = h;
         }
         /**
          * Zooms camera to specified percentage zoom about specified point as origin.
@@ -2910,22 +2159,29 @@ var framework;
          * @param {math.Vector2} pt  Zoom about pt as centre
          */
         zoomToAboutPoint(zoomPercentage, pt) {
-            const prevScale = this.scale;
+            const prevZoom = this.zoom;
             this.zoomTo(zoomPercentage);
-            const f = (-this.scale + prevScale);
+            const f = (-this.zoom + prevZoom) * this.METER_TO_PIXEL / 100;
             this.translate(pt.x * f, pt.y * f);
         }
         /**
          * Zooms out the camera.
          */
         zoomOut() {
-            this.zoomTo(this.scale * Camera.ZOOM_FACTOR);
+            this.zoomTo(this.zoom * Camera.ZOOM_FACTOR);
         }
         /**
          * Zooms in the camera.
          */
         zoomIn() {
-            this.zoomTo(this.scale / Camera.ZOOM_FACTOR);
+            this.zoomTo(this.zoom / Camera.ZOOM_FACTOR);
+        }
+        /**
+         * Returns current zoom percentage
+         * @return {number}
+         */
+        getZoom() {
+            return this.zoom;
         }
         /**
          * Zooms camera to specified percentage zoom.
@@ -2936,21 +2192,21 @@ var framework;
                 zoomPercentage = Camera.MIN_ZOOM;
             if (zoomPercentage > Camera.MAX_ZOOM)
                 zoomPercentage = Camera.MAX_ZOOM;
-            this.scale = zoomPercentage;
+            this.zoom = zoomPercentage;
         }
         /**
          * Zooms out the camera about point (in world coordinates).
          * @param {math.Vector2} pt Zoom about pt as centre
          */
         zoomOutAboutPoint(pt) {
-            this.zoomToAboutPoint(this.scale / Camera.ZOOM_FACTOR, pt);
+            this.zoomToAboutPoint(this.zoom / Camera.ZOOM_FACTOR, pt);
         }
         /**
          * Zooms in the camera about point (in world coordinates).
          * @param {math.Vector2} pt  Zoom about pt as centre
          */
         zoomInAboutPoint(pt) {
-            this.zoomToAboutPoint(this.scale * Camera.ZOOM_FACTOR, pt);
+            this.zoomToAboutPoint(this.zoom * Camera.ZOOM_FACTOR, pt);
         }
         /**
          * Moves the camera back to the origin (Now World origin will be rendered at screen center).
@@ -2974,21 +2230,21 @@ var framework;
         reset() {
             this.offsetX = 0;
             this.offsetY = 0;
-            this.scale = 100;
+            this.zoom = 1;
         }
         /**
          * Returns the scale factor in pixel per meter.
          * @return {number} double
          */
         getScale() {
-            return this.scale;
+            return 0.01 * this.zoom * this.METER_TO_PIXEL;
         }
         /**
          * Sets the scale factor in pixels per meter.
          * @param {number} scale the desired scale factor
          */
         setScale(scale) {
-            this.scale = scale;
+            this.zoomTo(100 * scale / this.METER_TO_PIXEL);
         }
         /**
          * Returns the offset of camera (displacement of screen center in pixels from 'world center rendered on screen').
@@ -3007,41 +2263,35 @@ var framework;
             this.offsetY = y;
         }
         /**
-         * Returns World coordinates for the given point given the width/height of the viewport.
-         * @param width the viewport width
-         * @param height the viewport height
-         * @param {math.Vector2} p the point
-         * @return {math.Vector2} Vector2
+         * Returns World coordinates for the given point
+         * @param {number} x screen X coordinate in css pixels with left as zero
+         * @param {number} y screen Y coordinate in css pixels with top as zero
+         * @return {math.Vector2} new Vector corresponding to world point
          */
-        toWorldCoordinates(p) {
-            if (p != null) {
-                const v = new math.Vector2();
-                v.x = (p.x - this.width * 0.5 - this.offsetX) / this.scale;
-                v.y = -(p.y - this.height * 0.5 + this.offsetY) / this.scale;
-                return v;
-            }
-            return new math.Vector2();
+        toWorldCoordinates(x, y) {
+            const v = new math.Vector2();
+            const scale = this.getScale();
+            v.x = (x - this.screenWidth * 0.5 - this.offsetX) / scale;
+            v.y = -(y - this.screenHeight * 0.5 + this.offsetY) / scale;
+            return v;
         }
         /**
-         * Returns World coordinates for the given point given the width/height of the viewport.
-         * @param width the viewport width
-         * @param height the viewport height
-         * @param {math.Vector2} p the point
-         * @return {math.Vector2} Vector2
+         * Returns Screen coordinates in css pixels (where top left is origin) for the given world point
+         * @param {number} x X coordinate in world space
+         * @param {number} y Y coordinate in world space
+         * @return {math.Vector2} new Vector corresponding to screen point
          */
-        toScreenCoordinates(p) {
-            if (p != null) {
-                const v = new math.Vector2();
-                v.x = p.x * this.scale + this.offsetX + this.width * 0.5;
-                v.y = -p.y * this.scale - this.offsetY + this.height * 0.5;
-                return v;
-            }
-            return null;
+        toScreenCoordinates(x, y) {
+            const v = new math.Vector2();
+            const scale = this.getScale();
+            v.x = x * scale + this.offsetX + this.screenWidth * 0.5;
+            v.y = -y * scale - this.offsetY + this.screenHeight * 0.5;
+            return v;
         }
     }
     Camera.ZOOM_FACTOR = 1.01;
-    Camera.MIN_ZOOM = 0.01;
-    Camera.MAX_ZOOM = 1000;
+    Camera.MIN_ZOOM = 0.05;
+    Camera.MAX_ZOOM = 2000;
     framework.Camera = Camera;
     Camera["__class"] = "framework.Camera";
 })(framework || (framework = {}));
@@ -3159,9 +2409,121 @@ var framework;
             ;
             return "#" + value;
         }
+        copy() {
+            return new Color(this.r, this.g, this.b, this.a);
+        }
     }
     framework.Color = Color;
     Color["__class"] = "framework.Color";
+})(framework || (framework = {}));
+(function (framework) {
+    /**
+     * Class SimpleInput - input class for input of simple input types
+     * via simple dialog box.
+     * eg. int, char, String,float or boolean.
+     *
+     * @author: Mahesh kurmi
+     * @class
+     */
+    class UserInput {
+        /**
+         * String input from the user via a simple dialog.
+         * @param {string} prompt the message string to be displayed inside dialog
+         * @return {string} String input from the user.
+         * @param {string} initialValue
+         */
+        static getString(prompt, initialValue) {
+            const commentArray = [prompt, UserInput.EMPTY_STRING, UserInput.EMPTY_STRING];
+            const options = ["OK", "Cancel"];
+            let validResponse = false;
+            let result = initialValue;
+            while ((!validResponse)) {
+                {
+                    result = window.prompt(prompt);
+                    if (result != null) {
+                        validResponse = true;
+                    }
+                    else {
+                        return null;
+                    }
+                }
+            }
+            ;
+            return result;
+        }
+        /**
+         * returns integer input from the user via a simple dialog.
+         * @param {string} prompt the message string to be displayed inside dialog
+         * @return {number} the input integer
+         */
+        static getInt(prompt) {
+            let validResponse = false;
+            while ((!validResponse)) {
+                while ((!validResponse)) {
+                    {
+                        const result = window.prompt(prompt);
+                        if (result != null) {
+                            try {
+                                const n = javaemul.internal.IntegerHelper.parseInt(result);
+                                validResponse = true;
+                                return n;
+                            }
+                            catch (e) {
+                            }
+                        }
+                    }
+                }
+            }
+            ;
+            return 0;
+        }
+        /**
+         * returns a float input from the user via a simple dialog.
+         * @param {string} prompt the message string to be displayed inside dialog
+         * @return {number} the input float
+         * @param {number} minValue
+         * @param {number} maxValue
+         */
+        static getDouble(prompt, minValue, maxValue) {
+            const options = ["OK"];
+            const commentArray = [prompt, UserInput.EMPTY_STRING, UserInput.EMPTY_STRING];
+            const validResponse = false;
+            const response = 0.0;
+            while ((!validResponse)) {
+                {
+                    const result = window.prompt(prompt);
+                    if (result != null) {
+                        try {
+                            const n = javaemul.internal.DoubleHelper.parseDouble(result);
+                            if (n > minValue && n < maxValue)
+                                return n;
+                        }
+                        catch (e) {
+                        }
+                    }
+                    else {
+                        return javaemul.internal.DoubleHelper.NaN;
+                    }
+                }
+            }
+            ;
+            return response;
+        }
+        static getExpression(title, message, initialValue, customVariables) {
+            return UserInput.getString(title, initialValue);
+        }
+    }
+    UserInput.STRING_TITLE = "Enter a String";
+    UserInput.EXPR_TITLE = "Enter an Expression";
+    UserInput.CHAR_TITLE = "Enter a char";
+    UserInput.INT_TITLE = "Enter an int";
+    UserInput.BOOLEAN_TITLE = "Select True or False";
+    UserInput.FLOAT_TITLE = "Enter a float";
+    UserInput.TRUE = "True";
+    UserInput.FALSE = "False";
+    UserInput.EMPTY_STRING = "";
+    framework.UserInput = UserInput;
+    UserInput["__class"] = "framework.UserInput";
 })(framework || (framework = {}));
 var math;
 (function (math) {
@@ -3205,16 +2567,31 @@ var math;
          * Creates parser for the expression
          * @param {string} expr
          * @return {net.objecthunter.exp4j.Expression} Expression Object if parsed successfully else returns null
-         * @param {boolean} includeGlobal
          * @param {java.lang.String[]} variables
+         * @param {*} globalVariables
+         * @param {*} globalFunctions
          */
-        static createParser(expr, includeGlobal, variables) {
+        static createParser(expr, variables, globalVariables, globalFunctions) {
             if (expr == null || /* isEmpty */ (expr.length === 0))
                 throw new Error("parsing error in expr: " + expr + " Empty or null Expression");
             const builder = new net.objecthunter.exp4j.ExpressionBuilder(expr);
             if (variables != null)
                 builder.variables$java_lang_String_A(variables);
-            if (includeGlobal) {
+            if (globalVariables != null) {
+                for (let index = globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        builder.variable(key);
+                    }
+                }
+            }
+            if (globalFunctions != null) {
+                for (let index = globalFunctions.values().iterator(); index.hasNext();) {
+                    let f = index.next();
+                    {
+                        builder._function(f);
+                    }
+                }
             }
             let exp = null;
             try {
@@ -3243,29 +2620,38 @@ var math;
         /**
          * throws exception if has bad expression, returns NaN for invalid inputs
          * @param {string} expr
-         * @param {net.objecthunter.exp4j.function._Function[]} customFunctions array of user defined custom  functions used in expression
+         * @param customFunctions array of user defined custom  functions used in expression
          * @return {number} customVariables user defined variable name-value pair used in expression
          * return NaN if expression is empty or invalid
          * @throws Exception
-         * @param {*} customVariables
+         * @param {*} functions
+         * @param {*} variables
          */
-        static evaluateExpression(expr, customFunctions, customVariables) {
+        static evaluateExpression(expr, functions, variables) {
             if (expr == null || /* isEmpty */ (expr.length === 0))
                 return javaemul.internal.DoubleHelper.NaN;
+            if ( /* equalsIgnoreCase */((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(expr, "true"))
+                return 1;
+            if ( /* equalsIgnoreCase */((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(expr, "false"))
+                return 0;
             const builder = new net.objecthunter.exp4j.ExpressionBuilder(expr);
-            if (customFunctions != null) {
-                (o => o.functions.apply(o, customFunctions))(builder);
+            if (functions != null) {
+                for (let index = functions.values().iterator(); index.hasNext();) {
+                    let f = index.next();
+                    builder._function(f);
+                }
             }
-            if (customVariables != null) {
-                builder.variables$java_util_Set(customVariables.keySet());
+            if (variables != null) {
+                for (let index = variables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    builder.variable(key);
+                }
             }
             const exp = builder.build();
-            if (customVariables != null) {
-                for (let index = customVariables.keySet().iterator(); index.hasNext();) {
+            if (variables != null) {
+                for (let index = variables.keySet().iterator(); index.hasNext();) {
                     let key = index.next();
-                    {
-                        exp.setVariable(key, customVariables.get(key));
-                    }
+                    exp.setVariable(key, variables.get(key));
                 }
             }
             try {
@@ -3293,8 +2679,8 @@ var math;
             let parserX;
             let parserY;
             try {
-                parserX = MathUtils.createParser(xExpr, true, ["t"]);
-                parserY = MathUtils.createParser(yExpr, true, ["t"]);
+                parserX = MathUtils.createParser(xExpr, ["t"], null, null);
+                parserY = MathUtils.createParser(yExpr, ["t"], null, null);
             }
             catch (e) {
                 throw new Error("Invalid Expression !" + e.message);
@@ -6338,7 +5724,7 @@ var math;
          */
         static interpolate(p1, p2, k) {
             if (k === javaemul.internal.DoubleHelper.POSITIVE_INFINITY)
-                return p2;
+                return p2.copy();
             return new Vector2((p2.x * k + p1.x) / (k + 1), (p2.y * k + p1.y) / (k + 1));
         }
     }
@@ -7759,210 +7145,1111 @@ var geom;
     Conics2D["__class"] = "geom.Conics2D";
 })(geom || (geom = {}));
 (function (geom) {
-    /**
-     * Class to handle value with associated expression
-     * @author maheshkurmi
-     * @param {number} value
-     * @param {number} min
-     * @param {number} max
-     * @class
-     */
-    class DynamicValue {
-        constructor(expr, min, max) {
-            if (((typeof expr === 'string') || expr === null) && ((typeof min === 'number') || min === null) && ((typeof max === 'number') || max === null)) {
-                let __args = arguments;
-                this.expr = null;
-                this.parserNeeded = false;
-                this.value = javaemul.internal.DoubleHelper.NaN;
-                this.multiplier = 1;
-                this.min = javaemul.internal.DoubleHelper.MIN_VALUE;
-                this.max = javaemul.internal.DoubleHelper.MAX_VALUE;
-                this.unitsEnabled = false;
-                this.max = max;
-                this.min = min;
-                this.set$java_lang_String(expr);
+    class ShapesManager {
+        constructor(app) {
+            this.shapes = (new java.util.ArrayList());
+            this.paint_shapes = (new java.util.ArrayList());
+            this.updateNeeded = false;
+            this.X_AXIS = new geom.Line2D(new math.Vector2(1, 0));
+            this.Y_AXIS = new geom.Line2D(new math.Vector2(0, 1));
+            this.tempShape = null;
+            this.previewShape = null;
+            if (this.globalVariables === undefined) {
+                this.globalVariables = null;
             }
-            else if (((typeof expr === 'number') || expr === null) && ((typeof min === 'number') || min === null) && ((typeof max === 'number') || max === null)) {
-                let __args = arguments;
-                let value = __args[0];
-                this.expr = null;
-                this.parserNeeded = false;
-                this.value = javaemul.internal.DoubleHelper.NaN;
-                this.multiplier = 1;
-                this.min = javaemul.internal.DoubleHelper.MIN_VALUE;
-                this.max = javaemul.internal.DoubleHelper.MAX_VALUE;
-                this.unitsEnabled = false;
-                this.max = max;
-                this.min = min;
-                this.set$double(value);
+            if (this.globalFunctions === undefined) {
+                this.globalFunctions = null;
             }
-            else if (((typeof expr === 'string') || expr === null) && min === undefined && max === undefined) {
-                let __args = arguments;
-                this.expr = null;
-                this.parserNeeded = false;
-                this.value = javaemul.internal.DoubleHelper.NaN;
-                this.multiplier = 1;
-                this.min = javaemul.internal.DoubleHelper.MIN_VALUE;
-                this.max = javaemul.internal.DoubleHelper.MAX_VALUE;
-                this.unitsEnabled = false;
-                this.set$java_lang_String(expr);
+            if (this.worldBounds === undefined) {
+                this.worldBounds = null;
             }
-            else
-                throw new Error('invalid overload');
+            if (this.surfaceMergingObjects === undefined) {
+                this.surfaceMergingObjects = null;
+            }
+            if (this.toolTipText === undefined) {
+                this.toolTipText = null;
+            }
+            this.tooltipPosition = new math.Vector2();
+            if (this.app === undefined) {
+                this.app = null;
+            }
+            if (this.preferences === undefined) {
+                this.preferences = null;
+            }
+            this.time = 0;
+            this.selectedShape = null;
+            this.prevDragPt = null;
+            this.paintStrokeWidth = 1.5;
+            this.app = app;
+            this.preferences = app.preferences;
+            this.globalVariables = (new java.util.HashMap());
+            this.globalFunctions = (new java.util.HashMap());
+            this.surfaceMergingObjects = (new java.util.ArrayList());
+            this.worldBounds = [0, 0, 1, 1];
+            this.clearAll();
         }
-        set$double(value) {
-            this.value = math.MathUtils.clamp$double$double$double(value, this.min, this.max);
-            this.expr = null;
-            this.parserNeeded = false;
-            this.multiplier = 1;
+        clearAll() {
+            this.shapes.clear();
+            this.globalVariables.clear();
+            this.globalFunctions.clear();
+            this.surfaceMergingObjects.clear();
+            this.globalVariables.put("T", this.time);
+            geom.Shape2D.ACCURACY = 1.0E-6;
+            geom.Shape2D.SNAP_DISTANCE = geom.Shape2D.ACCURACY_PIXEL / 100;
+            this.X_AXIS.name = "X-axis";
+            this.Y_AXIS.name = "Y-axis";
+            this.X_AXIS.setVisible(false);
+            this.Y_AXIS.setVisible(false);
+            this.X_AXIS.showEqn = true;
+            this.Y_AXIS.showEqn = true;
+            this.X_AXIS.set$double$double$double$double(0, 0, 1, 0);
+            this.Y_AXIS.set$double$double$double$double(0, 0, 0, 1);
+            this.X_AXIS.drawColor = this.preferences.textColor;
+            this.Y_AXIS.drawColor = this.preferences.textColor;
+            this.updateNeeded = true;
+            this.selectedShape = null;
+            this.paint_shapes.clear();
+            this.previewShape = null;
+            this.tempShape = null;
         }
-        set$java_lang_String(expr) {
-            this.expr = expr;
-            this.multiplier = 1;
-            this.parseUnit();
-            try {
-                this.value = /* doubleValue */ new Number(this.expr);
-                this.set$double(this.value * this.multiplier);
-                return;
-            }
-            catch (e) {
-                this.parserNeeded = true;
-            }
-            this.update();
+        removeAllPaintShapes() {
+            this.paint_shapes.clear();
+            this.previewShape = null;
+            this.tempShape = null;
         }
-        set(expr) {
-            if (((typeof expr === 'string') || expr === null)) {
-                return this.set$java_lang_String(expr);
+        removePaintShapeAtPoint(worldPt) {
+            let s = null;
+            for (let index = this.paint_shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    if (br.isSnapped(worldPt)) {
+                        s = br;
+                        break;
+                    }
+                }
             }
-            else if (((typeof expr === 'number') || expr === null)) {
-                return this.set$double(expr);
-            }
-            else
-                throw new Error('invalid overload');
+            return this.paint_shapes.remove(s);
+        }
+        addPaintShape(shape) {
+            this.paint_shapes.add(shape);
+            this.previewShape = null;
+            this.tempShape = null;
+        }
+        removePaintShape() {
+            this.paint_shapes.remove(this.shapes);
         }
         /**
-         * returns true if expression is not constant
+         * return true if Gui has atleast one visible widget
+         *
          * @return
          * @return {boolean}
          */
-        isVariable() {
-            return this.parserNeeded;
+        isActive() {
+            return this.shapes.size() > 0;
         }
         /**
-         * reevaluates expression, must be called before getting value
-         * @return {boolean} true if value has changed
+         * @return {java.util.ArrayList} the List of animations associated with simulation
          */
-        update() {
-            if (!this.parserNeeded)
-                return false;
-            try {
-                let r = math.MathUtils.evaluateExpression(this.expr, null, null);
-                r *= this.multiplier;
-                if (r < this.min || r > this.max)
-                    return false;
-                if (r !== this.value) {
-                    this.value = r;
-                    return true;
+        getAllShapes() {
+            return this.shapes;
+        }
+        /**
+         * Returns first shape identified with specified name, returns null if no shape is found
+         * @return {geom.Shape2D}
+         * @param {string} name
+         */
+        getShape(name) {
+            if (name == null)
+                return null;
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let s = index.next();
+                if (name === s.getName())
+                    return s;
+            }
+            return null;
+        }
+        /**
+         * Returns true if ShapeManager contains the specified shape
+         * @param {geom.Shape2D} shape
+         * @return
+         * @return {boolean}
+         */
+        containsShape(shape) {
+            return this.shapes.contains(shape);
+        }
+        /**
+         * @return {void} adds Animation
+         * @param {geom.Shape2D} b
+         */
+        addShape(b) {
+            if (b == null)
+                return;
+            this.shapes.add(b);
+            if ((b != null && b instanceof geom.Point2D)) {
+                b.fillColor = framework.Preferences.getRandomColor();
+                b.drawColor = this.preferences.textColor;
+                b.showName = true;
+            }
+            else {
+                b.drawColor = framework.Preferences.getRandomColor();
+            }
+            b.setName(this.createShapeName(b));
+            b.onAddShapeToSimulation(this);
+        }
+        /**
+         * All list of shapes, may overwrite existing if of same name
+         * @param {*} shapes
+         */
+        addAllShapes(shapes) {
+            shapes.addAll(shapes);
+            this.update(0);
+            for (let index = shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    br.onAddShapeToSimulation(this);
                 }
             }
-            catch (e) {
+        }
+        getDependentShapes(b, dependentShapes) {
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    if (br.parents != null) {
+                        for (let index = 0; index < br.parents.length; index++) {
+                            let p = br.parents[index];
+                            {
+                                if (p === b) {
+                                    dependentShapes.add(br);
+                                    this.getDependentShapes(br, dependentShapes);
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            return false;
+            if (b != null && b instanceof geom.ParentShapeArray2D) {
+                const p = b;
+                let i = 0;
+                while ((true)) {
+                    {
+                        const s = p.getChild(i);
+                        if (s == null)
+                            break;
+                        i++;
+                        this.getDependentShapes(s, dependentShapes);
+                    }
+                }
+                ;
+            }
         }
         /**
-         * Returns instantaneous value (last value successfully parsed) of expression
+         * Remove animation
+         * @param {geom.Shape2D} b
+         */
+        removeShape(b) {
+            if (b == null)
+                return;
+            const removedshapes = (new java.util.ArrayList());
+            removedshapes.add(b);
+            this.getDependentShapes(b, removedshapes);
+            for (let index = removedshapes.iterator(); index.hasNext();) {
+                let s = index.next();
+                {
+                    if (this.shapes.remove(s)) {
+                        s.dispose();
+                    }
+                    if (this.selectedShape === s)
+                        this.selectedShape = null;
+                }
+            }
+            removedshapes.clear();
+            if (this.selectedShape === b)
+                this.selectedShape = null;
+        }
+        forceUpdateAll() {
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    br.update();
+                }
+            }
+            this.updateNeeded = false;
+            this.X_AXIS.update();
+            this.Y_AXIS.update();
+        }
+        /**
+         * Sets world bounds
+         * @param {number} minX
+         * @param {number} minY
+         * @param {number} maxX
+         * @param {number} maxY
+         */
+        setWorldBounds(minX, minY, maxX, maxY) {
+            this.worldBounds[0] = minX;
+            this.worldBounds[1] = minY;
+            this.worldBounds[2] = maxX;
+            this.worldBounds[3] = maxY;
+        }
+        /**
+         * Returns world bounds
+         * @return  {double[]} array [minX,minY,maxX,maxY], Note that array is mutable
+         */
+        getWorldBounds() {
+            return this.worldBounds;
+        }
+        /**
+         * Updates shapes
+         * @param time elapsed in millisecons
+         * @param {number} dt
+         */
+        update(dt) {
+            this.time += dt / 1000;
+            this.setTime(this.time);
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    if (br != null && (br.constructor != null && br.constructor["__interfaces"] != null && br.constructor["__interfaces"].indexOf("geom.optics.OpticalObserver") >= 0))
+                        br.beginObserve();
+                }
+            }
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    br.update();
+                }
+            }
+            this.updateNeeded = false;
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    if (br != null && (br.constructor != null && br.constructor["__interfaces"] != null && br.constructor["__interfaces"].indexOf("geom.optics.OpticalSource") >= 0))
+                        br.shootRays();
+                }
+            }
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    if ((br != null && (br.constructor != null && br.constructor["__interfaces"] != null && br.constructor["__interfaces"].indexOf("geom.optics.OpticalObserver") >= 0)) && br.__isDefined)
+                        br.endObserve();
+                }
+            }
+        }
+        /**
+         * Returns simulation time in seconds
+         * @return
          * @return {number}
          */
-        getValue() {
-            return this.value;
+        getTime() {
+            return this.time;
         }
         /**
-         * returns expression of
+         * Sets simulation time in seconds
+         * @param {number} time
+         */
+        setTime(time) {
+            this.globalVariables.put("T", time);
+            this.time = time;
+        }
+        getSelectedShape() {
+            return this.selectedShape;
+        }
+        setSelectedShape(shape) {
+            if (this.selectedShape !== shape) {
+                this.prevDragPt = null;
+                ShapesManager.mousepressed = false;
+            }
+            if (this.selectedShape != null)
+                this.selectedShape.selected = false;
+            this.selectedShape = shape;
+            if (shape != null)
+                shape.selected = true;
+        }
+        /**
+         *
+         * @param {number} event 1=press, 2==release, 3==clicked, 4=moved
+         * @param x
+         * @param y
+         * @param {math.Vector2} worldPt
          * @return
+         * @return {boolean}
+         */
+        poll(event, worldPt) {
+            let consumed = false;
+            if (event === 3) {
+                if (this.selectedShape != null)
+                    this.selectedShape.selected = false;
+                this.selectedShape = this.getShapeAtPoint(worldPt, false, false);
+                if (this.selectedShape != null)
+                    this.selectedShape.selected = true;
+                this.prevDragPt = null;
+                ShapesManager.mousepressed = false;
+                return this.selectedShape != null;
+            }
+            else if (event === 1) {
+                if (this.prevDragPt == null && ShapesManager.mousepressed === false) {
+                    this.setToolTip(null, worldPt);
+                    if (this.selectedShape != null)
+                        this.selectedShape.selected = false;
+                    this.selectedShape = this.getShapeAtPoint(worldPt, false, false);
+                    if (this.selectedShape != null) {
+                        this.selectedShape.selected = true;
+                        this.selectedShape.mousePressed(worldPt);
+                        ShapesManager.mousepressed = true;
+                        this.prevDragPt = worldPt;
+                        ShapesManager.prevMousePressedPoint = worldPt.copy();
+                        return true;
+                    }
+                    else {
+                        ShapesManager.mousepressed = false;
+                        this.prevDragPt = null;
+                    }
+                    return false;
+                }
+                if (this.selectedShape != null && this.selectedShape.isFreeToMove()) {
+                    this.setCursor("pointer");
+                    if (this.prevDragPt != null) {
+                        const delta = worldPt.difference$math_Vector2(this.prevDragPt);
+                        this.prevDragPt = worldPt;
+                        this.selectedShape.mouseDragged(delta, worldPt, true);
+                        this.updateNeeded = true;
+                    }
+                }
+                consumed = this.selectedShape != null;
+            }
+            else if (event === 2) {
+                ShapesManager.mousepressed = false;
+                this.prevDragPt = null;
+                ShapesManager.prevMousePressedPoint = null;
+                this.setToolTip(null, worldPt);
+                if (this.selectedShape != null)
+                    this.selectedShape.mousePressed(worldPt);
+            }
+            else if (event === 4 && ShapesManager.mousepressed === false && this.prevDragPt == null) {
+                const s = this.getShapeAtPoint(worldPt, true, true);
+                if (s == null) {
+                    this.setToolTip(null, worldPt);
+                    this.setCursor("default");
+                    return false;
+                }
+                const allowMove = s.isFreeToMove();
+                if (allowMove) {
+                    this.setCursor("pointer");
+                    let shapeName;
+                    if (s.parents == null) {
+                        shapeName = this.getShapeString(s);
+                    }
+                    else {
+                        shapeName = s.getShapeInfo();
+                    }
+                    this.setToolTip("move this " + shapeName, worldPt);
+                }
+                else {
+                    this.setCursor("default");
+                    const shapeInfo = s.getShapeInfo();
+                    this.setToolTip(shapeInfo, worldPt);
+                }
+                return false;
+            }
+            return consumed;
+        }
+        setToolTip(text, pos) {
+            this.toolTipText = text;
+            if (pos != null)
+                this.tooltipPosition.set$math_Vector2(pos);
+        }
+        setCursor(cursor) {
+            this.app.setCursor(cursor);
+        }
+        renderShape(g, s) {
+            g.setColors(s.fillColor, s.drawColor);
+            g.setLineWidth(s.strokeWidth);
+            s.render(g);
+        }
+        render(gl) {
+            geom.Shape2D.SNAP_DISTANCE = geom.Shape2D.ACCURACY_PIXEL / gl.METER_TO_PIXEL;
+            if (this.shapes.size() > 0) {
+                for (let index = this.shapes.iterator(); index.hasNext();) {
+                    let br = index.next();
+                    {
+                        if (!(br != null && br instanceof geom.Point2D) && br.isVisible()) {
+                            this.renderShape(gl, br);
+                        }
+                    }
+                }
+                for (let index = this.shapes.iterator(); index.hasNext();) {
+                    let br = index.next();
+                    {
+                        if ((br != null && br instanceof geom.Point2D) && br.isVisible()) {
+                            this.renderShape(gl, br);
+                        }
+                    }
+                }
+            }
+            if (this.selectedShape != null && this.selectedShape.isVisible()) {
+                const strokewidth = this.selectedShape.strokeWidth;
+                const color = this.selectedShape.drawColor;
+                const fillColor = this.selectedShape.fillColor;
+                this.selectedShape.setDrawColor(this.preferences.selectedColor);
+                if (this.selectedShape != null && this.selectedShape instanceof geom.Point2D) {
+                    this.selectedShape.strokeWidth = strokewidth * 1.3;
+                    this.selectedShape.fillColor = this.preferences.selectedColor;
+                }
+                else {
+                    this.selectedShape.strokeWidth = strokewidth * 1.5;
+                    this.selectedShape.fillColor = null;
+                }
+                this.renderShape(gl, this.selectedShape);
+                this.selectedShape.setDrawColor(color);
+                this.selectedShape.strokeWidth = strokewidth;
+                this.selectedShape.fillColor = fillColor;
+                this.renderShape(gl, this.selectedShape);
+            }
+            if (this.tempShape != null)
+                this.renderShape(gl, this.tempShape);
+            if (this.toolTipText != null) {
+                gl.setColors(this.preferences.tooltipColor, this.preferences.textColor);
+                gl.drawText$java_lang_String$double$double(this.toolTipText, this.tooltipPosition.x, this.tooltipPosition.y);
+            }
+            this.renderPaintShapes(gl);
+        }
+        renderPaintShapes(g) {
+            for (let index = this.paint_shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    br.render(g);
+                }
+            }
+            if (this.previewShape != null)
+                this.previewShape.render(g);
+        }
+        /**
+         * Used for intersection of curves only
+         * Returns a new free point, or creates a points from existing shapes. If
+         * two curves intersect close to the point, return a new
+         * PointIntersection2Curves2D object. If distance to closest curve is 'small
+         * enough', create a PointOnCurve object, initialized with position given as
+         * parameter. Otherwise, return a new Free point.
+         *
+         * @param {math.Vector2} point
+         * a clicked point
+         * @return {geom.Shape2D} a new dynamic point, either free or constrained
+         */
+        createNewDynamicPoint(point) {
+            const pointSets = this.getCloseShapes(point, geom.Point2D);
+            if (pointSets.size() > 0) {
+                let dist;
+                let minDist = javaemul.internal.DoubleHelper.MAX_VALUE;
+                let i = 0;
+                let index = 0;
+                for (let index1 = pointSets.iterator(); index1.hasNext();) {
+                    let setPoint = index1.next();
+                    {
+                        dist = setPoint.distance(point);
+                        if (dist < minDist) {
+                            index = i;
+                            minDist = dist;
+                        }
+                        i++;
+                    }
+                }
+                return pointSets.get(index);
+            }
+            const curves = this.getCloseShapes(point, geom.Curve2D);
+            if (curves.size() > 1) {
+                const curve1 = curves.get(0);
+                const curve2 = curves.get(1);
+                const pt = new geom.PointIntersection2Curves2D(curve1, curve2, point);
+                if (pt != null)
+                    return pt;
+            }
+            const curveShape = this.getSnappedShape(point, geom.Curve2D);
+            point = this.preferences.snapToGrid(point);
+            if (curveShape != null) {
+                if (curveShape != null && curveShape instanceof geom.FunctionExplicit2D) {
+                    const pt = new geom.CriticalPointFunction2D(curveShape, point.x);
+                    if (pt.__isDefined)
+                        return pt;
+                }
+                return new geom.PointOnCurve2D(curveShape, curveShape.t(point));
+            }
+            return new geom.FreePoint2D(point);
+        }
+        /**
+         * Returns shape closest to the point, used for construction and mouse info
+         * Used in construction at AddShapeAction#findParentShape
+         * @param {math.Vector2} pt
+         * @param {java.lang.Class} shapeClass
+         * a class which inherits Shape2D
+         * @return {geom.Shape2D} snapped Object if any else null
+         */
+        getSnappedShape(pt, shapeClass) {
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let br = index.next();
+                {
+                    if (!br.__isDefined || !br.visible || !br.touchable)
+                        continue;
+                    if (br != null && br instanceof geom.ParentShapeArray2D) {
+                        br = br.getSnappedShape(pt, shapeClass);
+                        if (br != null)
+                            return br;
+                        continue;
+                    }
+                    if (framework.ClassUtils.isInstanceof(br, shapeClass) && br.isSnapped(pt)) {
+                        return br;
+                    }
+                }
+            }
+            if (this.preferences.showAxis && framework.ClassUtils.isInstanceof(this.X_AXIS, shapeClass) && this.X_AXIS.isSnapped(pt))
+                return this.X_AXIS;
+            if (this.preferences.showAxis && framework.ClassUtils.isInstanceof(this.Y_AXIS, shapeClass) && this.Y_AXIS.isSnapped(pt))
+                return this.Y_AXIS;
+            return null;
+        }
+        /**
+         * Returns a collection of elements whose distance to the given point is
+         * less than the specified distance, and whose class extends the specified
+         * class.
+         * Used in {@link ShapesManager#createNewDynamicPoint(Vector2)}
+         * @param {math.Vector2} point
+         * a location
+         * @param {java.lang.Class} geometry
+         * a class which inherits Shape2D
+         * @param minDist
+         * the minimum distance between a shape and the point
+         * @return {java.util.ArrayList} a set of Shape2D whose shapes are instances of geometry
+         */
+        getCloseShapes(point, geometry) {
+            const returnedShapes = (new java.util.ArrayList());
+            let dist;
+            for (let i = this.shapes.size() - 1; i >= 0; i--) {
+                {
+                    const shape = this.shapes.get(i);
+                    if (!shape.__isDefined || !shape.touchable || !shape.visible)
+                        continue;
+                    if (shape != null && shape instanceof geom.ParentShapeArray2D) {
+                        shape.getCloseShapes(point, geometry, returnedShapes);
+                        continue;
+                    }
+                    if (!framework.ClassUtils.isInstanceof(shape, geometry))
+                        continue;
+                    dist = shape.distance(point);
+                    if (shape.isSnapped(point))
+                        returnedShapes.add(shape);
+                }
+                ;
+            }
+            if (this.preferences.showAxis && framework.ClassUtils.isInstanceof(this.X_AXIS, geometry) && Math.abs(point.y) < geom.Shape2D.SNAP_DISTANCE)
+                returnedShapes.add(this.X_AXIS);
+            if (this.preferences.showAxis && framework.ClassUtils.isInstanceof(this.Y_AXIS, geometry) && Math.abs(point.x) < geom.Shape2D.SNAP_DISTANCE)
+                returnedShapes.add(this.Y_AXIS);
+            return returnedShapes;
+        }
+        /**
+         * Returns shape at mouse position
+         * Used in viewing shape info and deleting shape at mouse location
+         * @param {math.Vector2} worldPt
+         * @param {boolean} includeAxes
+         * @param {boolean} includeChildren if true children of parents are also searched
+         * @return
+         * @return {geom.Shape2D}
+         */
+        getShapeAtPoint(worldPt, includeAxes, includeChildren) {
+            if (this.selectedShape != null && (this.selectedShape != null && this.selectedShape instanceof geom.Point2D) && this.selectedShape.isSnapped(worldPt))
+                return this.selectedShape;
+            for (let i = this.shapes.size() - 1; i >= 0; i--) {
+                {
+                    const br = this.shapes.get(i);
+                    if (!br.__isDefined || !br.visible || !br.touchable)
+                        continue;
+                    if ((br != null && br instanceof geom.Point2D)) {
+                        if (br.isSnapped(worldPt)) {
+                            return br;
+                        }
+                    }
+                }
+                ;
+            }
+            if (includeAxes && this.preferences.showAxis) {
+                if (this.X_AXIS.isSnapped(worldPt))
+                    return this.X_AXIS;
+                if (this.Y_AXIS.isSnapped(worldPt))
+                    return this.Y_AXIS;
+            }
+            for (let i = this.shapes.size() - 1; i >= 0; i--) {
+                {
+                    let br = this.shapes.get(i);
+                    if (!br.__isDefined || !br.visible || !br.touchable)
+                        continue;
+                    if (!(br != null && br instanceof geom.Point2D)) {
+                        if (br.isSnapped(worldPt)) {
+                            if (includeChildren && (br != null && br instanceof geom.ParentShapeArray2D)) {
+                                const parent = br;
+                                const s = parent.getSnappedShape(worldPt, geom.Shape2D);
+                                if (s != null)
+                                    br = s;
+                            }
+                            return br;
+                        }
+                    }
+                }
+                ;
+            }
+            return null;
+        }
+        /**
+         * check if name is already occupied or not
+         *
+         * @param {string} name
+         * @return
+         * @param {java.lang.Class} clazz
+         * @return {boolean}
+         */
+        isValidShapeName(name, clazz) {
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let s = index.next();
+                if (framework.ClassUtils.isInstanceof(s, clazz) && (name === s.name))
+                    return false;
+            }
+            return true;
+        }
+        /**
+         * check if name is already occupied or not
+         *
+         * @param {string} name
+         * @return
+         * @return {boolean}
+         */
+        isValidFunctionName(name) {
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let s = index.next();
+                if (s.name === name)
+                    return false;
+            }
+            return true;
+        }
+        /**
+         * Returns a default name for a shape, according to shape class, and to
+         * already stored shapes.
+         * @param {geom.Shape2D} geometry
          * @return {string}
          */
-        getExpr() {
-            return this.parserNeeded ? (this.expr + this.getUnit()) : (this.value + "");
+        createShapeName(geometry) {
+            let baseName = "S";
+            if (geometry != null && geometry instanceof geom.Slider2D) {
+                baseName = "a";
+                let j = 0;
+                while ((true)) {
+                    {
+                        for (let i = 0; i < 26; i++) {
+                            {
+                                baseName = String.fromCharCode(('a'.charCodeAt(0) + i)) + ((j === 0) ? "" : j + "");
+                                if (this.isValidShapeName(baseName, geom.Slider2D))
+                                    return baseName;
+                            }
+                            ;
+                        }
+                        j++;
+                    }
+                }
+                ;
+            }
+            if (geometry != null && geometry instanceof geom.Point2D) {
+                baseName = "A";
+                let j = 0;
+                while ((true)) {
+                    {
+                        for (let i = 0; i < 26; i++) {
+                            {
+                                baseName = String.fromCharCode(('A'.charCodeAt(0) + i)) + ((j === 0) ? "" : j + "");
+                                if (this.isValidShapeName(baseName, geom.Point2D))
+                                    return baseName;
+                            }
+                            ;
+                        }
+                        j++;
+                    }
+                }
+                ;
+            }
+            if (geometry != null && geometry instanceof geom.AngleMeasure2D) {
+                baseName = math.Unicode.alpha + "";
+                let j = 0;
+                while ((true)) {
+                    {
+                        for (let i = 0; i < 26; i++) {
+                            {
+                                baseName = String.fromCharCode(((c => c.charCodeAt == null ? c : c.charCodeAt(0))(math.Unicode.alpha) + i)) + ((j === 0) ? "" : j + "");
+                                if (this.isValidShapeName(baseName, geom.Measure2D))
+                                    return baseName;
+                            }
+                            ;
+                        }
+                        j++;
+                    }
+                }
+                ;
+            }
+            if (geometry != null && geometry instanceof geom.LengthMeasure2D) {
+                return this.createNewVariableName("L");
+            }
+            if (geometry != null && geometry instanceof geom.FunctionExplicit2D) {
+                baseName = "f";
+                let j = 0;
+                while ((true)) {
+                    {
+                        for (let i = 0; i < 3; i++) {
+                            {
+                                baseName = String.fromCharCode(('f'.charCodeAt(0) + i)) + ((j === 0) ? "" : j + "");
+                                if (this.isValidFunctionName(baseName))
+                                    return baseName;
+                            }
+                            ;
+                        }
+                        j++;
+                    }
+                }
+                ;
+            }
+            if (geometry != null && geometry instanceof geom.optics.OpticalIdealLens2D) {
+                return "lens";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalIdealMirror2D) {
+                return "mirror";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalPlaneMirror2D) {
+                return "mirror";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalPlane2D) {
+                return "plane";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalPathShape2D) {
+                return "surface";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalBlocker2D) {
+                return "blocker";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalArc2D) {
+                return "arc";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalObserver2D) {
+                return "observer";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalBeam2D) {
+                return "beam";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalSource2D) {
+                return "src";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalRay2Points2D) {
+                return "ray";
+            }
+            else if (geometry != null && geometry instanceof geom.optics.OpticalWhiteLight2D) {
+                return "white-ray";
+            }
+            else if (geometry != null && geometry instanceof geom.Circle2D) {
+                baseName = "Cir";
+            }
+            else if (geometry != null && geometry instanceof geom.Vector2D) {
+                baseName = "Vec";
+            }
+            else if (geometry != null && geometry instanceof geom.Ray2D) {
+                baseName = "Ray";
+            }
+            else if (geometry != null && geometry instanceof geom.Segment2D) {
+                baseName = "Seg";
+            }
+            else if (geometry != null && geometry instanceof geom.Line2D) {
+                baseName = "Line";
+            }
+            else if (geometry != null && geometry instanceof geom.AngleMeasure2D) {
+                baseName = "Angle";
+            }
+            else if (geometry != null && geometry instanceof geom.LengthMeasure2D) {
+                baseName = "Length";
+            }
+            else if (geometry != null && geometry instanceof geom.PointMeasure2D) {
+                baseName = "Coord";
+            }
+            else if (geometry != null && geometry instanceof geom.ExpressionMeasure2D) {
+                baseName = "Expr";
+            }
+            else if (geometry != null && geometry instanceof geom.Label2D) {
+                baseName = "Label";
+            }
+            else if (geometry != null && geometry instanceof geom.ParametricCurve2D) {
+                baseName = "Curve";
+            }
+            else if (geometry != null && geometry instanceof geom.PolarCurve2D) {
+                baseName = "Curve";
+            }
+            else if (geometry != null && geometry instanceof geom.Bezier3Points2D) {
+                baseName = "quad-curve";
+            }
+            else if (geometry != null && geometry instanceof geom.Bezier4Points2D) {
+                baseName = "cubic-curve";
+            }
+            else if (geometry != null && geometry instanceof geom.DynamicCurve2D) {
+                baseName = "locus";
+            }
+            else if (geometry != null && geometry instanceof geom.Parabola2D) {
+                baseName = "Para";
+            }
+            else if (geometry != null && geometry instanceof geom.Ellipse2D) {
+                baseName = "Ell";
+            }
+            else if (geometry != null && geometry instanceof geom.Hyperbola2D) {
+                baseName = "Hyp";
+            }
+            else if (geometry != null && geometry instanceof geom.ConicTwoLines2D) {
+                baseName = "Lines-pair";
+            }
+            else if (geometry != null && geometry instanceof geom.Conic2D) {
+                baseName = "Conic";
+            }
+            else if (geometry != null && geometry instanceof geom.PathNpoints2D) {
+                baseName = "Path";
+            }
+            return "shape";
         }
         /**
-         * returns unit representation of multiplier
-         * @return {string} empty string if multiplier is 1
-         * @private
+         * Computes the mouse label when creating the given figure. This label
+         * depends on the class of the geometry of the created shape.
+         *
+         * @param figure
+         * the figure which will be created
+         * @return {string} the mouse label to display
+         * @param {geom.Shape2D} dynamic
          */
-        /*private*/ getUnit() {
-            if (this.multiplier === 1.0E-12)
-                return "p";
-            if (this.multiplier === 1.0E-9)
-                return "n";
-            if (this.multiplier === 1.0E-6)
-                return "u";
-            if (this.multiplier === 0.001)
-                return "m";
-            if (this.multiplier === 1000.0)
-                return "k";
-            if (this.multiplier === 1000000.0)
-                return "M";
-            if (this.multiplier === 1.0E9)
-                return "G";
+        getMouseLabel(dynamic) {
+            if (dynamic != null && dynamic instanceof geom.PointOnCurve2D) {
+                const parent = dynamic.getParents()[0];
+                return "new point in this " + parent.getName();
+            }
+            if (dynamic != null && dynamic instanceof geom.PointIntersection2Curves2D) {
+                return "new intersection";
+            }
+            if (dynamic != null && dynamic instanceof geom.CriticalPointFunction2D) {
+                return "new critical point";
+            }
             return "";
         }
         /**
-         * Enables units for the expression
-         * @param {boolean} unit
+         * Returns a string associated with an EuclideShape. The string is composed
+         * of a shape identifier ("line", "ellipse", "point set"...) and eventually
+         * the name of the shape between parents.
+         * @param {geom.Shape2D} dynamic
+         * @return {string}
          */
-        setUnitsEnabled(unit) {
-            this.unitsEnabled = unit;
+        getShapeString(dynamic) {
+            let baseName = "shape";
+            if (dynamic.isDefined()) {
+                const shape = dynamic;
+                if (shape != null)
+                    baseName = ShapesManager.getShapeName(shape.constructor);
+            }
+            const name = dynamic.getName();
+            if (name != null)
+                if (!(name.length === 0)) {
+                    baseName = baseName + " (" + name + ")";
+                }
+            return baseName;
         }
         /**
-         * parses unit from text in format like 1k, 23m, 32u
-         *
-         * @param value
-         * @return {void} 1 if no unit is found at the end of string
-         * @private
+         * Returns the name of the shape, from its class and possibly depending on
+         * the Locale. For example, Point2D class will return string "point", Line2D
+         * will return "line".... If the shape is not recognized, return the string
+         * "shape".
+         * @param {java.lang.Class} shapeClass
+         * @return {string}
          */
-        /*private*/ parseUnit() {
-            if (this.unitsEnabled === false)
-                return;
-            let s = this.expr;
-            s = s.trim();
-            const len = s.length;
-            const uc = s.charAt(len - 1);
-            let mult = 1;
-            switch ((uc).charCodeAt(0)) {
-                case 112 /* 'p' */:
-                case 80 /* 'P' */:
-                    mult = 1.0E-12;
-                    break;
-                case 110 /* 'n' */:
-                case 78 /* 'N' */:
-                    mult = 1.0E-9;
-                    break;
-                case 117 /* 'u' */:
-                case 85 /* 'U' */:
-                    mult = 1.0E-6;
-                    break;
-                case 109 /* 'm' */:
-                    mult = 0.001;
-                    break;
-                case 77 /* 'M' */:
-                    mult = 1000000.0;
-                    break;
-                case 107 /* 'k' */:
-                case 75 /* 'K' */:
-                    mult = 1000.0;
-                    break;
-                case 71 /* 'G' */:
-                case 103 /* 'g' */:
-                    mult = 1.0E9;
-                    break;
+        static getShapeName(shapeClass) {
+            if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalImageWrapper2D, shapeClass)) {
+                return "image";
             }
-            if (mult !== 1)
-                this.expr = s.substring(0, len - 1).trim();
-            this.multiplier = mult;
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalIdealLens2D, shapeClass)) {
+                return "lens";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalIdealMirror2D, shapeClass)) {
+                return "mirror";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalPlane2D, shapeClass)) {
+                return "plane";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalPathShape2D, shapeClass)) {
+                return "surface";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalBlocker2D, shapeClass)) {
+                return "blocker";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalObserver2D, shapeClass)) {
+                return "observer";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalBeam2D, shapeClass)) {
+                return "beam";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalSource2D, shapeClass)) {
+                return "light source";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalRay2Points2D, shapeClass)) {
+                return "light ray";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalWhiteLight2D, shapeClass)) {
+                return "white light";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalArc2D, shapeClass)) {
+                return "arc mirror";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalObserver2D, shapeClass)) {
+                return "observer";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Point2D, shapeClass)) {
+                return "point";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Vector2D, shapeClass)) {
+                return "vector";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Ray2D, shapeClass)) {
+                return "ray";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Slider2D, shapeClass)) {
+                return "slider";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Segment2D, shapeClass)) {
+                return "segment";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Line2D, shapeClass)) {
+                return "line";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Circle2D, shapeClass)) {
+                return "circle";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Parabola2D, shapeClass)) {
+                return "parabola";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Ellipse2D, shapeClass)) {
+                return "ellipse";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Hyperbola2D, shapeClass)) {
+                return "hyperbola";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.ConicTwoLines2D, shapeClass)) {
+                return "lines-pair";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Conic2D, shapeClass)) {
+                return "conic";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.FunctionExplicit2D, shapeClass)) {
+                return "function";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.ParametricCurve2D, shapeClass)) {
+                return "curve";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Bezier3Points2D, shapeClass)) {
+                return "quad-curve";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.Bezier4Points2D, shapeClass)) {
+                return "cubic-curve";
+            }
+            else if (framework.ClassUtils.isAssignableFrom(geom.DynamicCurve2D, shapeClass)) {
+                return "locus";
+            }
+            return /* getSimpleName */ (c => typeof c === 'string' ? c.substring(c.lastIndexOf('.') + 1) : c["__class"] ? c["__class"].substring(c["__class"].lastIndexOf('.') + 1) : c["name"].substring(c["name"].lastIndexOf('.') + 1))(shapeClass);
+        }
+        deleteSelected() {
+            if (this.selectedShape != null) {
+                this.removeShape(this.selectedShape);
+            }
+        }
+        deleteShapeAt(v) {
+            this.removeShape(this.getShapeAtPoint(v, false, false));
+        }
+        deleteShapesInside(tmpAABB) {
+            const removedshapes = (new java.util.ArrayList());
+            for (let index = this.shapes.iterator(); index.hasNext();) {
+                let p = index.next();
+                {
+                    if (p != null && p instanceof geom.Point2D) {
+                        const v = p.pt;
+                        if (tmpAABB.contains$math_Vector2(v))
+                            removedshapes.add(p);
+                    }
+                }
+            }
+            for (let index = removedshapes.iterator(); index.hasNext();) {
+                let s = index.next();
+                {
+                    this.removeShape(s);
+                }
+            }
+        }
+        isRenderable() {
+            return this.previewShape != null || this.tempShape != null || this.shapes.size() > 0 || this.paint_shapes.size() > 0;
+        }
+        /**
+         * Returns settings separated by ";" , USed in serialization and deserialization
+         * @return
+         * @return {string}
+         */
+        getSettings() {
+            const sb = new java.lang.StringBuilder();
+            sb.append(geom.Shape2D.ACCURACY + ";");
+            sb.append(geom.Shape2D.ACCURACY_PIXEL + ";");
+            sb.append(this.preferences.MAX_RAY_INTERACTIONS + ";");
+            sb.append(this.preferences.ImageColor.toString() + ";");
+            sb.append(this.preferences.virtualRaysColor.toString() + ";");
+            return sb.toString();
+        }
+        /**
+         * Updates settings during deserialization
+         * @param {string} settings
+         */
+        setSettings(settings) {
+            if (settings == null || /* isEmpty */ (settings.length === 0))
+                return;
+            const arr = settings.split(";");
+            try {
+                geom.Shape2D.ACCURACY = javaemul.internal.DoubleHelper.parseDouble(arr[0]);
+                geom.Shape2D.ACCURACY_PIXEL = javaemul.internal.DoubleHelper.parseDouble(arr[1]);
+                this.preferences.MAX_RAY_INTERACTIONS = javaemul.internal.IntegerHelper.parseInt(arr[2]);
+            }
+            catch (e) {
+                console.error(e.message, e);
+            }
+        }
+        /**
+         * Creates unique variable name
+         *
+         * @param name
+         * @param {string} baseName
+         * @return {string}
+         */
+        createNewVariableName(baseName) {
+            if (baseName == null) {
+                return null;
+            }
+            else {
+                let num = 1;
+                let ok = false;
+                let name = baseName;
+                while ((!ok)) {
+                    {
+                        ok = true;
+                        if (this.globalVariables.containsKey(name) === true || this.globalFunctions.containsKey(name) === true) {
+                            ok = false;
+                            name = javaemul.internal.StringHelper.format("%1$s%2$d", baseName, num);
+                            num++;
+                        }
+                    }
+                }
+                ;
+                return name;
+            }
         }
     }
-    geom.DynamicValue = DynamicValue;
-    DynamicValue["__class"] = "geom.DynamicValue";
+    ShapesManager.prevMousePressedPoint = null;
+    ShapesManager.mousepressed = false;
+    geom.ShapesManager = ShapesManager;
+    ShapesManager["__class"] = "geom.ShapesManager";
 })(geom || (geom = {}));
 (function (geom) {
     /**
@@ -8425,6 +8712,227 @@ var geom;
     }
     geom.Bounds2D = Bounds2D;
     Bounds2D["__class"] = "geom.Bounds2D";
+})(geom || (geom = {}));
+(function (geom) {
+    var optics;
+    (function (optics) {
+        /**
+         * Class to handle value with associated expression
+         * @author maheshkurmi
+         * @param {number} value
+         * @param {number} min
+         * @param {number} max
+         * @class
+         */
+        class DynamicValue {
+            constructor(expr, min, max) {
+                if (((typeof expr === 'string') || expr === null) && ((typeof min === 'number') || min === null) && ((typeof max === 'number') || max === null)) {
+                    let __args = arguments;
+                    if (this.shapesManager === undefined) {
+                        this.shapesManager = null;
+                    }
+                    this.expr = null;
+                    this.parserNeeded = false;
+                    this.value = javaemul.internal.DoubleHelper.NaN;
+                    this.multiplier = 1;
+                    this.min = javaemul.internal.DoubleHelper.MIN_VALUE;
+                    this.max = javaemul.internal.DoubleHelper.MAX_VALUE;
+                    this.unitsEnabled = false;
+                    this.max = max;
+                    this.min = min;
+                    this.set$java_lang_String(expr);
+                }
+                else if (((typeof expr === 'number') || expr === null) && ((typeof min === 'number') || min === null) && ((typeof max === 'number') || max === null)) {
+                    let __args = arguments;
+                    let value = __args[0];
+                    if (this.shapesManager === undefined) {
+                        this.shapesManager = null;
+                    }
+                    this.expr = null;
+                    this.parserNeeded = false;
+                    this.value = javaemul.internal.DoubleHelper.NaN;
+                    this.multiplier = 1;
+                    this.min = javaemul.internal.DoubleHelper.MIN_VALUE;
+                    this.max = javaemul.internal.DoubleHelper.MAX_VALUE;
+                    this.unitsEnabled = false;
+                    this.max = max;
+                    this.min = min;
+                    this.set$double(value);
+                }
+                else if (((typeof expr === 'string') || expr === null) && min === undefined && max === undefined) {
+                    let __args = arguments;
+                    if (this.shapesManager === undefined) {
+                        this.shapesManager = null;
+                    }
+                    this.expr = null;
+                    this.parserNeeded = false;
+                    this.value = javaemul.internal.DoubleHelper.NaN;
+                    this.multiplier = 1;
+                    this.min = javaemul.internal.DoubleHelper.MIN_VALUE;
+                    this.max = javaemul.internal.DoubleHelper.MAX_VALUE;
+                    this.unitsEnabled = false;
+                    this.set$java_lang_String(expr);
+                }
+                else
+                    throw new Error('invalid overload');
+            }
+            set$double(value) {
+                this.value = math.MathUtils.clamp$double$double$double(value, this.min, this.max);
+                this.expr = null;
+                this.parserNeeded = false;
+                this.multiplier = 1;
+            }
+            set$java_lang_String(expr) {
+                this.expr = expr;
+                this.multiplier = 1;
+                this.parseUnit();
+                try {
+                    this.value = /* doubleValue */ new Number(this.expr);
+                    this.set$double(this.value * this.multiplier);
+                    return;
+                }
+                catch (e) {
+                    this.parserNeeded = true;
+                }
+                this.update();
+            }
+            set(expr) {
+                if (((typeof expr === 'string') || expr === null)) {
+                    return this.set$java_lang_String(expr);
+                }
+                else if (((typeof expr === 'number') || expr === null)) {
+                    return this.set$double(expr);
+                }
+                else
+                    throw new Error('invalid overload');
+            }
+            /**
+             * returns true if expression is not constant
+             * @return
+             * @return {boolean}
+             */
+            isVariable() {
+                return this.parserNeeded;
+            }
+            /**
+             * reevaluates expression, must be called before getting value
+             * @return {boolean} true if value has changed
+             */
+            update() {
+                if (!this.parserNeeded)
+                    return false;
+                try {
+                    let r = math.MathUtils.evaluateExpression(this.expr, null, null);
+                    r *= this.multiplier;
+                    if (r < this.min || r > this.max)
+                        return false;
+                    if (r !== this.value) {
+                        this.value = r;
+                        return true;
+                    }
+                }
+                catch (e) {
+                }
+                return false;
+            }
+            /**
+             * Returns instantaneous value (last value successfully parsed) of expression
+             * @return {number}
+             */
+            getValue() {
+                return this.value;
+            }
+            /**
+             * returns expression of
+             * @return
+             * @return {string}
+             */
+            getExpr() {
+                return this.parserNeeded ? (this.expr + this.getUnit()) : (this.value + "");
+            }
+            /**
+             * returns unit representation of multiplier
+             * @return {string} empty string if multiplier is 1
+             * @private
+             */
+            /*private*/ getUnit() {
+                if (this.multiplier === 1.0E-12)
+                    return "p";
+                if (this.multiplier === 1.0E-9)
+                    return "n";
+                if (this.multiplier === 1.0E-6)
+                    return "u";
+                if (this.multiplier === 0.001)
+                    return "m";
+                if (this.multiplier === 1000.0)
+                    return "k";
+                if (this.multiplier === 1000000.0)
+                    return "M";
+                if (this.multiplier === 1.0E9)
+                    return "G";
+                return "";
+            }
+            /**
+             * Enables units for the expression
+             * @param {boolean} unit
+             */
+            setUnitsEnabled(unit) {
+                this.unitsEnabled = unit;
+            }
+            /**
+             * parses unit from text in format like 1k, 23m, 32u
+             *
+             * @param value
+             * @return {void} 1 if no unit is found at the end of string
+             * @private
+             */
+            /*private*/ parseUnit() {
+                if (this.unitsEnabled === false)
+                    return;
+                let s = this.expr;
+                s = s.trim();
+                const len = s.length;
+                const uc = s.charAt(len - 1);
+                let mult = 1;
+                switch ((uc).charCodeAt(0)) {
+                    case 112 /* 'p' */:
+                    case 80 /* 'P' */:
+                        mult = 1.0E-12;
+                        break;
+                    case 110 /* 'n' */:
+                    case 78 /* 'N' */:
+                        mult = 1.0E-9;
+                        break;
+                    case 117 /* 'u' */:
+                    case 85 /* 'U' */:
+                        mult = 1.0E-6;
+                        break;
+                    case 109 /* 'm' */:
+                        mult = 0.001;
+                        break;
+                    case 77 /* 'M' */:
+                        mult = 1000000.0;
+                        break;
+                    case 107 /* 'k' */:
+                    case 75 /* 'K' */:
+                        mult = 1000.0;
+                        break;
+                    case 71 /* 'G' */:
+                    case 103 /* 'g' */:
+                        mult = 1.0E9;
+                        break;
+                }
+                if (mult !== 1)
+                    this.expr = s.substring(0, len - 1).trim();
+                this.multiplier = mult;
+            }
+            setShapesManager(shapesManager) {
+                this.shapesManager = shapesManager;
+            }
+        }
+        optics.DynamicValue = DynamicValue;
+        DynamicValue["__class"] = "geom.optics.DynamicValue";
+    })(optics = geom.optics || (geom.optics = {}));
 })(geom || (geom = {}));
 (function (geom) {
     var optics;
@@ -9322,12 +9830,20 @@ var geom;
     var input;
     (function (input) {
         class AbstractKeyboardInputHandler extends framework.input.AbstractInputHandler {
-            constructor(component) {
+            constructor(app) {
                 super();
                 if (this.component === undefined) {
                     this.component = null;
                 }
-                this.component = component;
+                if (this.camera === undefined) {
+                    this.camera = null;
+                }
+                if (this.app === undefined) {
+                    this.app = null;
+                }
+                this.app = app;
+                this.component = app.canvas;
+                this.camera = app.camera;
             }
             /**
              *
@@ -9367,17 +9883,18 @@ var geom;
     var input;
     (function (input) {
         class AbstractMouseInputHandler extends framework.input.AbstractInputHandler {
-            constructor(component, camera, button) {
+            constructor(app) {
                 super();
+                if (this.app === undefined) {
+                    this.app = null;
+                }
                 if (this.component === undefined) {
                     this.component = null;
                 }
                 if (this.camera === undefined) {
                     this.camera = null;
                 }
-                if (this.button === undefined) {
-                    this.button = 0;
-                }
+                this.TMP_VEC = new math.Vector2();
                 if (this.dragCurrent === undefined) {
                     this.dragCurrent = null;
                 }
@@ -9387,35 +9904,48 @@ var geom;
                 if (this.wheelRotation === undefined) {
                     this.wheelRotation = 0;
                 }
-                this.component = component;
-                this.camera = camera;
-                this.button = button;
+                this.app = app;
+                this.component = app.canvas;
+                this.camera = app.camera;
+            }
+            /*private*/ pageToCanvas(x, y) {
+                return new math.Vector2(x - this.component.offsetLeft, y - this.component.offsetTop);
+            }
+            /*private*/ getButton(e) {
+                let btn = e.button;
+                if (btn === 0)
+                    btn = e.which;
+                return btn;
             }
             /**
              *
              */
             install() {
                 this.component.addEventListener("mousedown", (event) => {
-                    this.dragCurrent = new math.Vector2(event.pageX, event.pageY);
+                    this.dragCurrent = this.pageToCanvas(event.pageX, event.pageY);
                     this.dragStart = this.dragCurrent;
                     if (this.isEnabled() && !this.isDependentBehaviorActive()) {
-                        this.onMousePressed(event.button, this.dragStart);
+                        this.onMousePressed(this.getButton(event), this.dragStart);
                     }
                     return null;
                 }, true);
                 this.component.addEventListener("mousemove", (event) => {
                     if (event.buttons > 0) {
-                        this.dragCurrent = new math.Vector2(event.pageX, event.pageY);
+                        this.dragCurrent = this.pageToCanvas(event.pageX, event.pageY);
                         if (this.isEnabled() && !this.isDependentBehaviorActive() && this.dragStart != null) {
-                            this.onMouseDrag(event.button, this.dragStart, this.dragCurrent);
+                            this.onMouseDrag(this.getButton(event), this.dragStart, this.dragCurrent);
                         }
                     }
-                    this.onMouseMove(0, new math.Vector2(event.pageX, event.pageY));
+                    else {
+                        if (this.isEnabled() && !this.isDependentBehaviorActive())
+                            this.onMouseMove(0, this.pageToCanvas(event.pageX, event.pageY));
+                    }
                     return null;
                 }, true);
                 this.component.addEventListener("mouseup", (event) => {
+                    const v = this.pageToCanvas(event.pageX, event.pageY);
                     if (this.isEnabled() && !this.isDependentBehaviorActive()) {
-                        this.onMouseRelease(event.button, this.dragCurrent);
+                        this.onMouseRelease(this.getButton(event), v);
                     }
                     this.dragCurrent = null;
                     this.dragStart = null;
@@ -9423,16 +9953,59 @@ var geom;
                 }, true);
                 this.component.addEventListener("click", (event) => {
                     if (this.isEnabled() && !this.isDependentBehaviorActive()) {
-                        this.onMouseClick(event.button, new math.Vector2(event.pageX, event.pageY));
+                        this.onMouseClick(this.getButton(event), this.pageToCanvas(event.pageX, event.pageY));
                     }
+                    return null;
+                }, true);
+                this.component.addEventListener("contextmenu", (event) => {
+                    event.preventDefault();
+                    if (this.isEnabled() && !this.isDependentBehaviorActive()) {
+                        this.onMouseClick(2, this.pageToCanvas(event.pageX, event.pageY));
+                    }
+                    return null;
+                }, true);
+                this.component.addEventListener("touchstart", (event) => {
+                    if (event.touches.length === 1) {
+                        const touch = event.changedTouches.item(0);
+                        this.dragCurrent = this.pageToCanvas(touch.pageX, touch.pageY);
+                        this.dragStart = this.dragCurrent;
+                        if (this.isEnabled() && !this.isDependentBehaviorActive()) {
+                            this.onMousePressed(1, this.dragStart);
+                        }
+                    }
+                    event.preventDefault();
+                    return null;
+                }, true);
+                this.component.addEventListener("touchmove", (event) => {
+                    if (event.changedTouches.length === 1) {
+                        const touch = event.changedTouches.item(0);
+                        this.dragCurrent = this.pageToCanvas(touch.pageX, touch.pageY);
+                        if (this.isEnabled() && !this.isDependentBehaviorActive() && this.dragStart != null) {
+                            this.onMouseDrag(1, this.dragStart, this.dragCurrent);
+                        }
+                    }
+                    event.preventDefault();
+                    return null;
+                }, true);
+                this.component.addEventListener("touchend", (event) => {
+                    if (event.changedTouches.length === 1) {
+                        const touch = event.changedTouches.item(0);
+                        this.dragCurrent = this.pageToCanvas(touch.pageX, touch.pageY);
+                        if (this.isEnabled() && !this.isDependentBehaviorActive()) {
+                            this.onMouseClick(1, this.dragCurrent);
+                            this.onMouseRelease(1, this.dragCurrent);
+                        }
+                        this.dragCurrent = null;
+                        this.dragStart = null;
+                    }
+                    event.preventDefault();
                     return null;
                 }, true);
                 this.component.addEventListener("mousewheel", (event) => {
                     if (this.isEnabled() && !this.isDependentBehaviorActive()) {
                         event.preventDefault();
-                        this.onMouseWheel(event.wheelDelta, new math.Vector2(event.pageX, event.pageY));
+                        this.onMouseWheel(event.wheelDelta, this.pageToCanvas(event.pageX, event.pageY));
                     }
-                    event.stopPropagation();
                     return null;
                 }, true);
             }
@@ -9470,59 +10043,6 @@ var geom;
         AbstractMouseInputHandler["__class"] = "framework.input.AbstractMouseInputHandler";
         AbstractMouseInputHandler["__interfaces"] = ["framework.input.InputHandler"];
     })(input = framework.input || (framework.input = {}));
-})(framework || (framework = {}));
-(function (framework) {
-    class Preferences {
-        static ImageColor_$LI$() { if (Preferences.ImageColor == null) {
-            Preferences.ImageColor = new framework.Color(180, 100, 100, 220);
-        } return Preferences.ImageColor; }
-        static virtualRaysColor_$LI$() { if (Preferences.virtualRaysColor == null) {
-            Preferences.virtualRaysColor = new framework.Color(190, 190, 40, 240);
-        } return Preferences.virtualRaysColor; }
-        static selectedColor_$LI$() { if (Preferences.selectedColor == null) {
-            Preferences.selectedColor = new framework.Color(100, 100, 200, 200);
-        } return Preferences.selectedColor; }
-        static backgroundColor_$LI$() { if (Preferences.backgroundColor == null) {
-            Preferences.backgroundColor = new framework.Color(24, 24, 24);
-        } return Preferences.backgroundColor; }
-        static gridColor_$LI$() { if (Preferences.gridColor == null) {
-            Preferences.gridColor = new framework.Color(130, 130, 120, 150);
-        } return Preferences.gridColor; }
-        static axisColor_$LI$() { if (Preferences.axisColor == null) {
-            Preferences.axisColor = new framework.Color(250, 120, 40, 255);
-        } return Preferences.axisColor; }
-        static textColor_$LI$() { if (Preferences.textColor == null) {
-            Preferences.textColor = new framework.Color(255, 255, 255);
-        } return Preferences.textColor; }
-        static tooltipColor_$LI$() { if (Preferences.tooltipColor == null) {
-            Preferences.tooltipColor = new framework.Color(255, 255, 255, 180);
-        } return Preferences.tooltipColor; }
-        static snapToGrid(p) {
-            if (!Preferences.gridEnabled)
-                return p;
-            const x = Math.round(p.x / Preferences.gridSize) * Preferences.gridSize;
-            const y = Math.round(p.y / Preferences.gridSize) * Preferences.gridSize;
-            return new math.Vector2(x, y);
-        }
-        static getEpsilon() {
-            return Preferences.EPSILON;
-        }
-        static getMaxSignifucantFigures() {
-            return 2;
-        }
-        static getRandomColor() {
-            return new framework.Color(math.MathUtils.random$int$int(160, 255), math.MathUtils.random$int$int(160, 255), math.MathUtils.random$int$int(160, 255), 160);
-        }
-    }
-    Preferences.showAxis = false;
-    Preferences.showGrid = false;
-    Preferences.MAX_RAY_INTERACTIONS = 10;
-    Preferences.EPSILON = 1.0E-12;
-    Preferences.axesEnabled = true;
-    Preferences.gridEnabled = false;
-    Preferences.gridSize = 0.1;
-    framework.Preferences = Preferences;
-    Preferences["__class"] = "framework.Preferences";
 })(framework || (framework = {}));
 (function (math) {
     /**
@@ -11370,16 +11890,8 @@ var geom;
     var input;
     (function (input) {
         class KeyBoardControlsHandler extends framework.input.AbstractKeyboardInputHandler {
-            constructor(component, app, camera) {
-                super(component);
-                if (this.app === undefined) {
-                    this.app = null;
-                }
-                if (this.camera === undefined) {
-                    this.camera = null;
-                }
-                this.app = app;
-                this.camera = camera;
+            constructor(app) {
+                super(app);
             }
             /**
              *
@@ -11423,13 +11935,9 @@ var geom;
     var input;
     (function (input) {
         class KeyBoardCameraHandler extends framework.input.AbstractKeyboardInputHandler {
-            constructor(component, camera) {
-                super(component);
-                if (this.camera === undefined) {
-                    this.camera = null;
-                }
+            constructor(app) {
+                super(app);
                 this.delta = 1;
-                this.camera = camera;
             }
             /**
              *
@@ -11439,7 +11947,7 @@ var geom;
                 return true;
             }
             onKeyPressed(keyCode, key) {
-                this.delta = framework.Preferences.gridSize / 5;
+                this.delta = this.app.preferences.gridSize / 5;
                 let dx = 0;
                 let dy = 0;
                 switch ((key)) {
@@ -11479,13 +11987,13 @@ var geom;
     var input;
     (function (input) {
         class MousePickingInputHandler extends framework.input.AbstractMouseInputHandler {
-            constructor(component, camera, shapesManager) {
-                super(component, camera, 1);
+            constructor(app) {
+                super(app);
                 if (this.shapesManager === undefined) {
                     this.shapesManager = null;
                 }
                 this.active = false;
-                this.shapesManager = shapesManager;
+                this.shapesManager = app.shapesManager;
             }
             /**
              *
@@ -11494,7 +12002,7 @@ var geom;
              */
             onMousePressed(button, point) {
                 super.onMousePressed(button, point);
-                const p = this.camera.toWorldCoordinates(point);
+                const p = this.camera.toWorldCoordinates(point.x, point.y);
                 this.shapesManager.poll(1, p);
             }
             /**
@@ -11505,17 +12013,17 @@ var geom;
              */
             onMouseDrag(button, start, current) {
                 super.onMouseDrag(button, start, current);
-                const p = this.camera.toWorldCoordinates(current);
+                const p = this.camera.toWorldCoordinates(current.x, current.y);
                 this.shapesManager.poll(1, p);
             }
             onMouseClick(button, point) {
                 super.onMouseClick(button, point);
-                const p = this.camera.toWorldCoordinates(point);
+                const p = this.camera.toWorldCoordinates(point.x, point.y);
                 this.shapesManager.poll(3, p);
             }
             onMouseMove(button, point) {
                 super.onMouseMove(button, point);
-                const p = this.camera.toWorldCoordinates(point);
+                const p = this.camera.toWorldCoordinates(point.x, point.y);
                 this.shapesManager.poll(4, p);
             }
             /**
@@ -11525,7 +12033,7 @@ var geom;
              */
             onMouseRelease(button, point) {
                 super.onMouseRelease(button, point);
-                const p = this.camera.toWorldCoordinates(point);
+                const p = this.camera.toWorldCoordinates(point.x, point.y);
                 this.shapesManager.poll(2, p);
             }
             /**
@@ -11548,6 +12056,10 @@ var geom;
             uninstall() {
                 super.uninstall();
             }
+            onMouseWheel(rotation, pt) {
+                pt = this.camera.toWorldCoordinates(pt.x, pt.y);
+                this.camera.zoomToAboutPoint(this.camera.getZoom() * Math.pow(1.001, rotation), pt);
+            }
         }
         input.MousePickingInputHandler = MousePickingInputHandler;
         MousePickingInputHandler["__class"] = "framework.input.MousePickingInputHandler";
@@ -11558,8 +12070,8 @@ var geom;
     var input;
     (function (input) {
         class MousePanningInputHandler extends framework.input.AbstractMouseInputHandler {
-            constructor(component, camera) {
-                super(component, camera, 1);
+            constructor(app) {
+                super(app);
                 if (this.panning === undefined) {
                     this.panning = false;
                 }
@@ -11597,8 +12109,8 @@ var geom;
                 this.clearPanningState();
             }
             onMouseWheel(rotation, pt) {
-                pt = this.camera.toWorldCoordinates(pt);
-                this.camera.zoomToAboutPoint(this.camera.getScale() * Math.pow(1.001, rotation), pt);
+                pt = this.camera.toWorldCoordinates(pt.x, pt.y);
+                this.camera.zoomToAboutPoint(this.camera.getZoom() * Math.pow(1.001, rotation), pt);
             }
             /**
              *
@@ -11649,6 +12161,857 @@ var geom;
 })(framework || (framework = {}));
 (function (geom) {
     /**
+     * Action to store information about moving (translating) the world.
+     * @param {framework.App} app
+     * @class
+     * @extends framework.input.AbstractMouseInputHandler
+     */
+    class AddShapeAction extends framework.input.AbstractMouseInputHandler {
+        constructor(app) {
+            super(app);
+            if (this.elementClass === undefined) {
+                this.elementClass = null;
+            }
+            this.parentClasses = null;
+            if (this.arrayObjects === undefined) {
+                this.arrayObjects = null;
+            }
+            if (this.paramClasses === undefined) {
+                this.paramClasses = null;
+            }
+            if (this.param === undefined) {
+                this.param = null;
+            }
+            if (this.pathInfo === undefined) {
+                this.pathInfo = null;
+            }
+            this.step = 1;
+            this.instructions = ["no instruction"];
+            this.vertices = (new java.util.ArrayList());
+            if (this.name === undefined) {
+                this.name = null;
+            }
+            if (this.shapesManager === undefined) {
+                this.shapesManager = null;
+            }
+            this.cursor = "default";
+            if (this.active === undefined) {
+                this.active = false;
+            }
+            this.mousePressedPoint = null;
+            this.prevMousepos = null;
+            this.shapesManager = app.shapesManager;
+            AddShapeAction.tmpColor = framework.Preferences.getRandomColor();
+            this.active = false;
+        }
+        begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_String_A(name, elementClass, parentClasses, instructions) {
+            this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A(name, elementClass, parentClasses, [], []);
+        }
+        begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A(name, elementClass, parentClasses, options, instructions) {
+            this.end();
+            this.name = name;
+            this.elementClass = elementClass;
+            this.parentClasses = parentClasses;
+            this.instructions = instructions;
+            if (options == null)
+                options = [];
+            const parentNumber = parentClasses.length;
+            const optionNumber = options.length;
+            this.param = (s => { let a = []; while (s-- > 0)
+                a.push(null); return a; })(parentNumber + optionNumber);
+            this.paramClasses = (s => { let a = []; while (s-- > 0)
+                a.push(null); return a; })(parentNumber + optionNumber);
+            for (let i = 0; i < parentNumber; i++) {
+                this.paramClasses[i] = AddShapeAction.typeClass(parentClasses[i]);
+            }
+            for (let i = 0; i < optionNumber; i++) {
+                {
+                    this.param[parentNumber + i] = options[i];
+                    this.paramClasses[parentNumber + i] = AddShapeAction.typeClass(options[i].constructor);
+                }
+                ;
+            }
+            if (parentClasses.length > 0)
+                this.arrayObjects = (new java.util.ArrayList());
+            this.begin$();
+        }
+        /**
+         * @param {string} name the key to retrieve this tool
+         * @param {java.lang.Class} elementClass class of the object to create
+         * @param classes classes of objects which define the created object
+         * @param parameters optional parameters for created object
+         * @param {java.lang.Class<? extends geom.Shape2D>[]} parentClasses
+         * @param {java.lang.Object[]} options
+         * @param {java.lang.String[]} instructions
+         */
+        begin(name, elementClass, parentClasses, options, instructions) {
+            if (((typeof name === 'string') || name === null) && ((elementClass != null && (elementClass["__class"] != null || ((t) => { try {
+                new t;
+                return true;
+            }
+            catch (_a) {
+                return false;
+            } })(elementClass))) || elementClass === null) && ((parentClasses != null && parentClasses instanceof Array && (parentClasses.length == 0 || parentClasses[0] == null || (parentClasses[0] != null && (parentClasses[0]["__class"] != null || ((t) => { try {
+                new t;
+                return true;
+            }
+            catch (_a) {
+                return false;
+            } })(parentClasses[0]))))) || parentClasses === null) && ((options != null && options instanceof Array && (options.length == 0 || options[0] == null || (options[0] != null))) || options === null) && ((instructions != null && instructions instanceof Array && (instructions.length == 0 || instructions[0] == null || (typeof instructions[0] === 'string'))) || instructions === null)) {
+                return this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A(name, elementClass, parentClasses, options, instructions);
+            }
+            else if (((typeof name === 'string') || name === null) && ((elementClass != null && (elementClass["__class"] != null || ((t) => { try {
+                new t;
+                return true;
+            }
+            catch (_a) {
+                return false;
+            } })(elementClass))) || elementClass === null) && ((parentClasses != null && parentClasses instanceof Array && (parentClasses.length == 0 || parentClasses[0] == null || (parentClasses[0] != null && (parentClasses[0]["__class"] != null || ((t) => { try {
+                new t;
+                return true;
+            }
+            catch (_a) {
+                return false;
+            } })(parentClasses[0]))))) || parentClasses === null) && ((options != null && options instanceof Array && (options.length == 0 || options[0] == null || (typeof options[0] === 'string'))) || options === null) && instructions === undefined) {
+                return this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_String_A(name, elementClass, parentClasses, options);
+            }
+            else if (name === undefined && elementClass === undefined && parentClasses === undefined && options === undefined && instructions === undefined) {
+                return this.begin$();
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        /**
+         * Transform a class such as Integer.class into the class of the
+         * corresponding primitive type: int.class.
+         *
+         * @param {java.lang.Class} aClass
+         * @return
+         * @return {java.lang.Class}
+         * @private
+         */
+        /*private*/ static typeClass(aClass) {
+            let theClass = aClass;
+            if (theClass === Number)
+                theClass = Number;
+            if (theClass === Number)
+                theClass = Number;
+            if (theClass === Boolean)
+                theClass = Boolean;
+            return theClass;
+        }
+        begin$() {
+            this.active = true;
+            this.step = 1;
+            this.vertices.clear();
+            this.pathInfo = "";
+            if (this.arrayObjects != null)
+                this.arrayObjects.clear();
+            if (this.paramClasses != null)
+                this.param = (s => { let a = []; while (s-- > 0)
+                    a.push(null); return a; })(this.paramClasses.length);
+            this.shapesManager.previewShape = null;
+            this.shapesManager.tempShape = null;
+            this.shapesManager.setToolTip(null, null);
+            this.app.setStatusLine(this.getInstruction());
+            AddShapeAction.tmpColor = framework.Preferences.getRandomColor();
+        }
+        /**
+         *
+         * @param {number} button
+         * @param {math.Vector2} point
+         */
+        onMousePressed(button, point) {
+            super.onMousePressed(button, point);
+            const p = this.camera.toWorldCoordinates(point.x, point.y);
+            if (this.isActive())
+                this.mouseMoved(p, button === 1, false);
+        }
+        /**
+         *
+         * @param {number} button
+         * @param {math.Vector2} start
+         * @param {math.Vector2} current
+         */
+        onMouseDrag(button, start, current) {
+            super.onMouseDrag(button, start, current);
+            const p = this.camera.toWorldCoordinates(current.x, current.y);
+            if (this.isActive())
+                this.mouseMoved(p, button === 1, false);
+        }
+        onMouseClick(button, point) {
+            super.onMouseClick(button, point);
+            const p = this.camera.toWorldCoordinates(point.x, point.y);
+            if (this.isActive())
+                this.mouseClicked(p, button === 1, false);
+        }
+        onMouseMove(button, point) {
+            super.onMouseMove(button, point);
+            const p = this.camera.toWorldCoordinates(point.x, point.y);
+            if (this.isActive())
+                this.mouseMoved(p, button === 1, false);
+        }
+        /**
+         *
+         * @param {number} button
+         * @param {math.Vector2} point
+         */
+        onMouseRelease(button, point) {
+            super.onMouseRelease(button, point);
+            const p = this.camera.toWorldCoordinates(point.x, point.y);
+        }
+        /**
+         *
+         * @param {boolean} flag
+         */
+        setEnabled(flag) {
+            super.setEnabled(flag);
+        }
+        /**
+         *
+         * @return {boolean}
+         */
+        isActive() {
+            return this.active && this.paramClasses != null;
+        }
+        /**
+         * Updates the action whenever mouse moves with the new begin position in world coordinates.
+         * <p>
+         * This is used if the action is carried out over a time period in which the
+         * user would like visual feedback.
+         * @param {math.Vector2} mousePosition the new begin position in world coordinates
+         * @param {boolean} shiftPressed
+         * @param true if mouse d pressed during move
+         * @param {boolean} pressed
+         */
+        mouseMoved(mousePosition, pressed, shiftPressed) {
+            let dynamic = null;
+            let class1 = this.paramClasses[this.step - 1];
+            if (class1 === geom.ShapeArray)
+                class1 = geom.ShapeArray.clazz_$LI$();
+            if (!framework.ClassUtils.isAssignableFrom(geom.Shape2D, class1))
+                return;
+            const shapeClass = class1;
+            const snappedShape = this.shapesManager.getSnappedShape(mousePosition, shapeClass);
+            if (snappedShape != null) {
+                this.shapesManager.setToolTip("this " + snappedShape.getName(), mousePosition);
+                this.shapesManager.previewShape = null;
+                dynamic = snappedShape;
+            }
+            else {
+                if (AddShapeAction.canCreateNewFreePoint(shapeClass)) {
+                    if (shiftPressed) {
+                        if (this.prevMousepos != null) {
+                            const dv = mousePosition.difference$math_Vector2(this.prevMousepos);
+                            if (Math.abs(dv.x) > Math.abs(dv.y)) {
+                                dv.y = 0;
+                            }
+                            else {
+                                dv.x = 0;
+                            }
+                            mousePosition.set$double$double(this.prevMousepos.x + dv.x, this.prevMousepos.y + dv.y);
+                        }
+                    }
+                    dynamic = this.shapesManager.createNewDynamicPoint(mousePosition);
+                    this.shapesManager.previewShape = dynamic;
+                    if (this.shapesManager.previewShape.drawColor == null)
+                        this.shapesManager.previewShape.drawColor = AddShapeAction.tmpColor.copy();
+                    this.shapesManager.setToolTip(this.shapesManager.getMouseLabel(dynamic), mousePosition);
+                }
+                else {
+                    this.shapesManager.setToolTip("", mousePosition);
+                }
+            }
+            if (this.step === this.parentClasses.length && framework.ClassUtils.isAssignableFrom(geom.Shape2D, this.elementClass) && dynamic != null) {
+                if (this.parentClasses[this.step - 1] === geom.ShapeArray) {
+                    if (pressed && this.arrayObjects.size() > 0) {
+                        if (this.mousePressedPoint == null) {
+                            this.mousePressedPoint = mousePosition;
+                        }
+                        else if (!isNaN(this.mousePressedPoint.x)) {
+                            const p = dynamic.pt;
+                            if (p.distance$math_Vector2(this.mousePressedPoint) > geom.Shape2D.SNAP_DISTANCE) {
+                                const pt = this.shapesManager.createNewDynamicPoint(this.mousePressedPoint);
+                                this.mousePressedPoint = new math.Vector2(javaemul.internal.DoubleHelper.NaN, 0);
+                                this.pathInfo += "1";
+                                this.arrayObjects.add(pt);
+                                this.shapesManager.addShape(pt);
+                                return;
+                            }
+                        }
+                    }
+                    for (let i = 0; i < this.param.length - 1; i++) {
+                        {
+                            if ( /* equals */((o1, o2) => o1 && o1.equals ? o1.equals(o2) : o1 === o2)(this.param[i], dynamic))
+                                return;
+                        }
+                        ;
+                    }
+                    const n = this.arrayObjects.size();
+                    const newArray = (s => { let a = []; while (s-- > 0)
+                        a.push(null); return a; })(n + 1);
+                    for (let i = 0; i < n; i++) {
+                        newArray[i] = this.arrayObjects.get(i);
+                    }
+                    newArray[n] = dynamic;
+                    this.param[this.step - 1] = newArray;
+                }
+                else {
+                    for (let i = 0; i < this.param.length - 1; i++) {
+                        {
+                            if ( /* equals */((o1, o2) => o1 && o1.equals ? o1.equals(o2) : o1 === o2)(this.param[i], dynamic))
+                                return;
+                        }
+                        ;
+                    }
+                    this.param[this.step - 1] = dynamic;
+                }
+                if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalPathShape2D, this.elementClass)) {
+                    this.shapesManager.tempShape = new geom.optics.OpticalPathShape2D(this.param[this.step - 1], [this.pathInfo + "0"]);
+                }
+                else if (framework.ClassUtils.isAssignableFrom(geom.PathNpoints2D, this.elementClass)) {
+                    this.shapesManager.tempShape = new geom.PathNpoints2D(this.param[this.step - 1], [this.pathInfo + "0"]);
+                }
+                else {
+                    this.shapesManager.tempShape = this.createObject(this.elementClass, this.paramClasses, this.param, pressed);
+                }
+                if (this.shapesManager.tempShape != null) {
+                    if (this.shapesManager.tempShape.drawColor == null)
+                        this.shapesManager.tempShape.drawColor = AddShapeAction.tmpColor.copy();
+                    this.shapesManager.tempShape.onAddShapeToSimulation(this.shapesManager);
+                }
+            }
+        }
+        mouseClicked(position, leftButton, shiftPressed) {
+            this.mousePressedPoint = null;
+            if (this.step > this.paramClasses.length)
+                this.step = 1;
+            let parentClass = this.paramClasses[this.step - 1];
+            let isSingleParent = true;
+            if (parentClass === geom.ShapeArray) {
+                isSingleParent = false;
+                parentClass = geom.ShapeArray.clazz_$LI$();
+            }
+            if (!framework.ClassUtils.isAssignableFrom(geom.Shape2D, parentClass)) {
+                console.info("Error: Variable class1 should be a subclass of Shape2D");
+            }
+            if (leftButton) {
+                if (this.step === 1)
+                    this.app.setCursor(null);
+                if (framework.ClassUtils.isAssignableFrom(geom.Shape2D, parentClass)) {
+                    if (shiftPressed && framework.ClassUtils.isAssignableFrom(geom.Point2D, parentClass)) {
+                        if (this.prevMousepos != null) {
+                            const dv = position.difference$math_Vector2(this.prevMousepos);
+                            if (Math.abs(dv.x) > Math.abs(dv.y)) {
+                                dv.y = 0;
+                            }
+                            else {
+                                dv.x = 0;
+                            }
+                            console.info("dv set to " + dv);
+                            position.set$double$double(this.prevMousepos.x + dv.x, this.prevMousepos.y + dv.y);
+                        }
+                    }
+                    this.prevMousepos = position;
+                    const ancestor = this.findParentShape(parentClass, position);
+                    if (ancestor == null)
+                        return;
+                    if (ancestor != null && ancestor instanceof geom.Point2D)
+                        this.prevMousepos = position;
+                    if (this.arrayObjects != null && this.arrayObjects.size() !== 0 && this.arrayObjects.get(0).equals(ancestor)) {
+                        this.createParentsArray(parentClass);
+                        this.step++;
+                    }
+                    else {
+                        for (let i = 0; i < this.step - 1; i++) {
+                            {
+                                if ( /* equals */((o1, o2) => o1 && o1.equals ? o1.equals(o2) : o1 === o2)(this.param[i], ancestor))
+                                    return;
+                            }
+                            ;
+                        }
+                        if (isSingleParent) {
+                            this.param[this.step - 1] = ancestor;
+                            this.step++;
+                        }
+                        else {
+                            this.addParentShapeToArray(ancestor);
+                            if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalPathShape2D, this.elementClass) || framework.ClassUtils.isAssignableFrom(geom.PathNpoints2D, this.elementClass))
+                                this.pathInfo += "0";
+                            return;
+                        }
+                    }
+                }
+            }
+            else {
+                if (isSingleParent) {
+                    this.restart();
+                    this.step = 1;
+                    this.app.setStatusLine(this.getInstruction());
+                    return;
+                }
+                else {
+                    if (this.arrayObjects.size() === 0) {
+                        this.step = 1;
+                        return;
+                    }
+                    this.createParentsArray(parentClass);
+                    this.step++;
+                }
+            }
+            this.app.setStatusLine(this.getInstruction());
+            while ((this.step < this.parentClasses.length + 1)) {
+                {
+                    parentClass = this.paramClasses[this.step - 1];
+                    if (framework.ClassUtils.isAssignableFrom(Number, parentClass)) {
+                        const value = framework.UserInput.getDouble(this.getInstruction(), 0, javaemul.internal.DoubleHelper.MAX_VALUE);
+                        this.param[this.step - 1] = value;
+                        this.step++;
+                    }
+                    else if (framework.ClassUtils.isAssignableFrom(String, parentClass)) {
+                        const string = framework.UserInput.getExpression("Enter Expression or value", this.getInstruction(), null, (this.elementClass === geom.FunctionExplicit2D) ? ["x"] : (this.elementClass === geom.PolarCurve2D || this.elementClass === geom.ParametricCurve2D) ? ["t"] : null);
+                        if (string == null || /* isEmpty */ (string.length === 0)) {
+                            this.restart();
+                            this.app.setStatusLine(this.getInstruction());
+                            return;
+                        }
+                        this.param[this.step - 1] = string;
+                        this.step++;
+                    }
+                    else {
+                        if (framework.ClassUtils.isAssignableFrom(geom.Shape2D, parentClass))
+                            return;
+                    }
+                }
+            }
+            ;
+            if (this.step === this.parentClasses.length + 1) {
+                let newObject;
+                if (framework.ClassUtils.isAssignableFrom(geom.optics.OpticalPathShape2D, this.elementClass)) {
+                    newObject = new geom.optics.OpticalPathShape2D(this.param[this.param.length - 1], [this.pathInfo]);
+                }
+                else if (framework.ClassUtils.isAssignableFrom(geom.PathNpoints2D, this.elementClass)) {
+                    newObject = new geom.PathNpoints2D(this.param[this.param.length - 1], [this.pathInfo]);
+                }
+                else {
+                    newObject = this.createObject(this.elementClass, this.paramClasses, this.param, false);
+                }
+                if (newObject == null) {
+                    this.step = 1;
+                    this.app.setStatusLine(this.getInstruction());
+                    return;
+                }
+                this.shapesManager.previewShape = null;
+                this.shapesManager.tempShape = null;
+                if (newObject.isDefined()) {
+                    this.shapesManager.addShape(newObject);
+                }
+                this.step = 1;
+                this.param = (s => { let a = []; while (s-- > 0)
+                    a.push(null); return a; })(this.param.length);
+                this.app.setStatusLine(this.getInstruction());
+                this.restart();
+            }
+        }
+        /**
+         * Conditions for creating new free point:
+         * (1) parent class extends Point2D or Shape2D, and
+         * (2) and creation of new point is allowed by application
+         * @param {java.lang.Class} shapeClass
+         * @return {boolean}
+         * @private
+         */
+        /*private*/ static canCreateNewFreePoint(shapeClass) {
+            if (framework.ClassUtils.isAssignableFrom(geom.Point2D, shapeClass))
+                return true;
+            if (geom.Shape2D === shapeClass)
+                return true;
+            return false;
+        }
+        /**
+         * Ends the move body action.
+         * @param component the component
+         */
+        end() {
+            if (this.active)
+                this.app.setCursor(this.cursor);
+            this.active = false;
+            this.step = 1;
+            if (this.arrayObjects != null)
+                this.arrayObjects.clear();
+            this.shapesManager.previewShape = null;
+            this.shapesManager.tempShape = null;
+            if (this.paramClasses != null)
+                this.param = (s => { let a = []; while (s-- > 0)
+                    a.push(null); return a; })(this.paramClasses.length);
+            this.shapesManager.setToolTip(null, null);
+            this.app.setStatusLine("");
+            this.vertices.clear();
+        }
+        /**
+         * Ends the move body action.
+         * @param component the component
+         */
+        restart() {
+            this.begin$();
+            this.app.setCursor(this.cursor);
+        }
+        /**
+         * Returns the vertices of polygon
+         * <p>
+         * Returns null if the action is inactive.
+         * @return {java.util.ArrayList} Vector2
+         * @see #isActive()
+         */
+        getvertices() {
+            if (!this.isActive())
+                return null;
+            return this.vertices;
+        }
+        /**
+         * Creates a new construction/Dynamic object.
+         * @param {java.lang.Class} elementClass the class of the construction, inherits
+         * DynamicObject2D
+         * @param {java.lang.Class<?>[]} paramClasses the array of classes for each argument of
+         * constructor
+         * @param {java.lang.Object[]} param the array of arguments for the constructor, should be the
+         * same size as paramClass
+         * @return {geom.Shape2D} a new construction (DynamicObject2D) initialized with given
+         * parameters
+         * @param {boolean} isPressed
+         * @private
+         */
+        /*private*/ createObject(elementClass, paramClasses, param, isPressed) {
+            let newObject;
+            const buildClasses = (s => { let a = []; while (s-- > 0)
+                a.push(null); return a; })(paramClasses.length);
+            for (let i = 0; i < paramClasses.length; i++) {
+                {
+                    buildClasses[i] = paramClasses[i];
+                }
+                ;
+            }
+            newObject = framework.ClassUtils.createInstance(elementClass, param);
+            if (newObject != null) {
+                newObject.drawColor = AddShapeAction.tmpColor.copy();
+                newObject.shapesManager = this.shapesManager;
+                newObject.update();
+            }
+            return newObject;
+        }
+        /*private*/ addParentShapeToArray(ancestor) {
+            if (ancestor == null)
+                return;
+            for (let index = this.arrayObjects.iterator(); index.hasNext();) {
+                let s = index.next();
+                {
+                    if (s === ancestor)
+                        return;
+                }
+            }
+            this.arrayObjects.add(ancestor);
+        }
+        /*private*/ findParentShape(class1, point) {
+            const shapeClass = class1;
+            let shape = this.shapesManager.getSnappedShape(point, shapeClass);
+            if (shape != null)
+                return shape;
+            if (!AddShapeAction.canCreateNewFreePoint(shapeClass))
+                return null;
+            shape = this.shapesManager.createNewDynamicPoint(point);
+            this.shapesManager.addShape(shape);
+            return shape;
+        }
+        /**
+         * USed for ShapeArray class only
+         * Create array of objects from arraylist and set param[] variable
+         * @param {java.lang.Class} class1
+         * @private
+         */
+        /*private*/ createParentsArray(class1) {
+            const l = this.arrayObjects.size();
+            const array = (s => { let a = []; while (s-- > 0)
+                a.push(null); return a; })(l);
+            for (let i = 0; i < l; i++) {
+                array[i] = this.arrayObjects.get(i);
+            }
+            this.param[this.step - 1] = array;
+            this.arrayObjects.clear();
+        }
+        /**
+         * Give instruction corresponding to current step of the tool.
+         * @return {string} an instruction string for this tool
+         */
+        getInstruction() {
+            if (this.step > this.instructions.length) {
+                if (this.step < this.paramClasses.length + 1) {
+                    return "Choose " + /* getName */ (c => typeof c === 'string' ? c : c["__class"] ? c["__class"] : c["name"])(this.paramClasses[this.step - 1]);
+                }
+                return "no instruction";
+            }
+            else {
+                return this.instructions[this.step - 1];
+            }
+        }
+        actionPerformed(command) {
+            if (command === ("point-free")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("FreePoint2D", geom.FreePoint2D, [geom.Point2D], null, ["Click to choose Point"]);
+            }
+            else if (command === ("point-coord")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PointsCoord2D", geom.PointExpr2D, [String, String], null, ["Enter X coordinate", "Enter Y coordinate"]);
+            }
+            else if (command === ("point-proj")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PointProjection2D", geom.PointProjection2D, [geom.Curve2D, geom.Point2D], null, ["Click on Curve or Line", "Click to choose Point"]);
+            }
+            else if (command === ("point-reflection")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PointReflectionLine2D", geom.PointReflectionLine2D, [geom.Line2D, geom.Point2D], null, ["Click to Choose Reflecting line ", "Click to choose Point to be reflected"]);
+            }
+            else if (command === ("point-ratio")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PointRatio2D", geom.PointRatio2D, [geom.Point2D, geom.Point2D, String], null, ["Click to choose First Point", "Click to choose Second Point", "Enter value k (divides points in k:1)"]);
+            }
+            else if (command === ("point-circle-center")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PointCircleCenter2D", geom.PointConicCenter, [geom.Conic2D], null, ["Click to choose Circle"]);
+            }
+            else if (command === ("line-2pts")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Line2Points2D", geom.Line2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("line-segments")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Segment2Points2D", geom.Segment2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("line-ray")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Ray2Points2D", geom.Ray2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose Starting Point of ray", "Click to choose Second Point"]);
+            }
+            else if (command === ("line-parallel")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LinePointParallel2D", geom.LinePointParallelLine2D, [geom.Line2D, geom.Point2D], null, ["Click to choose Line", "Click to choose Point"]);
+            }
+            else if (command === ("line-perpendicular")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LinePointPerpenducular2D", geom.LinePointPerpendicularLine2D, [geom.Line2D, geom.Point2D], null, ["Click to choose Line", "Click to choose Point"]);
+            }
+            else if (command === ("line-angle-x-axis")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LinePointAngle2D", geom.LinePointAngle2D, [geom.Point2D, String], null, ["Click to choose Point", "Enter expression for angle in radians"]);
+            }
+            else if (command === ("line-angle-line")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LineLineAnglePoint2D", geom.LineLineAnglePoint2D, [geom.Line2D, geom.Point2D, String], null, ["Click to choose Line", "Click to choose Point", "Enter expression for angle in radians"]);
+            }
+            else if (command === ("line-tangent")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LineTangent2D", geom.LineTangent2D, [geom.Curve2D, geom.Point2D], null, ["Click to choose curve ", "Click to choose Point"]);
+            }
+            else if (command === ("line-normal")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LineNormal2D", geom.LineNormal2D, [geom.Curve2D, geom.Point2D], null, ["Click to choose curve ", "Click to choose Point"]);
+            }
+            else if (command === ("line-bisector")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LineAngleBisector2D", geom.LineAngleBisectorPair2D, [geom.Line2D, geom.Line2D], null, ["Click to choose first line", "Click to choose second Line"]);
+            }
+            else if (command === ("ray-reflect")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("RayReflect2PointsCurve2D", geom.RayReflect2PointsCurve2D, [geom.Point2D, geom.Point2D, geom.Curve2D], null, ["Click to choose first point on incident ray", "Click to choose second point on Ray", "Click to choose curve"]);
+            }
+            else if (command === ("ray-refract")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("OpticalRay2D", geom.optics.OpticalRay2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose first point on incident ray", "Click to choose second point on incident ray", "Click to choose Curve", "Enter refractive index of emrgent medium wrt incident"]);
+            }
+            else if (command === ("circle-2pts")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Circle2Points2D", geom.Circle2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose center", "Click to choose Point on circle"]);
+            }
+            else if (command === ("circle-3pts")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Circle3Points2D", geom.Circle3Points2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point", "Click to choose Third Point"]);
+            }
+            else if (command === ("arc-3pts")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("CircleArc3Points2D", geom.CircleArc3Points2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point", "Click to choose Third Point"]);
+            }
+            else if (command === ("arc-center-2pts")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("CircleArcCenter2Points2D", geom.CircleArcCenter2Points2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose Center of Arc", "Click to choose Second Point", "Click to choose Third Point"]);
+            }
+            else if (command === ("circle-diameter")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("CircleDiameter2D", geom.CircleDiameter2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Diameter Point", "Click to choose Second Diameter Point"]);
+            }
+            else if (command === ("parabola-2pts")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Parabola2Points2D", geom.Parabola2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose vertex ", "Click to choose Focus"]);
+            }
+            else if (command === ("parabola-line-pt")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("ParabolaLinePoint2D", geom.ParabolaLinePoint2D, [geom.Line2D, geom.Point2D], null, ["Click to choose directrix", "Click to choose focus"]);
+            }
+            else if (command === ("ellipse-foci-point")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Ellipse2FocusPoint2D", geom.Ellipse2FocusPoint2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose choose first focus", "Click to choose second focus", "Click to choose point on ellipse"]);
+            }
+            else if (command === ("ellipse-center-point")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("EllipseCenter2Points2D", geom.EllipseCenter2Points2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose center", "Click to choose vertex", "Click to choose second axis length"]);
+            }
+            else if (command === ("hyperbola-foci-point")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Hyperbola2FocusPoint2D", geom.Hyperbola2FocusPoint2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose choose first focus", "Click to choose second focus", "Click to choose point on ellipse"]);
+            }
+            else if (command === ("hyperbola-center-point")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("HyperbolaCenter2Points2D", geom.HyperbolaCenter2Points2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose center", "Click to choose vertex", "Click to choose second axis length"]);
+            }
+            else if (command === ("conic-5points")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Conic5Points2D", geom.Conic5Points2D, [geom.Point2D, geom.Point2D, geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose first point", "Click to choose second point", "Click to choose third point", "Click to choose forth point", "Click to choose fifth point", "Click to choose sixth point"]);
+            }
+            else if (command === ("conic-line-point")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("ConicLinePointE2D", geom.ConicLinePointE2D, [geom.Line2D, geom.Point2D, String], null, ["Click to choose directrix", "Click to choose focus", "Click to enter eccentricity"]);
+            }
+            else if (command === ("conic-eqn")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("ConicEqn2D", geom.ConicEqnShape2D, [String, String, String, String, String, String], null, ["Click to enter a (coeff of x^2)", "Click to enter b(coeff of xy)", "Click to enter c (coeff of y^2)", "Click to enter d(coeff of x)", "Click to enter e (coeff of y)", "Click to enter f (constant term)"]);
+            }
+            else if (command === ("circle-center-radius")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("CircleCenterRadius2D", geom.CircleCenterRadius2D, [geom.Point2D, String], null, ["Click to choose center", "Enter expression for radius of circle"]);
+            }
+            else if (command === ("osculating-circle")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("OsculatingCircle2D", geom.OsculatingCircle2D, [geom.Curve2D, geom.Point2D], null, ["Click to choose curve", "Click to choose point"]);
+            }
+            else if (command === ("vector-2pts")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Vector2Points2D", geom.Vector2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("vector-parallel")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("VectorParallel2D", geom.VectorPointParallelLine2D, [geom.Line2D, geom.Point2D, geom.Point2D], null, ["Click to choose parallel Line or vector", "Click to choose initial Point", "Click to choose final Point"]);
+            }
+            else if (command === ("vector-perpendicular")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_String_A("VectorPerpendicular2D", geom.VectorPointPerpendicularLine2D, [geom.Line2D, geom.Point2D], ["Click to choose perpendicular Line or vector", "Click to choose Point"]);
+            }
+            else if (command === ("vector-resultant")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_String_A("VectorSum2D", geom.VectorSum2D, [geom.Vector2D, geom.Vector2D, geom.Point2D], ["Click to choose first vector", "Click to choose second Point", "Click to choose initial Point"]);
+            }
+            else if (command === ("vector-difference")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("VectorDifference2D", geom.VectorDifference2D, [geom.Vector2D, geom.Vector2D, geom.Point2D], null, ["Click to choose first vector", "Click to choose second Point", "Click to choose initial Point"]);
+            }
+            else if (command === ("vector-unit")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("VectorUnit2D", geom.VectorUnit2D, [geom.Line2D, geom.Point2D], null, ["Click to choose line of vector"]);
+            }
+            else if (command === ("measure-info")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("ShapeInfo2D", geom.ShapeInfo2D, [geom.Curve2D, geom.Point2D], null, ["Click to choose Curve/Line", "Click to choose Point"]);
+            }
+            else if (command === ("measure-angle")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("AngleMeasure", geom.AngleMeasure2D, [geom.Line2D, geom.Line2D], null, ["Click to choose First Line", "Click to choose Second Line"]);
+            }
+            else if (command === ("measure-length")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LenthMeasure", geom.LengthMeasure2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("measure-point")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PointMeasure", geom.PointMeasure2D, [geom.Point2D], null, ["Click to choose Point, to create variable"]);
+            }
+            else if (command === ("function-explicit")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("FunctionExplicit2D", geom.FunctionExplicit2D, [String], null, ["Enter Expression as an explicit function of x"]);
+            }
+            else if (command === ("measure-expr")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("ExpressionMeasure", geom.ExpressionMeasure2D, [geom.Point2D, String], null, ["Click to choose Point", "Enter expression to evaluate"]);
+            }
+            else if (command === ("measure-ruler")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Ruler2Points2D", geom.Ruler2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("measure-protractor")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Protractor3Points2D", geom.Protractor3Points2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose Center", "Click to choose initial point of arc", "Click to choose final point of arc"]);
+            }
+            else if (command === ("point-locus")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Dynamic-locus", geom.DynamicCurve2D, [geom.Point2D], null, ["Click to choose point whole locus is to be created"]);
+            }
+            else if (command === ("parametric-curve")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Parametric-Curve", geom.ParametricCurve2D, [String, String], null, ["Enter x Expression as a function of t(-1<=t<=1)", "Enter y Expression as a function of t(-1<=t<=1)"]);
+            }
+            else if (command === ("polar-curve")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("polar-Curve", geom.PolarCurve2D, [String], null, ["Enter Expression for r as a function of t (0<t<2*pi)"]);
+            }
+            else if (command === ("text-2pts")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Text2Points2D", geom.Text2Points2D, [geom.Point2D, geom.Point2D], null, ["Choose first Point", "Choose second Point"]);
+            }
+            else if (command === ("line-eqn")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("LineEqn2D", geom.LineEqn2D, [String, String, String], null, ["Enter \'a\' for equation ax+by+c=0", "Enter \'b\' for equation ax+by+c=0", "Enter \'c\' for equation ax+by+c=0"]);
+            }
+            else if (command === ("vector-eqn")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("VectorEqn2D", geom.VectorEqn2D, [geom.Point2D, String, String], null, ["Choose initial point of Vector", "Enter \'a\' for Vector ai" + math.Unicode.hat + " + bj" + math.Unicode.hat, "Enter \'b\' for Vector ai" + math.Unicode.hat + " + bj" + math.Unicode.hat]);
+            }
+            else if (command === ("point-relative")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PointRelativePoint2D", geom.PointRelativePoint2D, [geom.Point2D, geom.Point2D], null, ["Choose reference point", "Choose new Position Point"]);
+            }
+            else if (command === ("quad-curve")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Bezier3points2D", geom.Bezier3Points2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Choose first point", "Choose control point", "Choose secondn Point"]);
+            }
+            else if (command === ("cubic-curve")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Bezier4points2D", geom.Bezier4Points2D, [geom.Point2D, geom.Point2D, geom.Point2D, geom.Point2D], null, ["Choose first point", "Choose first control point", "Choose second control point", "Choose secondn Point"]);
+            }
+            else if (command === ("PathNpoints")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PathNpoints", geom.PathNpoints2D, [geom.ShapeArray], null, ["Choose Point on path, press and drag to create arc"]);
+            }
+            else if (command === ("conic-center")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PointConicCenter", geom.PointConicCenter, [geom.Conic2D], null, ["Choose Conic"]);
+            }
+            else if (command === ("conic-foci")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("FociConic2D", geom.FociConic2D, [geom.Conic2D], null, ["Choose Conic"]);
+            }
+            else if (command === ("conic-intersections")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("Intersection2Conics2D", geom.Intersection2Conics2D, [geom.Conic2D, geom.Conic2D], null, ["Choose First Conic", "Choose Second Conic"]);
+            }
+            else if (command === ("conic-pole")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PoleConicLine2D", geom.PoleConicLine2D, [geom.Conic2D, geom.Line2D], null, ["Choose Conic", "Choose polar line"]);
+            }
+            else if (command === ("conic-polar")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("PolarConicPoint2D", geom.PolarConicPoint2D, [geom.Conic2D, geom.Point2D], null, ["Choose Conic", "Choose pole Point"]);
+            }
+            else if (command === ("conic-midpointchord")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("MidPointChordConicPoint2D", geom.MidPointChordConicPoint2D, [geom.Conic2D, geom.Point2D], null, ["Choose Conic", "Choose MidPoint of chord"]);
+            }
+            else if (command === ("conic-parallel-tangents")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("TangentsConicLine2D", geom.TangentsConicLine2D, [geom.Conic2D, geom.Line2D], null, ["Choose conic", "Choose line parallel to which tangents are drawn"]);
+            }
+            else if (command === ("conic-ext-tangents")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("TangentsConicPoint2D", geom.TangentsConicPoint2D, [geom.Conic2D, geom.Point2D], null, ["Choose conic", "Choose point from where tangents are to be drawn"]);
+            }
+            else if (command === ("conic-common-tangents")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("CommonTangents2Conics2D", geom.CommonTangents2Conics2D, [geom.Conic2D, geom.Conic2D], null, ["Choose first conic", "Choose second conic"]);
+            }
+            else if (command === ("conic-parallel-normals")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("NormalsConicLine2D", geom.NormalsConicLine2D, [geom.Conic2D, geom.Line2D], null, ["Choose conic", "Choose line parallel to which normals are drawn"]);
+            }
+            else if (command === ("conic-ext-normals")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("NormalsConicPoint2D", geom.NormalsConicPoint2D, [geom.Conic2D, geom.Point2D], null, ["Choose conic", "Choose point from where normals are to be drawn"]);
+            }
+            else if (command === ("optics-ray")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-ray", geom.optics.OpticalRay2Points2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("optics-white-ray")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-white-ray", geom.optics.OpticalWhiteLight2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("optics-lens")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-lens", geom.optics.OpticalIdealLens2D, [geom.Point2D, geom.Point2D], null, ["Click to choose Pole", "Click to choose End Point"]);
+            }
+            else if (command === ("optics-planemirror")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-mirror", geom.optics.OpticalPlaneMirror2D, [geom.Point2D, geom.Point2D], null, ["Click to choose Pole", "Click to choose end Point"]);
+            }
+            else if (command === ("optics-observer")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-observer", geom.optics.OpticalObserver2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("optics-beam")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-beam", geom.optics.OpticalBeam2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("optics-blocker")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-blocker", geom.optics.OpticalBlocker2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("optics-src")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-src", geom.optics.OpticalSource2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point", "Click to choose Third Point"]);
+            }
+            else if (command === ("optics-parabolicmirror")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-arcmirror", geom.optics.OpticalParabolicArc2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point", "Click to choose Third Point"]);
+            }
+            else if (command === ("optics-arcmirror")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-arcmirror", geom.optics.OpticalArc2D, [geom.Point2D, geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point", "Click to choose Third Point"]);
+            }
+            else if (command === ("optics-idealmirror")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-idealmirror", geom.optics.OpticalIdealMirror2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("optics-plane")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-plane", geom.optics.OpticalPlane2D, [geom.Point2D, geom.Point2D], null, ["Click to choose First Point", "Click to choose Second Point"]);
+            }
+            else if (command === ("optics-path")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("optics-path", geom.optics.OpticalPathShape2D, [geom.ShapeArray], null, ["Choose Point on path, press and drag to create arc"]);
+            }
+            else if (command === ("slider")) {
+                this.begin$java_lang_String$java_lang_Class$java_lang_Class_A$java_lang_Object_A$java_lang_String_A("slider", geom.Slider2D, [geom.Point2D, geom.Point2D], null, ["Choose Point 1, Choose Point 2"]);
+            }
+        }
+    }
+    AddShapeAction.tmpColor = null;
+    geom.AddShapeAction = AddShapeAction;
+    AddShapeAction["__class"] = "geom.AddShapeAction";
+    AddShapeAction["__interfaces"] = ["framework.input.InputHandler"];
+})(geom || (geom = {}));
+(function (geom) {
+    /**
      *
      * @author mahesh
      * @class
@@ -11667,6 +13030,9 @@ var geom;
             this.visibilityCondition = null;
             this.strokeWidth = Shape2D.DEFAULT_STROKE_WIDTH;
             this.touchable = true;
+            if (this.shapesManager === undefined) {
+                this.shapesManager = null;
+            }
             this.selected = false;
             this.visible = true;
             this.showEqn = false;
@@ -11829,6 +13195,13 @@ var geom;
          * @return {boolean} the visible
          */
         isVisible() {
+            if (this.visibilityCondition != null) {
+                try {
+                    this.visible = math.MathUtils.evaluateExpression(this.visibilityCondition, this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables) !== 0;
+                }
+                catch (e) {
+                }
+            }
             return this.visible;
         }
         /**
@@ -11877,8 +13250,10 @@ var geom;
         }
         /**
          * Recreate shape from its parameters, mainly intended to reparse expression and adding global vars in shapes if any
+         * @param {geom.ShapesManager} manager
          */
-        onAddShapeToSimulation() {
+        onAddShapeToSimulation(manager) {
+            this.shapesManager = manager;
             this.update();
         }
         /**
@@ -11966,20 +13341,25 @@ var geom;
             }
             return b;
         }
+        mousePressed(pt) {
+        }
+        mouseReleased(pt) {
+        }
         /**
          * Fired when shape is dragged
          *
          * @param {math.Vector2} delta
+         * @param {math.Vector2} pt
          * @param {boolean} manually
          */
-        dragged(delta, manually) {
+        mouseDragged(delta, pt, manually) {
             if (this.parents == null)
                 return;
             for (let index = 0; index < this.parents.length; index++) {
                 let s = this.parents[index];
                 {
                     if (s != null)
-                        s.dragged(delta, false);
+                        s.mouseDragged(delta, pt, false);
                 }
             }
             this.update();
@@ -12232,7 +13612,7 @@ var geom;
         render(g) {
             if (!this.isDefined() || this.pt == null)
                 return;
-            this.r = this.strokeWidth * geom.Shape2D.SNAP_DISTANCE / 2.5;
+            this.r = this.strokeWidth * 3 / g.METER_TO_PIXEL;
             g.drawCircle(this.pt.x, this.pt.y, this.r, this.fillColor != null, this.drawColor != null);
             if (this.showEqn || this.showName) {
                 const v = new math.Vector2(0.75, 0.75);
@@ -12576,8 +13956,10 @@ var geom;
         }
         /**
          * Recreate shape from its parameters, mainly intended to reparse expression and adding global vars in shapes if any
+         * @param {geom.ShapesManager} manager
          */
-        onAddShapeToSimulation() {
+        onAddShapeToSimulation(manager) {
+            super.onAddShapeToSimulation(manager);
             let i = 0;
             const parents = [this];
             while ((true)) {
@@ -12593,10 +13975,15 @@ var geom;
                     s.showEqn = this.showEqn;
                     if (s.parents == null)
                         s.parents = parents;
+                    s.onAddShapeToSimulation(manager);
+                    if (s != null && s instanceof geom.Line2D)
+                        s.clip();
+                    if (s != null && s instanceof geom.Conic2D)
+                        s.clip();
                 }
             }
             ;
-            super.onAddShapeToSimulation();
+            super.onAddShapeToSimulation(this.shapesManager);
         }
         /**
          *
@@ -12705,7 +14092,7 @@ var geom;
         isVisible() {
             if (this.visibilityCondition != null) {
                 try {
-                    this.visible = math.MathUtils.evaluateExpression(this.visibilityCondition, null, null) !== 0;
+                    this.visible = math.MathUtils.evaluateExpression(this.visibilityCondition, this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables) !== 0;
                     let i = 0;
                     while ((true)) {
                         {
@@ -12857,7 +14244,7 @@ var geom;
                     if (shape == null)
                         break;
                     i++;
-                    if (shape.constructor !== shapeClass || !shape.__isDefined || !shape.visible)
+                    if (!framework.ClassUtils.isInstanceof(shape, shapeClass) || !shape.__isDefined || !shape.visible)
                         continue;
                     if (shape.isSnapped(pt))
                         return shape;
@@ -12881,7 +14268,7 @@ var geom;
                     if (shape == null)
                         break;
                     i++;
-                    if (!shapeClass.isInstance(shape) || !shape.__isDefined || !shape.visible)
+                    if (!framework.ClassUtils.isInstanceof(shape, shapeClass) || !shape.__isDefined || !shape.visible)
                         continue;
                     if (shape != null && shape instanceof geom.ParentShapeArray2D) {
                         shape.getCloseShapes(pt, shapeClass, listToAppend);
@@ -13006,6 +14393,434 @@ var geom;
     Polygon2D["__class"] = "geom.Polygon2D";
 })(geom || (geom = {}));
 (function (geom) {
+    class Text2Points2D extends geom.Shape2D {
+        constructor(p1, p2, text, xalign, yalign, wrapped, font) {
+            if (((p1 != null && p1 instanceof geom.Point2D) || p1 === null) && ((p2 != null && p2 instanceof geom.Point2D) || p2 === null) && ((typeof text === 'string') || text === null) && ((typeof xalign === 'string') || xalign === null) && ((typeof yalign === 'string') || yalign === null) && ((typeof wrapped === 'string') || wrapped === null) && ((typeof font === 'string') || font === null)) {
+                let __args = arguments;
+                super();
+                if (this.textArray === undefined) {
+                    this.textArray = null;
+                }
+                if (this.font === undefined) {
+                    this.font = null;
+                }
+                this.corner = new math.Vector2();
+                this.th = 0;
+                this.wrapped = true;
+                this.width = 0;
+                this.height = 0;
+                this.margin = 0.1;
+                this.lineheight = 0.1;
+                this.xalign = 1;
+                this.yalign = 1;
+                this.prevP = null;
+                this.prevQ = null;
+                this.revalidate = true;
+                this.HAIR_LINE_CHAR = '\u200a';
+                this.parents = [p1, p2];
+                this.params = [text, xalign, yalign, wrapped, font];
+                this.xalign = /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(xalign, "center") ? 1 : /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(xalign, "right") ? 2 : 0;
+                this.yalign = /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(yalign, "center") ? 1 : /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(yalign, "bottom") ? 2 : 0;
+                this.wrapped = javaemul.internal.BooleanHelper.parseBoolean(wrapped);
+                this.textArray = (new java.util.ArrayList());
+                this.font = font;
+                this.update();
+            }
+            else if (((p1 != null && p1 instanceof geom.Point2D) || p1 === null) && ((p2 != null && p2 instanceof geom.Point2D) || p2 === null) && text === undefined && xalign === undefined && yalign === undefined && wrapped === undefined && font === undefined) {
+                let __args = arguments;
+                {
+                    let __args = arguments;
+                    let text = "You can add any multiline text to this element by editing \'text\' property of the element in property table. \n This element also supports automatic wrapping of text along with horizontal and vertical alignment options to create dynamic text geometry.";
+                    let xalign = "center";
+                    let yalign = "center";
+                    let wrapped = "true";
+                    let font = "default-normal";
+                    super();
+                    if (this.textArray === undefined) {
+                        this.textArray = null;
+                    }
+                    if (this.font === undefined) {
+                        this.font = null;
+                    }
+                    this.corner = new math.Vector2();
+                    this.th = 0;
+                    this.wrapped = true;
+                    this.width = 0;
+                    this.height = 0;
+                    this.margin = 0.1;
+                    this.lineheight = 0.1;
+                    this.xalign = 1;
+                    this.yalign = 1;
+                    this.prevP = null;
+                    this.prevQ = null;
+                    this.revalidate = true;
+                    this.HAIR_LINE_CHAR = '\u200a';
+                    this.parents = [p1, p2];
+                    this.params = [text, xalign, yalign, wrapped, font];
+                    this.xalign = /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(xalign, "center") ? 1 : /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(xalign, "right") ? 2 : 0;
+                    this.yalign = /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(yalign, "center") ? 1 : /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(yalign, "bottom") ? 2 : 0;
+                    this.wrapped = javaemul.internal.BooleanHelper.parseBoolean(wrapped);
+                    this.textArray = (new java.util.ArrayList());
+                    this.font = font;
+                    this.update();
+                }
+                if (this.textArray === undefined) {
+                    this.textArray = null;
+                }
+                if (this.font === undefined) {
+                    this.font = null;
+                }
+                this.corner = new math.Vector2();
+                this.th = 0;
+                this.wrapped = true;
+                this.width = 0;
+                this.height = 0;
+                this.margin = 0.1;
+                this.lineheight = 0.1;
+                this.xalign = 1;
+                this.yalign = 1;
+                this.prevP = null;
+                this.prevQ = null;
+                this.revalidate = true;
+                this.HAIR_LINE_CHAR = '\u200a';
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {framework.EditInfo}
+         */
+        getEditInfo(index) {
+            if (index === 0) {
+                geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("Text", this.params[0], null);
+                geom.Shape2D.editInfo_$LI$().type = framework.EditInfo.TYPE.MULTILINE_TEXT;
+                return geom.Shape2D.editInfo_$LI$();
+            }
+            else if (index === 1) {
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$int$java_lang_String_A("X Alignment", this.xalign, ["Left", "Center", "Right", "justify"]);
+            }
+            else if (index === 2) {
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$int$java_lang_String_A("Y Alignment", this.yalign, ["Top", "Center", "Bottom"]);
+            }
+            else if (index === 3) {
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$boolean("Wrapped", this.wrapped);
+            }
+            else if (index === 4) {
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String("Font", this.font);
+            }
+            return null;
+        }
+        /**
+         *
+         * @param {number} index
+         * @param {*} value
+         */
+        setEditValue(index, value) {
+            const _var = value + "";
+            if (index === 0) {
+                this.params[0] = _var;
+            }
+            else if (index === 1) {
+                this.params[1] = _var;
+                this.xalign = /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(_var, "center") ? 1 : /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(_var, "right") ? 2 : /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(_var, "left") ? 0 : 3;
+            }
+            else if (index === 2) {
+                this.params[2] = _var;
+                this.yalign = /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(_var, "center") ? 1 : /* equalsIgnoreCase */ ((o1, o2) => o1.toUpperCase() === (o2 === null ? o2 : o2.toUpperCase()))(_var, "bottom") ? 2 : 0;
+            }
+            else if (index === 3) {
+                this.params[3] = _var;
+                this.wrapped = javaemul.internal.BooleanHelper.parseBoolean(_var);
+            }
+            else if (index === 4) {
+                this.font = _var;
+            }
+            this.revalidate = true;
+            this.update();
+        }
+        /**
+         *
+         */
+        update() {
+            this.__isDefined = false;
+            if (!this.parents[0].__isDefined || !this.parents[1].__isDefined)
+                return;
+            this.__isDefined = true;
+            this.revalidate = true;
+        }
+        /*private*/ measureSize(g) {
+            const ctx = g.context;
+            const P = this.parents[0].pt;
+            const Q = this.parents[1].pt;
+            if ((this.prevP != null && this.prevP.approxEqual(P) && this.prevQ.approxEqual(Q)))
+                return;
+            if (P.equals$math_Vector2(Q))
+                return;
+            const scaleFactor = g.METER_TO_PIXEL;
+            Text2Points2D.tmpVec = P.to$math_Vector2(Q);
+            this.th = Text2Points2D.tmpVec.getDirection();
+            this.width = Text2Points2D.tmpVec.normalize();
+            this.margin = 10 / scaleFactor;
+            this.lineheight = parseInt(ctx.font) * 1.5 / scaleFactor;
+            this.height = 0;
+            const justify = this.xalign === 3;
+            const temptextarray = this.params[0].split("\n");
+            this.textArray.clear();
+            const hairLineCharWidth = justify ? ctx.measureText(this.HAIR_LINE_CHAR + "").width / scaleFactor : 0;
+            const textWrapwidth = this.width - 2 * this.margin;
+            if (this.wrapped === false) {
+                this.width = 2 * this.margin;
+            }
+            else {
+                if (textWrapwidth < this.lineheight * 2)
+                    return;
+            }
+            for (let index = 0; index < temptextarray.length; index++) {
+                let txtt = temptextarray[index];
+                {
+                    if ( /* isEmpty */(txtt.length === 0))
+                        txtt = " ";
+                    let textwidth = ctx.measureText(txtt).width / scaleFactor;
+                    if (this.wrapped === false) {
+                        this.width = Math.max(this.width, textwidth + 2 * this.margin);
+                        this.textArray.add(txtt);
+                        continue;
+                    }
+                    if (textwidth < textWrapwidth) {
+                        this.textArray.add(txtt);
+                    }
+                    else {
+                        let temptext = txtt;
+                        const linelen = textWrapwidth;
+                        let textlen;
+                        let textpixlen;
+                        let texttoprint;
+                        while ((textwidth > linelen)) {
+                            {
+                                textlen = 0;
+                                textpixlen = 0;
+                                texttoprint = "";
+                                while ((textpixlen < linelen)) {
+                                    {
+                                        if (textlen === temptext.length)
+                                            break;
+                                        textlen++;
+                                        texttoprint = temptext.substring(0, textlen);
+                                        textpixlen = ctx.measureText(temptext.substring(0, textlen)).width / scaleFactor;
+                                    }
+                                }
+                                ;
+                                textlen--;
+                                if (textlen === 0)
+                                    textlen = temptext.indexOf(' ');
+                                if (textlen < 0)
+                                    textlen = temptext.length - 1;
+                                texttoprint = texttoprint.substring(0, textlen);
+                                const backup = textlen;
+                                if ((c => c.charCodeAt == null ? c : c.charCodeAt(0))(temptext.charAt(textlen)) != ' '.charCodeAt(0)) {
+                                    while (((c => c.charCodeAt == null ? c : c.charCodeAt(0))(temptext.charAt(textlen)) != ' '.charCodeAt(0) && textlen !== 0)) {
+                                        {
+                                            textlen--;
+                                        }
+                                    }
+                                    ;
+                                    if (textlen === 0) {
+                                        textlen = backup;
+                                    }
+                                    texttoprint = temptext.substring(0, textlen);
+                                }
+                                texttoprint = justify ? this.justifyLine(ctx, texttoprint, hairLineCharWidth, this.HAIR_LINE_CHAR, textWrapwidth) : texttoprint;
+                                temptext = temptext.substring(textlen + 1);
+                                textwidth = ctx.measureText(temptext).width / scaleFactor;
+                                this.textArray.add(texttoprint);
+                            }
+                        }
+                        ;
+                        if (textwidth > 0) {
+                            this.textArray.add(temptext);
+                        }
+                    }
+                }
+            }
+            this.height = this.textArray.size() * this.lineheight + 2 * this.margin;
+            switch ((this.yalign)) {
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+            }
+            switch ((this.xalign)) {
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+            }
+            this.corner.set$math_Vector2(P);
+            this.revalidate = false;
+        }
+        /**
+         * This function will insert spaces between words in a line in order
+         * to raise the line width to the box width.
+         * The spaces are evenly spread in the line, and extra spaces (if any) are inserted
+         * between the first words.
+         *
+         * It returns the justified text.
+         *
+         * @param {string} line
+         * @param {number} spaceWidth
+         * @param {char} spaceChar
+         * @param {number} width of bounding rectangle
+         * @param {CanvasRenderingContext2D} ctx
+         * @param {string} line
+         * @param {number} hairLineWidth
+         * @param {string} hairlineChar
+         * @param {number} width
+         * @return {string}
+         * @private
+         */
+        /*private*/ justifyLine(ctx, line, hairLineWidth, hairlineChar, width) {
+            const text = line.trim();
+            const scaleFactor = 100.0;
+            const lineWidth = ctx.measureText(text).width / scaleFactor;
+            const words = text.split("\\s+");
+            const nbSpaces = words.length - 1;
+            const nbHairLinesToInsert = (Math.floor((width - lineWidth) / hairLineWidth) | 0);
+            if (nbSpaces <= 0 || nbHairLinesToInsert <= 0)
+                return text;
+            const nbHairLinesMinimum = (Math.floor((nbHairLinesToInsert / nbSpaces | 0)) | 0);
+            const extraSpaces = nbHairLinesToInsert - nbSpaces * nbHairLinesMinimum;
+            const spaces = new java.lang.StringBuilder(nbHairLinesMinimum);
+            for (let i = 0; i < nbHairLinesMinimum; i++) {
+                {
+                    spaces.append(hairlineChar);
+                }
+                ;
+            }
+            return text;
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getShapeInfo() {
+            return "Text Area with corners " + (this.parents[0] == null ? "" : this.parents[0].getName()) + (this.parents[1] == null ? "" : " , " + this.parents[1].getName());
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getEquation() {
+            return null;
+        }
+        /**
+         *
+         * @param {framework.Renderer} g
+         */
+        render(g) {
+            if (!this.__isDefined)
+                return;
+            if (this.revalidate)
+                this.measureSize(g);
+            g.setColors(this.fillColor, this.drawColor);
+            const ctx = g.context;
+            ctx.save();
+            ctx.translate(this.corner.x, this.corner.y);
+            ctx.rotate(this.th);
+            let y = 0;
+            let x = 0;
+            switch ((this.yalign)) {
+                case 0:
+                    y = 0;
+                    break;
+                case 1:
+                    y = this.height / 2;
+                    break;
+                case 2:
+                    y = this.height;
+                    break;
+            }
+            if (this.fillColor != null) {
+                g.drawRect(0, y, this.width, this.height, true, true);
+            }
+            const scaleFactor = 100.0;
+            if (this.drawColor != null) {
+                y -= (this.lineheight + this.margin);
+                ctx.textBaseline = "middle";
+                for (let index = this.textArray.iterator(); index.hasNext();) {
+                    let s = index.next();
+                    {
+                        switch ((this.xalign)) {
+                            case 0:
+                            case 3:
+                                x = Math.fround(this.margin);
+                                break;
+                            case 1:
+                                x = Math.fround((this.width / 2 - ctx.measureText(s).width / 2 / scaleFactor));
+                                break;
+                            case 2:
+                                x = Math.fround((this.width - this.margin - ctx.measureText(s).width / scaleFactor));
+                                break;
+                        }
+                        g.drawText$java_lang_String$double$double(s, x, y);
+                        y -= this.lineheight;
+                    }
+                }
+            }
+            ctx.restore();
+        }
+        /**
+         *
+         * @param {math.Vector2} pt
+         * @return {boolean}
+         */
+        isSnapped(pt) {
+            const p = pt.difference$math_Vector2(this.corner);
+            p.rotate$double(-this.th);
+            let y1 = 0;
+            let y2 = -this.height;
+            switch ((this.yalign)) {
+                case 1:
+                    y1 = this.height / 2;
+                    y2 = -this.height / 2;
+                    break;
+                case 2:
+                    y1 = this.height;
+                    y2 = 0;
+                    break;
+            }
+            return p.x > 0 && p.x < this.width && p.y < y1 && p.y > y2;
+        }
+        /**
+         *
+         * @param {math.Vector2} pt
+         * @return {number}
+         */
+        distance(pt) {
+            const p = pt.difference$math_Vector2(this.corner);
+            p.rotate$double(-this.th);
+            let dx = Math.max(-p.x, p.x - this.width);
+            if (dx < 0)
+                dx = 0;
+            let dy = Math.max(-p.y, p.y - this.height);
+            if (dy < 0)
+                dy = 0;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+    }
+    /**
+     * unit vector along horizontally right direction in text area frame
+     */
+    Text2Points2D.tmpVec = null;
+    geom.Text2Points2D = Text2Points2D;
+    Text2Points2D["__class"] = "geom.Text2Points2D";
+})(geom || (geom = {}));
+(function (geom) {
     class Label2D extends geom.Shape2D {
         constructor(x, y, label) {
             if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof label === 'string') || label === null)) {
@@ -13117,9 +14932,10 @@ var geom;
         /**
          *
          * @param {math.Vector2} delta
+         * @param {math.Vector2} worldPt
          * @param {boolean} manually
          */
-        dragged(delta, manually) {
+        mouseDragged(delta, worldPt, manually) {
             if (!this.__isDefined)
                 return;
             const dir = new math.Vector2(this.th);
@@ -13141,8 +14957,10 @@ var geom;
         render(gl) {
             if (!this.__isDefined || !this.visible)
                 return;
-            const r = this.r;
+            const rect = gl.context.measureText(this.label);
+            let r = this.r;
             const v = new math.Vector2(this.x0 + r * Math.cos(this.th), this.y0 + r * Math.sin(this.th));
+            r += rect.width / gl.METER_TO_PIXEL;
             const v1 = new math.Vector2(this.x0 + r * Math.cos(this.th), this.y0 + r * Math.sin(this.th));
             this.segment = new geom.Segment2D(v, v1);
             if (this.showEqn)
@@ -13343,9 +15161,10 @@ var geom;
         /**
          *
          * @param {math.Vector2} delta
+         * @param {math.Vector2} worldPt
          * @param {boolean} manually
          */
-        dragged(delta, manually) {
+        mouseDragged(delta, worldPt, manually) {
             if (!this.isDefined() || delta.isZero())
                 return;
             if (!manually)
@@ -13354,7 +15173,7 @@ var geom;
             this.delta.add$math_Vector2(delta);
             this.pt.add$math_Vector2(this.delta);
             if (manually)
-                this.pt = framework.Preferences.snapToGrid(this.pt);
+                this.pt = this.shapesManager.preferences.snapToGrid(this.pt);
             if (!(Math.abs(p.x - this.pt.x) < geom.Shape2D.ACCURACY) || !(Math.abs(p.y - this.pt.y) < geom.Shape2D.ACCURACY))
                 this.delta.set$double$double(0, 0);
             this.params = [this.pt.x + "", this.pt.y + ""];
@@ -13461,7 +15280,7 @@ var geom;
             }
             let ratio;
             try {
-                ratio = math.MathUtils.evaluateExpression(this.params[0], null, null);
+                ratio = math.MathUtils.evaluateExpression(this.params[0], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
             }
             catch (e) {
                 this.__isDefined = false;
@@ -13596,9 +15415,10 @@ var geom;
         }
         /**
          * Recreate shape from its parameters, mainly intended to reparse expression in shapes if any
+         * @param {geom.ShapesManager} manager
          */
-        onAddShapeToSimulation() {
-            this.update();
+        onAddShapeToSimulation(manager) {
+            super.onAddShapeToSimulation(manager);
         }
         /**
          *
@@ -13614,8 +15434,8 @@ var geom;
             this.pt = null;
             this.__isDefined = false;
             try {
-                const x = math.MathUtils.evaluateExpression(this.xExpr, null, null);
-                const y = math.MathUtils.evaluateExpression(this.yExpr, null, null);
+                const x = math.MathUtils.evaluateExpression(this.xExpr, this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
+                const y = math.MathUtils.evaluateExpression(this.yExpr, this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
                 this.pt = (!((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(x) || !((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(y)) ? null : new math.Vector2(x, y);
                 this.__isDefined = (this.pt != null);
             }
@@ -13626,6 +15446,27 @@ var geom;
     }
     geom.PointExpr2D = PointExpr2D;
     PointExpr2D["__class"] = "geom.PointExpr2D";
+})(geom || (geom = {}));
+(function (geom) {
+    class ShapeArray {
+        constructor() {
+            if (this.shapes === undefined) {
+                this.shapes = null;
+            }
+            this.shapes = (new java.util.ArrayList());
+        }
+        static clazz_$LI$() { if (ShapeArray.clazz == null) {
+            ShapeArray.clazz = geom.Point2D;
+        } return ShapeArray.clazz; }
+        addShape(shape) {
+            this.shapes.add(shape);
+        }
+        getShapes() {
+            return this.shapes;
+        }
+    }
+    geom.ShapeArray = ShapeArray;
+    ShapeArray["__class"] = "geom.ShapeArray";
 })(geom || (geom = {}));
 (function (geom) {
     class PointProjection2D extends geom.Point2D {
@@ -13733,7 +15574,7 @@ var geom;
             }
             if (this.parserNeeded) {
                 try {
-                    this.t = math.MathUtils.evaluateExpression(this.params[0], null, null);
+                    this.t = math.MathUtils.evaluateExpression(this.params[0], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
                 }
                 catch (e) {
                     return;
@@ -13745,9 +15586,10 @@ var geom;
         /**
          *
          * @param {math.Vector2} delta
+         * @param {math.Vector2} worldPt
          * @param {boolean} manually
          */
-        dragged(delta, manually) {
+        mouseDragged(delta, worldPt, manually) {
             if (!this.isDefined())
                 return;
             try {
@@ -13759,7 +15601,7 @@ var geom;
             let p = this.pt.copy();
             this.delta.add$math_Vector2(delta);
             p.add$math_Vector2(this.delta);
-            p = framework.Preferences.snapToGrid(p);
+            p = this.shapesManager.preferences.snapToGrid(p);
             const t = this.parents[0].t(p);
             p = this.parents[0].point(t);
             if (p != null && (!((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(p.x) || !((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(p.y)))
@@ -13887,9 +15729,10 @@ var geom;
         /**
          *
          * @param {math.Vector2} delta
+         * @param {math.Vector2} pt
          * @param {boolean} manually
          */
-        dragged(delta, manually) {
+        mouseDragged(delta, pt, manually) {
         }
         /**
          *
@@ -14482,16 +16325,16 @@ var geom;
                 throw new java.lang.IllegalArgumentException("Invalid cartesian coefficients of line !");
             }
             else if (a === 0) {
-                this.set$math_Vector2$math_Vector2(new math.Vector2(0, -c / b), new math.Vector2(1, 0));
+                this.set$double$double$double$double(0, -c / b, 1, 0);
             }
             else if (b === 0) {
-                this.set$math_Vector2$math_Vector2(new math.Vector2(-c / a, 0), new math.Vector2(0, 1));
+                this.set$double$double$double$double(-c / a, 0, 0, 1);
             }
             else if (c === 0) {
-                this.set$math_Vector2$math_Vector2(new math.Vector2(0, 0), new math.Vector2(b, -a));
+                this.set$double$double$double$double(0, 0, b, -a);
             }
             else {
-                this.set$math_Vector2$math_Vector2(new math.Vector2(0, -c / b), new math.Vector2(b, -a));
+                this.set$double$double$double$double(0, -c / b, b, -a);
             }
         }
         /**
@@ -14507,21 +16350,21 @@ var geom;
             super.setVisible(visible);
         }
         clip() {
-            if (framework.App.instance == null)
+            if (this.shapesManager == null)
                 return;
-            const b = framework.App.instance.getCanvasBounds();
+            const b = this.shapesManager.getWorldBounds();
             const xmin = b[0];
             const ymin = b[1];
             const xmax = b[2];
             const ymax = b[3];
             const v1 = new math.Vector2();
             const v2 = new math.Vector2();
-            if (Math.abs(this.dy) < geom.Shape2D.ACCURACY) {
+            if (Math.abs(this.dy) < framework.Preferences.EPSILON) {
                 this.dy = 0;
                 v1.set$double$double(xmin, this.y0);
                 v2.set$double$double(xmax, this.y0);
             }
-            else if (Math.abs(this.dx) < geom.Shape2D.ACCURACY) {
+            else if (Math.abs(this.dx) < framework.Preferences.EPSILON) {
                 this.dx = 0;
                 v1.set$double$double(this.x0, ymin);
                 v2.set$double$double(this.x0, ymax);
@@ -14714,7 +16557,7 @@ var geom;
         renderAsRay(g) {
             g.drawLine(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
             const l = Math.min(this.p2.distance$math_Vector2(this.p1) * 0.75, 0.75);
-            const arrowhead = 0.06;
+            const arrowhead = (this.strokeWidth + 8) / g.METER_TO_PIXEL;
             if (l > 3 * arrowhead) {
                 g.context.beginPath();
                 g.context.moveTo(this.x0 + this.dx * (l - arrowhead) + 0.5 * arrowhead * this.dy, this.y0 + this.dy * (l - arrowhead) - 0.5 * arrowhead * this.dx);
@@ -14739,6 +16582,7 @@ var geom;
                 this.maxPoints = 500;
                 this.offset = -1;
                 this.stopped = false;
+                this.pixelLength = 0.01;
                 this.parents = [p];
                 this.maxPoints = javaemul.internal.IntegerHelper.parseInt(maxPoints);
                 this.params = [maxPoints + ""];
@@ -14752,6 +16596,7 @@ var geom;
                 this.maxPoints = 500;
                 this.offset = -1;
                 this.stopped = false;
+                this.pixelLength = 0.01;
                 this.parents = [p];
                 this.params = [this.maxPoints + ""];
                 this.__isDefined = true;
@@ -14764,6 +16609,7 @@ var geom;
                 this.maxPoints = 500;
                 this.offset = -1;
                 this.stopped = false;
+                this.pixelLength = 0.01;
                 this.params = [this.maxPoints + ""];
             }
             else
@@ -14851,7 +16697,7 @@ var geom;
         updatePoint(v) {
             if (v != null) {
                 const n = this.offset < 0 ? this.vertices.size() - 1 : this.offset;
-                if (this.vertices.size() === 0 || (v.distance$math_Vector2(this.vertices.get(n)) >= 0.01)) {
+                if (this.vertices.size() === 0 || (v.distance$math_Vector2(this.vertices.get(n)) >= this.pixelLength)) {
                     this.bounds.update$math_Vector2(v);
                     if (this.vertices.size() === this.maxPoints) {
                         this.offset++;
@@ -14878,6 +16724,7 @@ var geom;
         render(g) {
             if (!this.isDefined())
                 return;
+            this.pixelLength = 1 / g.METER_TO_PIXEL;
             g.context.beginPath();
             let v;
             let begin = false;
@@ -15144,6 +16991,379 @@ var geom;
     DynamicCurve2D["__class"] = "geom.DynamicCurve2D";
 })(geom || (geom = {}));
 (function (geom) {
+    /**
+     * Creates a new Spline2D.
+     *
+     * @param {geom.Point2D[]} points
+     * @class
+     * @extends geom.Curve2D
+     */
+    class Spline2D extends geom.Curve2D {
+        constructor(...points) {
+            super();
+            if (this.splineX === undefined) {
+                this.splineX = null;
+            }
+            if (this.splineY === undefined) {
+                this.splineY = null;
+            }
+            if (this.length === undefined) {
+                this.length = 0;
+            }
+            this.parents = points;
+            this.update();
+        }
+        update() {
+            this.__isDefined = false;
+            if (this.parents.length < 2)
+                return;
+            for (let index = 0; index < this.parents.length; index++) {
+                let p = this.parents[index];
+                if (!p.__isDefined)
+                    return;
+            }
+            const x = this.splineX != null ? this.splineX.yy : (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(this.parents.length);
+            const y = this.splineY != null ? this.splineY.yy : (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(this.parents.length);
+            const t = this.splineX != null ? this.splineY.xx : (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(this.parents.length);
+            for (let i = 0; i < this.parents.length; i++) {
+                {
+                    x[i] = this.parents[i].getX();
+                    y[i] = this.parents[i].getY();
+                }
+                ;
+            }
+            t[0] = 0.0;
+            for (let i = 1; i < t.length; i++) {
+                {
+                    const lx = x[i] - x[i - 1];
+                    const ly = y[i] - y[i - 1];
+                    if (0.0 === lx) {
+                        t[i] = Math.abs(ly);
+                    }
+                    else if (0.0 === ly) {
+                        t[i] = Math.abs(lx);
+                    }
+                    else {
+                        t[i] = Math.sqrt(lx * lx + ly * ly);
+                    }
+                    this.length += t[i];
+                    t[i] += t[i - 1];
+                }
+                ;
+            }
+            for (let i = 1; i < (t.length) - 1; i++) {
+                {
+                    t[i] = t[i] / this.length;
+                }
+                ;
+            }
+            t[(t.length) - 1] = 1.0;
+            if (this.splineX == null) {
+                this.splineX = new geom.Spline(t, x);
+                this.splineY = new geom.Spline(t, y);
+            }
+            else {
+                this.splineX.setValues(t, x);
+                this.splineX.setValues(t, y);
+            }
+        }
+        /**
+         * @param {number} t
+         * 0 <= t <= 1
+         * @return {math.Vector2}
+         */
+        getPoint(t) {
+            let x;
+            let y;
+            x = this.splineX.getValue(t);
+            y = this.splineY.getValue(t);
+            return new math.Vector2(x, y);
+        }
+        getDx(t) {
+            return this.splineX.getDx(t);
+        }
+        /**
+         *
+         * @param {math.Vector2} point
+         * @return {number}
+         */
+        t(point) {
+            return 0;
+        }
+        /**
+         *
+         * @param {number} t
+         * @return {math.Vector2}
+         */
+        point(t) {
+            let x;
+            let y;
+            x = this.splineX.getValue(t);
+            y = this.splineY.getValue(t);
+            return new math.Vector2(x, y);
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getEquation() {
+            return null;
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getShapeInfo() {
+            return null;
+        }
+        /**
+         *
+         * @param {framework.Renderer} gl
+         */
+        render(gl) {
+        }
+        /**
+         *
+         * @param {math.Vector2} pt
+         * @return {boolean}
+         */
+        isSnapped(pt) {
+            return false;
+        }
+        /**
+         *
+         * @param {math.Vector2} pt
+         * @return {number}
+         */
+        distance(pt) {
+            return 0;
+        }
+    }
+    geom.Spline2D = Spline2D;
+    Spline2D["__class"] = "geom.Spline2D";
+    /**
+     * Creates a new Spline.
+     *
+     * @param {double[]} xx
+     * @param {double[]} yy
+     * @class
+     */
+    class Spline {
+        constructor(xx, yy) {
+            if (this.xx === undefined) {
+                this.xx = null;
+            }
+            if (this.yy === undefined) {
+                this.yy = null;
+            }
+            if (this.a === undefined) {
+                this.a = null;
+            }
+            if (this.b === undefined) {
+                this.b = null;
+            }
+            if (this.c === undefined) {
+                this.c = null;
+            }
+            if (this.d === undefined) {
+                this.d = null;
+            }
+            this.storageIndex = 0;
+            this.setValues(xx, yy);
+        }
+        /**
+         * Set values for this Spline.
+         *
+         * @param {double[]} xx
+         * @param {double[]} yy
+         */
+        setValues(xx, yy) {
+            this.xx = xx;
+            this.yy = yy;
+            if (xx.length > 1) {
+                this.calculateCoefficients();
+            }
+        }
+        /**
+         * Returns an interpolated value.
+         *
+         * @param {number} x
+         * @return {number} the interpolated value
+         */
+        getValue(x) {
+            if (this.xx.length === 0) {
+                return javaemul.internal.DoubleHelper.NaN;
+            }
+            if (this.xx.length === 1) {
+                if (this.xx[0] === x) {
+                    return this.yy[0];
+                }
+                else {
+                    return javaemul.internal.DoubleHelper.NaN;
+                }
+            }
+            let index = java.util.Arrays.binarySearch(this.xx, x);
+            if (index > 0) {
+                return this.yy[index];
+            }
+            index = -(index + 1) - 1;
+            if (index < 0) {
+                return this.yy[0];
+            }
+            return this.a[index] + this.b[index] * (x - this.xx[index]) + this.c[index] * Math.pow(x - this.xx[index], 2) + this.d[index] * Math.pow(x - this.xx[index], 3);
+        }
+        /**
+         * Returns an interpolated value. To be used when a long sequence of values are required in order, but ensure
+         * checkValues() is called beforehand to ensure the boundary checks from getValue() are made
+         *
+         * @param {number} x
+         * @return {number} the interpolated value
+         */
+        getFastValue(x) {
+            if (this.storageIndex > -1 && this.storageIndex < this.xx.length - 1 && x > this.xx[this.storageIndex] && x < this.xx[this.storageIndex + 1]) {
+            }
+            else {
+                let index = java.util.Arrays.binarySearch(this.xx, x);
+                if (index > 0) {
+                    return this.yy[index];
+                }
+                index = -(index + 1) - 1;
+                this.storageIndex = index;
+            }
+            if (this.storageIndex < 0) {
+                return this.yy[0];
+            }
+            const value = x - this.xx[this.storageIndex];
+            return this.a[this.storageIndex] + this.b[this.storageIndex] * value + this.c[this.storageIndex] * (value * value) + this.d[this.storageIndex] * (value * value * value);
+        }
+        /**
+         * Used to check the correctness of this spline
+         * @return {boolean}
+         */
+        checkValues() {
+            if (this.xx.length < 2) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+        /**
+         * Returns the first derivation at x.
+         *
+         * @param {number} x
+         * @return {number} the first derivation at x
+         */
+        getDx(x) {
+            if (this.xx.length === 0 || this.xx.length === 1) {
+                return 0;
+            }
+            let index = java.util.Arrays.binarySearch(this.xx, x);
+            if (index < 0) {
+                index = -(index + 1) - 1;
+            }
+            return this.b[index] + 2 * this.c[index] * (x - this.xx[index]) + 3 * this.d[index] * Math.pow(x - this.xx[index], 2);
+        }
+        /**
+         * Calculates the Spline coefficients.
+         * @private
+         */
+        /*private*/ calculateCoefficients() {
+            const N = this.yy.length;
+            this.a = (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(N);
+            this.b = (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(N);
+            this.c = (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(N);
+            this.d = (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(N);
+            if (N === 2) {
+                this.a[0] = this.yy[0];
+                this.b[0] = this.yy[1] - this.yy[0];
+                return;
+            }
+            const h = (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(N - 1);
+            for (let i = 0; i < N - 1; i++) {
+                {
+                    this.a[i] = this.yy[i];
+                    h[i] = this.xx[i + 1] - this.xx[i];
+                    if (h[i] === 0.0) {
+                        h[i] = 0.01;
+                    }
+                }
+                ;
+            }
+            this.a[N - 1] = this.yy[N - 1];
+            const A = (function (dims) { let allocate = function (dims) { if (dims.length === 0) {
+                return 0;
+            }
+            else {
+                let array = [];
+                for (let i = 0; i < dims[0]; i++) {
+                    array.push(allocate(dims.slice(1)));
+                }
+                return array;
+            } }; return allocate(dims); })([N - 2, N - 2]);
+            const y = (s => { let a = []; while (s-- > 0)
+                a.push(0); return a; })(N - 2);
+            for (let i = 0; i < N - 2; i++) {
+                {
+                    y[i] = 3 * ((this.yy[i + 2] - this.yy[i + 1]) / h[i + 1] - (this.yy[i + 1] - this.yy[i]) / h[i]);
+                    A[i][i] = 2 * (h[i] + h[i + 1]);
+                    if (i > 0) {
+                        A[i][i - 1] = h[i];
+                    }
+                    if (i < N - 3) {
+                        A[i][i + 1] = h[i + 1];
+                    }
+                }
+                ;
+            }
+            this.solve(A, y);
+            for (let i = 0; i < N - 2; i++) {
+                {
+                    this.c[i + 1] = y[i];
+                    this.b[i] = (this.a[i + 1] - this.a[i]) / h[i] - (2 * this.c[i] + this.c[i + 1]) / 3 * h[i];
+                    this.d[i] = (this.c[i + 1] - this.c[i]) / (3 * h[i]);
+                }
+                ;
+            }
+            this.b[N - 2] = (this.a[N - 1] - this.a[N - 2]) / h[N - 2] - (2 * this.c[N - 2] + this.c[N - 1]) / 3 * h[N - 2];
+            this.d[N - 2] = (this.c[N - 1] - this.c[N - 2]) / (3 * h[N - 2]);
+        }
+        /**
+         * Solves Ax=b and stores the solution in b.
+         * @param {double[][]} A
+         * @param {double[]} b
+         */
+        solve(A, b) {
+            const n = b.length;
+            for (let i = 1; i < n; i++) {
+                {
+                    A[i][i - 1] = A[i][i - 1] / A[i - 1][i - 1];
+                    A[i][i] = A[i][i] - A[i - 1][i] * A[i][i - 1];
+                    b[i] = b[i] - A[i][i - 1] * b[i - 1];
+                }
+                ;
+            }
+            b[n - 1] = b[n - 1] / A[n - 1][n - 1];
+            for (let i = b.length - 2; i >= 0; i--) {
+                {
+                    b[i] = (b[i] - A[i][i + 1] * b[i + 1]) / A[i][i];
+                }
+                ;
+            }
+        }
+    }
+    geom.Spline = Spline;
+    Spline["__class"] = "geom.Spline";
+})(geom || (geom = {}));
+(function (geom) {
     class FunctionExplicit2D extends geom.Curve2D {
         constructor(expr) {
             super();
@@ -15156,6 +17376,7 @@ var geom;
             this.isValidExpr = true;
             this.reCreate = false;
             this.f = null;
+            this.pixLength = 0.01;
             this.setExpression(expr);
             this.__isDefined = true;
         }
@@ -15226,7 +17447,8 @@ var geom;
             }
             this.__isDefined = this.isValidExpr;
         }
-        onAddShapeToSimulation() {
+        onAddShapeToSimulation(manager) {
+            super.onAddShapeToSimulation(manager);
             this.setExpression(this.expr);
             this.setName(this.name);
             this.update();
@@ -15238,11 +17460,29 @@ var geom;
          * the name to set
          */
         setName(name) {
+            if (this.shapesManager == null) {
+                super.setName(name);
+                return;
+            }
+            if (!this.shapesManager.containsShape(this)) {
+                this.name = name;
+                return;
+            }
+            if (this.shapesManager.globalFunctions.containsKey(this.name) && (this.name === name))
+                return;
+            this.shapesManager.globalFunctions.remove(this.name);
+            if (name == null || !net.objecthunter.exp4j.__function._Function.isValidFunctionName(name))
+                return;
+            this.name = this.shapesManager.createNewVariableName(name);
+            this.f = new FunctionExplicit2D.FunctionExplicit2D$0(this, this.name, 1);
+            this.shapesManager.globalFunctions.put(this.name, this.f);
         }
         /**
          * perform some action if needed (like resource release, reset global variables etc) when the shape is removed
          */
         dispose() {
+            if (this.shapesManager != null)
+                this.shapesManager.globalFunctions.remove(this.name);
         }
         /**
          *
@@ -15256,17 +17496,26 @@ var geom;
             if (this.parser == null || !this.isValidExpr)
                 return;
             this.__isDefined = true;
-            let dy = 0.01;
-            const bnds = framework.App.instance.getCanvasBounds();
+            if (this.shapesManager == null)
+                return;
+            let dy = this.pixLength;
+            const bnds = this.shapesManager.getWorldBounds();
             const xmin = bnds[0];
             const ymin = bnds[1];
             const xmax = bnds[2];
             const ymax = bnds[3];
+            for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                let key = index.next();
+                {
+                    this.parser.setVariable(key, this.shapesManager.globalVariables.get(key));
+                }
+            }
+            this.shapesManager.globalVariables.put("T", this.shapesManager.getTime());
             let x = xmin;
             this.parser.setVariable("x", x);
             let y = this.parser.evaluate();
             let p = null;
-            const pix = 1 / 100.0;
+            const pix = this.pixLength;
             let need_move = true;
             const max_dx = pix;
             const min_dx = pix / 10;
@@ -15380,7 +17629,6 @@ var geom;
             this.vertices.trimToSize();
             this.__t0 = xmin;
             this.__t1 = xmax;
-            console.info("functions2D create " + this.vertices.size() + this.__t0 + "," + this.__t1);
         }
         getExpression() {
             return this.expr;
@@ -15393,9 +17641,11 @@ var geom;
          * @return {net.objecthunter.exp4j.Expression}
          */
         createParser(expr) {
+            if (this.shapesManager == null)
+                return null;
             let exp = null;
             try {
-                exp = math.MathUtils.createParser(expr, true, ["x"]);
+                exp = math.MathUtils.createParser(expr, ["x"], this.shapesManager.globalVariables, this.shapesManager.globalFunctions);
                 console.info("created parser successfully " + exp.toString());
             }
             catch (e) {
@@ -15418,6 +17668,7 @@ var geom;
         render(g) {
             if (!this.isDefined())
                 return;
+            this.pixLength = 1 / g.METER_TO_PIXEL;
             g.context.beginPath();
             let begin = false;
             let v;
@@ -15540,6 +17791,15 @@ var geom;
             if (this.parser == null)
                 return javaemul.internal.DoubleHelper.NaN;
             this.parser.setVariable("x", x);
+            if (this.shapesManager != null) {
+                for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        this.parser.setVariable(key, this.shapesManager.globalVariables.get(key));
+                    }
+                }
+                this.shapesManager.globalVariables.put("T", this.shapesManager.getTime());
+            }
             try {
                 return this.parser.evaluate();
             }
@@ -15686,472 +17946,23 @@ var geom;
     FunctionExplicit2D.loopcounter = 0;
     geom.FunctionExplicit2D = FunctionExplicit2D;
     FunctionExplicit2D["__class"] = "geom.FunctionExplicit2D";
-})(geom || (geom = {}));
-(function (geom) {
-    /**
-     * Creates line through point(x,y) and direction rations as dx and dy
-     * @param {number} x
-     * @param {number} y
-     * @param {number} dx
-     * @param {number} dy
-     * @class
-     * @extends geom.Curve2D
-     */
-    class Line2D2 extends geom.Curve2D {
-        constructor(x, y, dx, dy) {
-            if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof dx === 'number') || dx === null) && ((typeof dy === 'number') || dy === null)) {
-                let __args = arguments;
-                super();
-                this.expr = null;
-                this.x0 = 0;
-                this.y0 = 0;
-                this.dx = 1;
-                this.dy = 0;
-                this.p1 = new math.Vector2();
-                this.p2 = new math.Vector2(1, 0);
-                this.__t0 = javaemul.internal.DoubleHelper.NEGATIVE_INFINITY;
-                this.__t1 = javaemul.internal.DoubleHelper.POSITIVE_INFINITY;
-                this.set$double$double$double$double(x, y, dx, dy);
+    (function (FunctionExplicit2D) {
+        class FunctionExplicit2D$0 extends net.objecthunter.exp4j.__function._Function {
+            constructor(__parent, __arg0, __arg1) {
+                super(__arg0, __arg1);
+                this.__parent = __parent;
             }
-            else if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof dx === 'number') || dx === null) && dy === undefined) {
-                let __args = arguments;
-                let a = __args[0];
-                let b = __args[1];
-                let c = __args[2];
-                super();
-                this.expr = null;
-                this.x0 = 0;
-                this.y0 = 0;
-                this.dx = 1;
-                this.dy = 0;
-                this.p1 = new math.Vector2();
-                this.p2 = new math.Vector2(1, 0);
-                this.__t0 = javaemul.internal.DoubleHelper.NEGATIVE_INFINITY;
-                this.__t1 = javaemul.internal.DoubleHelper.POSITIVE_INFINITY;
-                this.set$double$double$double(a, b, c);
-            }
-            else if (((x != null && x instanceof math.Vector2) || x === null) && ((y != null && y instanceof math.Vector2) || y === null) && dx === undefined && dy === undefined) {
-                let __args = arguments;
-                let pt = __args[0];
-                let dir = __args[1];
-                {
-                    let __args = arguments;
-                    let x = pt.x;
-                    let y = pt.y;
-                    let dx = dir.x;
-                    let dy = dir.y;
-                    super();
-                    this.expr = null;
-                    this.x0 = 0;
-                    this.y0 = 0;
-                    this.dx = 1;
-                    this.dy = 0;
-                    this.p1 = new math.Vector2();
-                    this.p2 = new math.Vector2(1, 0);
-                    this.__t0 = javaemul.internal.DoubleHelper.NEGATIVE_INFINITY;
-                    this.__t1 = javaemul.internal.DoubleHelper.POSITIVE_INFINITY;
-                    this.set$double$double$double$double(x, y, dx, dy);
-                }
-                this.expr = null;
-                this.x0 = 0;
-                this.y0 = 0;
-                this.dx = 1;
-                this.dy = 0;
-                this.p1 = new math.Vector2();
-                this.p2 = new math.Vector2(1, 0);
-            }
-            else if (((x != null && x instanceof math.Vector2) || x === null) && y === undefined && dx === undefined && dy === undefined) {
-                let __args = arguments;
-                let dir = __args[0];
-                {
-                    let __args = arguments;
-                    let pt = new math.Vector2();
-                    {
-                        let __args = arguments;
-                        let x = pt.x;
-                        let y = pt.y;
-                        let dx = dir.x;
-                        let dy = dir.y;
-                        super();
-                        this.expr = null;
-                        this.x0 = 0;
-                        this.y0 = 0;
-                        this.dx = 1;
-                        this.dy = 0;
-                        this.p1 = new math.Vector2();
-                        this.p2 = new math.Vector2(1, 0);
-                        this.__t0 = javaemul.internal.DoubleHelper.NEGATIVE_INFINITY;
-                        this.__t1 = javaemul.internal.DoubleHelper.POSITIVE_INFINITY;
-                        this.set$double$double$double$double(x, y, dx, dy);
-                    }
-                    this.expr = null;
-                    this.x0 = 0;
-                    this.y0 = 0;
-                    this.dx = 1;
-                    this.dy = 0;
-                    this.p1 = new math.Vector2();
-                    this.p2 = new math.Vector2(1, 0);
-                }
-                this.expr = null;
-                this.x0 = 0;
-                this.y0 = 0;
-                this.dx = 1;
-                this.dy = 0;
-                this.p1 = new math.Vector2();
-                this.p2 = new math.Vector2(1, 0);
-            }
-            else if (x === undefined && y === undefined && dx === undefined && dy === undefined) {
-                let __args = arguments;
-                {
-                    let __args = arguments;
-                    let dir = new math.Vector2(1, 0);
-                    {
-                        let __args = arguments;
-                        let pt = new math.Vector2();
-                        {
-                            let __args = arguments;
-                            let x = pt.x;
-                            let y = pt.y;
-                            let dx = dir.x;
-                            let dy = dir.y;
-                            super();
-                            this.expr = null;
-                            this.x0 = 0;
-                            this.y0 = 0;
-                            this.dx = 1;
-                            this.dy = 0;
-                            this.p1 = new math.Vector2();
-                            this.p2 = new math.Vector2(1, 0);
-                            this.__t0 = javaemul.internal.DoubleHelper.NEGATIVE_INFINITY;
-                            this.__t1 = javaemul.internal.DoubleHelper.POSITIVE_INFINITY;
-                            this.set$double$double$double$double(x, y, dx, dy);
-                        }
-                        this.expr = null;
-                        this.x0 = 0;
-                        this.y0 = 0;
-                        this.dx = 1;
-                        this.dy = 0;
-                        this.p1 = new math.Vector2();
-                        this.p2 = new math.Vector2(1, 0);
-                    }
-                    this.expr = null;
-                    this.x0 = 0;
-                    this.y0 = 0;
-                    this.dx = 1;
-                    this.dy = 0;
-                    this.p1 = new math.Vector2();
-                    this.p2 = new math.Vector2(1, 0);
-                }
-                this.expr = null;
-                this.x0 = 0;
-                this.y0 = 0;
-                this.dx = 1;
-                this.dy = 0;
-                this.p1 = new math.Vector2();
-                this.p2 = new math.Vector2(1, 0);
-            }
-            else
-                throw new Error('invalid overload');
-        }
-        set$math_Vector2$math_Vector2(v1, v2) {
-            this.set$double$double$double$double(v1.x, v1.y, v2.x - v1.x, v2.y - v1.y);
-        }
-        set$double$double$double$double(x, y, dx, dy) {
-            this.x0 = x;
-            this.y0 = y;
-            if (Math.abs(dy) < framework.Preferences.EPSILON) {
-                dy = 0;
-            }
-            else if (Math.abs(dx) < framework.Preferences.EPSILON) {
-                dx = 0;
-            }
-            this.p1.set$double$double(this.x0, this.y0);
-            this.p2.set$double$double(this.x0 + dx, this.y0 + dy);
-            const r = math.MathUtils.hypot(dx, dy);
-            dx /= r;
-            dy /= r;
-            this.dx = dx;
-            this.dy = dy;
-            this.__isDefined = true;
-            const tab = [0, 0, 0];
-            tab[0] = dy;
-            tab[1] = -dx;
-            tab[2] = dx * this.y0 - dy * this.x0;
-            this.expr = math.MathUtils.formatEqn$double_A$java_lang_String_A(tab, ["x", "y", ""]);
-            this.__isDefined = true;
-            if (this.visible)
-                this.clip();
-        }
-        /**
-         * Sets line as passing through point (x,y) and direction rations as dx and dy
-         * @param {number} x
-         * @param {number} y
-         * @param {number} dx
-         * @param {number} dy
-         */
-        set(x, y, dx, dy) {
-            if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof dx === 'number') || dx === null) && ((typeof dy === 'number') || dy === null)) {
-                return this.set$double$double$double$double(x, y, dx, dy);
-            }
-            else if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof dx === 'number') || dx === null) && dy === undefined) {
-                return this.set$double$double$double(x, y, dx);
-            }
-            else if (((x != null && x instanceof math.Vector2) || x === null) && ((y != null && y instanceof math.Vector2) || y === null) && dx === undefined && dy === undefined) {
-                return this.set$math_Vector2$math_Vector2(x, y);
-            }
-            else
-                throw new Error('invalid overload');
-        }
-        set$double$double$double(a, b, c) {
-            if (a === 0 && b === 0) {
-                throw new java.lang.IllegalArgumentException("Invalid cartesian coefficients of line !");
-            }
-            else if (a === 0) {
-                this.set$math_Vector2$math_Vector2(new math.Vector2(0, -c / b), new math.Vector2(1, 0));
-            }
-            else if (b === 0) {
-                this.set$math_Vector2$math_Vector2(new math.Vector2(-c / a, 0), new math.Vector2(0, 1));
-            }
-            else if (c === 0) {
-                this.set$math_Vector2$math_Vector2(new math.Vector2(0, 0), new math.Vector2(b, -a));
-            }
-            else {
-                this.set$math_Vector2$math_Vector2(new math.Vector2(0, -c / b), new math.Vector2(b, -a));
+            /**
+             *
+             * @param {double[]} args
+             * @return {number}
+             */
+            apply(...args) {
+                return this.__parent.getY(args[0]);
             }
         }
-        /**
-         *
-         */
-        update() {
-        }
-        /**
-         * @param {boolean} visible
-         * the visible to set
-         */
-        setVisible(visible) {
-            super.setVisible(visible);
-        }
-        clip() {
-            if (framework.App.instance == null)
-                return;
-            const b = framework.App.instance.getCanvasBounds();
-            const xmin = b[0];
-            const ymin = b[1];
-            const xmax = b[2];
-            const ymax = b[3];
-            const v1 = new math.Vector2();
-            const v2 = new math.Vector2();
-            if (Math.abs(this.dy) < geom.Shape2D.ACCURACY) {
-                this.dy = 0;
-                v1.set$double$double(xmin, this.y0);
-                v2.set$double$double(xmax, this.y0);
-            }
-            else if (Math.abs(this.dx) < geom.Shape2D.ACCURACY) {
-                this.dx = 0;
-                v1.set$double$double(this.x0, ymin);
-                v2.set$double$double(this.x0, ymax);
-            }
-            else {
-                const c = [0, 0, 0];
-                c[0] = this.dy;
-                c[1] = -this.dx;
-                c[2] = -this.dx * this.y0 + this.dy * this.x0;
-                if (Math.abs(this.dy / this.dx) <= 1) {
-                    const y1 = (c[2] - c[0] * xmin) / c[1];
-                    const y2 = (c[2] - c[0] * xmax) / c[1];
-                    v1.set$double$double(xmin, y1);
-                    v2.set$double$double(xmax, y2);
-                }
-                else {
-                    const x1 = (c[2] - c[1] * ymin) / c[0];
-                    const x2 = (c[2] - c[1] * ymax) / c[0];
-                    v1.set$double$double(x1, ymin);
-                    v2.set$double$double(x2, ymax);
-                }
-            }
-            if ((v2.x - v1.x) * this.dx + (v2.y - v1.y) * this.dy > 0) {
-                this.p1.set$math_Vector2(v1);
-                this.p2.set$math_Vector2(v2);
-            }
-            else {
-                this.p1.set$math_Vector2(v2);
-                this.p2.set$math_Vector2(v1);
-            }
-        }
-        /**
-         *
-         * @return {string}
-         */
-        getEquation() {
-            return this.expr;
-        }
-        /**
-         *
-         * @param {framework.Renderer} g
-         */
-        render(g) {
-            if (!this.__isDefined)
-                return;
-            g.drawLine(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
-            if (this.showEqn || this.showName) {
-                this.renderInfo(g, this.p1, this.p2);
-            }
-        }
-        /**
-         * Returns the point through which line is passing
-         *
-         * @return {math.Vector2} {Vector2}
-         */
-        getPoint() {
-            return new math.Vector2(this.x0, this.y0);
-        }
-        /**
-         * returns unit vector parallel to the line
-         *
-         * @return {math.Vector2} {Vector2}
-         */
-        getDirection() {
-            return new math.Vector2(this.dx, this.dy).getNormalized();
-        }
-        /**
-         * returns the slope of the line
-         *
-         * @return {number} {Number}
-         */
-        getSlope() {
-            if (this.dx === 0)
-                return javaemul.internal.DoubleHelper.POSITIVE_INFINITY;
-            return this.dy / this.dx;
-        }
-        /**
-         * Returns the visible length of the line
-         *
-         * @return {number} {Number}
-         */
-        getLength() {
-            return this.p1.distance$math_Vector2(this.p2);
-        }
-        /**
-         * Returns true if the given point lies to the left of the line when traveling along the line in the direction given
-         * by its direction vector.
-         *
-         * @param {math.Vector2} p
-         * the point to test
-         * @return {boolean} true if point p lies on the 'left' of the line.
-         */
-        isInside(p) {
-            return ((p.x - this.x0) * this.dy - (p.y - this.y0) * this.dx < 0);
-        }
-        /**
-         *
-         * @param {math.Vector2} pt
-         * @return {boolean}
-         */
-        isSnapped(pt) {
-            if (!this.__isDefined)
-                return false;
-            const p = pt.difference$double$double(this.x0, this.y0);
-            return Math.abs(p.cross$double$double(this.dx, this.dy)) < geom.Shape2D.SNAP_DISTANCE;
-        }
-        /**
-         *
-         * @param {math.Vector2} pt
-         * @return {number}
-         */
-        t(pt) {
-            const denom = this.dx * this.dx + this.dy * this.dy;
-            return ((pt.y - this.y0) * this.dy + (pt.x - this.x0) * this.dx) / denom;
-        }
-        /**
-         *
-         * @param {number} t
-         * @return {math.Vector2}
-         */
-        point(t) {
-            if (!this.isDefined())
-                return null;
-            return new math.Vector2(this.x0 + t * this.dx, this.y0 + t * this.dy);
-        }
-        /**
-         *
-         * @param {math.Vector2} pt
-         * @return {number}
-         */
-        distance(pt) {
-            if (!this.isDefined() || pt == null)
-                return javaemul.internal.DoubleHelper.MAX_VALUE;
-            const p = this.project(pt);
-            return p.distance$math_Vector2(pt);
-        }
-        /**
-         * Returns true if the specified point  lies on the boundary of shape
-         * @param {math.Vector2} pt {Vector2 }
-         * @return {boolean} {Boolean}
-         */
-        contains(pt) {
-            return Math.abs(this.dy * (pt.x - this.x0) - this.dx * (pt.y - this.y0)) < geom.Shape2D.ACCURACY;
-        }
-        /**
-         *
-         * @param {number} t
-         * @return {math.Vector2}
-         */
-        tangent(t) {
-            if (!this.__isDefined)
-                return null;
-            return new math.Vector2(this.dx, this.dy);
-        }
-        /**
-         *
-         * @return {string}
-         */
-        getShapeInfo() {
-            if (this.parents != null && (this.parents[0] != null && this.parents[0] instanceof geom.ParentShapeArray2D)) {
-                return this.parents[0].getShapeInfo();
-            }
-            return "Line " + this.name;
-        }
-        /**
-         * Returns Line after transformation (Note that returned object may be reused internally so make its clone if needed for future use)
-         * @param {math.Transform} trans
-         * @return
-         * @return {geom.Line2D2}
-         */
-        transform(trans) {
-            if (Line2D2.TMP_LINE == null)
-                Line2D2.TMP_LINE = new Line2D2();
-            Line2D2.TMP_LINE.set$double$double$double$double(this.x0 * trans.m11 + this.y0 * trans.m12 + trans.m13, this.x0 * trans.m21 + this.y0 * trans.m22 + trans.m23, this.dx * trans.m11 + this.dy * trans.m12, this.dx * trans.m21 + this.dy * trans.m22);
-            return Line2D2.TMP_LINE;
-        }
-        /**
-         * Returns coefficient array [a,b,c] for line in form ax+by+c=0]
-         *
-         * @return
-         * @return {double[]}
-         */
-        coeff() {
-            const tab = [0, 0, 0];
-            tab[0] = this.dy;
-            tab[1] = -this.dx;
-            tab[2] = this.dx * this.y0 - this.dy * this.x0;
-            return tab;
-        }
-        renderAsRay(g) {
-            g.drawLine(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
-            const l = Math.min(this.p2.distance$math_Vector2(this.p1) * 0.75, 0.75);
-            const arrowhead = 0.06;
-            if (l > 3 * arrowhead) {
-                g.context.beginPath();
-                g.context.moveTo(this.x0 + this.dx * (l - arrowhead) + 0.5 * arrowhead * this.dy, this.y0 + this.dy * (l - arrowhead) - 0.5 * arrowhead * this.dx);
-                g.context.lineTo(this.x0 + this.dx * l, this.y0 + this.dy * l);
-                g.context.lineTo(this.x0 + this.dx * (l - arrowhead) - 0.5 * arrowhead * this.dy, this.y0 + this.dy * (l - arrowhead) + 0.5 * arrowhead * this.dx);
-                g.context.stroke();
-            }
-        }
-    }
-    Line2D2.TMP_LINE = null;
-    geom.Line2D2 = Line2D2;
-    Line2D2["__class"] = "geom.Line2D2";
+        FunctionExplicit2D.FunctionExplicit2D$0 = FunctionExplicit2D$0;
+    })(FunctionExplicit2D = geom.FunctionExplicit2D || (geom.FunctionExplicit2D = {}));
 })(geom || (geom = {}));
 (function (geom) {
     /**
@@ -16325,8 +18136,8 @@ var geom;
                 ;
             }
             if (CommonTangents2Conics2D.includeDualConic) {
-                this.children[4].conic = conic;
-                this.children[4].conic.setDrawPattern(geom.Shape2D.DrawMode.DASHED);
+                this.children[4].setConic(conic);
+                this.children[4].getConic().setDrawPattern(geom.Shape2D.DrawMode.DASHED);
                 this.children[4].__isDefined = true;
             }
         }
@@ -16341,6 +18152,305 @@ var geom;
     CommonTangents2Conics2D.includeDualConic = false;
     geom.CommonTangents2Conics2D = CommonTangents2Conics2D;
     CommonTangents2Conics2D["__class"] = "geom.CommonTangents2Conics2D";
+})(geom || (geom = {}));
+(function (geom) {
+    /**
+     * Common Tangents to the pair of conics
+     *
+     * @param curve
+     * @param point
+     * @param {number} elemIndex
+     * @param {number} count
+     * @param {java.lang.String[]} params
+     * @class
+     * @extends geom.ParentShapeArray2D
+     * @author mahesh kurmi
+     */
+    class SequenceElementArray2D extends geom.ParentShapeArray2D {
+        constructor(elemIndex, count, ...params) {
+            if (((typeof elemIndex === 'number') || elemIndex === null) && ((typeof count === 'number') || count === null) && ((params != null && params instanceof Array && (params.length == 0 || params[0] == null || (typeof params[0] === 'string'))) || params === null)) {
+                let __args = arguments;
+                super();
+                if (this.parsers === undefined) {
+                    this.parsers = null;
+                }
+                if (this.children === undefined) {
+                    this.children = null;
+                }
+                this.children = (s => { let a = []; while (s-- > 0)
+                    a.push(null); return a; })(count);
+                const parent = [this];
+                for (let i = 0; i < count; i++) {
+                    {
+                        let s = null;
+                        switch ((elemIndex)) {
+                            case 0:
+                                s = new geom.Point2D();
+                                break;
+                            case 1:
+                                s = new geom.Circle2D();
+                                break;
+                            case 2:
+                                s = new geom.Line2D();
+                                break;
+                            case 3:
+                                s = new geom.Segment2D();
+                                break;
+                            case 4:
+                                s = new geom.Vector2D();
+                                break;
+                        }
+                        s.parents = parent;
+                        s.params = [i + ""];
+                        s.showEqn = false;
+                        s.showName = false;
+                        this.children[i] = s;
+                    }
+                    ;
+                }
+                this.params = [elemIndex + "", count + "", params[0], params[1], params[2], params[3]];
+                this.parsers = (new java.util.ArrayList());
+                for (let i = 0; i < params.length; i++) {
+                    {
+                        try {
+                            if (params[i] == null || /* isEmpty */ (params[i].length === 0))
+                                break;
+                            const s = math.MathUtils.createParser(params[i], ["i"], this.shapesManager == null ? null : this.shapesManager.globalVariables, this.shapesManager == null ? null : this.shapesManager.globalFunctions);
+                            this.parsers.add(s);
+                        }
+                        catch (e) {
+                            console.error(e.message, e);
+                        }
+                    }
+                    ;
+                }
+                this.update();
+            }
+            else if (((elemIndex != null && elemIndex instanceof Array && (elemIndex.length == 0 || elemIndex[0] == null || (elemIndex[0] != null && elemIndex[0] instanceof geom.Shape2D))) || elemIndex === null) && ((count != null && count instanceof Array && (count.length == 0 || count[0] == null || (typeof count[0] === 'string'))) || count === null) && params === undefined || params.length === 0) {
+                let __args = arguments;
+                let parents = __args[0];
+                let params = __args[1];
+                {
+                    let __args = arguments;
+                    let elemIndex = javaemul.internal.IntegerHelper.parseInt(__args[2][0]);
+                    let count = javaemul.internal.IntegerHelper.parseInt(__args[2][1]);
+                    let params = __args[2][2];
+                    super();
+                    if (this.parsers === undefined) {
+                        this.parsers = null;
+                    }
+                    if (this.children === undefined) {
+                        this.children = null;
+                    }
+                    this.children = (s => { let a = []; while (s-- > 0)
+                        a.push(null); return a; })(count);
+                    const parent = [this];
+                    for (let i = 0; i < count; i++) {
+                        {
+                            let s = null;
+                            switch ((elemIndex)) {
+                                case 0:
+                                    s = new geom.Point2D();
+                                    break;
+                                case 1:
+                                    s = new geom.Circle2D();
+                                    break;
+                                case 2:
+                                    s = new geom.Line2D();
+                                    break;
+                                case 3:
+                                    s = new geom.Segment2D();
+                                    break;
+                                case 4:
+                                    s = new geom.Vector2D();
+                                    break;
+                            }
+                            s.parents = parent;
+                            s.params = [i + ""];
+                            s.showEqn = false;
+                            s.showName = false;
+                            this.children[i] = s;
+                        }
+                        ;
+                    }
+                    this.params = [elemIndex + "", count + "", params[0], params[1], params[2], params[3]];
+                    this.parsers = (new java.util.ArrayList());
+                    for (let i = 0; i < params.length; i++) {
+                        {
+                            try {
+                                if (params[i] == null || /* isEmpty */ (params[i].length === 0))
+                                    break;
+                                const s = math.MathUtils.createParser(params[i], ["i"], this.shapesManager == null ? null : this.shapesManager.globalVariables, this.shapesManager == null ? null : this.shapesManager.globalFunctions);
+                                this.parsers.add(s);
+                            }
+                            catch (e) {
+                                console.error(e.message, e);
+                            }
+                        }
+                        ;
+                    }
+                    this.update();
+                }
+                if (this.parsers === undefined) {
+                    this.parsers = null;
+                }
+                if (this.children === undefined) {
+                    this.children = null;
+                }
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        /**
+         *
+         * @return {number}
+         */
+        getChildrenCount() {
+            return this.children.length;
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {geom.Shape2D}
+         */
+        getChild(index) {
+            if (index < 0 || index >= this.children.length)
+                return null;
+            return this.children[index];
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {framework.EditInfo}
+         */
+        getEditInfo(index) {
+            const mode = javaemul.internal.IntegerHelper.parseInt(this.params[0]);
+            if (index === 0)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("x1", this.params[2], null);
+            if (index === 1)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("y1", this.params[3], null);
+            if (mode > 0 && index === 2)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A(mode === 1 ? "radius" : "x2", this.params[4], null);
+            if (mode > 1 && index === 3)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("y2", this.params[5], null);
+            return null;
+        }
+        /**
+         *
+         * @param {number} index
+         * @param {*} value
+         */
+        setEditValue(index, value) {
+            const v = value + "";
+            if (index < 4) {
+                try {
+                    const s = math.MathUtils.createParser(v, ["i"], this.shapesManager == null ? null : this.shapesManager.globalVariables, this.shapesManager == null ? null : this.shapesManager.globalFunctions);
+                    this.params[index + 2] = v;
+                    this.parsers.set(index, s);
+                }
+                catch (e) {
+                }
+                this.update();
+            }
+        }
+        /**
+         *
+         * @param {number} index
+         * @param {string} value
+         */
+        setParam(index, value) {
+            if (index > 1) {
+                try {
+                    const s = math.MathUtils.createParser(value, ["i"], this.shapesManager == null ? null : this.shapesManager.globalVariables, this.shapesManager == null ? null : this.shapesManager.globalFunctions);
+                    super.setParam(index, value);
+                    this.parsers.set(index - 2, s);
+                }
+                catch (e) {
+                    console.error(e.message, e);
+                }
+            }
+        }
+        /**
+         *
+         */
+        update() {
+            this.__isDefined = false;
+            for (let i = 0; i < this.children.length; i++) {
+                this.children[i].__isDefined = false;
+            }
+            if (this.shapesManager == null)
+                return;
+            const mode = javaemul.internal.IntegerHelper.parseInt(this.params[0]);
+            let x;
+            let y;
+            let z = 0;
+            let w = 0;
+            if (this.shapesManager != null) {
+                for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        for (let index = this.parsers.iterator(); index.hasNext();) {
+                            let p = index.next();
+                            p.setVariable(key, this.shapesManager.globalVariables.get(key));
+                        }
+                    }
+                }
+            }
+            for (let i = 0; i < this.children.length; i++) {
+                {
+                    this.parsers.get(0).setVariable("i", i);
+                    this.parsers.get(1).setVariable("i", i);
+                    x = this.parsers.get(0).evaluate();
+                    y = this.parsers.get(1).evaluate();
+                    if (mode > 0) {
+                        this.parsers.get(2).setVariable("i", i);
+                        z = this.parsers.get(2).evaluate();
+                    }
+                    if (mode > 2) {
+                        this.parsers.get(3).setVariable("i", i);
+                        w = this.parsers.get(3).evaluate();
+                    }
+                    const s = this.children[i];
+                    switch ((mode)) {
+                        case 0:
+                            s.set(x, y);
+                            break;
+                        case 1:
+                            s.set(x, y, z);
+                            break;
+                        case 2:
+                            s.set$double$double$double(x, y, z);
+                            break;
+                        case 3:
+                            s.set$double$double$double$double(x, y, z - x, w - y);
+                            break;
+                        case 4:
+                            s.set$double$double$double$double(x, y, z - x, w - y);
+                            break;
+                    }
+                }
+                ;
+            }
+            this.__isDefined = true;
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getShapeInfo() {
+            return "Sequence of shapes " + this.params[0] + " count = " + this.params[1];
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {string}
+         */
+        getChildInfo(index) {
+            return "Shape at index " + index;
+        }
+    }
+    geom.SequenceElementArray2D = SequenceElementArray2D;
+    SequenceElementArray2D["__class"] = "geom.SequenceElementArray2D";
 })(geom || (geom = {}));
 (function (geom) {
     class LineAngleBisector2D extends geom.ParentShapeArray2D {
@@ -16682,12 +18792,20 @@ var geom;
          * perform some action if needed (like resource release, reset global variables etc) when the shape is removed
          */
         dispose() {
+            if (this.shapesManager != null)
+                this.shapesManager.globalVariables.remove(this.getName());
         }
         /**
          * @param {string} name
          * the name to set
          */
         setName(name) {
+            if (name != null) {
+                name = /* replaceAll */ name.replace(new RegExp(" ", 'g'), "");
+                if (this.shapesManager.containsShape(this))
+                    this.shapesManager.globalVariables.remove(this.name);
+                this.name = name;
+            }
             this.update();
         }
         /**
@@ -16705,6 +18823,85 @@ var geom;
     }
     geom.Measure2D = Measure2D;
     Measure2D["__class"] = "geom.Measure2D";
+})(geom || (geom = {}));
+(function (geom) {
+    /**
+     * @author mahesh kurmi
+     * @param {geom.Shape2D[]} shapes
+     * @param {java.lang.String[]} params
+     * @class
+     * @extends geom.Label2D
+     */
+    class ShapeInfo2D extends geom.Label2D {
+        constructor(shapes, params) {
+            if (((shapes != null && shapes instanceof Array && (shapes.length == 0 || shapes[0] == null || (shapes[0] != null && shapes[0] instanceof geom.Shape2D))) || shapes === null) && ((params != null && params instanceof Array && (params.length == 0 || params[0] == null || (typeof params[0] === 'string'))) || params === null)) {
+                let __args = arguments;
+                {
+                    let __args = arguments;
+                    let p1 = shapes[1];
+                    let p2 = shapes[0];
+                    super(p2, "");
+                    this.info = "name : expr";
+                    this.updateNeeded = false;
+                    this.parents = [p2, p1];
+                    this.update();
+                }
+                this.info = "name : expr";
+                this.updateNeeded = false;
+            }
+            else if (((shapes != null && shapes instanceof geom.Curve2D) || shapes === null) && ((params != null && params instanceof geom.Point2D) || params === null)) {
+                let __args = arguments;
+                let p1 = __args[0];
+                let p2 = __args[1];
+                super(p2, "");
+                this.info = "name : expr";
+                this.updateNeeded = false;
+                this.parents = [p2, p1];
+                this.update();
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        /**
+         *
+         * @param {string} label
+         */
+        setLabel(label) {
+            this.info = label;
+            this.updateNeeded = true;
+        }
+        update() {
+            super.update();
+            if (this.parents.length < 2 || !this.parents[1].__isDefined) {
+                this.__isDefined = false;
+                return;
+            }
+            this.__isDefined = true;
+            let label = "";
+            if (this.showName && this.showEqn)
+                label = this.parents[1].getName() + " : " + this.parents[1].getEquation();
+            else if (this.showName)
+                label = this.parents[1].getName();
+            else if (this.showEqn)
+                label = this.parents[1].getEquation();
+            else
+                label = "";
+            if (!(label === this.info))
+                this.updateNeeded = true;
+            this.info = label;
+        }
+        /**
+         *
+         * @param {framework.Renderer} gl
+         */
+        render(gl) {
+            if (!this.__isDefined || !this.visible)
+                return;
+            super.render(gl);
+        }
+    }
+    geom.ShapeInfo2D = ShapeInfo2D;
+    ShapeInfo2D["__class"] = "geom.ShapeInfo2D";
 })(geom || (geom = {}));
 (function (geom) {
     /**
@@ -16772,17 +18969,18 @@ var geom;
         /**
          *
          * @param {math.Vector2} delta
+         * @param {math.Vector2} worldPt
          * @param {boolean} manually
          */
-        dragged(delta, manually) {
+        mouseDragged(delta, worldPt, manually) {
             if (!this.isDefined())
                 return;
-            super.dragged(delta, manually);
+            super.mouseDragged(delta, worldPt, manually);
             const p = this.pt.copy();
             this.delta.add$math_Vector2(delta);
             this.pt.add$math_Vector2(this.delta);
             if (manually)
-                this.pt = framework.Preferences.snapToGrid(this.pt);
+                this.pt = this.shapesManager.preferences.snapToGrid(this.pt);
             if (!math.MathUtils.approxEqual(this.pt, p))
                 this.delta.set$double$double(0, 0);
             const point1 = this.parents[0].pt;
@@ -17197,6 +19395,128 @@ var geom;
     Segment2D["__class"] = "geom.Segment2D";
 })(geom || (geom = {}));
 (function (geom) {
+    /**
+     * Line from catesian eqn in form ax+by+c=0
+     *
+     * @param {string} a
+     * @param {string} b
+     * @param {string} c
+     * @class
+     * @extends geom.Line2D
+     * @author maheshkurmi
+     */
+    class LineEqn2D extends geom.Line2D {
+        constructor(a, b, c) {
+            super();
+            if (this.a === undefined) {
+                this.a = null;
+            }
+            if (this.b === undefined) {
+                this.b = null;
+            }
+            if (this.c === undefined) {
+                this.c = null;
+            }
+            this.a = new geom.optics.DynamicValue(a, javaemul.internal.DoubleHelper.NEGATIVE_INFINITY, javaemul.internal.DoubleHelper.POSITIVE_INFINITY);
+            this.b = new geom.optics.DynamicValue(b, javaemul.internal.DoubleHelper.NEGATIVE_INFINITY, javaemul.internal.DoubleHelper.POSITIVE_INFINITY);
+            this.c = new geom.optics.DynamicValue(c, javaemul.internal.DoubleHelper.NEGATIVE_INFINITY, javaemul.internal.DoubleHelper.POSITIVE_INFINITY);
+            this.set$java_lang_String$java_lang_String$java_lang_String(a, b, c);
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {framework.EditInfo}
+         */
+        getEditInfo(index) {
+            if (index === 0)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("a", this.params[0], null);
+            if (index === 1)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("b", this.params[1], null);
+            if (index === 2)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("c", this.params[2], null);
+            return null;
+        }
+        /**
+         *
+         * @param {number} index
+         * @param {*} value
+         */
+        setEditValue(index, value) {
+            const __var = value + "";
+            if (index === 0) {
+                this.params[0] = __var;
+                this.a.set$java_lang_String(__var);
+            }
+            else if (index === 1) {
+                this.params[1] = __var;
+                this.b.set$java_lang_String(__var);
+            }
+            else if (index === 2) {
+                this.params[2] = __var;
+                this.c.set$java_lang_String(__var);
+            }
+            this.update();
+        }
+        /**
+         *
+         */
+        update() {
+            this.a.update();
+            this.b.update();
+            this.c.update();
+            const a = this.a.getValue();
+            const b = this.b.getValue();
+            const c = this.c.getValue();
+            if (!((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(a) || !((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(b) || !((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(c) || (a === 0 && b === 0)) {
+                this.__isDefined = false;
+                return;
+            }
+            else if (a === 0) {
+                super.set$double$double$double$double(0, -c / b, 1, 0);
+            }
+            else if (b === 0) {
+                super.set$double$double$double$double(-c / a, 0, 0, 1);
+            }
+            else {
+                super.set$double$double$double$double(0, -c / b, b, -a);
+            }
+        }
+        /**
+         * Sets line as passing through point (x,y) and direction rations as dx and dy
+         * @param {number} x
+         * @param {number} y
+         * @param {number} dx
+         * @param {number} dy
+         */
+        set(x, y, dx, dy) {
+            if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof dx === 'number') || dx === null) && ((typeof dy === 'number') || dy === null)) {
+                super.set(x, y, dx, dy);
+            }
+            else if (((typeof x === 'string') || x === null) && ((typeof y === 'string') || y === null) && ((typeof dx === 'string') || dx === null) && dy === undefined) {
+                return this.set$java_lang_String$java_lang_String$java_lang_String(x, y, dx);
+            }
+            else if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof dx === 'number') || dx === null) && dy === undefined) {
+                return this.set$double$double$double(x, y, dx);
+            }
+            else if (((x != null && x instanceof math.Vector2) || x === null) && ((y != null && y instanceof math.Vector2) || y === null) && dx === undefined && dy === undefined) {
+                return this.set$math_Vector2$math_Vector2(x, y);
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        set$java_lang_String$java_lang_String$java_lang_String(expra, exprb, exprc) {
+            this.params = [expra, exprb, exprc];
+            this.a.set$java_lang_String(expra);
+            this.b.set$java_lang_String(exprb);
+            this.c.set$java_lang_String(exprc);
+            this.update();
+            this.expr = math.MathUtils.formatEqn$java_lang_String_A$java_lang_String_A(this.params, ["x", "y", ""]);
+        }
+    }
+    geom.LineEqn2D = LineEqn2D;
+    LineEqn2D["__class"] = "geom.LineEqn2D";
+})(geom || (geom = {}));
+(function (geom) {
     class LineTangent2D extends geom.Line2D {
         constructor(curve, p) {
             super();
@@ -17271,18 +19591,20 @@ var geom;
         }
         /**
          *
+         * @param {geom.ShapesManager} manager
          */
-        onAddShapeToSimulation() {
+        onAddShapeToSimulation(manager) {
+            super.onAddShapeToSimulation(manager);
             if (this.mode === 0 && this.__isDefined) {
                 const curve = this.parents[0];
                 const line = this.parents[1];
                 const l1 = new NormalsConicLine2D(curve, line, "1");
                 const l2 = new NormalsConicLine2D(curve, line, "2");
-                framework.App.instance.shapesManager.removeShape(this);
+                this.shapesManager.removeShape(this);
                 if (l1.__isDefined)
-                    framework.App.instance.shapesManager.addShape(l1);
+                    this.shapesManager.addShape(l1);
                 if (l2.__isDefined)
-                    framework.App.instance.shapesManager.addShape(l2);
+                    this.shapesManager.addShape(l2);
             }
         }
         /**
@@ -17419,7 +19741,7 @@ var geom;
                 return;
             }
             try {
-                this.angle = math.MathUtils.evaluateExpression(this.params[0], null, null);
+                this.angle = math.MathUtils.evaluateExpression(this.params[0], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
             }
             catch (e) {
                 return;
@@ -17620,7 +19942,7 @@ var geom;
                 return;
             }
             try {
-                this.angle = math.MathUtils.evaluateExpression(this.params[0], null, null);
+                this.angle = math.MathUtils.evaluateExpression(this.params[0], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
             }
             catch (e) {
                 return;
@@ -17682,7 +20004,7 @@ var geom;
          * @return {string}
          */
         getInfo() {
-            return "Polar of conic  " + this.parents[0].getName() + " wrt Point " + this.parents[1].getName();
+            return "Chord on conic  " + this.parents[0].getName() + " with mid-point " + this.parents[1].getName();
         }
     }
     geom.MidPointChordConicPoint2D = MidPointChordConicPoint2D;
@@ -17728,18 +20050,20 @@ var geom;
         }
         /**
          *
+         * @param {geom.ShapesManager} manager
          */
-        onAddShapeToSimulation() {
+        onAddShapeToSimulation(manager) {
+            super.onAddShapeToSimulation(manager);
             if (this.mode === 0 && this.__isDefined) {
                 const curve = this.parents[0];
                 const line = this.parents[1];
                 const l1 = new TangentsConicLine2D(curve, line, "1");
                 const l2 = new TangentsConicLine2D(curve, line, "2");
-                framework.App.instance.shapesManager.removeShape(this);
+                this.shapesManager.removeShape(this);
                 if (l1.__isDefined)
-                    framework.App.instance.shapesManager.addShape(l1);
+                    this.shapesManager.addShape(l1);
                 if (l2.__isDefined)
-                    framework.App.instance.shapesManager.addShape(l2);
+                    this.shapesManager.addShape(l2);
             }
         }
         /**
@@ -17846,15 +20170,16 @@ var geom;
             else
                 throw new Error('invalid overload');
         }
-        onAddShapeToSimulation() {
+        onAddShapeToSimulation(manager) {
+            super.onAddShapeToSimulation(manager);
             if (this.mode === 0 && this.__isDefined) {
                 const line1 = this.parents[0];
                 const line2 = this.parents[1];
                 const l1 = new LineAngleBisectorPair2D(line1, line2, "1");
                 const l2 = new LineAngleBisectorPair2D(line1, line2, "2");
-                framework.App.instance.shapesManager.removeShape(this);
-                framework.App.instance.shapesManager.addShape(l1);
-                framework.App.instance.shapesManager.addShape(l2);
+                this.shapesManager.removeShape(this);
+                this.shapesManager.addShape(l1);
+                this.shapesManager.addShape(l2);
             }
         }
         update() {
@@ -17963,10 +20288,56 @@ var geom;
         }
         update() {
         }
+        /**
+         *
+         */
         clip() {
             if (!this.__isDefined)
                 return;
-            super.clip();
+            if (this.shapesManager == null)
+                return;
+            const b = this.shapesManager.getWorldBounds();
+            const xmin = b[0];
+            const ymin = b[1];
+            const xmax = b[2];
+            const ymax = b[3];
+            if (Math.abs(this.dy) < framework.Preferences.EPSILON) {
+                this.dy = 0;
+                this.p2.set$double$double(this.dx > 0 ? xmax : xmin, this.y0);
+            }
+            else if (Math.abs(this.dx) < framework.Preferences.EPSILON) {
+                this.dx = 0;
+                this.p2.set$double$double(this.x0, this.dy > 0 ? ymax : ymin);
+            }
+            else {
+                const c = [0, 0, 0];
+                const v1 = new math.Vector2();
+                const v2 = new math.Vector2();
+                c[0] = this.dy;
+                c[1] = -this.dx;
+                c[2] = -this.dx * this.y0 + this.dy * this.x0;
+                if (Math.abs(this.dy / this.dx) <= 1) {
+                    const y1 = (c[2] - c[0] * xmin) / c[1];
+                    const y2 = (c[2] - c[0] * xmax) / c[1];
+                    v1.set$double$double(xmin, y1);
+                    v2.set$double$double(xmax, y2);
+                }
+                else {
+                    const x1 = (c[2] - c[1] * ymin) / c[0];
+                    const x2 = (c[2] - c[1] * ymax) / c[0];
+                    v1.set$double$double(x1, ymin);
+                    v2.set$double$double(x2, ymax);
+                }
+                const t1 = this.t(v1);
+                const t2 = this.t(v2);
+                if (t2 > t1) {
+                    if (t2 > 0)
+                        this.p2.set$math_Vector2(v2);
+                }
+                else if (t1 > 0) {
+                    this.p2.set$math_Vector2(v1);
+                }
+            }
             this.p1.set$double$double(this.x0, this.y0);
         }
         /**
@@ -17997,8 +20368,7 @@ var geom;
          * @return {number}
          */
         t(pt) {
-            const pToP1 = pt.difference$double$double(this.x0, this.y0);
-            const dot = pToP1.dot$double$double(this.dx, this.dy);
+            const dot = (pt.x - this.x0) * this.dx + (pt.y - this.y0) * this.dy;
             return dot;
         }
         /**
@@ -18093,11 +20463,333 @@ var geom;
          * @return {string}
          */
         getShapeInfo() {
-            return "Pole of conic  " + this.parents[0].getName() + " wrt Point " + this.parents[1].getName();
+            return "Polar of conic  " + this.parents[0].getName() + " wrt Point " + this.parents[1].getName();
         }
     }
     geom.PolarConicPoint2D = PolarConicPoint2D;
     PolarConicPoint2D["__class"] = "geom.PolarConicPoint2D";
+})(geom || (geom = {}));
+(function (geom) {
+    class PolarCurve2D extends geom.DynamicCurve2D {
+        constructor(maxPoints, expr, min_t, max_t) {
+            if (((typeof maxPoints === 'string') || maxPoints === null) && ((typeof expr === 'string') || expr === null) && ((typeof min_t === 'string') || min_t === null) && ((typeof max_t === 'string') || max_t === null)) {
+                let __args = arguments;
+                super();
+                this.parserX = null;
+                this.isValidExpr = true;
+                this.parseErrorMessage = null;
+                this.min_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                this.max_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                this.maxPoints = javaemul.internal.IntegerHelper.parseInt(maxPoints);
+                this.params = [maxPoints + "", expr, min_t, max_t];
+                this.min_t.set$java_lang_String(min_t);
+                this.max_t.set$java_lang_String(max_t);
+                this.__t0 = this.min_t.getValue();
+                this.__t1 = this.max_t.getValue();
+                this.setExpression(expr);
+                this.update();
+            }
+            else if (((typeof maxPoints === 'string') || maxPoints === null) && ((typeof expr === 'string') || expr === null) && min_t === undefined && max_t === undefined) {
+                let __args = arguments;
+                {
+                    let __args = arguments;
+                    let min_t = "0";
+                    let max_t = "2*pi";
+                    super();
+                    this.parserX = null;
+                    this.isValidExpr = true;
+                    this.parseErrorMessage = null;
+                    this.min_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.max_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.maxPoints = javaemul.internal.IntegerHelper.parseInt(maxPoints);
+                    this.params = [maxPoints + "", expr, min_t, max_t];
+                    this.min_t.set$java_lang_String(min_t);
+                    this.max_t.set$java_lang_String(max_t);
+                    this.__t0 = this.min_t.getValue();
+                    this.__t1 = this.max_t.getValue();
+                    this.setExpression(expr);
+                    this.update();
+                }
+                this.parserX = null;
+                this.isValidExpr = true;
+                this.parseErrorMessage = null;
+                this.min_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                this.max_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+            }
+            else if (((typeof maxPoints === 'string') || maxPoints === null) && expr === undefined && min_t === undefined && max_t === undefined) {
+                let __args = arguments;
+                let expr = __args[0];
+                {
+                    let __args = arguments;
+                    let maxPoints = "200";
+                    let min_t = "0";
+                    let max_t = "2*pi";
+                    super();
+                    this.parserX = null;
+                    this.isValidExpr = true;
+                    this.parseErrorMessage = null;
+                    this.min_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.max_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.maxPoints = javaemul.internal.IntegerHelper.parseInt(maxPoints);
+                    this.params = [maxPoints + "", expr, min_t, max_t];
+                    this.min_t.set$java_lang_String(min_t);
+                    this.max_t.set$java_lang_String(max_t);
+                    this.__t0 = this.min_t.getValue();
+                    this.__t1 = this.max_t.getValue();
+                    this.setExpression(expr);
+                    this.update();
+                }
+                this.parserX = null;
+                this.isValidExpr = true;
+                this.parseErrorMessage = null;
+                this.min_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                this.max_t = new geom.optics.DynamicValue(1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {framework.EditInfo}
+         */
+        getEditInfo(index) {
+            if (index === 0)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("Max Points", this.params[0], null);
+            if (index === 1)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("r(t)", this.params[1], ["t"]);
+            if (index === 2)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("Minimum t", this.params[2], null);
+            if (index === 3)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("Maximum t", this.params[3], null);
+            return null;
+        }
+        /**
+         *
+         * @param {number} index
+         * @param {*} value
+         */
+        setEditValue(index, value) {
+            if (index === 0) {
+                this.params[0] = (value + "");
+                this.maxPoints = javaemul.internal.IntegerHelper.parseInt(this.params[0]);
+                this.reset();
+            }
+            else if (index === 1) {
+                this.params[1] = value + "";
+                this.setExpression(this.params[1]);
+            }
+            else if (index === 2) {
+                this.params[2] = value + "";
+                this.min_t.set$java_lang_String(this.params[2]);
+                this.__t0 = this.min_t.getValue();
+                this.reset();
+            }
+            else if (index === 3) {
+                this.params[3] = value + "";
+                this.max_t.set$java_lang_String(this.params[3]);
+                this.__t1 = this.max_t.getValue();
+                this.reset();
+            }
+        }
+        /**
+         * Recreate shape from its parameters, mainly intended to reparse expression in shapes if any
+         * @param {geom.ShapesManager} manager
+         */
+        onAddShapeToSimulation(manager) {
+            super.onAddShapeToSimulation(manager);
+            this.min_t.setShapesManager(manager);
+            this.max_t.setShapesManager(manager);
+        }
+        /**
+         *
+         */
+        update() {
+            if (this.shapesManager != null && this.shapesManager.containsShape(this)) {
+                this.min_t.update();
+                this.max_t.update();
+                this.__t0 = this.min_t.getValue();
+                this.__t1 = this.max_t.getValue();
+                if (this.__t1 <= this.__t0 || !this.isValidExpr) {
+                    this.__isDefined = false;
+                    return;
+                }
+                this.__isDefined = true;
+                this.createGraph();
+            }
+        }
+        /**
+         * removes all vertices from curve
+         */
+        reset() {
+            super.reset();
+            this.createGraph();
+        }
+        /**
+         * Sets expression for the field, the expression can be a function of position <b>x</b>, <b>y</b> or polar coordinates  <b>r</b> and  <b>th</b>(theta)
+         * @param xExpr expression for x component of field
+         * @param yExpr expression for y component of field
+         * @param {string} expr
+         */
+        setExpression(expr) {
+            if (expr == null || /* isEmpty */ (expr.length === 0)) {
+                this.params[1] = expr;
+                this.isValidExpr = false;
+                return;
+            }
+            this.params[1] = expr;
+            this.__isDefined = false;
+            this.isValidExpr = true;
+            this.parseErrorMessage = null;
+            this.parserX = null;
+            if (this.shapesManager == null)
+                return;
+            let e;
+            try {
+                e = math.MathUtils.createParser(expr, ["t"], this.shapesManager.globalVariables, this.shapesManager.globalFunctions);
+            }
+            catch (ex) {
+                this.parseErrorMessage = ex.message;
+                console.info("parsing error in expr: " + expr + " " + ex.message);
+                e = null;
+            }
+            if (e == null) {
+                this.isValidExpr = false;
+                return;
+            }
+            else {
+                const res = e.validate$boolean(false);
+                if (res.isValid()) {
+                    this.parserX = e;
+                }
+                else {
+                    this.isValidExpr = false;
+                    return;
+                }
+            }
+            this.createGraph();
+            this.__isDefined = this.isValidExpr;
+        }
+        /*private*/ createGraph() {
+            if (this.parserX == null || !this.isValidExpr || this.__t0 >= this.__t1)
+                return;
+            this.vertices.clear();
+            if (this.shapesManager != null) {
+                for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        this.parserX.setVariable(key, this.shapesManager.globalVariables.get(key));
+                    }
+                }
+            }
+            let t = this.__t0;
+            const dt = (this.__t1 - this.__t0) / (this.maxPoints - 1);
+            let r;
+            for (let i = 0; i < this.maxPoints; i++) {
+                {
+                    this.parserX.setVariable("t", t);
+                    r = this.parserX.evaluate();
+                    if ( /* isFinite */((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(r))
+                        this.updatePoint(math.Vector2.create(r, t));
+                    t += dt;
+                }
+                ;
+            }
+        }
+        /**
+         *
+         * @param {number} t
+         * @return {math.Vector2}
+         */
+        point(t) {
+            if (this.__isDefined === false)
+                return null;
+            if (this.shapesManager != null) {
+                for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        this.parserX.setVariable(key, this.shapesManager.globalVariables.get(key));
+                    }
+                }
+            }
+            this.parserX.setVariable("t", t);
+            const r = this.parserX.evaluate();
+            if ( /* isFinite */((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(r))
+                return math.Vector2.create(r, t);
+            return null;
+        }
+        /**
+         *
+         * @param {math.Vector2} pt
+         * @return {number}
+         */
+        t(pt) {
+            const t = super.t(pt);
+            return this.__t0 + t * (this.__t1 - this.__t0);
+        }
+        /*private*/ getr(t) {
+            this.parserX.setVariable("t", t);
+            return this.parserX.evaluate();
+        }
+        /**
+         * Returns the unit Vector along tangent to curve
+         * @param {number} t
+         * @return {math.Vector2}
+         */
+        tangent(t) {
+            if (!this.__isDefined || this.vertices.size() < 2)
+                return null;
+            if (this.shapesManager != null) {
+                for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        this.parserX.setVariable(key, this.shapesManager.globalVariables.get(key));
+                    }
+                }
+            }
+            const r = this.getr(t);
+            let ddx = 0;
+            const x = t;
+            let h;
+            if (x > 1 || x < -1)
+                h = Math.sqrt(geom.Shape2D.ACCURACY) * x;
+            else
+                h = Math.sqrt(geom.Shape2D.ACCURACY);
+            const answerx = this.getr(t);
+            for (let i = 1; i <= 5; i++) {
+                {
+                    const diff = (h * i);
+                    t = x + diff;
+                    let answer = this.getr(t);
+                    ddx += ((answer - answerx) / diff);
+                    t = x - diff;
+                    answer = this.getr(t);
+                    ddx += ((answerx - answer) / diff);
+                }
+                ;
+            }
+            ddx = ddx / 10;
+            const dy = ddx * Math.sin(t) + r * Math.cos(t);
+            const dx = ddx * Math.cos(t) - r * Math.sin(t);
+            return geom.Shape2D.TMP_VEC_$LI$().set$double$double(dx, dy).getNormalized();
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getEquation() {
+            return "r(t)=" + this.params[1];
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getShapeInfo() {
+            return "Polar Curve (r(t)=" + this.params[1] + ")";
+        }
+    }
+    geom.PolarCurve2D = PolarCurve2D;
+    PolarCurve2D["__class"] = "geom.PolarCurve2D";
 })(geom || (geom = {}));
 (function (geom) {
     class ParametricCurve2D extends geom.DynamicCurve2D {
@@ -18311,8 +21003,10 @@ var geom;
         }
         /**
          * Recreate shape from its parameters, mainly intended to reparse expression in shapes if any
+         * @param {geom.ShapesManager} manager
          */
-        onAddShapeToSimulation() {
+        onAddShapeToSimulation(manager) {
+            super.onAddShapeToSimulation(manager);
             this.setExpressions(this.xExpr, this.yExpr);
             this.update();
         }
@@ -18320,7 +21014,9 @@ var geom;
          *
          */
         update() {
-            if (framework.App.instance.shapesManager.containsShape(this)) {
+            if (this.shapesManager == null)
+                return;
+            if (this.shapesManager.containsShape(this)) {
                 if (this.__t1 <= this.__t0 || !this.isValidExpr) {
                     this.__isDefined = false;
                     return;
@@ -18348,6 +21044,8 @@ var geom;
                 yExpr = "0";
             this.params[1] = xExpr;
             this.params[2] = yExpr;
+            if (this.shapesManager == null)
+                return;
             this.__isDefined = false;
             this.isValidExpr = true;
             this.parseErrorMessage = null;
@@ -18357,7 +21055,7 @@ var geom;
             this.yExpr = yExpr;
             let e;
             try {
-                e = math.MathUtils.createParser(xExpr, true, ["t"]);
+                e = math.MathUtils.createParser(xExpr, ["t"], this.shapesManager.globalVariables, this.shapesManager.globalFunctions);
             }
             catch (ex) {
                 this.parseErrorMessage = ex.message;
@@ -18379,7 +21077,7 @@ var geom;
                 }
             }
             try {
-                e = math.MathUtils.createParser(yExpr, framework.App.instance.shapesManager.containsShape(this), ["t"]);
+                e = math.MathUtils.createParser(yExpr, ["t"], this.shapesManager == null ? null : this.shapesManager.globalVariables, this.shapesManager == null ? null : this.shapesManager.globalFunctions);
             }
             catch (ex) {
                 this.parseErrorMessage = ex.message;
@@ -18407,6 +21105,15 @@ var geom;
             if (this.parserX == null || this.parserY == null || !this.isValidExpr || this.__t0 >= this.__t1)
                 return;
             this.vertices.clear();
+            if (this.shapesManager != null) {
+                for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        this.parserX.setVariable(key, this.shapesManager.globalVariables.get(key));
+                        this.parserY.setVariable(key, this.shapesManager.globalVariables.get(key));
+                    }
+                }
+            }
             let t = this.__t0;
             const dt = (this.__t1 - this.__t0) / (this.maxPoints - 1);
             let x;
@@ -18440,6 +21147,15 @@ var geom;
         point(t) {
             if (this.__isDefined === false)
                 return null;
+            if (this.shapesManager != null) {
+                for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        this.parserX.setVariable(key, this.shapesManager.globalVariables.get(key));
+                        this.parserY.setVariable(key, this.shapesManager.globalVariables.get(key));
+                    }
+                }
+            }
             let x;
             let y;
             x = this.getX(t);
@@ -18465,6 +21181,15 @@ var geom;
         tangent(t) {
             if (!this.__isDefined || this.vertices.size() < 2)
                 return null;
+            if (this.shapesManager != null) {
+                for (let index = this.shapesManager.globalVariables.keySet().iterator(); index.hasNext();) {
+                    let key = index.next();
+                    {
+                        this.parserX.setVariable(key, this.shapesManager.globalVariables.get(key));
+                        this.parserY.setVariable(key, this.shapesManager.globalVariables.get(key));
+                    }
+                }
+            }
             let ddx = 0;
             let ddy = 0;
             const t0 = t;
@@ -19011,6 +21736,9 @@ var geom;
         update() {
             if (!this.parents[0].__isDefined || !this.parents[1].__isDefined) {
                 this.__isDefined = false;
+                if (this.name != null && !(this.name.length === 0))
+                    if (this.shapesManager != null)
+                        this.shapesManager.globalVariables.put(this.name, javaemul.internal.DoubleHelper.NaN);
                 return;
             }
             this.__isDefined = true;
@@ -19021,6 +21749,8 @@ var geom;
             this.y0 = v.y;
             v = v1.to$math_Vector2(v2);
             if (v.isZero()) {
+                if (this.shapesManager != null && this.name != null && !(this.name.length === 0))
+                    this.shapesManager.globalVariables.put(this.name, 0.0);
                 return;
             }
             const l = v.normalize();
@@ -19030,6 +21760,8 @@ var geom;
             this.tmp_V2.set$math_Vector2(v2).add$math_Vector2(v);
             this.label = math.MathUtils.formatValue(l, false) + " m";
             this.segment = new geom.Segment2D(this.tmp_V1, this.tmp_V2);
+            if (this.shapesManager != null && this.name != null && !(this.name.length === 0))
+                this.shapesManager.globalVariables.put(this.name, l);
         }
         /**
          *
@@ -19065,6 +21797,8 @@ var geom;
          * @param {string} name
          */
         setName(name) {
+            if (this.shapesManager != null && name != null && !(name.length === 0))
+                this.shapesManager.globalVariables.remove(this.getName());
             this.name = name;
             this.update();
         }
@@ -19079,8 +21813,19 @@ var geom;
             const v2 = this.parents[1].pt;
             const v = this.tmp_V1.to$math_Vector2(this.tmp_V2);
             const l = v.normalize();
-            if (l < 1 / 100.0)
+            if (l < 1 / gl.METER_TO_PIXEL)
                 return;
+            if (this.drawColor != null) {
+                gl.setColors(null, this.drawColor);
+                if (this.offset !== 0) {
+                    gl.context.save();
+                    gl.context.setLineDash([0.1, 0.2]);
+                    gl.drawLine(v1.x, v1.y, this.tmp_V1.x, this.tmp_V1.y);
+                    gl.drawLine(v2.x, v2.y, this.tmp_V2.x, this.tmp_V2.y);
+                    gl.context.restore();
+                }
+                gl.drawDoubleVector(this.tmp_V1.x, this.tmp_V1.y, v.x, v.y, l, this.offset !== 0);
+            }
             if (this.showEqn || this.showName)
                 geom.Shape2D.renderInfo(gl, this.getInfo(), this.tmp_V1, this.tmp_V2, 1, 2, this.drawColor, this.fillColor);
         }
@@ -19101,6 +21846,99 @@ var geom;
     }
     geom.LengthMeasure2D = LengthMeasure2D;
     LengthMeasure2D["__class"] = "geom.LengthMeasure2D";
+})(geom || (geom = {}));
+(function (geom) {
+    class PointMeasure2D extends geom.Measure2D {
+        constructor(pt, xVarName, yVarName) {
+            if (((pt != null && pt instanceof geom.Point2D) || pt === null) && ((typeof xVarName === 'string') || xVarName === null) && ((typeof yVarName === 'string') || yVarName === null)) {
+                let __args = arguments;
+                super(pt, "");
+                this.parents = [pt];
+                this.setName(pt.getName());
+                this.params = [xVarName, yVarName];
+                this.update();
+            }
+            else if (((pt != null && pt instanceof geom.Point2D) || pt === null) && xVarName === undefined && yVarName === undefined) {
+                let __args = arguments;
+                super(pt, "");
+                this.parents = [pt];
+                this.setName(pt.getName());
+                this.params = [this.name + "_x", this.name + "_y"];
+                this.update();
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {framework.EditInfo}
+         */
+        getEditInfo(index) {
+            if (index === 0)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("X var name", this.params[0], null);
+            if (index === 1)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("Y var name", this.params[1], null);
+            return null;
+        }
+        /**
+         *
+         * @param {number} index
+         * @param {*} value
+         */
+        setEditValue(index, value) {
+            if (value == null || !value.toString().matches("[a-zA-Z][a-zA-Z0-9_]*")) {
+                return;
+            }
+            const _var = value + "";
+            if (index === 0) {
+                if (this.shapesManager != null)
+                    this.shapesManager.globalVariables.remove(this.params[0]);
+                this.params[0] = _var;
+                this.update();
+            }
+            else if (index === 1) {
+                if (this.shapesManager != null)
+                    this.shapesManager.globalVariables.remove(this.params[1]);
+                this.params[1] = _var;
+                this.update();
+            }
+        }
+        setVariableNames(xVarName, yVarName) {
+            if (xVarName != null && !(xVarName.indexOf(" ") != -1)) {
+                this.params[0] = xVarName;
+            }
+            if (yVarName != null && !(yVarName.indexOf(" ") != -1)) {
+                this.params[1] = yVarName;
+            }
+        }
+        update() {
+            if (this.parents == null || this.params == null)
+                return;
+            if (!this.parents[0].__isDefined) {
+                this.__isDefined = false;
+                return;
+            }
+            const pt = this.parents[0];
+            this.x0 = pt.pt.x;
+            this.y0 = pt.pt.y;
+            this.__isDefined = true;
+            if (this.shapesManager != null)
+                this.shapesManager.globalVariables.put(this.params[0], this.x0);
+            if (this.shapesManager != null)
+                this.shapesManager.globalVariables.put(this.params[1], this.y0);
+            this.label = math.MathUtils.formatPoint(pt.pt, false);
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getShapeInfo() {
+            return this.params[0] + ":" + math.MathUtils.format(this.x0) + "," + this.params[1] + ":" + math.MathUtils.format(this.y0);
+        }
+    }
+    geom.PointMeasure2D = PointMeasure2D;
+    PointMeasure2D["__class"] = "geom.PointMeasure2D";
 })(geom || (geom = {}));
 (function (geom) {
     class ExpressionMeasure2D extends geom.Measure2D {
@@ -19158,10 +21996,12 @@ var geom;
             this.__isDefined = true;
             let value = javaemul.internal.DoubleHelper.NaN;
             try {
-                value = math.MathUtils.evaluateExpression(this.params[0], null, null);
+                value = math.MathUtils.evaluateExpression(this.params[0], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
             }
             catch (e) {
             }
+            if (this.shapesManager != null)
+                this.shapesManager.globalVariables.put(this.getName(), value);
             this.label = this.getName() + "=" + math.MathUtils.formatValue(value, true);
         }
         /**
@@ -19314,6 +22154,8 @@ var geom;
         update() {
             this.__isDefined = false;
             if ((!this.parents[0].__isDefined || !this.parents[1].__isDefined) && (this.name != null && !(this.name.length === 0))) {
+                if (this.shapesManager != null)
+                    this.shapesManager.globalVariables.put(this.name, javaemul.internal.DoubleHelper.NaN);
                 return;
             }
             this.forceAcute = javaemul.internal.BooleanHelper.parseBoolean(this.params[0]);
@@ -19361,12 +22203,16 @@ var geom;
             this.segment = new geom.Segment2D(new math.Vector2(this.x0, this.y0), new math.Vector2(this.x0 + this.offset * Math.cos(this.th), this.y0 + this.offset * Math.sin(this.th)));
             this.label = math.MathUtils.formatAngle(/* toDegrees */ (x => x * 180 / Math.PI)(angle));
             this.__isDefined = true;
+            if (this.shapesManager != null && this.name != null && !(this.name.length === 0))
+                this.shapesManager.globalVariables.put(this.name, angle);
         }
         /**
          *
          * @param {string} name
          */
         setName(name) {
+            if (name != null && !(name.length === 0) && this.shapesManager != null && this.shapesManager.containsShape(this))
+                this.shapesManager.globalVariables.remove(this.getName());
             this.name = name;
             this.update();
         }
@@ -19377,8 +22223,7 @@ var geom;
             return (Math.atan2(p2.y - p1.y, p2.x - p1.x) + AngleMeasure2D.M_2PI_$LI$()) % (AngleMeasure2D.M_2PI_$LI$());
         }
         /**
-         * Returns the horizontal angle formed by the line joining the two given
-         * points.
+         * Returns the horizontal angle formed by the line joining the two given points.
          * @param {math.Vector2} p1
          * @param {math.Vector2} p2
          * @return {number}
@@ -19399,8 +22244,8 @@ var geom;
             return (angle2 - angle1 + AngleMeasure2D.M_2PI_$LI$()) % (AngleMeasure2D.M_2PI_$LI$());
         }
         /**
-         * Returns the oriented angle between two (directed) straight objects.
-         * Result is given in radians, between 0 and 2*PI.
+         * Returns the oriented angle between two (directed) straight objects. Result is
+         * given in radians, between 0 and 2*PI.
          * @param {geom.Line2D} obj1
          * @param {geom.Line2D} obj2
          * @return {number}
@@ -19421,15 +22266,11 @@ var geom;
             return (angle2 - angle1 + AngleMeasure2D.M_2PI_$LI$()) % (AngleMeasure2D.M_2PI_$LI$());
         }
         /**
-         * Checks whether two angles are equal, with respect to the given error
-         * bound.
+         * Checks whether two angles are equal, with respect to the given error bound.
          *
-         * @param {number} angle1
-         * first angle to compare
-         * @param {number} angle2
-         * second angle to compare
-         * @param {number} eps
-         * the threshold value for comparison
+         * @param {number} angle1 first angle to compare
+         * @param {number} angle2 second angle to compare
+         * @param {number} eps    the threshold value for comparison
          * @return {boolean} true if the two angle are equal modulo 2*PI
          */
         static almostEquals(angle1, angle2, eps) {
@@ -19442,8 +22283,7 @@ var geom;
         }
         /**
          *
-         * @param {number} angle
-         * in radians
+         * @param {number} angle in radians
          * @return {string} String representing
          */
         static angleDegrees(angle) {
@@ -19456,8 +22296,50 @@ var geom;
         render(g) {
             if (!this.__isDefined)
                 return;
-            const v = new math.Vector2(this.x0 + this.r * Math.cos(this.th), this.y0 + this.r * Math.sin(this.th));
-            const v1 = new math.Vector2(this.x0 + this.r * Math.cos(this.th), this.y0 + this.r * Math.sin(this.th));
+            const ctx = g.context;
+            let info = this.getInfo();
+            let r = this.offset;
+            const is90 = Math.abs(2 * Math.abs(this.angle2 - this.angle1) - AngleMeasure2D.M_PI_$LI$()) < framework.Preferences.getEpsilon();
+            if (is90) {
+                r *= 0.75;
+                const dx1 = r * Math.cos(this.angle1);
+                const dy1 = r * Math.sin(this.angle1);
+                const dx2 = r * Math.cos(this.angle2);
+                const dy2 = r * Math.sin(this.angle2);
+                if (this.drawColor != null) {
+                    this.drawColor.a = 80;
+                    g.setColors(this.drawColor, null);
+                }
+                ctx.beginPath();
+                ctx.moveTo(this.x0, this.y0);
+                ctx.lineTo(this.x0 + dx1, this.y0 + dy1);
+                ctx.lineTo(this.x0 + dx1 + dx2, this.y0 + dy1 + dy2);
+                ctx.lineTo(this.x0 + dx2, this.y0 + dy2);
+                ctx.closePath();
+                ctx.fill();
+                if (this.drawColor != null) {
+                    this.drawColor.a = 160;
+                    g.setColors(this.drawColor, null);
+                }
+                ctx.moveTo(this.x0, this.y0);
+                ctx.lineTo(this.x0 + dx1, this.y0 + dy1);
+                ctx.lineTo(this.x0 + dx1 + dx2, this.y0 + dy1 + dy2);
+                ctx.lineTo(this.x0 + dx2, this.y0 + dy2);
+                ctx.stroke();
+                info = this.name;
+            }
+            else {
+                if (this.drawColor != null) {
+                    this.drawColor.a = 80;
+                    g.setColors(this.drawColor, null);
+                }
+                g.drawSlice(this.x0, this.y0, r, this.angle2 - this.angle1, -(this.angle2 + this.angle1) / 2, true, this.drawColor != null);
+            }
+            const rect = ctx.measureText(info);
+            r += 10 / g.METER_TO_PIXEL;
+            const v = new math.Vector2(this.x0 + r * Math.cos(this.th), this.y0 + r * Math.sin(this.th));
+            r += rect.width / g.METER_TO_PIXEL;
+            const v1 = new math.Vector2(this.x0 + r * Math.cos(this.th), this.y0 + r * Math.sin(this.th));
             if (this.showEqn || this.showName)
                 this.renderInfo(g, v, v1);
         }
@@ -19669,9 +22551,10 @@ var geom;
             const l = dir.normalize();
             const dx = dir.x;
             const dy = dir.y;
-            const sx = this.p1.x;
-            const sy = this.p1.y;
-            const arrowlength = (12 + 2 * this.strokeWidth) / 100;
+            const arrowlength = (15 + 2 * this.strokeWidth) / g.METER_TO_PIXEL;
+            const sx = this.p2.x - dx * arrowlength;
+            const sy = this.p2.y - dy * arrowlength;
+            g.drawLine(this.p1.x, this.p1.y, sx, sy);
             g.drawArrow(sx, sy, dx, dy, arrowlength);
             if (this.showEqn || this.showName) {
                 this.renderInfo(g, this.p1, this.p2);
@@ -19690,6 +22573,171 @@ var geom;
     }
     geom.Vector2D = Vector2D;
     Vector2D["__class"] = "geom.Vector2D";
+})(geom || (geom = {}));
+(function (geom) {
+    class Slider2D extends geom.Segment2D {
+        constructor(pt1, pt2) {
+            super(pt1.pt, pt2.pt);
+            this.length = 1;
+            this.min = 0;
+            this.max = 5;
+            this.value = 1;
+            this.pt = new math.Vector2();
+            this.knobDrag = false;
+            this.setRange(this.min, this.max);
+            this.showEqn = true;
+            this.showName = true;
+        }
+        setRange(min, max) {
+            this.min = min;
+            this.max = max;
+            this.update();
+        }
+        setValue(value) {
+            this.value = math.MathUtils.clamp$double$double$double(value, this.min, this.max);
+            this.pt = math.Vector2.interpolate(this.p1, this.p2, (value - this.min) / (this.max - value));
+            if (this.shapesManager != null && this.name != null && !(this.name.length === 0))
+                this.shapesManager.globalVariables.put(this.name, this.value);
+        }
+        /**
+         * @param {string} name
+         * the name to set
+         */
+        setName(name) {
+            if (name != null) {
+                name = /* replaceAll */ name.replace(new RegExp(" ", 'g'), "");
+                if (this.shapesManager.containsShape(this))
+                    this.shapesManager.globalVariables.remove(this.name);
+                this.name = name;
+            }
+            this.update();
+        }
+        /**
+         *
+         */
+        update() {
+            this.__isDefined = true;
+            this.setValue(this.value);
+            this.expr = math.MathUtils.format(this.value);
+        }
+        mousePressed(pt) {
+            if (pt.distance$math_Vector2(this.pt) < geom.Shape2D.SNAP_DISTANCE) {
+                this.knobDrag = true;
+            }
+            else {
+                this.knobDrag = false;
+            }
+        }
+        mouseReleased(pt) {
+            this.knobDrag = false;
+        }
+        /**
+         *
+         * @param {math.Vector2} delta
+         * @param {math.Vector2} pt
+         * @param {boolean} manually
+         */
+        mouseDragged(delta, pt, manually) {
+            if (!this.__isDefined)
+                return;
+            if (this.knobDrag) {
+                this.pt.add$math_Vector2(delta);
+                const t = this.t(pt);
+                this.setValue(this.min + t * (this.max - this.min));
+            }
+            else {
+                this.set$math_Vector2$math_Vector2(this.p1.add$math_Vector2(delta), this.p2.add$math_Vector2(delta));
+            }
+        }
+        /**
+         *
+         * @param {framework.Renderer} g
+         */
+        render(g) {
+            if (!this.isDefined())
+                return;
+            super.render(g);
+            g.drawCircle(this.pt.x, this.pt.y, 0.07, true, true);
+        }
+        /**
+         * returns true if shape can be moved freely by mouse drag or arrow keys
+         * @return
+         * @return {boolean}
+         */
+        isFreeToMove() {
+            return true;
+        }
+    }
+    geom.Slider2D = Slider2D;
+    Slider2D["__class"] = "geom.Slider2D";
+})(geom || (geom = {}));
+(function (geom) {
+    class RayRefract2PointsCurveMu2D extends geom.Ray2D {
+        constructor(p1, p2, curve, mu) {
+            super();
+            if (this.incidentRay === undefined) {
+                this.incidentRay = null;
+            }
+            this.parents = [p1, p2, curve];
+            this.params = [mu];
+            this.update();
+        }
+        update() {
+            if (this.parents == null)
+                return;
+            this.expr = null;
+            this.__isDefined = false;
+            if (!this.parents[0].isDefined() || !this.parents[1].isDefined()) {
+                return;
+            }
+            let mu = 1;
+            try {
+                mu = Math.fround(math.MathUtils.evaluateExpression(this.params[0], null, null));
+            }
+            catch (e) {
+                return;
+            }
+            const v1 = this.parents[0].pt;
+            const v2 = this.parents[1].pt;
+            if (v1 == null || v2 == null || v1.equals$math_Vector2(v2))
+                return;
+            this.incidentRay = new geom.Line2D(v1, v2.difference$math_Vector2(v1));
+            const curve = this.parents[2];
+            const pts = geom.CurveUtils.getIntersections(this.incidentRay, curve, v2);
+            if (pts == null)
+                return;
+            const p = pts[0];
+            const n = curve.tangent(curve.t(p)).right();
+            const iDir = this.incidentRay.getDirection();
+            const sini = n.cross$math_Vector2(iDir);
+            const i = Math.asin(sini);
+            let r;
+            if (sini / mu > 1) {
+                r = Math.PI - i;
+            }
+            else {
+                r = Math.asin(sini / mu);
+            }
+            if ( /* isNaN */isNaN(r))
+                return;
+            iDir.rotate$double(i - r);
+            this.x0 = p.x;
+            this.y0 = p.y;
+            this.dx = iDir.x;
+            this.dy = iDir.y;
+            this.__isDefined = true;
+            this.clip();
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getShapeInfo() {
+            return this.parents == null ? "Refracted Ray " + this.name : ("from " + this.parents[2].getName() + " to " + this.parents[1].getName());
+        }
+    }
+    geom.RayRefract2PointsCurveMu2D = RayRefract2PointsCurveMu2D;
+    RayRefract2PointsCurveMu2D["__class"] = "geom.RayRefract2PointsCurveMu2D";
 })(geom || (geom = {}));
 (function (geom) {
     /**
@@ -19739,16 +22787,225 @@ var geom;
     Ray2Points2D["__class"] = "geom.Ray2Points2D";
 })(geom || (geom = {}));
 (function (geom) {
+    class RayReflect2PointsCurve2D extends geom.ParentShapeArray2D {
+        constructor(p1, p2, curve, reflectivity, refractiveIndex) {
+            if (((p1 != null && p1 instanceof geom.Point2D) || p1 === null) && ((p2 != null && p2 instanceof geom.Point2D) || p2 === null) && ((curve != null && curve instanceof geom.Curve2D) || curve === null) && ((typeof reflectivity === 'string') || reflectivity === null) && ((typeof refractiveIndex === 'string') || refractiveIndex === null)) {
+                let __args = arguments;
+                super();
+                if (this.incidentRay === undefined) {
+                    this.incidentRay = null;
+                }
+                if (this.reflectedRay === undefined) {
+                    this.reflectedRay = null;
+                }
+                if (this.refractedRay === undefined) {
+                    this.refractedRay = null;
+                }
+                this.reflectivity = 0.5;
+                this.parents = [p1, p2, curve];
+                this.incidentRay = new geom.Segment2D();
+                this.reflectedRay = new geom.Ray2D();
+                this.refractedRay = new geom.Ray2D();
+                this.params = [reflectivity, refractiveIndex];
+                this.update();
+            }
+            else if (((p1 != null && p1 instanceof geom.Point2D) || p1 === null) && ((p2 != null && p2 instanceof geom.Point2D) || p2 === null) && ((curve != null && curve instanceof geom.Curve2D) || curve === null) && reflectivity === undefined && refractiveIndex === undefined) {
+                let __args = arguments;
+                {
+                    let __args = arguments;
+                    let reflectivity = "1";
+                    let refractiveIndex = "1.5";
+                    super();
+                    if (this.incidentRay === undefined) {
+                        this.incidentRay = null;
+                    }
+                    if (this.reflectedRay === undefined) {
+                        this.reflectedRay = null;
+                    }
+                    if (this.refractedRay === undefined) {
+                        this.refractedRay = null;
+                    }
+                    this.reflectivity = 0.5;
+                    this.parents = [p1, p2, curve];
+                    this.incidentRay = new geom.Segment2D();
+                    this.reflectedRay = new geom.Ray2D();
+                    this.refractedRay = new geom.Ray2D();
+                    this.params = [reflectivity, refractiveIndex];
+                    this.update();
+                }
+                if (this.incidentRay === undefined) {
+                    this.incidentRay = null;
+                }
+                if (this.reflectedRay === undefined) {
+                    this.reflectedRay = null;
+                }
+                if (this.refractedRay === undefined) {
+                    this.refractedRay = null;
+                }
+                this.reflectivity = 0.5;
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        static TMP_RAY_$LI$() { if (RayReflect2PointsCurve2D.TMP_RAY == null) {
+            RayReflect2PointsCurve2D.TMP_RAY = new geom.Ray2D();
+        } return RayReflect2PointsCurve2D.TMP_RAY; }
+        /**
+         *
+         * @param {number} index
+         * @return {framework.EditInfo}
+         */
+        getEditInfo(index) {
+            if (index === 0)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("Reflective Coefficient", this.params[0], null);
+            else if (index === 1) {
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("RefractiveIndex", this.params[1], null);
+            }
+            return null;
+        }
+        /**
+         *
+         * @param {number} index
+         * @param {*} value
+         */
+        setEditValue(index, value) {
+            if (index === 0) {
+                this.params[0] = (value + "");
+            }
+            else if (index === 1) {
+                this.params[1] = (value + "");
+            }
+        }
+        update() {
+            this.__isDefined = false;
+            this.incidentRay.__isDefined = false;
+            this.reflectedRay.__isDefined = false;
+            this.refractedRay.__isDefined = false;
+            if (this.parents[0] != null && !this.parents[0].isDefined() || this.parents[1] != null && !this.parents[1].isDefined()) {
+                return;
+            }
+            const v1 = this.parents[0].pt;
+            const v2 = this.parents[1].pt;
+            const curve = this.parents[2];
+            if (v1 == null || v2 == null || v1.equals$math_Vector2(v2))
+                return;
+            RayReflect2PointsCurve2D.TMP_RAY_$LI$().set$math_Vector2$math_Vector2(v1, v2);
+            let p = null;
+            const pts = geom.CurveUtils.getIntersections(curve, RayReflect2PointsCurve2D.TMP_RAY_$LI$(), v2);
+            if (pts != null) {
+                for (let index = 0; index < pts.length; index++) {
+                    let v = pts[index];
+                    {
+                        if (RayReflect2PointsCurve2D.TMP_RAY_$LI$().contains(v) && !math.MathUtils.approxEqual(v, v1)) {
+                            p = v;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (p == null)
+                return;
+            this.incidentRay.set$math_Vector2$math_Vector2(v1, p);
+            const t = curve.t(p);
+            let refCoeff = 0.5;
+            let mu = 1.5;
+            try {
+                refCoeff = math.MathUtils.evaluateExpression(this.params[0], null, null);
+                mu = math.MathUtils.evaluateExpression(this.params[1], null, null);
+            }
+            catch (e) {
+                return;
+            }
+            const iDir = this.incidentRay.getDirection();
+            const n = curve.tangent(t).right();
+            if (n.dot$math_Vector2(iDir) > 0)
+                n.negate();
+            mu = 1 / mu;
+            const cos1 = -n.x * iDir.x - n.y * iDir.y;
+            const sq1 = 1 - mu * mu * (1 - cos1 * cos1);
+            if (sq1 < 0 || refCoeff === 1) {
+                this.reflectedRay.set$double$double$double$double(p.x, p.y, iDir.x + 2 * cos1 * n.x, iDir.y + 2 * cos1 * n.y);
+            }
+            else {
+                const cos2 = Math.sqrt(sq1);
+                const R_s = Math.pow((mu * cos1 - cos2) / (mu * cos1 + cos2), 2);
+                const R_p = Math.pow((mu * cos2 - cos1) / (mu * cos2 + cos1), 2);
+                const brightness = refCoeff;
+                this.refractedRay.set$double$double$double$double(p.x, p.y, mu * iDir.x + (mu * cos1 - cos2) * n.x, mu * iDir.y + (mu * cos1 - cos2) * n.y);
+                if (brightness > 0) {
+                    this.reflectedRay.set$double$double$double$double(p.x, p.y, iDir.x + 2 * cos1 * n.x, iDir.y + 2 * cos1 * n.y);
+                    this.reflectivity = Math.fround(brightness);
+                }
+                else {
+                    this.reflectivity = 0;
+                }
+            }
+            this.__isDefined = true;
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getShapeInfo() {
+            return "Ray " + this.name + ("from " + this.parents[0].getName() + " to " + this.parents[1].getName());
+        }
+        /**
+         *
+         * @return {number}
+         */
+        getChildrenCount() {
+            return 3;
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {geom.Shape2D}
+         */
+        getChild(index) {
+            if (index === 0) {
+                return this.incidentRay;
+            }
+            else if (index === 1) {
+                return this.reflectedRay;
+            }
+            else if (index === 2) {
+                return this.refractedRay;
+            }
+            return null;
+        }
+        /**
+         *
+         * @param {framework.Renderer} gl
+         */
+        render(gl) {
+            if (this.drawColor != null) {
+                gl.setColors(null, this.drawColor);
+            }
+            if (this.reflectedRay.__isDefined && this.refractedRay.__isDefined) {
+                this.incidentRay.renderAsRay(gl);
+                const color = this.incidentRay.drawColor;
+                color.a = ((Math.fround(this.reflectivity * 255)) | 0);
+                gl.setColors(null, color);
+                this.reflectedRay.render(gl);
+                color.a = ((Math.fround(255 - Math.fround(this.reflectivity * 255))) | 0);
+                gl.setColors(null, color);
+                this.refractedRay.render(gl);
+            }
+            else {
+                this.incidentRay.renderAsRay(gl);
+                if (this.reflectedRay.__isDefined)
+                    this.reflectedRay.render(gl);
+                if (this.refractedRay.__isDefined)
+                    this.refractedRay.render(gl);
+            }
+        }
+    }
+    geom.RayReflect2PointsCurve2D = RayReflect2PointsCurve2D;
+    RayReflect2PointsCurve2D["__class"] = "geom.RayReflect2PointsCurve2D";
+})(geom || (geom = {}));
+(function (geom) {
     var optics;
     (function (optics) {
-        /**
-         * Creates Ray of wavelength 500nm with origin at p1 and passing through p2
-         * @param {*} source of ray
-         * @param {geom.Point2D} s1
-         * @param {geom.Point2D} s2
-         * @class
-         * @extends geom.Ray2D
-         */
         class OpticalRay2D extends geom.Ray2D {
             constructor(parent, pt1, pt2, brightness) {
                 if (((parent != null && parent instanceof geom.optics.OpticalRay2D) || parent === null) && ((pt1 != null && pt1 instanceof math.Vector2) || pt1 === null) && ((pt2 != null && pt2 instanceof math.Vector2) || pt2 === null) && ((typeof brightness === 'number') || brightness === null)) {
@@ -19777,90 +23034,11 @@ var geom;
                         this.drawColor = parent.drawColor;
                         this.index = parent.index + 1;
                         this.waveLength = parent.waveLength;
+                        this.shapesManager = parent.shapesManager;
                     }
                     this.set$math_Vector2$math_Vector2(pt1, pt2);
                     this.brightness = math.MathUtils.clamp$double$double$double(brightness, 0, 1);
                     this.__isDefined = true;
-                }
-                else if (((parent != null && (parent.constructor != null && parent.constructor["__interfaces"] != null && parent.constructor["__interfaces"].indexOf("geom.optics.OpticalSource") >= 0)) || parent === null) && ((pt1 != null && pt1 instanceof geom.Point2D) || pt1 === null) && ((pt2 != null && pt2 instanceof geom.Point2D) || pt2 === null) && brightness === undefined) {
-                    let __args = arguments;
-                    let source = __args[0];
-                    let s1 = __args[1];
-                    let s2 = __args[2];
-                    {
-                        let __args = arguments;
-                        let waveLength = "500";
-                        super();
-                        if (this.refractedRay === undefined) {
-                            this.refractedRay = null;
-                        }
-                        if (this.reflectedRay === undefined) {
-                            this.reflectedRay = null;
-                        }
-                        if (this.source === undefined) {
-                            this.source = null;
-                        }
-                        if (this.device === undefined) {
-                            this.device = null;
-                        }
-                        this.index = 0;
-                        this.brightness = 1;
-                        this.isTerminated = false;
-                        this.waveLength = 500;
-                        this.extentionPoint = null;
-                        this.parents = [s1, s2];
-                        this.params = [waveLength + ""];
-                        this.drawColor = geom.optics.OpticsUtils.waveLengthToColor(javaemul.internal.FloatHelper.parseFloat(waveLength));
-                        this.update();
-                    }
-                    if (this.refractedRay === undefined) {
-                        this.refractedRay = null;
-                    }
-                    if (this.reflectedRay === undefined) {
-                        this.reflectedRay = null;
-                    }
-                    if (this.source === undefined) {
-                        this.source = null;
-                    }
-                    if (this.device === undefined) {
-                        this.device = null;
-                    }
-                    this.index = 0;
-                    this.brightness = 1;
-                    this.isTerminated = false;
-                    this.waveLength = 500;
-                    this.extentionPoint = null;
-                    (() => {
-                        this.source = source;
-                    })();
-                }
-                else if (((parent != null && parent instanceof geom.Point2D) || parent === null) && ((pt1 != null && pt1 instanceof geom.Point2D) || pt1 === null) && ((typeof pt2 === 'string') || pt2 === null) && brightness === undefined) {
-                    let __args = arguments;
-                    let s1 = __args[0];
-                    let s2 = __args[1];
-                    let waveLength = __args[2];
-                    super();
-                    if (this.refractedRay === undefined) {
-                        this.refractedRay = null;
-                    }
-                    if (this.reflectedRay === undefined) {
-                        this.reflectedRay = null;
-                    }
-                    if (this.source === undefined) {
-                        this.source = null;
-                    }
-                    if (this.device === undefined) {
-                        this.device = null;
-                    }
-                    this.index = 0;
-                    this.brightness = 1;
-                    this.isTerminated = false;
-                    this.waveLength = 500;
-                    this.extentionPoint = null;
-                    this.parents = [s1, s2];
-                    this.params = [waveLength + ""];
-                    this.drawColor = geom.optics.OpticsUtils.waveLengthToColor(javaemul.internal.FloatHelper.parseFloat(waveLength));
-                    this.update();
                 }
                 else if (((parent != null && (parent.constructor != null && parent.constructor["__interfaces"] != null && parent.constructor["__interfaces"].indexOf("geom.optics.OpticalSource") >= 0)) || parent === null) && pt1 === undefined && pt2 === undefined && brightness === undefined) {
                     let __args = arguments;
@@ -19895,6 +23073,7 @@ var geom;
                             this.drawColor = parent.drawColor;
                             this.index = parent.index + 1;
                             this.waveLength = parent.waveLength;
+                            this.shapesManager = parent.shapesManager;
                         }
                         this.set$math_Vector2$math_Vector2(pt1, pt2);
                         this.brightness = math.MathUtils.clamp$double$double$double(brightness, 0, 1);
@@ -19924,9 +23103,6 @@ var geom;
                 else
                     throw new Error('invalid overload');
             }
-            static surfaceMergingObjects_$LI$() { if (OpticalRay2D.surfaceMergingObjects == null) {
-                OpticalRay2D.surfaceMergingObjects = (new java.util.ArrayList());
-            } return OpticalRay2D.surfaceMergingObjects; }
             set$double$double$double$double(x, y, dx, dy) {
                 this.x0 = x;
                 this.y0 = y;
@@ -19978,11 +23154,12 @@ var geom;
              *
              * @param {geom.optics.OpticalRay2D} ray
              * @return {number} number of subrays (0,1,2)
+             * @param {geom.ShapesManager} shapesManager
              */
-            static processRay(ray) {
+            static processRay(ray, shapesManager) {
                 if (ray == null)
                     return 0;
-                if (ray.index > framework.Preferences.MAX_RAY_INTERACTIONS) {
+                if (ray.index > shapesManager.preferences.MAX_RAY_INTERACTIONS) {
                     ray.refractedRay = null;
                     ray.reflectedRay = null;
                     return 0;
@@ -19993,12 +23170,12 @@ var geom;
                     ray.isTerminated = false;
                     return 0;
                 }
-                if (OpticalRay2D.surfaceMergingObjects_$LI$().size() > 0)
-                    OpticalRay2D.surfaceMergingObjects_$LI$().clear();
+                if (shapesManager.surfaceMergingObjects.size() > 0)
+                    shapesManager.surfaceMergingObjects.clear();
                 ray.extentionPoint = null;
                 let t0 = javaemul.internal.DoubleHelper.POSITIVE_INFINITY;
                 let device = null;
-                for (let index = framework.App.instance.shapesManager.getAllShapes().iterator(); index.hasNext();) {
+                for (let index = shapesManager.getAllShapes().iterator(); index.hasNext();) {
                     let s = index.next();
                     {
                         if (!s.isDefined() || !s.isVisible() || !(s != null && s instanceof geom.optics.OpticalDevice2D))
@@ -20008,7 +23185,7 @@ var geom;
                         if (t > 0 && device != null && Math.abs(t - t0) < geom.Shape2D.ACCURACY) {
                             if (device != null && (device.constructor != null && device.constructor["__interfaces"] != null && device.constructor["__interfaces"].indexOf("geom.optics.OpticalRefractor") >= 0)) {
                                 if (od != null && (od.constructor != null && od.constructor["__interfaces"] != null && od.constructor["__interfaces"].indexOf("geom.optics.OpticalRefractor") >= 0)) {
-                                    OpticalRay2D.surfaceMergingObjects_$LI$().add(od);
+                                    shapesManager.surfaceMergingObjects.add(od);
                                 }
                                 else {
                                     device = od;
@@ -20019,8 +23196,8 @@ var geom;
                         else if (t > geom.Shape2D.ACCURACY && t < t0) {
                             device = od;
                             t0 = t;
-                            if (OpticalRay2D.surfaceMergingObjects_$LI$().size() > 0)
-                                OpticalRay2D.surfaceMergingObjects_$LI$().clear();
+                            if (shapesManager.surfaceMergingObjects.size() > 0)
+                                shapesManager.surfaceMergingObjects.clear();
                         }
                     }
                 }
@@ -20043,18 +23220,18 @@ var geom;
                     case 1:
                         ray.refractedRay = null;
                         device.addRayToObserve(ray.reflectedRay, true);
-                        OpticalRay2D.processRay(ray.reflectedRay);
+                        OpticalRay2D.processRay(ray.reflectedRay, shapesManager);
                         return 1;
                     case 2:
                         ray.reflectedRay = null;
                         device.addRayToObserve(ray.refractedRay, false);
-                        OpticalRay2D.processRay(ray.refractedRay);
+                        OpticalRay2D.processRay(ray.refractedRay, shapesManager);
                         return 1;
                     case 3:
                         device.addRayToObserve(ray.reflectedRay, true);
                         device.addRayToObserve(ray.refractedRay, false);
-                        OpticalRay2D.processRay(ray.reflectedRay);
-                        OpticalRay2D.processRay(ray.refractedRay);
+                        OpticalRay2D.processRay(ray.reflectedRay, shapesManager);
+                        OpticalRay2D.processRay(ray.refractedRay, shapesManager);
                         return 2;
                 }
                 return 0;
@@ -20068,8 +23245,8 @@ var geom;
                 if (this.extentionPoint != null) {
                     ctx.save();
                     ctx.setLineDash([0.1, 0.1]);
-                    framework.Preferences.virtualRaysColor_$LI$().a = ((255 * this.brightness) | 0);
-                    gl.setColors(null, framework.Preferences.virtualRaysColor_$LI$());
+                    this.shapesManager.preferences.virtualRaysColor.a = ((255 * this.brightness) | 0);
+                    gl.setColors(null, this.shapesManager.preferences.virtualRaysColor);
                     let v;
                     if (this.t(this.extentionPoint) < 0) {
                         v = this.p1;
@@ -20551,8 +23728,8 @@ var geom;
                 for (let index = this.images.iterator(); index.hasNext();) {
                     let img = index.next();
                     {
-                        framework.Preferences.ImageColor_$LI$().a = ((Math.fround(img.brightness * 255)) | 0);
-                        gl.setColors(framework.Preferences.ImageColor_$LI$(), null);
+                        this.shapesManager.preferences.ImageColor.a = ((Math.fround(img.brightness * 255)) | 0);
+                        gl.setColors(this.shapesManager.preferences.ImageColor, null);
                         gl.drawRect(img.x - r / 2, img.y - r / 2, r, r, true, false);
                         if (this.showEqn || this.showName) {
                             geom.Shape2D.TMP_VEC_$LI$().set$double$double(0.7 * geom.Shape2D.SNAP_DISTANCE, 0.7 * geom.Shape2D.SNAP_DISTANCE);
@@ -20568,7 +23745,7 @@ var geom;
              * @param {java.util.ArrayList} listToAppend
              */
             getCloseShapes(pt, shapeClass, listToAppend) {
-                if (shapeClass.isAssignableFrom(geom.Point2D)) {
+                if (framework.ClassUtils.isAssignableFrom(shapeClass, geom.Point2D)) {
                     let i = 0;
                     for (let index = this.images.iterator(); index.hasNext();) {
                         let img = index.next();
@@ -20607,7 +23784,7 @@ var geom;
                 {
                     let __args = arguments;
                     let alignment = "false";
-                    let divSize = 2 * framework.Preferences.gridSize + "";
+                    let divSize = 0.1 + "";
                     let numSubDivisions = "5";
                     super(p1, p2);
                     this.bottomAlign = false;
@@ -20668,6 +23845,13 @@ var geom;
         }
         /**
          *
+         * @param {geom.ShapesManager} shapesManager
+         */
+        onAddShapeToSimulation(shapesManager) {
+            this.divSize = 5 * shapesManager.preferences.gridSize;
+        }
+        /**
+         *
          * @param {framework.Renderer} g
          */
         render(g) {
@@ -20677,9 +23861,9 @@ var geom;
             const Q = this.parents[1].pt;
             const th = geom.Shape2D.TMP_VEC_$LI$().set$math_Vector2(P).to$math_Vector2(Q).getDirection();
             const divSize = this.numSubDivision > 0 ? this.divSize / this.numSubDivision : this.divSize;
-            let majorTicklength = 16 / 100.0;
+            let majorTicklength = 16 / g.METER_TO_PIXEL;
             const l = P.distance$math_Vector2(Q);
-            const textHeight = 16 / 100.0;
+            const textHeight = 16 / g.METER_TO_PIXEL;
             g.context.save();
             g.context.translate(P.x, P.y);
             g.context.rotate(th);
@@ -20828,6 +24012,19 @@ var geom;
                     this.drawRays = math.MathUtils.evaluateBoolean(this.params[2]);
                 }
             }
+            /**
+             * Recreate shape from its parameters, mainly intended to reparse expression and adding global vars in shapes if any
+             * @param {geom.ShapesManager} manager
+             */
+            onAddShapeToSimulation(manager) {
+                for (let index = this.rays.iterator(); index.hasNext();) {
+                    let ray = index.next();
+                    {
+                        ray.onAddShapeToSimulation(manager);
+                    }
+                }
+                super.onAddShapeToSimulation(manager);
+            }
             update() {
                 super.update();
                 if (this.rays == null || !this.parents[0].isDefined() || !this.parents[1].isDefined() || !this.parents[2].isDefined()) {
@@ -20842,7 +24039,9 @@ var geom;
                         this.rays = (new java.util.ArrayList(n));
                         for (let i = 0; i < n; i++) {
                             {
-                                this.rays.add(new geom.optics.OpticalRay2D(this));
+                                const ray = new geom.optics.OpticalRay2D(this);
+                                ray.onAddShapeToSimulation(this.shapesManager);
+                                this.rays.add(ray);
                             }
                             ;
                         }
@@ -20921,7 +24120,7 @@ var geom;
                 for (let index = this.rays.iterator(); index.hasNext();) {
                     let ray = index.next();
                     {
-                        geom.optics.OpticalRay2D.processRay(ray);
+                        geom.optics.OpticalRay2D.processRay(ray, this.shapesManager);
                     }
                 }
                 this.drawRays = math.MathUtils.evaluateBoolean(this.params[2]);
@@ -20986,6 +24185,19 @@ var geom;
                 return null;
             }
             /**
+             * Recreate shape from its parameters, mainly intended to reparse expression and adding global vars in shapes if any
+             * @param {geom.ShapesManager} manager
+             */
+            onAddShapeToSimulation(manager) {
+                for (let index = this.rays.iterator(); index.hasNext();) {
+                    let ray = index.next();
+                    {
+                        ray.onAddShapeToSimulation(manager);
+                    }
+                }
+                super.onAddShapeToSimulation(manager);
+            }
+            /**
              *
              * @param {number} index
              * @param {*} value
@@ -21024,7 +24236,9 @@ var geom;
                         this.rays = (new java.util.ArrayList(n));
                         for (let i = 0; i < n; i++) {
                             {
-                                this.rays.add(new geom.optics.OpticalRay2D(this));
+                                const ray = new geom.optics.OpticalRay2D(this);
+                                ray.onAddShapeToSimulation(this.shapesManager);
+                                this.rays.add(ray);
                             }
                             ;
                         }
@@ -21092,7 +24306,7 @@ var geom;
                 for (let index = this.rays.iterator(); index.hasNext();) {
                     let ray = index.next();
                     {
-                        geom.optics.OpticalRay2D.processRay(ray);
+                        geom.optics.OpticalRay2D.processRay(ray, this.shapesManager);
                     }
                 }
                 this.drawRays = math.MathUtils.evaluateBoolean(this.params[2]);
@@ -21193,6 +24407,19 @@ var geom;
                     this.update();
                 }
             }
+            /**
+             * Recreate shape from its parameters, mainly intended to reparse expression and adding global vars in shapes if any
+             * @param {geom.ShapesManager} manager
+             */
+            onAddShapeToSimulation(manager) {
+                for (let index = this.rays.iterator(); index.hasNext();) {
+                    let ray = index.next();
+                    {
+                        ray.onAddShapeToSimulation(manager);
+                    }
+                }
+                super.onAddShapeToSimulation(manager);
+            }
             update() {
                 super.update();
                 if (this.__isDefined = false) {
@@ -21244,7 +24471,7 @@ var geom;
                 for (let index = this.rays.iterator(); index.hasNext();) {
                     let ray = index.next();
                     {
-                        geom.optics.OpticalRay2D.processRay(ray);
+                        geom.optics.OpticalRay2D.processRay(ray, this.shapesManager);
                     }
                 }
             }
@@ -21265,7 +24492,7 @@ var geom;
                     if (this.ray === undefined) {
                         this.ray = null;
                     }
-                    this.ray = new geom.optics.OpticalRay2D(this, p1, p2);
+                    this.ray = new geom.optics.OpticalRay2D(this);
                     this.ray.source = p1;
                     this.params = [waveLength];
                     this.setEditValue(0, waveLength);
@@ -21280,7 +24507,7 @@ var geom;
                         if (this.ray === undefined) {
                             this.ray = null;
                         }
-                        this.ray = new geom.optics.OpticalRay2D(this, p1, p2);
+                        this.ray = new geom.optics.OpticalRay2D(this);
                         this.ray.source = p1;
                         this.params = [waveLength];
                         this.setEditValue(0, waveLength);
@@ -21316,14 +24543,21 @@ var geom;
                 }
             }
             /**
+             * Recreate shape from its parameters, mainly intended to reparse expression and adding global vars in shapes if any
+             * @param {geom.ShapesManager} manager
+             */
+            onAddShapeToSimulation(manager) {
+                this.ray.onAddShapeToSimulation(this.shapesManager);
+                super.onAddShapeToSimulation(manager);
+            }
+            /**
              *
              */
             update() {
                 super.update();
-                if (this.ray == null)
-                    return;
                 if (this.__isDefined && this.ray != null) {
                     this.ray.set$math_Vector2$math_Vector2(this.p1, this.p2);
+                    this.ray.clip();
                 }
             }
             /**
@@ -21347,7 +24581,7 @@ var geom;
             shootRays() {
                 if (!this.visible || !this.__isDefined)
                     return;
-                geom.optics.OpticalRay2D.processRay(this.ray);
+                geom.optics.OpticalRay2D.processRay(this.ray, this.shapesManager);
             }
         }
         optics.OpticalRay2Points2D = OpticalRay2Points2D;
@@ -21877,9 +25111,11 @@ var geom;
         clip() {
             if (!this.visible)
                 return;
+            if (this.shapesManager == null)
+                return;
             const A = new math.Vector2();
             const C = new math.Vector2();
-            const b = framework.App.instance.getCanvasBounds();
+            const b = this.shapesManager.getWorldBounds();
             const xmin = b[0];
             const ymin = b[1];
             const xmax = b[2];
@@ -21959,6 +25195,8 @@ var geom;
                 {
                     t += dt;
                     v = this.point(t);
+                    if (v == null)
+                        break;
                     g.context.lineTo(v.x, v.y);
                 }
             }
@@ -22167,14 +25405,15 @@ var geom;
          * which contains only instances of ParabolaArc2D. If the parabola is not
          * clipped, the result is an instance of CurveSet2D<ParabolaArc2D> which
          * contains 0 curves.
-         * @private
          */
-        /*private*/ clip() {
+        clip() {
             if (!this.visible)
+                return;
+            if (this.shapesManager == null)
                 return;
             const A = new math.Vector2();
             const C = new math.Vector2();
-            const b = framework.App.instance.getCanvasBounds();
+            const b = this.shapesManager.getWorldBounds();
             const xmin = b[0];
             const ymin = b[1];
             const xmax = b[2];
@@ -22710,6 +25949,8 @@ var geom;
          */
         isSnapped(pt) {
             const p = this.project(pt);
+            if (p == null)
+                return false;
             return (p.distance$math_Vector2(pt)) < geom.Shape2D.SNAP_DISTANCE;
         }
         /**
@@ -22724,8 +25965,8 @@ var geom;
                 if (this.clipt0 < this.clipt1) {
                     g.context.beginPath();
                     const dt = (this.clipt1 - this.clipt0) / 200;
-                    let t = this.clipt0 - dt;
-                    v = this.point(t);
+                    let t = this.clipt0;
+                    v = this.point(this.getTheta_from_t(t));
                     g.context.moveTo(v.x, v.y);
                     while ((t < this.clipt1)) {
                         {
@@ -22740,8 +25981,8 @@ var geom;
                 if (this.clipt2 < this.clipt3) {
                     g.context.beginPath();
                     const dt = (this.clipt3 - this.clipt2) / 200;
-                    let t = this.clipt2 - dt;
-                    v = this.point(t);
+                    let t = this.clipt2;
+                    v = this.point(this.getTheta_from_t(1 / t));
                     g.context.moveTo(v.x, v.y);
                     while ((t < this.clipt3)) {
                         {
@@ -22946,16 +26187,17 @@ var geom;
          * Clip the parabola by a box. The result is an instance of CurveSet2D<ParabolaArc2D>, which contains only instances
          * of ParabolaArc2D. If the parabola is not clipped, the result is an instance of CurveSet2D<ParabolaArc2D> which
          * contains 0 curves.
-         * @private
          */
-        /*private*/ clip() {
+        clip() {
             if (!this.visible)
                 return;
             this.clipt0 = 0;
             this.clipt1 = 2 * Math.PI;
+            if (this.shapesManager == null)
+                return;
             let A = new math.Vector2();
             const C = new math.Vector2();
-            const b = framework.App.instance.getCanvasBounds();
+            const b = this.shapesManager.getWorldBounds();
             const xmin = b[0];
             const ymin = b[1];
             const xmax = b[2];
@@ -23007,10 +26249,7 @@ var geom;
             if (!this.__isDefined)
                 return;
             if (this.clipt1 - this.clipt0 > 6) {
-                g.context.save();
-                g.context.translate(this.xc, this.yc);
-                g.context.scale(1, this.r2 / this.r1);
-                g.drawCircle(0, 0, this.r1, this.fillColor != null, true);
+                g.drawOval(this.xc, this.yc, this.r1, this.r2, this.theta, this.fillColor != null, true);
             }
             else {
                 let v;
@@ -23626,6 +26865,21 @@ var geom;
         }
         /**
          *
+         * @param {geom.ShapesManager} shapesManager
+         */
+        onAddShapeToSimulation(shapesManager) {
+            super.onAddShapeToSimulation(shapesManager);
+            this.line1.shapesManager = shapesManager;
+            this.line2.shapesManager = shapesManager;
+            this.line1.clip();
+            this.line2.clip();
+        }
+        clip() {
+            this.line1.clip();
+            this.line2.clip();
+        }
+        /**
+         *
          * @return {double[]}
          */
         conicCoefficients() {
@@ -23854,10 +27108,8 @@ var geom;
          * @param {framework.Renderer} gl
          */
         render(gl) {
-            if (this.line1 != null)
-                this.line1.render(gl);
-            if (this.line2 != null)
-                this.line2.render(gl);
+            this.line1.render(gl);
+            this.line2.render(gl);
         }
     }
     geom.ConicTwoLines2D = ConicTwoLines2D;
@@ -23891,6 +27143,7 @@ var geom;
                 }
                 this.clipt0 = 0;
                 this.clipt1 = 2 * Math.PI;
+                this.ACW = true;
                 this.set(x, y, radius);
             }
             else if (x === undefined && y === undefined && radius === undefined) {
@@ -23915,6 +27168,7 @@ var geom;
                     }
                     this.clipt0 = 0;
                     this.clipt1 = 2 * Math.PI;
+                    this.ACW = true;
                     this.set(x, y, radius);
                 }
                 if (this.expr === undefined) {
@@ -23931,6 +27185,7 @@ var geom;
                 }
                 this.clipt0 = 0;
                 this.clipt1 = 2 * Math.PI;
+                this.ACW = true;
             }
             else
                 throw new Error('invalid overload');
@@ -23963,16 +27218,15 @@ var geom;
          * Clip the parabola by a box. The result is an instance of CurveSet2D<ParabolaArc2D>, which contains only instances
          * of ParabolaArc2D. If the parabola is not clipped, the result is an instance of CurveSet2D<ParabolaArc2D> which
          * contains 0 curves.
-         * @private
          */
-        /*private*/ clip() {
+        clip() {
             this.clipt0 = 0;
             this.clipt1 = 2 * Math.PI;
+            if (this.shapesManager == null)
+                return;
             let A = new math.Vector2();
-            const B = new math.Vector2();
             const C = new math.Vector2();
-            const D = new math.Vector2();
-            const b = framework.App.instance.getCanvasBounds();
+            const b = this.shapesManager.getWorldBounds();
             const xmin = b[0];
             const ymin = b[1];
             const xmax = b[2];
@@ -24016,12 +27270,11 @@ var geom;
                 java.util.Collections.sort(pts);
                 this.clipt0 = pts.get(0);
                 this.clipt1 = pts.get(pts.size() - 1);
-                let t = (this.clipt0 + this.clipt1) / 2;
+                const t = (this.clipt0 + this.clipt1) / 2;
                 A = this.point(t);
+                this.ACW = true;
                 if (A != null && (xmin >= A.x || xmax <= A.x || ymin >= A.y || ymax <= A.y)) {
-                    t = this.clipt0;
-                    this.clipt0 = this.clipt1;
-                    this.clipt1 = t + 2 * Math.PI - this.clipt1 + this.clipt0;
+                    this.ACW = false;
                 }
             }
         }
@@ -24098,18 +27351,35 @@ var geom;
             else {
                 let v;
                 g.context.beginPath();
-                let t = this.clipt0;
-                v = this.point(t);
-                g.context.moveTo(v.x, v.y);
-                const dt = (this.clipt1 - this.clipt0) / 200;
-                while ((t < this.clipt1)) {
-                    {
-                        t += dt;
-                        v = this.point(t);
-                        g.context.lineTo(v.x, v.y);
+                if (this.ACW) {
+                    let t = this.clipt0;
+                    v = this.point(t);
+                    g.context.moveTo(v.x, v.y);
+                    const dt = (this.clipt1 - this.clipt0) / 200;
+                    while ((t < this.clipt1)) {
+                        {
+                            t += dt;
+                            v = this.point(t);
+                            g.context.lineTo(v.x, v.y);
+                        }
                     }
+                    ;
                 }
-                ;
+                else {
+                    let t = this.clipt1;
+                    const t2 = this.clipt0 + Math.PI * 2;
+                    v = this.point(t);
+                    g.context.moveTo(v.x, v.y);
+                    const dt = (t2 - this.clipt1) / 200;
+                    while ((t < t2)) {
+                        {
+                            t += dt;
+                            v = this.point(t);
+                            g.context.lineTo(v.x, v.y);
+                        }
+                    }
+                    ;
+                }
                 g.context.stroke();
             }
             if (this.showEqn || this.showName) {
@@ -24430,11 +27700,39 @@ var geom;
             else
                 throw new Error('invalid overload');
         }
+        getConic() {
+            return this.conic;
+        }
+        setConic(conic) {
+            this.conic = conic;
+            if (conic != null) {
+                this.conic.shapesManager = this.shapesManager;
+                this.conic.clip();
+            }
+        }
+        /**
+         *
+         * @param {geom.ShapesManager} shapesManager
+         */
+        onAddShapeToSimulation(shapesManager) {
+            super.onAddShapeToSimulation(shapesManager);
+            if (this.conic != null) {
+                this.conic.shapesManager = shapesManager;
+                this.conic.clip();
+            }
+        }
         getShapeInfo() {
             if (this.conic == null)
                 return "undefined conic";
-            const s = framework.ShapesManager.getShapeName(this.conic.constructor);
+            const s = geom.ShapesManager.getShapeName(this.conic.constructor);
             return s;
+        }
+        /**
+         *
+         */
+        clip() {
+            if (this.conic != null)
+                this.conic.clip();
         }
         /**
          *
@@ -24696,7 +27994,7 @@ var geom;
         isVisible() {
             if (this.visibilityCondition != null) {
                 try {
-                    this.visible = math.MathUtils.evaluateExpression(this.visibilityCondition, null, null) !== 0;
+                    this.visible = math.MathUtils.evaluateExpression(this.visibilityCondition, this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables) !== 0;
                     if (this.conic != null)
                         this.conic.visible = this.visible;
                 }
@@ -24947,6 +28245,109 @@ var geom;
     VectorUnit2D["__class"] = "geom.VectorUnit2D";
 })(geom || (geom = {}));
 (function (geom) {
+    class VectorEqn2D extends geom.Vector2D {
+        constructor(p1, a, b) {
+            super();
+            if (this.a === undefined) {
+                this.a = null;
+            }
+            if (this.b === undefined) {
+                this.b = null;
+            }
+            this.parents = [p1];
+            this.a = new geom.optics.DynamicValue(a, javaemul.internal.DoubleHelper.NEGATIVE_INFINITY, javaemul.internal.DoubleHelper.POSITIVE_INFINITY);
+            this.b = new geom.optics.DynamicValue(a, javaemul.internal.DoubleHelper.NEGATIVE_INFINITY, javaemul.internal.DoubleHelper.POSITIVE_INFINITY);
+            this.set$java_lang_String$java_lang_String(a, b);
+        }
+        /**
+         * Sets line as passing through point (x,y) and direction rations as dx and dy
+         * @param {number} x
+         * @param {number} y
+         * @param {number} dx
+         * @param {number} dy
+         */
+        set(x, y, dx, dy) {
+            if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof dx === 'number') || dx === null) && ((typeof dy === 'number') || dy === null)) {
+                super.set(x, y, dx, dy);
+            }
+            else if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof dx === 'number') || dx === null) && dy === undefined) {
+                return this.set$double$double$double(x, y, dx);
+            }
+            else if (((typeof x === 'string') || x === null) && ((typeof y === 'string') || y === null) && dx === undefined && dy === undefined) {
+                return this.set$java_lang_String$java_lang_String(x, y);
+            }
+            else if (((x != null && x instanceof math.Vector2) || x === null) && ((y != null && y instanceof math.Vector2) || y === null) && dx === undefined && dy === undefined) {
+                return this.set$math_Vector2$math_Vector2(x, y);
+            }
+            else
+                throw new Error('invalid overload');
+        }
+        set$java_lang_String$java_lang_String(expra, exprb) {
+            this.params = [expra, exprb];
+            this.a.set$java_lang_String(expra);
+            this.b.set$java_lang_String(exprb);
+            this.expr = math.MathUtils.formatEqn$java_lang_String_A$java_lang_String_A(this.params, [math.Unicode.hat + "i", math.Unicode.hat + "j"]);
+            this.update();
+        }
+        /**
+         *
+         * @param {number} index
+         * @return {framework.EditInfo}
+         */
+        getEditInfo(index) {
+            if (index === 0)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("a", this.params[0], null);
+            if (index === 1)
+                return geom.Shape2D.editInfo_$LI$().set$java_lang_String$java_lang_String$java_lang_String_A("b", this.params[1], null);
+            return null;
+        }
+        /**
+         *
+         * @param {number} index
+         * @param {*} value
+         */
+        setEditValue(index, value) {
+            const __var = value + "";
+            if (index === 0) {
+                this.params[0] = __var;
+                this.a.set$java_lang_String(__var);
+            }
+            else if (index === 1) {
+                this.params[1] = __var;
+                this.b.set$java_lang_String(__var);
+            }
+            this.update();
+        }
+        update() {
+            this.a.update();
+            this.b.update();
+            const a = this.a.getValue();
+            const b = this.b.getValue();
+            if (!this.parents[0].isDefined() || !((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(a) || !((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(b) || (a === 0 && b === 0)) {
+                this.__isDefined = false;
+                return;
+            }
+            const p = this.parents[0].pt;
+            this.__isDefined = true;
+            this.x0 = p.x;
+            this.y0 = p.y;
+            const v = new math.Vector2(a, b);
+            this.dx = v.x;
+            this.dy = v.y;
+            super.set$math_Vector2$math_Vector2(p, v.add$math_Vector2(p));
+        }
+        /**
+         *
+         * @return {string}
+         */
+        getShapeInfo() {
+            return "Vectors " + this.expr + " from " + this.parents[0].getName();
+        }
+    }
+    geom.VectorEqn2D = VectorEqn2D;
+    VectorEqn2D["__class"] = "geom.VectorEqn2D";
+})(geom || (geom = {}));
+(function (geom) {
     var optics;
     (function (optics) {
         class OpticalIdealLens2D extends geom.optics.OpticalDevice2D {
@@ -24970,7 +28371,7 @@ var geom;
                     this.fillColor = framework.Preferences.getRandomColor();
                     this.drawColor = this.fillColor.darker();
                     this.fillColor.a = 127;
-                    this.focalLength = new geom.DynamicValue(f, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.focalLength = new geom.optics.DynamicValue(f, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
                     let b = javaemul.internal.BooleanHelper.parseBoolean(showFoci);
                     this.focus1.setVisible(b);
                     this.focus2.setVisible(b);
@@ -25047,7 +28448,7 @@ var geom;
                         this.fillColor = framework.Preferences.getRandomColor();
                         this.drawColor = this.fillColor.darker();
                         this.fillColor.a = 127;
-                        this.focalLength = new geom.DynamicValue(f, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                        this.focalLength = new geom.optics.DynamicValue(f, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
                         let b = javaemul.internal.BooleanHelper.parseBoolean(showFoci);
                         this.focus1.setVisible(b);
                         this.focus2.setVisible(b);
@@ -25114,6 +28515,14 @@ var geom;
             static TMP_LINE2_$LI$() { if (OpticalIdealLens2D.TMP_LINE2 == null) {
                 OpticalIdealLens2D.TMP_LINE2 = new geom.Line2D();
             } return OpticalIdealLens2D.TMP_LINE2; }
+            /**
+             *
+             * @param {geom.ShapesManager} manager
+             */
+            onAddShapeToSimulation(manager) {
+                super.onAddShapeToSimulation(manager);
+                this.focalLength.setShapesManager(manager);
+            }
             /**
              *
              * @param {number} index
@@ -25429,9 +28838,9 @@ var geom;
                     this.arcInfo = null;
                     this.vertices = null;
                     this.path = new geom.Path2D();
-                    this.mu = new geom.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                    this.w = new geom.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                    this.r = new geom.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.mu = new geom.optics.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.w = new geom.optics.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.r = new geom.optics.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
                     this.rays2 = (new java.util.ArrayList());
                     if (params.length === 1)
                         params = [params[0], "1.5", "0", "0.1", "false"];
@@ -25466,9 +28875,9 @@ var geom;
                     this.arcInfo = null;
                     this.vertices = null;
                     this.path = new geom.Path2D();
-                    this.mu = new geom.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                    this.w = new geom.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                    this.r = new geom.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.mu = new geom.optics.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.w = new geom.optics.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.r = new geom.optics.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
                     this.rays2 = (new java.util.ArrayList());
                     this.path = new geom.Path2D();
                 }
@@ -25484,6 +28893,16 @@ var geom;
             static TMP_RAY2_$LI$() { if (OpticalPathShape2D.TMP_RAY2 == null) {
                 OpticalPathShape2D.TMP_RAY2 = new geom.Ray2D();
             } return OpticalPathShape2D.TMP_RAY2; }
+            /**
+             *
+             * @param {geom.ShapesManager} manager
+             */
+            onAddShapeToSimulation(manager) {
+                super.onAddShapeToSimulation(manager);
+                this.mu.setShapesManager(manager);
+                this.r.setShapesManager(manager);
+                this.w.setShapesManager(manager);
+            }
             /**
              *
              * @param {number} index
@@ -25651,8 +29070,8 @@ var geom;
                     else {
                         return 0;
                     }
-                    if (geom.optics.OpticalRay2D.surfaceMergingObjects_$LI$().size() > 0) {
-                        for (let index = geom.optics.OpticalRay2D.surfaceMergingObjects_$LI$().iterator(); index.hasNext();) {
+                    if (this.shapesManager.surfaceMergingObjects.size() > 0) {
+                        for (let index = this.shapesManager.surfaceMergingObjects.iterator(); index.hasNext();) {
                             let refractor = index.next();
                             {
                                 shotType = refractor.getShotType(opticalray);
@@ -25882,7 +29301,7 @@ var geom;
                     this.fillColor = framework.Preferences.getRandomColor();
                     this.drawColor = this.fillColor.darker();
                     this.fillColor.a = 127;
-                    this.focalLength = new geom.DynamicValue(f, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.focalLength = new geom.optics.DynamicValue(f, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
                     let b = javaemul.internal.BooleanHelper.parseBoolean(showFoci);
                     this.focus.setVisible(b);
                     b = javaemul.internal.BooleanHelper.parseBoolean(showAxis);
@@ -25940,7 +29359,7 @@ var geom;
                         this.fillColor = framework.Preferences.getRandomColor();
                         this.drawColor = this.fillColor.darker();
                         this.fillColor.a = 127;
-                        this.focalLength = new geom.DynamicValue(f, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                        this.focalLength = new geom.optics.DynamicValue(f, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
                         let b = javaemul.internal.BooleanHelper.parseBoolean(showFoci);
                         this.focus.setVisible(b);
                         b = javaemul.internal.BooleanHelper.parseBoolean(showAxis);
@@ -25988,6 +29407,14 @@ var geom;
             static TMP_LINE2_$LI$() { if (OpticalIdealMirror2D.TMP_LINE2 == null) {
                 OpticalIdealMirror2D.TMP_LINE2 = new geom.Line2D();
             } return OpticalIdealMirror2D.TMP_LINE2; }
+            /**
+             *
+             * @param {geom.ShapesManager} manager
+             */
+            onAddShapeToSimulation(manager) {
+                super.onAddShapeToSimulation(manager);
+                this.focalLength.setShapesManager(manager);
+            }
             /**
              *
              * @param {number} index
@@ -26203,7 +29630,7 @@ var geom;
                     i = 0;
                     ctx.scale(1, l / 2);
                     if (this.fillColor != null) {
-                        const dx = 5 / 100.0 / l;
+                        const dx = 5 / gl.METER_TO_PIXEL / l;
                         ctx.translate(-dx, 0);
                         gl.setColors(this.fillColor, this.fillColor);
                         gl.setLineWidth(7);
@@ -26220,40 +29647,66 @@ var geom;
                     this.arc.setFillColor(null);
                     i = 1;
                     ctx.scale(l * (0.6 - 0.3 * Math.exp(-Math.abs(2 / f))), l / 2);
-                    ctx.beginPath();
-                    ctx.moveTo(OpticalIdealMirror2D.tmpVertexBufConvex[0].x, OpticalIdealMirror2D.tmpVertexBufConvex[0].y);
-                    for (let index = 0; index < OpticalIdealMirror2D.tmpVertexBufConvex.length; index++) {
-                        let v = OpticalIdealMirror2D.tmpVertexBufConvex[index];
-                        {
-                            ctx.lineTo(v.x, v.y);
-                        }
-                    }
                     if (f > 0) {
                         if (this.fillColor != null) {
-                            const dx = 3 / 100.0 / l;
+                            const dx = 3.5 / gl.scaleFactor;
                             ctx.translate(-dx, 0);
-                            gl.setColors(this.fillColor, this.drawColor);
+                            gl.setColors(this.fillColor, this.fillColor);
                             gl.setLineWidth(7);
+                            ctx.beginPath();
+                            ctx.moveTo(OpticalIdealMirror2D.tmpVertexBufConvex[0].x, OpticalIdealMirror2D.tmpVertexBufConvex[0].y);
+                            for (let index = 0; index < OpticalIdealMirror2D.tmpVertexBufConvex.length; index++) {
+                                let v = OpticalIdealMirror2D.tmpVertexBufConvex[index];
+                                {
+                                    ctx.lineTo(v.x, v.y);
+                                }
+                            }
                             ctx.stroke();
-                            gl.setLineWidth(1);
                             ctx.translate(dx, 0);
                         }
                         if (this.drawColor != null) {
+                            gl.setLineWidth(1.5);
+                            gl.setColors(null, this.drawColor);
+                            ctx.beginPath();
+                            ctx.moveTo(OpticalIdealMirror2D.tmpVertexBufConvex[0].x, OpticalIdealMirror2D.tmpVertexBufConvex[0].y);
+                            for (let index = 0; index < OpticalIdealMirror2D.tmpVertexBufConvex.length; index++) {
+                                let v = OpticalIdealMirror2D.tmpVertexBufConvex[index];
+                                {
+                                    ctx.lineTo(v.x, v.y);
+                                }
+                            }
+                            ctx.stroke();
                         }
                     }
                     else {
                         ctx.scale(-1, 1);
                         if (this.fillColor != null) {
-                            const dx = 5 / 100.0 / l;
+                            const dx = 5 / gl.scaleFactor;
                             ctx.translate(dx, 0);
                             gl.setColors(this.fillColor, this.fillColor);
                             gl.setLineWidth(7);
+                            ctx.beginPath();
+                            ctx.moveTo(OpticalIdealMirror2D.tmpVertexBufConvex[0].x, OpticalIdealMirror2D.tmpVertexBufConvex[0].y);
+                            for (let index = 0; index < OpticalIdealMirror2D.tmpVertexBufConvex.length; index++) {
+                                let v = OpticalIdealMirror2D.tmpVertexBufConvex[index];
+                                {
+                                    ctx.lineTo(v.x, v.y);
+                                }
+                            }
                             ctx.stroke();
-                            gl.setLineWidth(1);
                             ctx.translate(-dx, 0);
                         }
                         if (this.drawColor != null) {
-                            gl.setColors(this.fillColor, this.fillColor);
+                            gl.setLineWidth(1.5);
+                            gl.setColors(null, this.drawColor);
+                            ctx.beginPath();
+                            ctx.moveTo(OpticalIdealMirror2D.tmpVertexBufConvex[0].x, OpticalIdealMirror2D.tmpVertexBufConvex[0].y);
+                            for (let index = 0; index < OpticalIdealMirror2D.tmpVertexBufConvex.length; index++) {
+                                let v = OpticalIdealMirror2D.tmpVertexBufConvex[index];
+                                {
+                                    ctx.lineTo(v.x, v.y);
+                                }
+                            }
                             ctx.stroke();
                         }
                         ctx.scale(-1, 1);
@@ -26302,7 +29755,9 @@ var geom;
                 if (((p1 != null && p1 instanceof geom.Point2D) || p1 === null) && ((p2 != null && p2 instanceof geom.Point2D) || p2 === null) && ((typeof showImages === 'string') || showImages === null)) {
                     let __args = arguments;
                     super();
-                    this.mirror = new geom.Segment2D();
+                    if (this.mirror === undefined) {
+                        this.mirror = null;
+                    }
                     this.mirror = new geom.Segment2Points2D(p1, p2);
                     this.parents = this.mirror.getParents();
                     this.params = [showImages];
@@ -26320,7 +29775,9 @@ var geom;
                         let __args = arguments;
                         let showImages = "true";
                         super();
-                        this.mirror = new geom.Segment2D();
+                        if (this.mirror === undefined) {
+                            this.mirror = null;
+                        }
                         this.mirror = new geom.Segment2Points2D(p1, p2);
                         this.parents = this.mirror.getParents();
                         this.params = [showImages];
@@ -26332,7 +29789,9 @@ var geom;
                         this.showImages = math.MathUtils.evaluateBoolean(this.showImagesExpr);
                         this.update();
                     }
-                    this.mirror = new geom.Segment2D();
+                    if (this.mirror === undefined) {
+                        this.mirror = null;
+                    }
                 }
                 else
                     throw new Error('invalid overload');
@@ -26424,7 +29883,7 @@ var geom;
              */
             render(gl) {
                 if (this.fillColor != null) {
-                    const dt = 4 / 100.0;
+                    const dt = 4 / gl.METER_TO_PIXEL;
                     const dx = dt * this.mirror.dy;
                     const dy = -dt * this.mirror.dx;
                     const ctx = gl.context;
@@ -26910,7 +30369,7 @@ var geom;
                 if (!this.showImages)
                     return;
                 const r = 2 * Math.sqrt(this.strokeWidth) * geom.Shape2D.SNAP_DISTANCE / 2.5;
-                const color = framework.Preferences.ImageColor_$LI$();
+                const color = this.shapesManager.preferences.ImageColor;
                 for (let index = this.images.iterator(); index.hasNext();) {
                     let img = index.next();
                     {
@@ -27002,9 +30461,9 @@ var geom;
                     if (this.line === undefined) {
                         this.line = null;
                     }
-                    this.mu = new geom.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                    this.w = new geom.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                    this.r = new geom.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.mu = new geom.optics.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.w = new geom.optics.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.r = new geom.optics.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
                     this.rays2 = (new java.util.ArrayList());
                     this.line = new geom.Line2Points2D(p1, p2);
                     this.parents = this.line.getParents();
@@ -27033,9 +30492,9 @@ var geom;
                         if (this.line === undefined) {
                             this.line = null;
                         }
-                        this.mu = new geom.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                        this.w = new geom.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                        this.r = new geom.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
+                        this.mu = new geom.optics.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                        this.w = new geom.optics.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                        this.r = new geom.optics.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
                         this.rays2 = (new java.util.ArrayList());
                         this.line = new geom.Line2Points2D(p1, p2);
                         this.parents = this.line.getParents();
@@ -27055,13 +30514,23 @@ var geom;
                     if (this.line === undefined) {
                         this.line = null;
                     }
-                    this.mu = new geom.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                    this.w = new geom.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
-                    this.r = new geom.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.mu = new geom.optics.DynamicValue(1.5, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.w = new geom.optics.DynamicValue(0.1, -javaemul.internal.DoubleHelper.MAX_VALUE, javaemul.internal.DoubleHelper.MAX_VALUE);
+                    this.r = new geom.optics.DynamicValue(0, 0, javaemul.internal.DoubleHelper.MAX_VALUE);
                     this.rays2 = (new java.util.ArrayList());
                 }
                 else
                     throw new Error('invalid overload');
+            }
+            /**
+             *
+             * @param {geom.ShapesManager} manager
+             */
+            onAddShapeToSimulation(manager) {
+                super.onAddShapeToSimulation(manager);
+                this.mu.setShapesManager(manager);
+                this.r.setShapesManager(manager);
+                this.w.setShapesManager(manager);
             }
             /**
              *
@@ -27118,7 +30587,9 @@ var geom;
             }
             render(gl) {
                 if (this.fillColor != null && this.__isDefined) {
-                    const b = framework.App.instance.getCanvasBounds();
+                    if (this.shapesManager == null)
+                        return;
+                    const b = this.shapesManager.getWorldBounds();
                     const w = b[2] - b[0];
                     const h = b[3] - b[1];
                     const par_x = -this.line.dx;
@@ -27197,8 +30668,8 @@ var geom;
                     else {
                         return 0;
                     }
-                    if (geom.optics.OpticalRay2D.surfaceMergingObjects_$LI$().size() > 0) {
-                        for (let index = geom.optics.OpticalRay2D.surfaceMergingObjects_$LI$().iterator(); index.hasNext();) {
+                    if (this.shapesManager.surfaceMergingObjects.size() > 0) {
+                        for (let index = this.shapesManager.surfaceMergingObjects.iterator(); index.hasNext();) {
                             let refractor = index.next();
                             {
                                 shotType = refractor.getShotType(opticalray);
@@ -27319,10 +30790,6 @@ var geom;
                     this.axis = new geom.Line2D();
                     this.DIR_Y = new math.Vector2();
                     this.DIR_X = new math.Vector2();
-                    if (!(point3 != null && point3 instanceof geom.FreePoint2D)) {
-                        framework.App.instance.shapesManager.removeShape(point3);
-                        point3 = new geom.FreePoint2D();
-                    }
                     this.curve = new geom.ParabolaArc2D();
                     this.parents = [point1, point2, point3];
                     this.params = [showFocus, showAxis, showImages];
@@ -27351,10 +30818,6 @@ var geom;
                         this.axis = new geom.Line2D();
                         this.DIR_Y = new math.Vector2();
                         this.DIR_X = new math.Vector2();
-                        if (!(point3 != null && point3 instanceof geom.FreePoint2D)) {
-                            framework.App.instance.shapesManager.removeShape(point3);
-                            point3 = new geom.FreePoint2D();
-                        }
                         this.curve = new geom.ParabolaArc2D();
                         this.parents = [point1, point2, point3];
                         this.params = [showFocus, showAxis, showImages];
@@ -27950,7 +31413,7 @@ var geom;
             }
             let r;
             try {
-                r = math.MathUtils.evaluateExpression(this.params[0], null, null);
+                r = math.MathUtils.evaluateExpression(this.params[0], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
             }
             catch (e) {
                 return;
@@ -27993,12 +31456,14 @@ var geom;
             const p3 = (this.parents[2]).pt;
             if (math.Vector2.isCollinear(p1, p2, p3))
                 return;
-            if (Circle3Points2D.TMP_LINE1 != null)
+            if (Circle3Points2D.TMP_LINE1 == null) {
                 Circle3Points2D.TMP_LINE1 = new geom.Line2D();
-            if (Circle3Points2D.TMP_LINE2 != null)
                 Circle3Points2D.TMP_LINE2 = new geom.Line2D();
-            Circle3Points2D.TMP_LINE1.set$math_Vector2$math_Vector2(new math.Vector2((p1.x + p2.x) / 2, (p1.y + p2.y) / 2), p1.to$math_Vector2(p2).right());
-            Circle3Points2D.TMP_LINE2.set$math_Vector2$math_Vector2(new math.Vector2((p2.x + p3.x) / 2, (p2.y + p3.y) / 2), p2.to$math_Vector2(p3).right());
+                Circle3Points2D.TMP_LINE1.visible = false;
+                Circle3Points2D.TMP_LINE2.visible = false;
+            }
+            Circle3Points2D.TMP_LINE1.set$double$double$double$double((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, p2.y - p1.y, p1.x - p2.x);
+            Circle3Points2D.TMP_LINE2.set$double$double$double$double((p2.x + p3.x) / 2, (p2.y + p3.y) / 2, p3.y - p2.y, p2.x - p3.x);
             const inter = geom.CurveUtils.LineLineIntersection$geom_Line2D$geom_Line2D(Circle3Points2D.TMP_LINE1, Circle3Points2D.TMP_LINE2);
             if (inter == null)
                 return;
@@ -28214,9 +31679,15 @@ var geom;
             if (math.Vector2.isCollinear(p1, p2, p3)) {
                 return;
             }
-            const l1 = new geom.Line2D(new math.Vector2((p1.x + p2.x) / 2, (p1.y + p2.y) / 2), p1.to$math_Vector2(p2).right());
-            const l2 = new geom.Line2D(new math.Vector2((p2.x + p3.x) / 2, (p2.y + p3.y) / 2), p2.to$math_Vector2(p3).right());
-            const inter = geom.CurveUtils.LineLineIntersection$geom_Line2D$geom_Line2D(l1, l2);
+            if (CircleArc2D.TMP_LINE1 == null) {
+                CircleArc2D.TMP_LINE1 = new geom.Line2D();
+                CircleArc2D.TMP_LINE2 = new geom.Line2D();
+                CircleArc2D.TMP_LINE1.visible = false;
+                CircleArc2D.TMP_LINE2.visible = false;
+            }
+            CircleArc2D.TMP_LINE1.set$double$double$double$double((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, p2.y - p1.y, p1.x - p2.x);
+            CircleArc2D.TMP_LINE2.set$double$double$double$double((p2.x + p3.x) / 2, (p2.y + p3.y) / 2, p3.y - p2.y, p2.x - p3.x);
+            const inter = geom.CurveUtils.LineLineIntersection$geom_Line2D$geom_Line2D(CircleArc2D.TMP_LINE1, CircleArc2D.TMP_LINE2);
             if (inter == null)
                 return;
             const c = inter[0];
@@ -28375,7 +31846,7 @@ var geom;
             if (this.fillColor != null) {
             }
             if (this.drawColor != null) {
-                g.drawArc(c.x, c.y, this.r, this.startAngle, this.angleExtent, false);
+                g.drawArc(c.x, c.y, this.r, this.startAngle, this.angleExtent, this.angleExtent < 0);
                 if (this.showEqn || this.showName) {
                     geom.Circle2D.renderInfo(g, this.getInfo(), c.sum$double$double(this.r, 0), c.difference$double$double(this.r, 0), 1, 0, this.drawColor, null);
                 }
@@ -28479,6 +31950,8 @@ var geom;
             }
         }
     }
+    CircleArc2D.TMP_LINE1 = null;
+    CircleArc2D.TMP_LINE2 = null;
     geom.CircleArc2D = CircleArc2D;
     CircleArc2D["__class"] = "geom.CircleArc2D";
 })(geom || (geom = {}));
@@ -28575,7 +32048,7 @@ var geom;
             try {
                 for (let i = 0; i < this.params.length; i++) {
                     {
-                        values[i] = math.MathUtils.evaluateExpression(this.params[i], null, null);
+                        values[i] = math.MathUtils.evaluateExpression(this.params[i], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
                         if (!((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(values[i]))
                             return;
                     }
@@ -28585,8 +32058,10 @@ var geom;
             catch (e) {
                 return;
             }
-            this.conic = geom.Conics2D.reduceConic$double_A(values);
-            this.__isDefined = (this.conic != null);
+            this.setConic(geom.Conics2D.reduceConic$double_A(values));
+            this.getConic().onAddShapeToSimulation(this.shapesManager);
+            this.getConic().update();
+            this.__isDefined = (this.getConic() != null);
         }
     }
     geom.ConicEqnShape2D = ConicEqnShape2D;
@@ -28646,7 +32121,7 @@ var geom;
             if (!this.parents[0].isDefined() || !this.parents[1].isDefined())
                 return;
             try {
-                this.e = math.MathUtils.evaluateExpression(this.params[0], null, null);
+                this.e = math.MathUtils.evaluateExpression(this.params[0], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables);
             }
             catch (e) {
                 return;
@@ -28658,23 +32133,29 @@ var geom;
             const focus = this.parents[1].pt;
             if (this.directrix.contains(focus))
                 return;
-            if (this.e === 1) {
+            let conic = null;
+            if (this.e === 0) {
+                const p0 = line.project(focus);
+                const d = p0.distance$math_Vector2(focus);
+                conic = new geom.Circle2D(focus.x, focus.y, d);
+            }
+            else if (this.e === 1) {
                 const p0 = line.project(focus);
                 const p = p0.distance$math_Vector2(focus) / 2;
                 const xv = (focus.x + p0.x) / 2;
                 const yv = (focus.y + p0.y) / 2;
                 const theta = geom.AngleUtils.horizontalAngle$math_Vector2$math_Vector2(p0, focus);
-                this.conic = new geom.Parabola2D(xv, yv, p, theta);
+                conic = new geom.Parabola2D(xv, yv, p, theta);
             }
-            else if (this.e < 1) {
+            else if (this.e > 0 && this.e < 1) {
                 const p0 = line.project(focus);
-                const otherFocus = math.Vector2.interpolate(p0, focus, (1 + this.e * this.e) / (-2 * this.e * this.e));
                 const d = p0.distance$math_Vector2(focus);
+                const otherFocus = math.Vector2.interpolate(p0, focus, (1 + this.e * this.e) / (-2 * this.e * this.e));
                 const a = d * this.e / (1 - this.e * this.e);
-                this.conic = new geom.Ellipse2D();
-                this.conic.set$math_Vector2$math_Vector2$double(focus, otherFocus, 2 * a);
+                conic = new geom.Ellipse2D();
+                conic.set$math_Vector2$math_Vector2$double(focus, otherFocus, 2 * a);
             }
-            else {
+            else if (this.e > 1) {
                 const p0 = line.project(focus);
                 const otherFocus = math.Vector2.interpolate(p0, focus, (1 + this.e * this.e) / (-2 * this.e * this.e));
                 const d = p0.distance$math_Vector2(focus);
@@ -28682,16 +32163,21 @@ var geom;
                 const b = Math.sqrt(a * a * this.e * this.e - a * a);
                 const centre = math.Vector2.midPoint(focus, otherFocus);
                 const theta = geom.AngleUtils.horizontalAngle$math_Vector2$math_Vector2(focus, otherFocus);
-                this.conic = new geom.Hyperbola2D(centre.x, centre.y, a, b, theta);
+                conic = new geom.Hyperbola2D(centre.x, centre.y, a, b, theta);
             }
-            this.__isDefined = (this.conic != null);
+            this.setConic(conic);
+            if (conic != null) {
+                conic.onAddShapeToSimulation(this.shapesManager);
+                conic.update();
+            }
+            this.__isDefined = (this.getConic() != null);
         }
         /**
          *
          * @return {string}
          */
         getShapeInfo() {
-            return this.conic.conicType() + " from Directrix " + this.parents[0].getName() + " and focus " + this.parents[1].getName();
+            return this.getConic().conicType() + " from Directrix " + this.parents[0].getName() + " and focus " + this.parents[1].getName();
         }
     }
     geom.ConicLinePointE2D = ConicLinePointE2D;
@@ -28713,6 +32199,7 @@ var geom;
         constructor(point1, point2, point3, point4, point5) {
             super(null);
             this.parents = [point1, point2, point3, point4, point5];
+            this.showEqn = true;
             this.update();
         }
         /**
@@ -28741,9 +32228,11 @@ var geom;
             const coefs = geom.Conics2D.findConic(points);
             if (coefs == null)
                 return;
-            this.conic = geom.Conics2D.reduceConic$double_A(coefs);
-            if (this.conic == null)
+            this.setConic(geom.Conics2D.reduceConic$double_A(coefs));
+            if (this.getConic() == null)
                 return;
+            this.getConic().onAddShapeToSimulation(this.shapesManager);
+            this.getConic().update();
             this.__isDefined = true;
         }
         /**
@@ -28751,9 +32240,9 @@ var geom;
          * @return {string}
          */
         getShapeInfo() {
-            if (this.conic == null)
+            if (this.getConic() == null)
                 return "undefined conic";
-            const s = framework.ShapesManager.getShapeName(this.conic.constructor);
+            const s = geom.ShapesManager.getShapeName(this.getConic().constructor);
             return s + " through " + this.parents[0].getName() + ", " + this.parents[1].getName() + ", " + this.parents[2].getName() + ", " + this.parents[3].getName() + ", " + this.parents[4].getName();
         }
     }
@@ -28799,32 +32288,15 @@ var geom;
      * @param {geom.Point2D} p1
      * @param {geom.Point2D} p2
      * @param {geom.Point2D} p3
-     * @param {string} direct
      * @class
      * @extends geom.CircleArc2D
      */
     class CircleArcCenter2Points2D extends geom.CircleArc2D {
-        constructor(p1, p2, p3, direct) {
-            if (((p1 != null && p1 instanceof geom.Point2D) || p1 === null) && ((p2 != null && p2 instanceof geom.Point2D) || p2 === null) && ((p3 != null && p3 instanceof geom.Point2D) || p3 === null) && ((typeof direct === 'string') || direct === null)) {
-                let __args = arguments;
-                super();
-                this.parents = [p1, p2, p3];
-                this.params = [direct + ""];
-                this.update();
-            }
-            else if (((p1 != null && p1 instanceof geom.Point2D) || p1 === null) && ((p2 != null && p2 instanceof geom.Point2D) || p2 === null) && ((p3 != null && p3 instanceof geom.Point2D) || p3 === null) && direct === undefined) {
-                let __args = arguments;
-                {
-                    let __args = arguments;
-                    let direct = "true";
-                    super();
-                    this.parents = [p1, p2, p3];
-                    this.params = [direct + ""];
-                    this.update();
-                }
-            }
-            else
-                throw new Error('invalid overload');
+        constructor(p1, p2, p3) {
+            super();
+            this.parents = [p1, p2, p3];
+            this.params = [true + ""];
+            this.update();
         }
         /**
          *
@@ -28873,7 +32345,8 @@ var geom;
                 this.angleExtent = this.angleExtent + (2 * Math.PI);
             let isDirect = true;
             try {
-                isDirect = math.MathUtils.evaluateExpression(this.params[0], null, null) !== 0;
+                if (this.params != null)
+                    isDirect = math.MathUtils.evaluateExpression(this.params[0], this.shapesManager == null ? null : this.shapesManager.globalFunctions, this.shapesManager == null ? null : this.shapesManager.globalVariables) !== 0;
             }
             catch (e) {
                 console.error(e.message, e);
@@ -28972,14 +32445,15 @@ var geom;
             const Q = this.parents[1].pt;
             let th = geom.Shape2D.TMP_VEC_$LI$().set$math_Vector2(P).to$math_Vector2(Q).getDirection();
             const divSizeDegrees = this.divSize / this.numSubDivision;
-            const majorTicklength = (16 / 100 | 0);
+            const majorTicklength = 16 / g.METER_TO_PIXEL;
             const totalAngleDegrees = (x => x * 180 / Math.PI)(this.angleExtent);
-            const textHeight = (16 / 100 | 0);
+            const textHeight = 16 / g.METER_TO_PIXEL;
             const tickCount = ((totalAngleDegrees / divSizeDegrees) | 0);
             if (tickCount < 2) {
                 return;
             }
             g.context.save();
+            g.setLineWidth(1);
             g.context.translate(P.x, P.y);
             g.context.rotate(th);
             const minorTickLength = majorTicklength * 0.6;
@@ -29011,16 +32485,17 @@ var geom;
                 g.context.restore();
                 return;
             }
-            const scale = ((1 / 100 | 0));
             x = this.r - majorTicklength - minorTickLength;
             y = -textHeight / 2;
             th = this.numSubDivision * divSizeDegrees;
-            const dh = x * /* toRadians */ (x => x * Math.PI / 180)(th);
+            th = /* toRadians */ (x => x * Math.PI / 180)(th);
+            g.context.textAlign = "right";
+            const dh = x * th;
             let gap = 0;
             for (let i = 0; i <= tickCount; i += this.numSubDivision) {
                 {
                     const str = math.MathUtils.format(i * divSizeDegrees);
-                    if (gap > 0.12) {
+                    if (gap > 0.2) {
                         g.drawLine(x, 0, this.r, 0);
                         g.drawText$java_lang_String$double$double(str, Math.fround(x), Math.fround(y));
                         gap = 0;
@@ -29054,7 +32529,7 @@ geom.optics.OpticsUtils.TMP_VEC2_$LI$();
 geom.optics.OpticsUtils.TMP_VEC_$LI$();
 geom.optics.OpticsUtils.TMP_SEGMENT_$LI$();
 geom.optics.OpticsUtils.TMP_RAY_$LI$();
-geom.optics.OpticalRay2D.surfaceMergingObjects_$LI$();
+geom.RayReflect2PointsCurve2D.TMP_RAY_$LI$();
 geom.Conic2D.TMP_SEGMENT_$LI$();
 geom.AngleMeasure2D.M_PI_4_$LI$();
 geom.AngleMeasure2D.M_3PI_2_$LI$();
@@ -29063,6 +32538,7 @@ geom.AngleMeasure2D.M_2PI_$LI$();
 geom.AngleMeasure2D.M_PI_$LI$();
 geom.Bezier3Points2D.coeff_$LI$();
 geom.Bezier4Points2D.coeff_$LI$();
+geom.ShapeArray.clazz_$LI$();
 geom.Shape2D.editInfo_$LI$();
 geom.Shape2D.TMP_TRANSFORM_$LI$();
 geom.Shape2D.TMP_VEC_$LI$();
@@ -29073,14 +32549,6 @@ geom.CurveUtils.circleTerms_$LI$();
 geom.CurveUtils.conicTerms_$LI$();
 math.Transform.tmpVector_$LI$();
 math.Transform.tmp_Transform_$LI$();
-framework.Preferences.tooltipColor_$LI$();
-framework.Preferences.textColor_$LI$();
-framework.Preferences.axisColor_$LI$();
-framework.Preferences.gridColor_$LI$();
-framework.Preferences.backgroundColor_$LI$();
-framework.Preferences.selectedColor_$LI$();
-framework.Preferences.virtualRaysColor_$LI$();
-framework.Preferences.ImageColor_$LI$();
 net.objecthunter.exp4j.operator.Operators.builtinOperators_$LI$();
 net.objecthunter.exp4j.operator.Operators.__static_initialize();
 net.objecthunter.exp4j.__function.Functions.builtinFunctions_$LI$();

@@ -12,10 +12,33 @@ html, body {
 <link rel="icon" type="image/png" href="../logo.png">
 <link rel="shortcut icon" href="../logo.png">
 <script src="jrt.js"></script>
-<script src="bundle.js"></script>
+<script src="../../target/js/bundle.js"></script>
+
+
 </head>
 
 <body>
-	<canvas id="canvas" width="400px" height="300px" style="position: absolute; border: solid black 1px"></canvas>
+	<canvas id="canvas1" width="400px" height="300px" ></canvas>
+	<canvas id="canvas2" width="400px" height="300px" ></canvas>
+	<canvas id="canvas3" width="400px" height="300px" ></canvas>
 </body>
+<script>
+	let app3 = new framework.App("canvas3");
+	
+	let sm = app3.shapesManager;
+	let s1 = new geom.Circle2D();
+	let s2 = new geom.FreePoint2D(1, 1);
+	let s3 = new geom.PointOnCurve2D(s1, -1);
+	let s4 = new geom.Circle2Points2D(s2, s3);
+	// const s5 = new geom.PointOnCurve2D(sm.X_AXIS, 0.4);
+	// const s6 = new geom.PointOnCurve2D(sm.Y_AXIS, 0.5);
+	// const s7 = new geom.Ray2Points2D(s5, s6);
+	// const s8 = new geom.FunctionExplicit2D("sin(x*x)");
+	const s9 = new geom.Parabola2Points2D(s2, s3);
+	sm.addShape(s1);
+	sm.addShape(s2);
+	sm.addShape(s3);
+	sm.addShape(s4);
+	sm.addShape(s9);
+</script>
 </html>
