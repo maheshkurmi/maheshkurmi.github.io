@@ -1788,9 +1788,6 @@ var framework;
         }
         /**
          * Draws the grids on given bounds object.
-         *
-         * @param gl the OpenGL context
-         * @param b  the bounds
          * @param {number} minX
          * @param {number} minY
          * @param {number} maxX
@@ -2039,20 +2036,19 @@ var framework;
             const dt = this.last - time;
             this.last = time;
             this.shapesManager.update(dt);
-            const bounds = this.getCanvasBounds();
             const min = this.camera.toWorldCoordinates(0, this.camera.screenHeight);
             const max = this.camera.toWorldCoordinates(this.camera.screenWidth, 0);
             this.shapesManager.setWorldBounds(min.x, min.y, max.x, max.y);
             this.renderer.setColors(this.preferences.backgroundColor, this.preferences.axisColor);
             this.renderer.begin(this.camera);
             if (this.preferences.showAxis)
-                this.renderer.drawGrid(bounds[0], bounds[1], bounds[2], bounds[3], 5 * this.preferences.gridSize, this.preferences.gridColor);
+                this.renderer.drawGrid(min.x, min.y, max.x, max.y, 5 * this.preferences.gridSize, this.preferences.gridColor);
             if (this.preferences.showGrid)
-                this.renderer.drawAxes(bounds[0], bounds[1], bounds[2], bounds[3], this.preferences.gridSize, this.preferences.gridSize * 10, true, this.preferences.axisColor);
+                this.renderer.drawAxes(min.x, min.y, max.x, max.y, this.preferences.gridSize, this.preferences.gridSize * 10, true, this.preferences.axisColor);
             this.renderer.setColors(this.preferences.textColor, this.preferences.textColor);
             this.shapesManager.render(this.renderer);
             if (this.statusInfo != null) {
-                this.renderer.drawText$java_lang_String$double$double(this.statusInfo, bounds[0] + 0.3, bounds[3] - 0.3);
+                this.renderer.drawText$java_lang_String$double$double(this.statusInfo, min.x + 0.3, max.y - 0.3);
             }
             this.renderer.end(this.camera);
             window.requestAnimationFrame((t) => {
@@ -2072,22 +2068,6 @@ var framework;
             return this.paused;
         }
         /**
-         * returns [minX,minY,maxX,maxY]
-         * @return
-         * @return {double[]}
-         */
-        getCanvasBounds() {
-            this.TMP = [0, 0, 0, 0];
-            let p = new math.Vector2();
-            p = this.camera.toWorldCoordinates(0, this.canvas.height);
-            this.TMP[0] = p.x;
-            this.TMP[1] = p.y;
-            p = this.camera.toWorldCoordinates(this.canvas.width, 0);
-            this.TMP[2] = p.x;
-            this.TMP[3] = p.y;
-            return this.TMP;
-        }
-        /**
          * HAND_CURSOR = "pointer";
          * DRAG_CURSOR = "move";
          * DEFAULT_CURSOR = "default";
@@ -2105,6 +2085,8 @@ var framework;
         }
         setStatusLine(statusInfo) {
             this.statusInfo = statusInfo;
+            if (this.shapesManager.eventsListener != null)
+                this.shapesManager.eventsListener.onStatusUpdate(statusInfo);
         }
         setFillWindow(fillWindow) {
             this.fillWindow = fillWindow;
@@ -2115,6 +2097,9 @@ var framework;
             else {
                 this.setCanvasSize(this.canvas.clientWidth, this.canvas.clientHeight);
             }
+        }
+        setAppEventsListener(listener) {
+            this.shapesManager.eventsListener = listener;
         }
         static main(args) {
             window.onload = (e) => {
@@ -7180,6 +7165,15 @@ var geom;
             this.selectedShape = null;
             this.prevDragPt = null;
             this.paintStrokeWidth = 1.5;
+            if (this.eventsListener === undefined) {
+                this.eventsListener = null;
+            }
+            this.shiftKey = false;
+            this.controlKey = false;
+            this.leftKey = false;
+            this.rightKey = false;
+            this.upKey = false;
+            this.downKey = false;
             this.app = app;
             this.preferences = app.preferences;
             this.globalVariables = (new java.util.HashMap());
@@ -7295,6 +7289,8 @@ var geom;
             }
             b.setName(this.createShapeName(b));
             b.onAddShapeToSimulation(this);
+            if (this.eventsListener != null)
+                this.eventsListener.onShapeAdd(b);
         }
         /**
          * All list of shapes, may overwrite existing if of same name
@@ -7307,6 +7303,8 @@ var geom;
                 let br = index.next();
                 {
                     br.onAddShapeToSimulation(this);
+                    if (this.eventsListener != null)
+                        this.eventsListener.onShapeAdd(br);
                 }
             }
         }
@@ -7365,6 +7363,8 @@ var geom;
             removedshapes.clear();
             if (this.selectedShape === b)
                 this.selectedShape = null;
+            if (this.eventsListener != null)
+                this.eventsListener.onShapeDelete(b);
         }
         forceUpdateAll() {
             for (let index = this.shapes.iterator(); index.hasNext();) {
@@ -7405,6 +7405,22 @@ var geom;
         update(dt) {
             this.time += dt / 1000;
             this.setTime(this.time);
+            if (this.leftKey || this.rightKey || this.upKey || this.downKey) {
+                let delta = this.app.camera.getScale() * this.app.preferences.gridSize / 5;
+                if (this.shiftKey)
+                    delta = delta / 5;
+                let dx = 0;
+                let dy = 0;
+                if (this.leftKey)
+                    dx -= delta;
+                if (this.rightKey)
+                    dx += delta;
+                if (this.downKey)
+                    dy -= delta;
+                if (this.upKey)
+                    dy += delta;
+                this.app.camera.translate(dx, dy);
+            }
             for (let index = this.shapes.iterator(); index.hasNext();) {
                 let br = index.next();
                 {
@@ -7454,27 +7470,101 @@ var geom;
             return this.selectedShape;
         }
         setSelectedShape(shape) {
+            if (this.selectedShape === shape)
+                return;
             if (this.selectedShape !== shape) {
                 this.prevDragPt = null;
                 ShapesManager.mousepressed = false;
             }
-            if (this.selectedShape != null)
+            if (this.selectedShape != null) {
                 this.selectedShape.selected = false;
+                if (this.eventsListener != null)
+                    this.eventsListener.onShapeDeSelect(this.selectedShape);
+            }
             this.selectedShape = shape;
-            if (shape != null)
+            if (shape != null) {
                 shape.selected = true;
+                if (this.eventsListener != null)
+                    this.eventsListener.onShapeSelect(this.selectedShape);
+            }
         }
         /**
          *
-         * @param {number} event 1=press, 2==release, 3==clicked, 4=moved
+         * @param {number} event 1=pressed, 2==released
+         * @param worldPt
+         * @return
+         * @param {number} keyCode
+         * @param {string} key
+         * @return {boolean}
+         */
+        handlekeyBoard(event, keyCode, key) {
+            if (event === 1) {
+                switch ((key)) {
+                    case "Shift":
+                        this.shiftKey = true;
+                        break;
+                    case "Control":
+                        this.controlKey = true;
+                        break;
+                    case "ArrowLeft":
+                        this.leftKey = true;
+                        break;
+                    case "ArrowRight":
+                        this.rightKey = true;
+                        break;
+                    case "ArrowUp":
+                        this.upKey = true;
+                        break;
+                    case "ArrowDown":
+                        this.downKey = true;
+                        break;
+                    case "q":
+                        this.app.camera.zoomIn();
+                        break;
+                    case "w":
+                        this.app.camera.zoomOut();
+                        break;
+                    case "Delete":
+                        this.deleteSelected();
+                }
+            }
+            else {
+                switch ((key)) {
+                    case "Shift":
+                        this.shiftKey = false;
+                        break;
+                    case "Control":
+                        this.controlKey = false;
+                        break;
+                    case "ArrowLeft":
+                        this.leftKey = false;
+                        break;
+                    case "ArrowRight":
+                        this.rightKey = false;
+                        break;
+                    case "ArrowUp":
+                        this.upKey = false;
+                        break;
+                    case "ArrowDown":
+                        this.downKey = false;
+                        break;
+                }
+            }
+            return true;
+        }
+        /**
+         *
+         * @param {number} event 1=press, 2==release, 3==clicked, 4=moved/dragged
          * @param x
          * @param y
          * @param {math.Vector2} worldPt
          * @return
          * @return {boolean}
          */
-        poll(event, worldPt) {
+        handleMouse(event, worldPt) {
             let consumed = false;
+            if (this.eventsListener != null)
+                this.eventsListener.onCursorUpdate(worldPt);
             if (event === 3) {
                 if (this.selectedShape != null)
                     this.selectedShape.selected = false;
@@ -7510,6 +7600,18 @@ var geom;
                     if (this.prevDragPt != null) {
                         const delta = worldPt.difference$math_Vector2(this.prevDragPt);
                         this.prevDragPt = worldPt;
+                        if (this.shiftKey && ShapesManager.prevMousePressedPoint != null) {
+                            if (Math.abs(worldPt.x - ShapesManager.prevMousePressedPoint.x) <= Math.abs(worldPt.y - ShapesManager.prevMousePressedPoint.y)) {
+                                delta.x = 0;
+                            }
+                            else {
+                                delta.y = 0;
+                            }
+                            this.prevDragPt.set$math_Vector2(worldPt);
+                        }
+                        else {
+                            this.prevDragPt = worldPt;
+                        }
                         this.selectedShape.mouseDragged(delta, worldPt, true);
                         this.updateNeeded = true;
                     }
@@ -8158,6 +8260,8 @@ var geom;
         deleteSelected() {
             if (this.selectedShape != null) {
                 this.removeShape(this.selectedShape);
+                if (this.eventsListener != null)
+                    this.eventsListener.onShapeDelete(this.selectedShape);
             }
         }
         deleteShapeAt(v) {
@@ -8179,6 +8283,8 @@ var geom;
                 let s = index.next();
                 {
                     this.removeShape(s);
+                    if (this.eventsListener != null)
+                        this.eventsListener.onShapeDelete(s);
                 }
             }
         }
@@ -11947,35 +12053,10 @@ var geom;
                 return true;
             }
             onKeyPressed(keyCode, key) {
-                this.delta = this.app.preferences.gridSize / 5;
-                let dx = 0;
-                let dy = 0;
-                switch ((key)) {
-                    case "ArrowLeft":
-                        dx -= this.delta;
-                        break;
-                    case "ArrowRight":
-                        dx += this.delta;
-                        break;
-                    case "ArrowUp":
-                        dy += this.delta;
-                        break;
-                    case "ArrowDown":
-                        dy -= this.delta;
-                        break;
-                    case "Space":
-                        dx = 0;
-                        dy = 0;
-                    case "q":
-                        this.camera.zoomIn();
-                        break;
-                    case "w":
-                        this.camera.zoomOut();
-                        break;
-                }
-                this.camera.translate(dx, dy);
+                this.app.shapesManager.handlekeyBoard(1, keyCode, key);
             }
             onKeyReleased(keyCode, key) {
+                this.app.shapesManager.handlekeyBoard(2, keyCode, key);
             }
         }
         input.KeyBoardCameraHandler = KeyBoardCameraHandler;
@@ -12003,7 +12084,7 @@ var geom;
             onMousePressed(button, point) {
                 super.onMousePressed(button, point);
                 const p = this.camera.toWorldCoordinates(point.x, point.y);
-                this.shapesManager.poll(1, p);
+                this.shapesManager.handleMouse(1, p);
             }
             /**
              *
@@ -12014,17 +12095,17 @@ var geom;
             onMouseDrag(button, start, current) {
                 super.onMouseDrag(button, start, current);
                 const p = this.camera.toWorldCoordinates(current.x, current.y);
-                this.shapesManager.poll(1, p);
+                this.shapesManager.handleMouse(1, p);
             }
             onMouseClick(button, point) {
                 super.onMouseClick(button, point);
                 const p = this.camera.toWorldCoordinates(point.x, point.y);
-                this.shapesManager.poll(3, p);
+                this.shapesManager.handleMouse(3, p);
             }
             onMouseMove(button, point) {
                 super.onMouseMove(button, point);
                 const p = this.camera.toWorldCoordinates(point.x, point.y);
-                this.shapesManager.poll(4, p);
+                this.shapesManager.handleMouse(4, p);
             }
             /**
              *
@@ -12034,7 +12115,7 @@ var geom;
             onMouseRelease(button, point) {
                 super.onMouseRelease(button, point);
                 const p = this.camera.toWorldCoordinates(point.x, point.y);
-                this.shapesManager.poll(2, p);
+                this.shapesManager.handleMouse(2, p);
             }
             /**
              *
@@ -15601,7 +15682,8 @@ var geom;
             let p = this.pt.copy();
             this.delta.add$math_Vector2(delta);
             p.add$math_Vector2(this.delta);
-            p = this.shapesManager.preferences.snapToGrid(p);
+            if (manually)
+                this.pt = this.shapesManager.preferences.snapToGrid(this.pt);
             const t = this.parents[0].t(p);
             p = this.parents[0].point(t);
             if (p != null && (!((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(p.x) || !((value) => !isNaN(value) && Number.NEGATIVE_INFINITY !== value && Number.POSITIVE_INFINITY !== value)(p.y)))
