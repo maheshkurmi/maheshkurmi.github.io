@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<dialog text="grapher" resizable="true">
+<splitpane name="split" divider="180" weightx="1" weighty="1">
+    <panel scrollable="true" bottom="2" columns="1" gap="4" left="3" top="3" weightx="1" weighty="1" >
+        <panel columns="4" gap="3" >
+            <button text="△" name="btn_pause" tooltip="play/pause graph" action="button_clicked(this)"/>
+            <button text="↻" name="btn_reset" tooltip="reset graph" action="button_clicked(this)"/>
+			<button text="θ" name="btn_export" tooltip="export data to csv" action="button_clicked(this)"/>
+        </panel>
+        <label name="lbl_obj1" text="Body1"></label>
+        <combobox name="cmb_firstparam" action="combo_changed(this,this.selected)" width="100" end="7" editable="false" selected="3" start="7" text="Momentum" weightx="1" >
+        </combobox>
+        <label name="lbl_obj2" text="Body2"></label>
+        <combobox  name="cmb_secondparam" action="combo_changed(this,this.selected)" editable="false" text="Y axis; Speed" font="Serif 16" weightx="1" >
+        </combobox>
+   
+              
+        <panel name="pnl_legends" background="#00000022" columns="1" top="5" bottom="3" gap="3">
+            <checkbox text="x-axis" font="default-small" name="cb-legends1" selected="true"/>
+        </panel>
+       
+        <label name="lbl_interval" text="Time Interval: [0.01 sec]"/>
+		<slider minimum="0.01" maximum="2" value="0.01" action="slider_changed(this,this.value)" tooltip="Data polling interval" name="sld_interval" unit="0.05" block="0.2"/>
+   		<label name="lbl_span" text="Time Span: [10.0 sec]"/>      
+		<slider minimum="0.5" maximum="100" value="6" action="slider_changed(this,this.value)" tooltip="Time interval for which data will be recorded and displayed" name="sld_span" unit="0.1" block="1"/>
+        <panel columns="1" top="5" gap="2">
+           	<checkbox name="chk_info"    selected="true" text="Show Values"  action="checkbox_clicked(this,this.selected)"/>
+            <checkbox name="chk_grids"   selected="true" text="Show Grids"   action="checkbox_clicked(this,this.selected)"/>
+            <checkbox name="chk_legends" selected="true" text="Show Legends" action="checkbox_clicked(this,this.selected)"/>
+            <checkbox name="chk_timeaxis" selected="false" text="Force time as X axis" action="checkbox_clicked(this,this.selected)" tooltip="Check to use time as x axis and objects parameters on Y axis (ignoring units)"/>
+        </panel>
+    </panel>
+<bean name="pnlGraph"  bean="org.shikhar.simphy.gui.CanvasBean" width="480" height="300" border="true"/>
+</splitpane>
+</dialog>
