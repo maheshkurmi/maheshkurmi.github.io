@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML Parsing</title>
+    
+    <script src="extern/jszip/jszip.min.js"></script>
+    <!-- <script src="https://maheshkurmi.github.io/geom/jrt.js"></script>
+    <script src="https://maheshkurmi.github.io/geom/bundle.js"></script> -->
+    <script src="extern/geom/jrt.js"></script>
+    <script src="extern/geom/bundle.js"></script>
+    <script src="extern/acorn/acorn.js"></script>
+
+</head>
+<body id="BODY_TAG">
+    <!-- Title -->
+    <style>
+        canvas {
+            
+            position: absolute;
+            left: 0px;
+            top: 0px;
+           
+        }
+        form {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            color:cyan; 
+        }
+        h1 {
+            text-align: center;
+        }
+    </style>
+     <!-- Canvas -->
+     <canvas id="canvas" width="1200" height="480"></canvas>
+
+    <!-- <input type="file" id="fileInput">
+    <pre id="fileContent"></pre> -->
+    <form action="" method="">
+        <label for="simulation">Choose a Simulation:</label>
+        <select id="simulation" name="Simulation">
+          <option value="Bejeweled.ssim">Bejeweled</option>
+          <option value="Canvas Origami World.ssim">Origami</option>
+          <option value="Particle System.ssim">Particle System</option>
+          <option value="Canvas TriangleCeption.ssim">Rotating Triangles</option>
+          <option value="Canvas Birds.ssim">Flock of Birds</option>
+          <option value="Liquid Particle Simulation2.ssim">Moving particles</option>
+          <option value="Canvas Magic.ssim">Canvas Magic</option>
+          <option value="Canvas Scenegraph Demo.ssim">Scenegraph Demo</option>
+          <option value="typer.ssim">Typer game</option>
+          <option value="canvas tree animation.ssim">Tree animation</option>
+          <option value="Canvas BrickBreaker Demo1.ssim">BrickBreaker</option>
+          <option value="Canvas Spiral Rainbow.ssim">Spiral Rainbow</option>
+        </select>
+        <button type="submit">Load Simulation</button>
+    </form>
+  
+    <!-- Run javascript-->
+    <script src="js/scriptmanager.js"></script>
+    <script src="js/shapes.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
