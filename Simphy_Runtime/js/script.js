@@ -97,7 +97,7 @@ async function unzipFile(url) {
 }
 
 function buildSimulation(simulation) {
-  app.setFillWindow(true);
+  
   app.scriptManager.setScriptEngine(null);
   console.log("Simulation", simulation);
  
@@ -110,13 +110,13 @@ function buildSimulation(simulation) {
 
 // Function to handle the file selection
 function loadSimulation(event) {
-
+  
   const file = event.target.files[0];
 
   if (!file) {
     return;
   }
-  
+ 
   unzipFile(URL.createObjectURL(file)).then((source) => {
     const simulation = parseXMLToObject(source['simulation.xml']);
     buildSimulation(simulation);
@@ -129,6 +129,8 @@ function loadSimulationFromPath(path){
     buildSimulation(simulation);
   });
 }
+
+
 // Function to build the geometry
 function buildGeometry(simulation) {
   shapes = simulation.World.Shapes;
@@ -168,7 +170,7 @@ function buildScriptManager(simulation) {
   let script = simulation.World.ScriptManager.Script.cdata;
   if (!script) { app.scriptManager.setScriptEngine(null); return; }
   app.scriptManager.setScriptEngine(null);
-  let engine = new ScriptEngine();
+  let engine = new ScriptEngine(app);
   //console.log("before",app.scriptManager);
   app.scriptManager.setScriptEngine(engine);
   engine.load(simulation.World.ScriptManager.Script.cdata);
@@ -520,8 +522,6 @@ function parseShape(shapeNode) {
   //console.log(shape);
   return shape;
 }
-// Attach the event listener to the file input element
-//fileInput.addEventListener('change', loadSimulation);
 
 var app = new framework.App("canvas");
 var camera = app.camera;
@@ -534,3 +534,5 @@ if(sim){
   document.getElementById("simulation").value=sim;
 }
 
+// Attach the event listener to the file input element
+fileInput.addEventListener('change', loadSimulation);

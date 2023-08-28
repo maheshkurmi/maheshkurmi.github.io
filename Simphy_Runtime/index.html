@@ -13,16 +13,23 @@
     <script src="extern/acorn/acorn.js"></script>
 
 </head>
-<body id="BODY_TAG">
+<body id="BODY_TAG" style="touch-action:none;">
     <!-- Title -->
     <style>
-        canvas {
-            
+        html, body {
+            margin: 0;
+            height: 100%;
+        }
+        #canvas {
+            width: 800px;
+            height: 480px;
+            display: block;
             position: absolute;
             left: 0px;
             top: 0px;
-           
         }
+
+     
         form {
             position: absolute;
             left: 10px;
@@ -34,10 +41,8 @@
         }
     </style>
      <!-- Canvas -->
-     <canvas id="canvas" width="1200" height="480"></canvas>
+     <canvas id="canvas" style="border:solid black 1px; touch-action:none" ></canvas>
 
-    <!-- <input type="file" id="fileInput">
-    <pre id="fileContent"></pre> -->
     <form action="" method="">
         <label for="simulation">Choose a Simulation:</label>
         <select id="simulation" name="Simulation">
@@ -46,17 +51,24 @@
           <option value="Particle System.ssim">Particle System</option>
           <option value="Canvas TriangleCeption.ssim">Rotating Triangles</option>
           <option value="Canvas Birds.ssim">Flock of Birds</option>
-          <option value="Liquid Particle Simulation2.ssim">Moving particles</option>
-          <option value="Canvas Magic.ssim">Canvas Magic</option>
+          <option value="Liquid particle Simulation2.ssim">Moving particles</option>
+          <option value="Canvas magic.ssim">Canvas Magic</option>
           <option value="Canvas Scenegraph Demo.ssim">Scenegraph Demo</option>
           <option value="typer.ssim">Typer game</option>
           <option value="canvas tree animation.ssim">Tree animation</option>
           <option value="Canvas BrickBreaker Demo1.ssim">BrickBreaker</option>
           <option value="Canvas Spiral Rainbow.ssim">Spiral Rainbow</option>
+          <option value="world canvas mouse events.ssim">Drawing with Mouse</option>
+          <option value="Predict Collision.ssim">Predict collision</option>
+          <option value="Angle Joint Demo.ssim">Angle Joint Demo</option>
+
+          
         </select>
         <button type="submit">Load Simulation</button>
+        <input type="file" id="fileInput">
+        <pre id="fileContent"></pre>
     </form>
-  
+   
     <!-- Run javascript-->
     <script src="js/scriptmanager.js"></script>
     <script src="js/shapes.js"></script>

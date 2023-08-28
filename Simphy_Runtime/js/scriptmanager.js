@@ -2,33 +2,11 @@
 // Temporary helper classes for the script manager //
 /////////////////////////////////////////////////////
 
-class WorldWrapper {
-  constructor() {
 
-
-  }
-
-  getCanvas() {
-    return app.getCanvas();
-    /*
-    let f=app.renderer.DPI_FACTOR;
-    this.canvas=new OffscreenCanvas(app.canvas.width/f, app.canvas.height/f);
-   
-    app.offscreencanvas = this.canvas;
-    return this.canvas;
-    */
-  }
-  addDisc(radius) {
-    let shape = org.phys2d.geometry.Geometry.createCircle(shapeNode.Radius);
-    let fixture = new org.phys2d.dynamics.BodyFixture(shape);
-    let body = new physics.SimulationBody();
-    body.setMass(radius);
-    this.app.worldManager.world.addbody(body);
-  }
-};
 
 class ScriptEngine {
-  constructor() {
+  constructor(app) {
+    this.app=app;
     if (!CanvasRenderingContext2D.prototype.clear) {
       /*
       let canvas=HTMLCanvasElement.prototype;
@@ -74,7 +52,7 @@ class ScriptEngine {
   load(script) {
 
     let functions = this.extractFunctions(script);
-    console.log(functions);
+    //console.log(functions);
 
     let postfix = '_:0';
     for (const func of functions) {
@@ -90,8 +68,8 @@ class ScriptEngine {
     this.script = prefix + script + postfix;
     this.manager = new Function(
       'World', 'App', 'Console', 'Widgets', 'Vector2', 'Color'
-      ,this.script)(app.scriptManager.worldWrapper, app.scriptManager.appWrapper, console, app.scriptManager.wigdetsWrapper, org.phys2d.geometry.Vector2, framework.Color);
-      console.log(this.manager);
+      ,this.script)(this.app.scriptManager.worldWrapper, this.app.scriptManager.appWrapper, console, this.app.scriptManager.wigdetsWrapper, org.phys2d.geometry.Vector2, framework.Color);
+     //console.log(this.manager);
     }
 
   extractFunctions(code) {
