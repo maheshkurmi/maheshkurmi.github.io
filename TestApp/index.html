@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML Parsing</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <script src="extern/jszip/jszip.min.js"></script>
+    <script src="extern/geom/jrt.js"></script>
+    <script src="extern/geom/bundle.js"></script>
+    <script src="extern/acorn/acorn.js"></script>
+    <script type="module" src="js/SimulationTag.js"></script>
+    <style>
+        div {
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        html {
+            background-color: #eee;
+            height: 50px;
+            /*I have set this to 50px to show off how overflow works*/
+        }
+
+        body {
+            background-color: #999;
+            margin: 0;
+            padding: 0;
+            height: 100vh; /*Important to cover viewport only, else it might overflow*/
+            width: 100vw; /*Important to cover viewport only else it might overflow*/
+            box-sizing: border-box; /*Lets make padding and border is included in the div's height and width. */
+        }
+
+     
+    </style>
+</head>
+
+<body>
+<div id="main"> </div>
+
+
+</body>
+<script type="module" style="margin:0;padding:0">
+    const urlParams = new URLSearchParams(window.location.search);
+    let file = urlParams.get('simulation');
+    if (file) {
+        file = "simulations/" + file;
+        let tag = document.createElement("simphy-simulation");
+        //tag.setAttribute("width","600px");
+        //tag.setAttribute("height","300px");
+        tag.setAttribute("src", file);
+        document.getElementById("main").appendChild(tag);
+    }
+</script>
+
+</html>
