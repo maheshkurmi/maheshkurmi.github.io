@@ -1,4 +1,4 @@
-import ScriptEngine from "./ScriptEngine.js"
+import ScriptEngine from "./scriptEngine.js"
 
 const DEG_TO_RADIAN = Math.PI / 180;
 
