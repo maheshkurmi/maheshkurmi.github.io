@@ -228,7 +228,7 @@
 
 </div>
 <script src="tweakpane3.js"></script>
-<script src="https://unpkg.com/three"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.js"></script>
 <script src="https://unpkg.com/@seregpie/three.text-texture"></script>
 <script src="https://unpkg.com/@seregpie/three.text-sprite"></script>
 
@@ -380,7 +380,7 @@ import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/exampl
         // axes
         //scene.add( new THREE.AxesHelper( 20 ) );
 
-        light = new THREE.PointLight( 0xffffff,0.45 ); // soft white light
+        light = new THREE.PointLight( 0xffffff,1.45 ); // soft white light
         light.position.set(0,0,0);
         camera.add( light );
         scene.add(camera);

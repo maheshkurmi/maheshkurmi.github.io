@@ -230,7 +230,7 @@
 </div>
 
 <script src="tweakpane3.js"></script>
-<script src="https://unpkg.com/three"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.js"></script>
 <script src="https://unpkg.com/@seregpie/three.text-texture"></script>
 <script src="https://unpkg.com/@seregpie/three.text-sprite"></script>
 
@@ -306,6 +306,8 @@
             texture.wrapS= THREE.RepeatWrapping;
             texture.wrapT= THREE.RepeatWrapping;
             texture.repeat.set( n,n );
+            texture.encoding = THREE.sRGBEncoding;
+            texture.colorSpace = THREE.SRGBColorSpace;
         }
         texture.needsUpdate = true;
         return texture;
@@ -342,6 +344,8 @@
         renderer = new THREE.WebGLRenderer({antialias :true});
         renderer.setSize( window.innerWidth, window.innerHeight );
         renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.outputEncoding = THREE.sRGBEncoding;
+     
         renderer.shadowMap.enabled = true;
         renderer.shadowMapSoft = true;
         renderer.shadowMapType = THREE.PCFSoftShadowMap;
@@ -364,9 +368,9 @@
         scene.add( new THREE.AmbientLight( 0x222222 ) );
 
         // light
-        var light = new THREE.DirectionalLight( 0xaaaaaa, 0.8 );
-        light.position.set(-5,0,20 ); //20,20,0
-        light.castShadow=true;
+        var light = new THREE.DirectionalLight( 0xaaaaaa, 2.5 );
+        light.position.set(-5,-4,20 ); //20,20,0
+        light.castShadow=false;
 
         light.shadowCameraLeft = -20;
         	light.shadowCameraTop = 20;
@@ -385,7 +389,7 @@
         // axes
         //scene.add( new THREE.AxesHelper( 20 ) );
 
-        light = new THREE.PointLight( 0xffffff,0.5 ); // soft white light
+        light = new THREE.PointLight( 0xffffff,1.5 ); // soft white light
         light.position.set(0,0,0);
         camera.add( light );
         scene.add(camera);

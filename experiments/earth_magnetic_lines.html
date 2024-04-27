@@ -230,7 +230,7 @@
 
 </div>
 <script src="tweakpane3.js"></script>
-<script src="https://unpkg.com/three"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.js"></script>
 <script src="https://unpkg.com/@seregpie/three.text-texture"></script>
 <script src="https://unpkg.com/@seregpie/three.text-sprite"></script>
 
@@ -254,7 +254,7 @@ import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/exampl
     var renderer, scene, camera;
     var groundTex,earthTex,compassTex1,compassTex2;
     var equator,magnet,earth, compassH,compassV,needle,arrowNS,location,magMeridian,geogMeridian,meridianfield, magCircle, geogCircle,compassArrow,planeGM, planeMM, field
-    var bgColor=new THREE.Color("rgb(0,34,34)");
+    var bgColor=new THREE.Color("rgb(0,12,0)");
     var pane;
 
 
@@ -295,6 +295,8 @@ import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/exampl
             texture.wrapS= THREE.RepeatWrapping;
             texture.wrapT= THREE.RepeatWrapping;
             texture.repeat.set( n,n );
+            texture.encoding = THREE.sRGBEncoding;
+            texture.colorSpace = THREE.SRGBColorSpace;
         }
         texture.needsUpdate = true;
         return texture;
@@ -370,6 +372,8 @@ import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/exampl
         renderer.shadowMapSoft = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.physicallyBasedShading = true;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+     
         document.body.appendChild( renderer.domElement );
 
         // scene
@@ -406,14 +410,14 @@ import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.121.1/exampl
         //scene.add( new THREE.DirectionalLight(light, 2.5) );
         scene.add( light );
 
-        var light = new THREE.DirectionalLight( 0xaaaaaa, 1);
-        light.position.set(-1,-3,-2 ); //20,20,0
+        var light = new THREE.DirectionalLight( 0xffffff, 1.6);
+        light.position.set(20,20,20 ); //20,20,0
         scene.add( light );
 
         // axes
         //scene.add( new THREE.AxesHelper( 20 ) );
 
-        light = new THREE.PointLight( 0xffffff,0.65 ); // soft white light
+        light = new THREE.PointLight( 0xffffff,1.65 ); // soft white light
         light.position.set(0,0,0);
         camera.add( light );
         scene.add(camera);
