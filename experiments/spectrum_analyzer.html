@@ -45,11 +45,11 @@
             width: 40px;
             height: 40px;
             cursor: pointer;
-            background: url('https://image.flaticon.com/icons/png/512/758/758884.png') no-repeat center;
+            background: url('audio-waves.png') no-repeat center;
             background-size: contain;
         }
         .audio-player #oscModeIcon.pause {
-            background: url('https://image.flaticon.com/icons/png/512/3456/3456069.png') no-repeat center;
+            background: url('audio-spectrum.png') no-repeat center;
             background-size: contain;
         }
 
@@ -57,11 +57,11 @@
             width: 40px;
             height: 40px;
             cursor: pointer;
-            background: url('https://image.flaticon.com/icons/svg/149/149427.svg') no-repeat center;
+            background: url('microphone.png') no-repeat center;
             background-size: contain;
         }
         .audio-player #radioIcon.pause {
-            background: url('https://image.flaticon.com/icons/svg/149/149428.svg') no-repeat center;
+            background: url('mute.png') no-repeat center;
             background-size: contain;
         }
         .audio-player #playAudio {
@@ -71,11 +71,11 @@
             border: none;
             width: 40px;
             height: 40px;
-            background: url('https://image.flaticon.com/icons/svg/149/149125.svg') no-repeat center;
+            background: url('play-button.png') no-repeat center;
             background-size: contain;
         }
         .audio-player #playAudio.pause {
-            background: url('https://image.flaticon.com/icons/svg/149/149127.svg') no-repeat center;
+            background: url('pause-button.png') no-repeat center;
             background-size: contain;
         }
         .audio-player p {
@@ -436,9 +436,10 @@
             }
             this.source = audioBufferSouceNode;
             this.gainNode = this.audioContext.createGain();
-            this.gainNode.gain.value = 0.1; // 10 %
+            //this.gainNode.gain.value = 0.1; // 10 %
             this.gainNode.connect(this.audioContext.destination)
             console.log("Gain Node created "+this.gainNode);
+            visualizer.gainNode-this.gainNode;
             // now instead of connecting to aCtx.destination, connect to the gainNode
             this.source.connect(this.gainNode);
 
@@ -888,10 +889,11 @@
 
 
     function updateVolume(deg){
+       // console.log("volume change:"+deg,visualizer.audioBuffer);
         if(visualizer.audioBuffer==null)return;
         let v=deg/100;
-        visualizer.gainNode.gain.value=v*v;
-        console.log(deg+"="+ visualizer.gainNode.gain.value);
+        visualizer.gainNode.gain.value=v;
+        console.log(deg+"=volume="+ visualizer.gainNode.gain.value);
     }
 
     function seek(e) {
