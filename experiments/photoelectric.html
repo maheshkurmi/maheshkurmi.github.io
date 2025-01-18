@@ -816,7 +816,7 @@
 
     function drawBattery(){
         ctx.fillStyle="red";
-        if(voltage>0){
+        if(voltage<0){
             ctx.fillStyle="red";
             ctx.fillRect(batteryTerminals[0],batteryTerminals[1],batteryTerminalSize,batteryTerminalSize);
             ctx.fillText("+",batteryTerminals[0]+batteryTerminalSize/2,batteryTerminals[1]+batteryTerminalSize*2);
