@@ -1,6 +1,5 @@
-# maheshkurmi.github.io
 Collection of my web apps
-1. ScrewGauge [demo https://maheshkurmi.github.io/screwgauge/index.html]
+
 
 A complete spin of 'drum' will produce an advance of 0.50 mm and the fifty divisions will ‘sweep’ the ‘reference line’. In this way, each division of the drum ‘marks’ the advance of 0.01 mm (one hundredth of a millimeter) of the spindle.
 
